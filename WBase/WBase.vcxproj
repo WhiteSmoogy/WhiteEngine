@@ -1,0 +1,358 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="addressof.hpp" />
+    <ClInclude Include="algorithm.hpp" />
+    <ClInclude Include="any.h" />
+    <ClInclude Include="any_iterator.hpp" />
+    <ClInclude Include="array.hpp" />
+    <ClInclude Include="cache.hpp" />
+    <ClInclude Include="cast.hpp" />
+    <ClInclude Include="cctype.h" />
+    <ClInclude Include="cformat.h" />
+    <ClInclude Include="concurrency.h" />
+    <ClInclude Include="ConcurrentHashMap.h" />
+    <ClInclude Include="container.hpp" />
+    <ClInclude Include="cstdio.h" />
+    <ClInclude Include="cstring.h" />
+    <ClInclude Include="ctime.h" />
+    <ClInclude Include="cwctype.h" />
+    <ClInclude Include="deref_op.hpp" />
+    <ClInclude Include="enum.hpp" />
+    <ClInclude Include="examiner.hpp" />
+    <ClInclude Include="exception.h" />
+    <ClInclude Include="exception_type.h" />
+    <ClInclude Include="folly\Bits.h" />
+    <ClInclude Include="folly\concurrency\CacheLocality.h" />
+    <ClInclude Include="folly\concurrency\ConcurrentHashMap.h" />
+    <ClInclude Include="folly\concurrency\detail\ConcurrentHashMap-detail.h" />
+    <ClInclude Include="folly\ConstexprMath.h" />
+    <ClInclude Include="folly\container\detail\F14Mask.h" />
+    <ClInclude Include="folly\container\HeterogeneousAccess-fwd.h" />
+    <ClInclude Include="folly\container\HeterogeneousAccess.h" />
+    <ClInclude Include="folly\CPortability.h" />
+    <ClInclude Include="folly\CppAttributes.h" />
+    <ClInclude Include="folly\Demangle.h" />
+    <ClInclude Include="folly\detail\Futex-inl.h" />
+    <ClInclude Include="folly\detail\Futex.h" />
+    <ClInclude Include="folly\detail\Iterators.h" />
+    <ClInclude Include="folly\detail\Singleton.h" />
+    <ClInclude Include="folly\detail\StaticSingletonManager.h" />
+    <ClInclude Include="folly\detail\ThreadLocalDetail.h" />
+    <ClInclude Include="folly\detail\UniqueInstance.h" />
+    <ClInclude Include="folly\Expected.h" />
+    <ClInclude Include="folly\folly-config.h" />
+    <ClInclude Include="folly\functional\ApplyTuple.h" />
+    <ClInclude Include="folly\functional\Invoke.h" />
+    <ClInclude Include="folly\Hash.h" />
+    <ClInclude Include="folly\hash\Hash.h" />
+    <ClInclude Include="folly\hash\SpookyHashV1.h" />
+    <ClInclude Include="folly\hash\SpookyHashV2.h" />
+    <ClInclude Include="folly\lang\Align.h" />
+    <ClInclude Include="folly\lang\Aligned.h" />
+    <ClInclude Include="folly\lang\Assume-inl.h" />
+    <ClInclude Include="folly\lang\Assume.h" />
+    <ClInclude Include="folly\lang\Bits.h" />
+    <ClInclude Include="folly\lang\CString.h" />
+    <ClInclude Include="folly\lang\Exception.h" />
+    <ClInclude Include="folly\lang\Extern.h" />
+    <ClInclude Include="folly\lang\Launder.h" />
+    <ClInclude Include="folly\lang\SafeAssert.h" />
+    <ClInclude Include="folly\lang\Thunk.h" />
+    <ClInclude Include="folly\lang\TypeInfo.h" />
+    <ClInclude Include="folly\lang\UncaughtExceptions.h" />
+    <ClInclude Include="folly\Likely.h" />
+    <ClInclude Include="folly\Memory.h" />
+    <ClInclude Include="folly\memory\detail\MallocImpl.h" />
+    <ClInclude Include="folly\memory\Malloc.h" />
+    <ClInclude Include="folly\net\detail\SocketFileDescriptorMap.h" />
+    <ClInclude Include="folly\net\NetOps.h" />
+    <ClInclude Include="folly\net\NetworkSocket.h" />
+    <ClInclude Include="folly\Optional.h" />
+    <ClInclude Include="folly\Portability.h" />
+    <ClInclude Include="folly\portability\Asm.h" />
+    <ClInclude Include="folly\portability\Builtins.h" />
+    <ClInclude Include="folly\portability\Config.h" />
+    <ClInclude Include="folly\portability\GFlags.h" />
+    <ClInclude Include="folly\portability\Logging.h" />
+    <ClInclude Include="folly\portability\Malloc.h" />
+    <ClInclude Include="folly\portability\PThread.h" />
+    <ClInclude Include="folly\portability\Sched.h" />
+    <ClInclude Include="folly\portability\SysTypes.h" />
+    <ClInclude Include="folly\portability\Time.h" />
+    <ClInclude Include="folly\portability\Unistd.h" />
+    <ClInclude Include="folly\portability\Windows.h" />
+    <ClInclude Include="folly\ScopeGuard.h" />
+    <ClInclude Include="folly\SharedMutex.h" />
+    <ClInclude Include="folly\SingletonThreadLocal.h" />
+    <ClInclude Include="folly\synchronization\AsymmetricMemoryBarrier.h" />
+    <ClInclude Include="folly\synchronization\detail\HazptrUtils.h" />
+    <ClInclude Include="folly\synchronization\detail\Sleeper.h" />
+    <ClInclude Include="folly\synchronization\Hazptr-fwd.h" />
+    <ClInclude Include="folly\synchronization\Hazptr.h" />
+    <ClInclude Include="folly\synchronization\HazptrDomain.h" />
+    <ClInclude Include="folly\synchronization\HazptrHolder.h" />
+    <ClInclude Include="folly\synchronization\HazptrObj.h" />
+    <ClInclude Include="folly\synchronization\HazptrObjLinked.h" />
+    <ClInclude Include="folly\synchronization\HazptrRec.h" />
+    <ClInclude Include="folly\synchronization\HazptrThrLocal.h" />
+    <ClInclude Include="folly\synchronization\MicroSpinLock.h" />
+    <ClInclude Include="folly\synchronization\ParkingLot.h" />
+    <ClInclude Include="folly\synchronization\SanitizeThread.h" />
+    <ClInclude Include="folly\system\ThreadId.h" />
+    <ClInclude Include="folly\ThreadLocal.h" />
+    <ClInclude Include="folly\Traits.h" />
+    <ClInclude Include="folly\Unit.h" />
+    <ClInclude Include="folly\Utility.h" />
+    <ClInclude Include="functional.hpp" />
+    <ClInclude Include="functor.hpp" />
+    <ClInclude Include="future.hpp" />
+    <ClInclude Include="id.hpp" />
+    <ClInclude Include="integer_sequence.hpp" />
+    <ClInclude Include="ios.hpp" />
+    <ClInclude Include="iterator.hpp" />
+    <ClInclude Include="iterator_op.hpp" />
+    <ClInclude Include="cassert.h" />
+    <ClInclude Include="iterator_trait.hpp" />
+    <ClInclude Include="wcompiler.h" />
+    <ClInclude Include="wdef.h" />
+    <ClInclude Include="winttype_utility.hpp" />
+    <ClInclude Include="wmath.hpp" />
+    <ClInclude Include="wmathhalf.h" />
+    <ClInclude Include="wmathtype.hpp" />
+    <ClInclude Include="winttype.hpp" />
+    <ClInclude Include="wmacro.h" />
+    <ClInclude Include="wmemory.hpp" />
+    <ClInclude Include="wmathquaternion.hpp" />
+    <ClInclude Include="mixin.hpp" />
+    <ClInclude Include="observer_ptr.hpp" />
+    <ClInclude Include="path.hpp" />
+    <ClInclude Include="MCF\Abstract.hpp" />
+    <ClInclude Include="memory.hpp" />
+    <ClCompile Include="cformat.cpp" />
+    <ClCompile Include="folly\concurrency\CacheLocality.cpp" />
+    <ClCompile Include="folly\Demangle.cpp" />
+    <ClCompile Include="folly\detail\Futex.cpp" />
+    <ClCompile Include="folly\detail\StaticSingletonManager.cpp" />
+    <ClCompile Include="folly\detail\ThreadLocalDetail.cpp" />
+    <ClCompile Include="folly\detail\UniqueInstance.cpp" />
+    <ClCompile Include="folly\hash\SpookyHashV1.cpp" />
+    <ClCompile Include="folly\hash\SpookyHashV2.cpp" />
+    <ClCompile Include="folly\lang\Assume.cpp" />
+    <ClCompile Include="folly\lang\CString.cpp" />
+    <ClCompile Include="folly\memory\detail\MallocImpl.cpp" />
+    <ClCompile Include="folly\net\detail\SocketFileDescriptorMap.cpp" />
+    <ClCompile Include="folly\net\NetOps.cpp" />
+    <ClCompile Include="folly\portability\Builtins.cpp" />
+    <ClCompile Include="folly\portability\Malloc.cpp" />
+    <ClCompile Include="folly\portability\PThread.cpp" />
+    <ClCompile Include="folly\portability\Sched.cpp" />
+    <ClCompile Include="folly\portability\Time.cpp" />
+    <ClCompile Include="folly\portability\Unistd.cpp" />
+    <ClCompile Include="folly\ScopeGuard.cpp" />
+    <ClCompile Include="folly\SharedMutex.cpp" />
+    <ClCompile Include="folly\synchronization\AsymmetricMemoryBarrier.cpp" />
+    <ClCompile Include="folly\synchronization\detail\Sleeper.cpp" />
+    <ClCompile Include="folly\synchronization\Hazptr.cpp" />
+    <ClCompile Include="folly\synchronization\ParkingLot.cpp" />
+    <ClCompile Include="folly\synchronization\SanitizeThread.cpp" />
+    <ClCompile Include="folly\system\ThreadId.cpp" />
+    <ClCompile Include="operators.hpp" />
+    <ClInclude Include="optional.hpp" />
+    <ClInclude Include="placement.hpp" />
+    <ClInclude Include="pointer.hpp" />
+    <ClInclude Include="pseudo_mutex.h" />
+    <ClInclude Include="range.hpp" />
+    <ClInclude Include="ref.hpp" />
+    <ClInclude Include="scope_gurad.hpp" />
+    <ClInclude Include="set.hpp" />
+    <ClInclude Include="smart_ptr.hpp" />
+    <ClInclude Include="span.hpp" />
+    <ClInclude Include="streambuf.hpp" />
+    <ClInclude Include="string.hpp" />
+    <ClInclude Include="string_utility.hpp" />
+    <ClInclude Include="sutility.h" />
+    <ClInclude Include="tuple.hpp" />
+    <ClInclude Include="typeindex.h" />
+    <ClInclude Include="typeinfo.h" />
+    <ClInclude Include="type_op.hpp" />
+    <ClInclude Include="type_pun.hpp" />
+    <ClInclude Include="type_traits.hpp" />
+    <ClInclude Include="utility.hpp" />
+    <ClInclude Include="variadic.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="any.cpp" />
+    <ClCompile Include="cassert.cpp" />
+    <ClCompile Include="concurrency.cpp" />
+    <ClCompile Include="cstdio.cpp" />
+    <ClCompile Include="cwctype.cpp" />
+    <ClCompile Include="exception.cpp" />
+    <ClCompile Include="sutility.cpp" />
+    <ClCompile Include="WBase.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="WBase.natvis" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4F3AE107-3FFD-4D5C-82A8-5034C0041562}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>LBase</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IntDir>$(SolutionDir)Inter\$(ProjectName)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir);$(SolutionDir);$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IntDir>$(SolutionDir)Inter\$(ProjectName)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir);$(SolutionDir);$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(ProjectDir);$(SolutionDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <OutDir>$(ProjectDir)lib\$(Platform)\</OutDir>
+    <TargetName>$(ProjectName)d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(ProjectDir);$(SolutionDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <OutDir>$(ProjectDir)lib\$(Platform)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <DisableSpecificWarnings>4180</DisableSpecificWarnings>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <DisableSpecificWarnings>4180</DisableSpecificWarnings>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WB_Use_LightweightTypeID;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <DisableSpecificWarnings>4180</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <DisableSpecificWarnings>4180</DisableSpecificWarnings>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

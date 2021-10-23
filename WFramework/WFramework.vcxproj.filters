@@ -1,0 +1,288 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Win32">
+      <UniqueIdentifier>{72d528e0-0dda-4274-a97e-b081a17af977}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Win32\WCLib">
+      <UniqueIdentifier>{867ac9fd-057b-4682-8c93-32004254fc2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CHRLib">
+      <UniqueIdentifier>{4e380efc-f6da-4734-882b-b55f4e6cf98f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Adaptor">
+      <UniqueIdentifier>{7d7c92f8-9dcb-4ca7-8efa-8a7ec93ca281}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Helper">
+      <UniqueIdentifier>{766b376c-84fe-4dec-af44-8014ea2922e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="WCLib">
+      <UniqueIdentifier>{67d679be-11d0-4e51-9744-ac87e325d999}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{003de9c5-0ace-4415-ad43-a77beb3f0c54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Service">
+      <UniqueIdentifier>{b411ec38-9d54-4566-96b4-ab1a386b973f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CHRLib\CharacterMapping.h">
+      <Filter>CHRLib</Filter>
+    </ClInclude>
+    <ClInclude Include="CHRLib\CharacterProcessing.h">
+      <Filter>CHRLib</Filter>
+    </ClInclude>
+    <ClInclude Include="CHRLib\Convert.hpp">
+      <Filter>CHRLib</Filter>
+    </ClInclude>
+    <ClInclude Include="CHRLib\Encoding.h">
+      <Filter>CHRLib</Filter>
+    </ClInclude>
+    <ClInclude Include="CHRLib\MappingEx.h">
+      <Filter>CHRLib</Filter>
+    </ClInclude>
+    <ClInclude Include="CHRLib\StaticMapping.hpp">
+      <Filter>CHRLib</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\FCommon.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\FContainer.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\FFileIO.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\FReference.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\Host.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\Mutex.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\NativeAPI.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\Platform.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="Adaptor\WAdaptor.h">
+      <Filter>Adaptor</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WConsole.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WCoreUtilities.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WException.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WFunc.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WShellDefinition.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Helper\Initialization.h">
+      <Filter>Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="Service\FileSystem.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WObject.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WString.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Adaptor\WTextBase.h">
+      <Filter>Adaptor</Filter>
+    </ClInclude>
+    <ClInclude Include="Service\File.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\FileSystem.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\MemoryMapping.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ValueNode.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Service\TextFile.h">
+      <Filter>Service</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WEvent.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\HostGUI.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\Input.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="Helper\HostWindow.h">
+      <Filter>Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="Helper\GUIApplication.h">
+      <Filter>Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WMessage.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\wmsgdef.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WShell.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Helper\WindowThread.h">
+      <Filter>Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="Helper\ShellHelper.h">
+      <Filter>Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WClock.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\Timer.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\Debug.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\Logger.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="WCLib\WDescriptions.h">
+      <Filter>WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\WCLib\COM.h">
+      <Filter>Win32\WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\WCLib\Consoles.h">
+      <Filter>Win32\WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\WCLib\GDI.h">
+      <Filter>Win32\WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\WCLib\Mingw32.h">
+      <Filter>Win32\WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\WCLib\NLS.h">
+      <Filter>Win32\WCLib</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\WCLib\Registry.h">
+      <Filter>Win32\WCLib</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Win32\WCLib\Consoles.cpp">
+      <Filter>Win32\WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\WCLib\MinGW32.cpp">
+      <Filter>Win32\WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\WCLib\NLS.cpp">
+      <Filter>Win32\WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="CHRLib\CharacterProcessing.cpp">
+      <Filter>CHRLib</Filter>
+    </ClCompile>
+    <ClCompile Include="CHRLib\chrmap.cpp">
+      <Filter>CHRLib</Filter>
+    </ClCompile>
+    <ClCompile Include="CHRLib\MappingEx.cpp">
+      <Filter>CHRLib</Filter>
+    </ClCompile>
+    <ClCompile Include="WCLib\FCommon.cpp">
+      <Filter>WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="WCLib\FFileIO.cpp">
+      <Filter>WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="WCLib\Host.cpp">
+      <Filter>WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WException.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Helper\Initialization.cpp">
+      <Filter>Helper</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WObject.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WString.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Service\FileSystem.cpp">
+      <Filter>Service</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\WCLib\Registry.cpp">
+      <Filter>Win32\WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="WCLib\MemoryMapping.cpp">
+      <Filter>WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="WCLib\NativeAPI.cpp">
+      <Filter>WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ValueNode.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Service\File.cpp">
+      <Filter>Service</Filter>
+    </ClCompile>
+    <ClCompile Include="Service\TextFile.cpp">
+      <Filter>Service</Filter>
+    </ClCompile>
+    <ClCompile Include="WCLib\HostGUI.cpp">
+      <Filter>WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\WCLib\GDI.cpp">
+      <Filter>Win32\WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="WCLib\Input.cpp">
+      <Filter>WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="Helper\GUIApplication.cpp">
+      <Filter>Helper</Filter>
+    </ClCompile>
+    <ClCompile Include="Helper\WindowThread.cpp">
+      <Filter>Helper</Filter>
+    </ClCompile>
+    <ClCompile Include="Helper\HostWindow.cpp">
+      <Filter>Helper</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WShell.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WMessage.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Helper\ShellHelper.cpp">
+      <Filter>Helper</Filter>
+    </ClCompile>
+    <ClCompile Include="WCLib\Timer.cpp">
+      <Filter>WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WCoreUtilities.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="WCLib\Logger.cpp">
+      <Filter>WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="WCLib\Debug.cpp">
+      <Filter>WCLib</Filter>
+    </ClCompile>
+    <ClCompile Include="WCLib\FileSystem.WCLib.cpp">
+      <Filter>WCLib</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

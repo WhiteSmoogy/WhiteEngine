@@ -24,7 +24,7 @@ bool platform::imgui::Context_Init(Render::Context& context)
 {
     // Setup back-end capabilities flags
     ImGuiIO& io = ::ImGui::GetIO();
-    io.BackendRendererName = "imgui_impl_leoengine";
+    io.BackendRendererName = "imgui_impl_whiteengine";
     io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
 
     return true;

@@ -14,6 +14,7 @@
 #include "EffectX.h"
 #include "WSLAssetX.h"
 #include "D3DShaderCompiler.h"
+#include "../Core/Path.h"
 
 #pragma warning(disable:4715) //return value or throw exception;
 using namespace platform::Render::Shader;
@@ -54,6 +55,17 @@ namespace platform {
 		{
 			Super::PreCreate();
 			return nullptr;
+		}
+
+		asset::path Path(const asset::path& path) const override
+		{
+			static std::filesystem::path effect_path = WhiteEngine::PathSet::EngineDir() / "Render/Effect";
+
+			auto local_path = effect_path / path;
+			if (std::filesystem::exists(local_path))
+				return local_path;
+
+			return path;
 		}
 
 		std::shared_ptr<AssetType> LoadNode()

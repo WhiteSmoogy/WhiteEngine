@@ -23,7 +23,7 @@ namespace platform::X
 
 	template<typename AssetType>
 	class ShaderLoadingDesc{
-	private:
+	protected:
 		struct ShaderDesc {
 			path path;
 			struct Data {
@@ -46,8 +46,12 @@ namespace platform::X
 			return std::hash<std::wstring>()(shader_desc.path.wstring());
 		}
 
-		const path& Path() const{
+		virtual const path& Path() const {
 			return shader_desc.path;
+		}
+
+		virtual path Path(const path& input) const{
+			return input;
 		}
 
 		std::shared_ptr<AssetType> ReturnValue()
@@ -80,12 +84,12 @@ namespace platform::X
 
 		void LoadNode()
 		{
-			shader_desc.data->term_node = *platform::X::LoadNode(shader_desc.path).begin();
+			shader_desc.data->term_node = *platform::X::LoadNode(Path(shader_desc.path)).begin();
 		}
 
 		white::coroutine::Task<void> LoadNodeAsync(white::coroutine::IOScheduler& io)
 		{
-			shader_desc.data->term_node = *(co_await LoadNodeAsync(io, shader_desc.path.string())).begin();
+			shader_desc.data->term_node = *(co_await LoadNodeAsync(io, shader_desc.path)).begin();
 		}
 
 		void ParseNode()
@@ -170,8 +174,8 @@ namespace platform::X
 			return include_line;
 		}
 
-		white::coroutine::Task<scheme::TermNode> LoadNodeAsync(white::coroutine::IOScheduler& io,const std::string& path) {
-			auto file = white::coroutine::ReadOnlyFile::open(io, path);
+		white::coroutine::Task<scheme::TermNode> LoadNodeAsync(white::coroutine::IOScheduler& io,const path& path) {
+			auto file = white::coroutine::ReadOnlyFile::open(io, Path(path).string());
 
 			constexpr size_t bufferSize = 4096;
 			auto buffer = std::make_unique<char[]>(bufferSize);

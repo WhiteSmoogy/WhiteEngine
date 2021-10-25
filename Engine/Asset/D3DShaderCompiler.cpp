@@ -29,14 +29,6 @@ namespace asset::X::Shader {
 
 		environment.SetDefine("SM4", "40");
 
-		auto caps = Context::Instance().GetDevice().GetCaps();
-		switch (caps.type) {
-		case Caps::Type::D3D12:
-			environment.SetDefine("D3D12", "1");
-			//TODO depend feature_level
-			environment.SetDefine("SM_VERSION", "50");
-			break;
-		}
 		switch (type) {
 		case ShaderType::VertexShader:
 			environment.SetDefine("VS", "1");

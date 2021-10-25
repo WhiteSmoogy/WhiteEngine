@@ -21,7 +21,7 @@ class Entity {
 public:
 	Entity(const std::string& mesh_name,const std::string& material_name) {
 		pMesh = platform::X::LoadMesh(mesh_name + ".asset", mesh_name);
-		pMaterial = platform::X::LoadMaterial(material_name + ".mat.lsl", material_name);
+		pMaterial = platform::X::LoadMaterial(material_name + ".mat.wsl", material_name);
 	}
 
 	const platform::Material& GetMaterial() const {

@@ -120,10 +120,32 @@ namespace platform::Render::Shader
 		co_await pInfo->Serialize(archive);
 	}
 
+	fs::path RedirectPath(const std::string& path)
+	{
+		static fs::path shaders_path = WhiteEngine::PathSet::EngineDir() / "Shaders";
+		return shaders_path / path;
+	}
+
+	fs::file_time_type ReidrectFileTime(const std::string& path)
+	{
+		auto local_path = RedirectPath(path);
+
+		std::error_code ec;
+		auto last_write_time = fs::last_write_time(local_path, ec);
+
+		if (ec)
+		{
+			last_write_time = fs::last_write_time(path, ec);
+		}
+
+		wconstraint(!ec);
+		return last_write_time;
+	}
+
 	class FileTimeCacheContext
 	{
 	public:
-		bool CheckFileTime(const std::string& key)
+		bool CheckFileTime(const std::string& key,bool redirect = true)
 		{
 			{
 				std::shared_lock lock{ mutex };
@@ -135,7 +157,19 @@ namespace platform::Render::Shader
 			}
 
 			fs::path path_key = key;
-			auto last_write_time = fs::last_write_time(path_key);
+			if (redirect)
+			{
+				fs::path local_path = RedirectPath(key);
+				if (fs::exists(local_path))
+					path_key = local_path;
+			}
+			std::error_code ec;
+			auto last_write_time = fs::last_write_time(path_key,ec);
+			if (ec)
+			{
+				spdlog::warn("CheckFileTime error:{}", ec.message());
+				return false;
+			}
 
 			auto db_time = WhiteEngine::ShaderDB::QueryTime(key);
 			if (!db_time.has_value() || db_time.value() != last_write_time)
@@ -161,14 +195,14 @@ namespace platform::Render::Shader
 					return itr->second;
 			}
 
-			fs::path shaders_path = WhiteEngine::PathSet::EngineDir() / "Shaders";
 
-			auto local_path = shaders_path / key;
-			auto fs_key = local_path.string();
+			auto local_path = RedirectPath(key);
 
 			if (fs::exists(local_path))
 			{
-				if (!CheckFileTime(fs_key))
+				auto fs_key = local_path.string();
+
+				if (!CheckFileTime(fs_key,false))
 				{
 					if (updatedb)
 					{
@@ -242,7 +276,11 @@ namespace platform::Render::Shader
 		input.Type = meta->GetShaderType();
 		input.SourceName = meta->GetSourceFileName();
 
-		auto last_write_time = std::filesystem::last_write_time(input.SourceName);
+		fs::path local_path = RedirectPath(meta->GetSourceFileName());
+		if(!fs::exists(local_path))
+			local_path = meta->GetSourceFileName();
+
+		auto last_write_time = fs::last_write_time(local_path);
 
 		//meta_write_time
 
@@ -256,7 +294,7 @@ namespace platform::Render::Shader
 		meta->SetupCompileEnvironment(PermutationId, input.Environment);
 		asset::X::Shader::AppendCompilerEnvironment(input.Environment, input.Type);
 
-		auto Code = co_await platform::X::GenHlslShaderAsync(meta->GetSourceFileName());
+		auto Code = co_await platform::X::GenHlslShaderAsync(local_path);
 
 		auto PreprocessRet = asset::X::Shader::PreprocessShader(Code, input);
 		Code = PreprocessRet.Code;
@@ -458,8 +496,7 @@ namespace platform::Render::Shader
 	}
 
 	white::coroutine::Task<void> WriteShaderCache(BuiltInShaderMeta* meta,std::set<std::string>&& sets) {
-		fs::path path_key = meta->GetSourceFileName();
-		auto last_write_time = fs::last_write_time(path_key);
+		auto last_write_time = ReidrectFileTime(meta->GetSourceFileName());
 
 		std::vector<std::string> dependents(sets.begin(), sets.end());
 		co_await WhiteEngine::ShaderDB::UpdateTime(meta->GetSourceFileName(), last_write_time);

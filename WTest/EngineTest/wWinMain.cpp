@@ -697,7 +697,7 @@ private:
 		HDROutput = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EA_GPURead | EA_RTV, {}, &data));
 		NormalOutput = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EA_GPURead | EA_RTV, {}, &data));
 
-		pEntities = std::make_unique<Entities>("sponza_crytek.entities.lsl");
+		pEntities = std::make_unique<Entities>("sponza_crytek.entities.wsl");
 
 		scene.AABBMin = pEntities->min;
 		scene.AABBMax = pEntities->max;

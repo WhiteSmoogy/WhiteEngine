@@ -1,5 +1,5 @@
 (RayTracing
-	(refer RayTracing/RayTracingCommon.wsl)
+	(include RayTracing/RayTracingCommon.h)
 (shader
 "
 RAY_TRACING_ENTRY_CLOSEST_HIT(DefaultCHS,

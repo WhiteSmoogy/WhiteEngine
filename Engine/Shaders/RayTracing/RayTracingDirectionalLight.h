@@ -1,7 +1,7 @@
 #ifndef RayTracingDirectionalLight_h
 #define RayTracingDirectionalLight_h 1
 
-#include "RayTracing/RayTracingCommon.h"
+#include "RayTracingCommon.h"
 #include "MonteCarlo.h"
 
 struct LightShaderParameters

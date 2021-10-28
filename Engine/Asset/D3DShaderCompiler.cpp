@@ -43,25 +43,22 @@ namespace asset::X::Shader {
 	{
 		using namespace  platform::Render;
 
-		auto caps = Context::Instance().GetDevice().GetCaps();
-		switch (caps.type) {
-		case Caps::Type::D3D12:
-			switch (type) {
-			case ShaderType::VertexShader:
-				return "vs_5_0";
-			case ShaderType::PixelShader:
-				return "ps_5_0";
-			case ShaderType::GeometryShader:
-				return "gs_5_0";
-			case ShaderType::ComputeShader:
-				return "cs_5_0";
-			case ShaderType::RayGen:
-			case ShaderType::RayMiss:
-			case ShaderType::RayHitGroup:
-			case ShaderType::RayCallable:
-				return "lib_6_3";
-			}
+		switch (type) {
+		case ShaderType::VertexShader:
+			return "vs_5_0";
+		case ShaderType::PixelShader:
+			return "ps_5_0";
+		case ShaderType::GeometryShader:
+			return "gs_5_0";
+		case ShaderType::ComputeShader:
+			return "cs_5_0";
+		case ShaderType::RayGen:
+		case ShaderType::RayMiss:
+		case ShaderType::RayHitGroup:
+		case ShaderType::RayCallable:
+			return "lib_6_3";
 		}
+
 		return "";
 	}
 }
@@ -90,7 +87,7 @@ void UniqueAddByName(std::vector<T>& target, T&& value)
 }
 
 template<typename ID3D1xShaderReflection, typename D3D1x_SHADER_DESC>
-void FillD3D12Reflect(ID3D1xShaderReflection* pReflection, ShaderInfo* pInfo,ShaderType type)
+void FillD3D12Reflect(ID3D1xShaderReflection* pReflection, ShaderInfo* pInfo, ShaderType type)
 {
 	D3D1x_SHADER_DESC desc;
 	pReflection->GetDesc(&desc);
@@ -126,7 +123,7 @@ void FillD3D12Reflect(ID3D1xShaderReflection* pReflection, ShaderInfo* pInfo,Sha
 
 				ConstantBufferInfo.var_desc.emplace_back(std::move(VariableInfo));
 			}
-			UniqueAddByName(pInfo->ConstantBufferInfos,std::move(ConstantBufferInfo));
+			UniqueAddByName(pInfo->ConstantBufferInfos, std::move(ConstantBufferInfo));
 		}
 	}
 	pInfo->ResourceCounts.NumCBs = static_cast<white::uint16>(pInfo->ConstantBufferInfos.size());
@@ -178,7 +175,7 @@ void FillD3D12Reflect(ID3D1xShaderReflection* pReflection, ShaderInfo* pInfo,Sha
 			BoundResourceInfo.name = input_bind_desc.Name;
 			BoundResourceInfo.type = static_cast<uint8_t>(input_bind_desc.Type);
 			BoundResourceInfo.bind_point = static_cast<uint16_t>(input_bind_desc.BindPoint);
-			UniqueAddByName(pInfo->BoundResourceInfos,std::move(BoundResourceInfo));
+			UniqueAddByName(pInfo->BoundResourceInfos, std::move(BoundResourceInfo));
 		}
 		break;
 
@@ -254,7 +251,7 @@ void FillD3D11Reflect(ID3D11ShaderReflection* pReflection, ShaderInfo* pInfo, Sh
 		}
 	}
 
-	pInfo->ResourceCounts.NumCBs =static_cast<white::uint16>(pInfo->ConstantBufferInfos.size());
+	pInfo->ResourceCounts.NumCBs = static_cast<white::uint16>(pInfo->ConstantBufferInfos.size());
 
 	for (UINT i = 0; i != desc.BoundResources; ++i) {
 		D3D11_SHADER_INPUT_BIND_DESC input_bind_desc;
@@ -343,7 +340,7 @@ void FillD3D11Reflect(ID3D11ShaderReflection* pReflection, ShaderInfo* pInfo, Sh
 
 void ReportCompileResult(HRESULT hr, const char* msg)
 {
-	hr == S_OK ? WE_LogWarning(msg):WE_LogError(msg);
+	hr == S_OK ? WE_LogWarning(msg) : WE_LogError(msg);
 	CheckHResult(hr);
 }
 
@@ -380,8 +377,8 @@ namespace asset::X::Shader::DXBC {
 		platform_ex::COMPtr<ID3D12ShaderReflection> pReflection;
 		if (SUCCEEDED(D3DReflect(blob.first.get(), blob.second, IID_ID3D12ShaderReflection, reinterpret_cast<void**>(&pReflection.GetRef()))))
 		{
-			FillD3D12Reflect<ID3D12ShaderReflection,D3D12_SHADER_DESC>(pReflection.Get(), pInfo, type);
-			return ;
+			FillD3D12Reflect<ID3D12ShaderReflection, D3D12_SHADER_DESC>(pReflection.Get(), pInfo, type);
+			return;
 		}
 
 		//fallback
@@ -541,7 +538,7 @@ namespace asset::X::Shader::DXIL {
 		)
 		{
 			auto path = std::filesystem::path(pFilename);
-			
+
 			auto hr = currdir_include.LoadSource(path, ppIncludeSource);
 			if (SUCCEEDED(hr))
 			{
@@ -572,7 +569,7 @@ namespace asset::X::Shader::DXIL {
 		std::set<std::string> Dependents;
 	};
 
-	static void D3DCreateDXCArguments(std::vector<const WCHAR*>& OutArgs, const WCHAR* Exports, white::uint32 CompileFlags,white::uint32 AutoBindingSpace = ~0u)
+	static void D3DCreateDXCArguments(std::vector<const WCHAR*>& OutArgs, const WCHAR* Exports, white::uint32 CompileFlags, white::uint32 AutoBindingSpace = ~0u)
 	{
 		// Static digit strings are used here as they are returned in OutArgs
 		static const WCHAR* DigitStrings[] =
@@ -718,7 +715,7 @@ namespace asset::X::Shader::DXIL {
 
 		std::vector<const wchar_t*> args;
 		String wRayTracingExports(RayTracingExports);
-		D3DCreateDXCArguments(args,(wchar_t*)wRayTracingExports.data(), flags, GetAutoBindingSpace(input.Type));
+		D3DCreateDXCArguments(args, (wchar_t*)wRayTracingExports.data(), flags, GetAutoBindingSpace(input.Type));
 
 		dxc::DxcDllSupport& DxcDllHelper = GetDxcDllHelper();
 
@@ -729,7 +726,7 @@ namespace asset::X::Shader::DXIL {
 		DxcDllHelper.CreateInstance(CLSID_DxcLibrary, &Library.GetRef());
 
 		COMPtr<IDxcBlobEncoding> TextBlob;
-		Library->CreateBlobWithEncodingFromPinned(input.Code.data(),static_cast<UINT32>(input.Code.size()), CP_UTF8, &TextBlob.GetRef());
+		Library->CreateBlobWithEncodingFromPinned(input.Code.data(), static_cast<UINT32>(input.Code.size()), CP_UTF8, &TextBlob.GetRef());
 
 		COMPtr<IDxcOperationResult> CompileResult;
 		CheckHResult(Compiler->Compile(
@@ -761,7 +758,7 @@ namespace asset::X::Shader::DXIL {
 				white::replace_all(error, "hlsl.hlsl", input.SourceName);
 				ReportCompileResult(CompileResultCode, error.c_str());
 			}
-			else{
+			else {
 				ReportCompileResult(CompileResultCode, (const char*)error_blob->GetBufferPointer());
 			}
 		}
@@ -813,7 +810,7 @@ namespace asset::X::Shader::DXIL {
 					{
 						if (strstr(FunctionDesc.Name, MangledEntryPoint.c_str()))
 						{
-							FillD3D12Reflect<ID3D12FunctionReflection, D3D12_FUNCTION_DESC>(FunctionReflection, pInfo,input.Type);
+							FillD3D12Reflect<ID3D12FunctionReflection, D3D12_FUNCTION_DESC>(FunctionReflection, pInfo, input.Type);
 
 							++NumFoundEntryPoints;
 						}

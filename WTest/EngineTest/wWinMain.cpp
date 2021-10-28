@@ -1085,9 +1085,22 @@ void TestNanite()
 	Nanite::Build(Res, Vertices, Indexs, MaterialIndices, MeshTriangleCounts, NumTexCoords, {});
 }
 
+void SetupD3DDll()
+{
+	using namespace platform::Descriptions;
+	using namespace white::inttype;
+	try {
+		WCL_CallF_Win32(LoadLibraryW, L"d3d12.dll");
+		WCL_CallF_Win32(LoadLibraryW, L"dxgi.dll");
+	}
+	CatchExpr(platform_ex::Windows::Win32Exception&, TraceDe(Warning, "d3d12 win32 op failed."))
+}
+
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR cmdLine, int nCmdShow)
 {
 	SetupLog();
+	SetupD3DDll();
+	
 	static auto pInitGuard = WhiteEngine::System::InitGlobalEnvironment();
 
 	TestNanite();

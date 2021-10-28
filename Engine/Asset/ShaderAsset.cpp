@@ -1,6 +1,7 @@
 #include "ShaderAsset.h"
 #include "../System/SystemEnvironment.h"
 #include "WFramework/Helper/ShellHelper.h"
+#include "../Core/Path.h"
 
 using namespace asset;
 using namespace platform::Render::Shader;
@@ -506,6 +507,17 @@ public:
 
 	const asset::path& Path() const override {
 		return Super::Path();
+	}
+
+	asset::path Path(const asset::path& path) const override
+	{
+		static std::filesystem::path shaders_path = WhiteEngine::PathSet::EngineDir() / "Shaders";
+
+		auto local_path = shaders_path / path;
+		if (std::filesystem::exists(local_path))
+			return local_path;
+
+		return path;
 	}
 
 	std::experimental::generator<std::shared_ptr<AssetType>> Coroutine() override {

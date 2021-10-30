@@ -5,8 +5,12 @@
 #include <WBase/winttype.hpp>
 #include <WBase/wmathtype.hpp>
 #include <WBase/cformat.h>
-
+#include <WFramework/WCLib/Platform.h>
 #include <optional>
+
+#if WFL_Win32
+#define D3D_RAYTRACING 1
+#endif
 
 namespace white::coroutine
 {

@@ -3,6 +3,7 @@
 #include <WBase/smart_ptr.hpp>
 #include "ShaderCore.h"
 #include "ShaderPermutation.h"
+#include "Core/Hash/MessageDigest.h"
 #include <concepts>
 #include <shared_mutex>
 
@@ -98,6 +99,111 @@ inline namespace Shader
 		{}
 	};
 
+	class ShaderMapResource
+	{
+	public:
+		ShaderMapResource(std::size_t Num);
+
+		int32 GetNumShaders() const
+		{
+			return NumRHIShaders;
+		}
+
+		inline bool IsValidShaderIndex(int32 ShaderIndex) const
+		{
+			return ShaderIndex >= 0 && ShaderIndex < NumRHIShaders;
+		}
+
+		inline bool HasShader(int32 ShaderIndex) const
+		{
+			return HWShaders[ShaderIndex].load(std::memory_order_acquire) != nullptr;
+		}
+
+		inline HardwareShader* GetShader(int32 ShaderIndex)
+		{
+			// This is a double checked locking. This trickery arises from the fact that we're
+			// synchronizing two threads: one that takes a lock and another that doesn't.
+			// Without fences, there is a race between storing the shader pointer and accessing it
+			// on the other (lockless) thread.
+
+			auto Shader = HWShaders[ShaderIndex].load(std::memory_order_acquire);
+			if (Shader == nullptr)
+			{
+				// most shadermaps have <100 shaders, and less than a half of them can be created. One lock
+				// for all creation seems sufficient, but if this function is often contended, per-shader
+				// locks are easily possible.
+				std::unique_lock lock{ ShadersCriticalSection };
+
+				Shader = HWShaders[ShaderIndex].load(std::memory_order_relaxed);
+				if (Shader == nullptr)
+				{
+					Shader = CreateShader(ShaderIndex);
+					HWShaders[ShaderIndex].store(Shader, std::memory_order_release);
+				}
+			}
+			return Shader;
+		}
+
+	protected:
+		/** Addrefs the reference, passing the responsibility to the caller to Release() it. */
+		HardwareShader* CreateShader(int32 ShaderIndex);
+
+		virtual HardwareShader* CreateHWShader(int32 ShaderIndex) = 0;
+	private:
+		std::mutex ShadersCriticalSection;
+
+		/** An array of shader pointers . */
+		std::unique_ptr<std::atomic<HardwareShader*>[]> HWShaders;
+
+		/** Since the shaders are no longer a TArray, this is their count (the size of the RHIShadersArray). */
+		int32 NumRHIShaders;
+	};
+
+	class ShaderInitializer
+	{
+	public:
+		const platform::Render::ShaderBlob* pBlob;
+		const platform::Render::ShaderInfo* pInfo;
+	};
+
+	struct ShaderCompilerOutput :public ShaderInitializer
+	{
+	};
+
+	class ShaderMapResourceCode
+	{
+	public:
+		struct ShaderEntry
+		{
+			std::vector<uint8> Code;
+			ShaderInfo Info;
+			ShaderType Type;
+
+			//Archive
+		};
+
+		void AddShaderCompilerOutput(const ShaderCompilerOutput& Output);
+
+		int32 FindShaderIndex(const Digest::SHAHash& InHash) const;
+
+		void AddShaderCode(ShaderType InType, const Digest::SHAHash& InHash, const ShaderInitializer& InCode);
+
+		std::vector<Digest::SHAHash> ShaderHashes;
+		std::vector<ShaderEntry> ShaderEntries;
+	};
+
+	class ShaderMapResource_InlineCode : public ShaderMapResource
+	{
+	public:
+		ShaderMapResource_InlineCode(ShaderMapResourceCode* InCode)
+			: ShaderMapResource(InCode->ShaderEntries.size())
+			, Code(InCode)
+		{}
+
+		virtual HardwareShader* CreateHWShader(int32 ShaderIndex) override;
+
+		std::unique_ptr<ShaderMapResourceCode> Code;
+	};
 	
 	class RenderShader
 	{
@@ -477,12 +583,7 @@ public:\
 
 }
 
-class ShaderInitializer
-{
-public:
-	const platform::Render::ShaderBlob* pBlob;
-	const platform::Render::ShaderInfo* pInfo;
-};
+using Shader::ShaderInitializer;
 
 PR_NAMESPACE_END
 

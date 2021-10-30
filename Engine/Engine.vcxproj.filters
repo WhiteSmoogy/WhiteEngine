@@ -407,6 +407,12 @@
     <ClCompile Include="Core\Threading\SpinMutex.cpp">
       <Filter>Core\Threading</Filter>
     </ClCompile>
+    <ClCompile Include="Render\ShaderResource.cpp">
+      <Filter>Render\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Hash\MessageDigest.cpp">
+      <Filter>Core\Hash</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Render\D3D12\Context.h">
@@ -1064,6 +1070,9 @@
     </ClInclude>
     <ClInclude Include="Core\Serialization\AsyncArchive.h">
       <Filter>Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Hash\MessageDigest.h">
+      <Filter>Core\Hash</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

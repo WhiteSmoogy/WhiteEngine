@@ -51,6 +51,7 @@
     <ClCompile Include="Core\Coroutine\writable_file.cpp" />
     <ClCompile Include="Core\Coroutine\WriteOnlyFile.cpp" />
     <ClCompile Include="Core\Hash\CityHash.cpp" />
+    <ClCompile Include="Core\Hash\MessageDigest.cpp" />
     <ClCompile Include="Core\WSLBuilder.cpp" />
     <ClCompile Include="Core\WSLEvaluator.cpp" />
     <ClCompile Include="Core\Materail.cpp" />
@@ -157,6 +158,7 @@
     <ClCompile Include="Render\ShaderParamterTraits.cpp">
       <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
     </ClCompile>
+    <ClCompile Include="Render\ShaderResource.cpp" />
     <ClCompile Include="Runtime\DirectionalLight.cpp" />
     <ClCompile Include="Runtime\GizmosElements.cpp" />
     <ClCompile Include="Runtime\Light.cpp" />
@@ -222,6 +224,7 @@
     <ClInclude Include="Core\Coroutine\writable_file.h" />
     <ClInclude Include="Core\Coroutine\WriteOnlyFile.h" />
     <ClInclude Include="Core\Hash\CityHash.h" />
+    <ClInclude Include="Core\Hash\MessageDigest.h" />
     <ClInclude Include="Core\Hash\Murmur.h" />
     <ClInclude Include="Core\LFile.h" />
     <ClInclude Include="Core\WSLEvaluator.h" />

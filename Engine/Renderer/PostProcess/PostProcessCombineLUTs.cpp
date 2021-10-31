@@ -172,7 +172,7 @@ std::shared_ptr<Render::Texture> platform::CombineLUTPass(const CombineLUTSettin
 
 		SetGraphicsPipelineState(CmdList, GraphicsPSOInit);
 
-		VertexShader->SetParameters(CmdList, Bounds, white::math::int3(Bounds.MaxX - Bounds.MinX));
+		VertexShader->SetParameters(CmdList, VertexShader, Bounds, white::math::int3(Bounds.MaxX - Bounds.MinX));
 
 		SetShaderParameters(CmdList, PixelShader, PixelShader.GetPixelShader(), PassParameters);
 

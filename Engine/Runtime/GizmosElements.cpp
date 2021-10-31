@@ -44,12 +44,12 @@ public:
 		SHADER_PARAMETER(wm::float4x4, Transform)
 		END_SHADER_PARAMETER_STRUCT();
 
-	void SetParameters(CommandList& CmdList, wm::float4x4 Transform)
+	void SetParameters(CommandList& CmdList,ShaderRef<GizmosElementVertexShader> This, wm::float4x4 Transform)
 	{
 		Parameters Parameters;
 		Parameters.Transform = wm::transpose(Transform);
 
-		SetShaderParameters(CmdList, ShaderRef<GizmosElementVertexShader>(this), this->GetVertexShader(), Parameters);
+		SetShaderParameters(CmdList, This, This.GetVertexShader(), Parameters);
 	}
 
 	EXPORTED_BUILTIN_SHADER(GizmosElementVertexShader);
@@ -86,7 +86,7 @@ bool GizmosElements::Draw(platform::Render::CommandList& CmdList, const WhiteEng
 
 		SetGraphicsPipelineState(CmdList, psoInit);
 		
-		VertexShader->SetParameters(CmdList, Transform);
+		VertexShader->SetParameters(CmdList, VertexShader,Transform);
 
 		auto VertexBuffer = CreateVertexBuffer(white::make_const_span((std::byte*)Lines.data(), Lines.size() * sizeof(GizmosElementVertex)),
 			Buffer::Usage::Static,EAccessHint::EA_GPURead);

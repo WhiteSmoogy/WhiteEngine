@@ -202,7 +202,7 @@ public:
 
 	using FPermutationDomain = Render::TShaderPermutationDomain<FFadePlane>;
 
-	void Set(lr::CommandList& CmdList, const SceneInfo& scene, const ProjectedShadowInfo* ShadowInfo)
+	void Set(lr::CommandList& CmdList, lr::ShaderRef<ShadowProjectionPS> This, const SceneInfo& scene, const ProjectedShadowInfo* ShadowInfo)
 	{
 		Parameters Parameters;
 
@@ -222,7 +222,7 @@ public:
 		Parameters.SceneParameters = scene.GetParameters();
 		Parameters.InvDeviceZToWorldZTransform = CreateInvDeviceZToWorldZTransform(scene.Matrices.GetProjectionMatrix());
 
-		lr::SetShaderParameters(CmdList,lr::ShaderRef<ShadowProjectionPS>(this), this->GetPixelShader(), Parameters);
+		lr::SetShaderParameters(CmdList, This, This.GetPixelShader(), Parameters);
 	}
 };
 
@@ -260,7 +260,7 @@ void ProjectedShadowInfo::RenderProjection(lr::CommandList& CmdList, const Scene
 
 	lr::SetGraphicsPipelineState(CmdList, psoInit);
 
-	PixelShader->Set(CmdList, scene, this);
+	PixelShader->Set(CmdList, PixelShader, scene, this);
 
 	CmdList.SetVertexBuffer(0, GFullScreenVertexBuffer().get());
 	CmdList.DrawPrimitive(0, 0, 2, 1);

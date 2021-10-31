@@ -55,7 +55,7 @@ namespace platform
 		//CompilerFlags.Add( CFLAG_VertexToGeometryShader );
 
 		template<class CommandList>
-		void SetParameters(CommandList& cmdlist, const VolumeBounds& bounds, white::math::int3 Resolution)
+		void SetParameters(CommandList& cmdlist, Render::ShaderRef<WriteToSliceVS> This, const VolumeBounds& bounds, white::math::int3 Resolution)
 		{
 			Parameters parameters;
 			parameters.MinZ = bounds.MinZ;
@@ -70,7 +70,7 @@ namespace platform
 				bounds.MinY * InvVolumeResolutionY
 			);
 
-			platform::Render::SetShaderParameters(cmdlist,ShaderRef<WriteToSliceVS>(this), this->GetVertexShader(), parameters);
+			platform::Render::SetShaderParameters(cmdlist, This, This.GetVertexShader(), parameters);
 		}
 
 	};

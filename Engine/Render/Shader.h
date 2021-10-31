@@ -176,7 +176,7 @@ inline namespace Shader
 		struct ShaderEntry
 		{
 			std::vector<uint8> Code;
-			ShaderInfo Info;
+			int32 UnCompressSize;
 			ShaderType Type;
 
 			//Archive

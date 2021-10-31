@@ -16,6 +16,7 @@
 #include "IGraphicsPipelineState.h"
 #include "IShaderCompose.h"
 #include "RenderObject.h"
+#include "Core/Hash/MessageDigest.h"
 #include <optional>
 
 namespace asset {
@@ -33,6 +34,11 @@ namespace platform::Render {
 	{
 	public:
 		virtual ~HardwareShader() = 0;
+
+		void SetHash(Digest::SHAHash InHash) { Hash = InHash; }
+		Digest::SHAHash GetHash() const { return Hash; }
+	private:
+		Digest::SHAHash Hash;
 	};
 
 	class VertexHWShader : public HardwareShader
@@ -153,6 +159,8 @@ namespace platform::Render {
 		virtual GraphicsPipelineState* CreateGraphicsPipelineState(const GraphicsPipelineStateInitializer& initializer) =0;
 
 		virtual HardwareShader* CreateShader(const ShaderInitializer& initializer) = 0;
+
+		virtual HardwareShader* CreateShader(const white::span<const uint8>& Code) = 0;
 	};
 }
 

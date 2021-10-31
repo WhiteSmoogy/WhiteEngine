@@ -5,7 +5,7 @@
 using namespace platform::Render;
 using namespace WhiteEngine;
 
-const std::string& GetShaderCompressionFormat()
+const std::string& Shader::GetShaderCompressionFormat()
 {
 	return NAME_LZ4;
 }

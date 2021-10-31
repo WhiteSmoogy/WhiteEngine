@@ -118,10 +118,10 @@ lr::GraphicsPipelineStateInitializer ProjectedShadowInfo::SetupShadowDepthPass(l
 	);
 
 	auto ShadowDepthPassUniformBuffer = Render::CreateGraphicsBuffeImmediate(Parameters, Render::Buffer::Usage::SingleFrame);
-	CmdList.SetShaderConstantBuffer(VertexShader->GetVertexShader(), 0, ShadowDepthPassUniformBuffer.Get());
+	CmdList.SetShaderConstantBuffer(VertexShader.GetVertexShader(), 0, ShadowDepthPassUniformBuffer.Get());
 
-	psoInit.ShaderPass.VertexShader = VertexShader->GetVertexShader();
-	psoInit.ShaderPass.PixelShader = PixelShader->GetPixelShader();
+	psoInit.ShaderPass.VertexShader = VertexShader.GetVertexShader();
+	psoInit.ShaderPass.PixelShader = PixelShader.GetPixelShader();
 
 	// Disable color writes
 	psoInit.BlendState.color_write_mask[0] = 0;
@@ -255,8 +255,8 @@ void ProjectedShadowInfo::RenderProjection(lr::CommandList& CmdList, const Scene
 
 	auto PixelShader = lr::GetBuiltInShaderMap()->GetShader< ShadowProjectionPS>(PermutationVector);
 	auto VertexShader = lr::GetBuiltInShaderMap()->GetShader< ShadowProjectionVS>();
-	psoInit.ShaderPass.VertexShader = VertexShader->GetVertexShader();
-	psoInit.ShaderPass.PixelShader = PixelShader->GetPixelShader();
+	psoInit.ShaderPass.VertexShader = VertexShader.GetVertexShader();
+	psoInit.ShaderPass.PixelShader = PixelShader.GetPixelShader();
 
 	lr::SetGraphicsPipelineState(CmdList, psoInit);
 

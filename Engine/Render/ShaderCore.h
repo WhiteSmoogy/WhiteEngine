@@ -7,6 +7,8 @@
 #include <WBase/cformat.h>
 #include <WFramework/WCLib/Platform.h>
 #include <optional>
+#include <WBase/span.hpp>
+#include "Core/Hash/MessageDigest.h"
 
 #if WFL_Win32
 #define D3D_RAYTRACING 1
@@ -38,6 +40,9 @@ namespace platform::Render {
 
 		struct ShaderCodeResourceCounts
 		{
+			// for FindOptionalData() and AddOptionalData()
+			static const uint8 Key = 'p';
+
 			uint16 NumSamplers = 0;
 			uint16 NumSRVs = 0;
 			uint16 NumUAVs = 0;
@@ -272,6 +277,7 @@ namespace platform::Render {
 
 			bool FindParameterAllocation(const std::string& ParameterName, uint16& OutBufferIndex, uint16& OutBaseIndex, uint16& OutSize) const;
 
+			void UpdateHash(Digest::SHA1& HashState) const;
 		private:
 			std::unordered_map<std::string, ParameterAllocation> ParameterMap;
 		};
@@ -297,6 +303,290 @@ namespace platform::Render {
 			}
 		private:
 			std::unordered_map<std::string, std::string> Definitions;
+		};
+
+		const std::string& GetShaderCompressionFormat();
+
+		#ifndef WB_ATTRIBUTE_UNALIGNED
+		// TODO find out if using GCC_ALIGN(1) instead of this new #define break on all kinds of platforms...
+		#define WB_ATTRIBUTE_UNALIGNED
+		#endif
+
+		typedef int32  WB_ATTRIBUTE_UNALIGNED unaligned_int32;
+		typedef uint32 WB_ATTRIBUTE_UNALIGNED unaligned_uint32;
+
+		class ShaderCodeReader
+		{
+			white::span<const uint8> ShaderCode;
+
+		public:
+			ShaderCodeReader(white::span<const uint8> InShaderCode)
+				: ShaderCode(InShaderCode)
+			{
+				wassume(!ShaderCode.empty());
+			}
+
+			uint32 GetActualShaderCodeSize() const
+			{
+				return static_cast<int32>(ShaderCode.size()) - GetOptionalDataSize();
+			}
+
+			// for convenience
+			template <class T>
+			const T* FindOptionalData() const
+			{
+				return (const T*)FindOptionalData(T::Key, sizeof(T));
+			}
+
+
+			// @param InKey e.g. FShaderCodePackedResourceCounts::Key
+			// @return 0 if not found
+			const uint8* FindOptionalData(uint8 InKey, uint8 ValueSize) const
+			{
+				wassume(ValueSize);
+
+				const uint8* End = &ShaderCode[0] + ShaderCode.size();
+
+				int32 LocalOptionalDataSize = GetOptionalDataSize();
+
+				const uint8* Start = End - LocalOptionalDataSize;
+				// while searching don't include the optional data size
+				End = End - sizeof(LocalOptionalDataSize);
+				const uint8* Current = Start;
+
+				while (Current < End)
+				{
+					uint8 Key = *Current++;
+					uint32 Size = *((const unaligned_uint32*)Current);
+					Current += sizeof(Size);
+
+					if (Key == InKey && Size == ValueSize)
+					{
+						return Current;
+					}
+
+					Current += Size;
+				}
+
+				return 0;
+			}
+
+			const char* FindOptionalData(uint8 InKey) const
+			{
+				wassume(ShaderCode.size() >= 4);
+
+				const uint8* End = &ShaderCode[0] + ShaderCode.size();
+
+				int32 LocalOptionalDataSize = GetOptionalDataSize();
+
+				const uint8* Start = End - LocalOptionalDataSize;
+				// while searching don't include the optional data size
+				End = End - sizeof(LocalOptionalDataSize);
+				const uint8* Current = Start;
+
+				while (Current < End)
+				{
+					uint8 Key = *Current++;
+					uint32 Size = *((const unaligned_uint32*)Current);
+					Current += sizeof(Size);
+
+					if (Key == InKey)
+					{
+						return (char*)Current;
+					}
+
+					Current += Size;
+				}
+
+				return 0;
+			}
+
+			// Returns nullptr and Size -1 if key was not found
+			const uint8* FindOptionalDataAndSize(uint8 InKey, int32& OutSize) const
+			{
+				wassume(ShaderCode.size() >= 4);
+
+				const uint8* End = &ShaderCode[0] + ShaderCode.size();
+
+				int32 LocalOptionalDataSize = GetOptionalDataSize();
+
+				const uint8* Start = End - LocalOptionalDataSize;
+				// while searching don't include the optional data size
+				End = End - sizeof(LocalOptionalDataSize);
+				const uint8* Current = Start;
+
+				while (Current < End)
+				{
+					uint8 Key = *Current++;
+					uint32 Size = *((const unaligned_uint32*)Current);
+					Current += sizeof(Size);
+
+					if (Key == InKey)
+					{
+						OutSize = Size;
+						return Current;
+					}
+
+					Current += Size;
+				}
+
+				OutSize = -1;
+				return nullptr;
+			}
+
+			int32 GetOptionalDataSize() const
+			{
+				if (ShaderCode.size() < sizeof(int32))
+				{
+					return 0;
+				}
+
+				const uint8* End = &ShaderCode[0] + ShaderCode.size();
+
+				int32 LocalOptionalDataSize = ((const unaligned_int32*)End)[-1];
+
+				wassume(LocalOptionalDataSize >= 0);
+				wassume(ShaderCode.size() >= LocalOptionalDataSize);
+
+				return LocalOptionalDataSize;
+			}
+
+			int32 GetShaderCodeSize() const
+			{
+				return static_cast<int32>(ShaderCode.size()) - GetOptionalDataSize();
+			}
+		};
+
+		class ShaderCode
+		{
+			// -1 if ShaderData was finalized
+			mutable int32 OptionalDataSize;
+			// access through class methods
+			mutable std::vector<uint8> ShaderCodeWithOptionalData;
+
+			/** ShaderCode may be compressed in SCWs on demand. If this value isn't null, the shader code is compressed. */
+			mutable int32 UncompressedSize;
+
+			/** Compression algo */
+			mutable std::string CompressionFormat;
+
+			/** We cannot get the code size after the compression, so store it here */
+			mutable int32 ShaderCodeSize;
+
+		public:
+
+			ShaderCode()
+				: OptionalDataSize(0)
+				, UncompressedSize(0)
+				, CompressionFormat()
+				, ShaderCodeSize(0)
+			{
+			}
+
+			// adds CustomData or does nothing if that was already done before
+			void FinalizeShaderCode() const
+			{
+				if (OptionalDataSize != -1)
+				{
+					WAssert(UncompressedSize == 0, "ShaderCode::FinalizeShaderCode() was called after compressing the code");
+					OptionalDataSize += sizeof(OptionalDataSize);
+					ShaderCodeWithOptionalData.insert(ShaderCodeWithOptionalData.end(),(const uint8*)&OptionalDataSize, (const uint8*)&OptionalDataSize+ sizeof(OptionalDataSize));
+					OptionalDataSize = -1;
+				}
+			}
+
+			void Compress(const std::string& ShaderCompressionFormat);
+
+			// Write access for regular microcode: Optional Data must be added AFTER regular microcode and BEFORE Finalize
+			std::vector<uint8>& GetWriteAccess()
+			{
+				WAssert(OptionalDataSize != -1, "Tried to add ShaderCode after being finalized!");
+				WAssert(OptionalDataSize == 0, "Tried to add ShaderCode after adding Optional data!");
+				return ShaderCodeWithOptionalData;
+			}
+
+			int32 GetShaderCodeSize() const
+			{
+				// use the cached size whenever available
+				if (ShaderCodeSize != 0)
+				{
+					return ShaderCodeSize;
+				}
+				else
+				{
+					FinalizeShaderCode();
+
+					ShaderCodeReader Wrapper(ShaderCodeWithOptionalData);
+					return Wrapper.GetShaderCodeSize();
+				}
+			}
+
+			// for read access, can have additional data attached to the end. Can also be compressed
+			const std::vector<uint8>& GetReadAccess() const
+			{
+				FinalizeShaderCode();
+
+				return ShaderCodeWithOptionalData;
+			}
+
+			bool IsCompressed() const
+			{
+				return UncompressedSize != 0;
+			}
+
+			const std::string& GetCompressionFormat() const
+			{
+				return CompressionFormat;
+			}
+
+			int32 GetUncompressedSize() const
+			{
+				return UncompressedSize;
+			}
+
+			// for convenience
+			template <class T>
+			void AddOptionalData(const T& In)
+			{
+				AddOptionalData(T::Key, (uint8*)&In, sizeof(T));
+			}
+
+			// Note: we don't hash the optional attachments in GenerateOutputHash() as they would prevent sharing (e.g. many material share the save VS)
+			// can be called after the non optional data was stored in ShaderData
+			// @param Key uint8 to save memory so max 255, e.g. FShaderCodePackedResourceCounts::Key
+			// @param Size >0, only restriction is that sum of all optional data values must be < 4GB
+			void AddOptionalData(uint8 Key, const uint8* ValuePtr, uint32 ValueSize)
+			{
+				wconstraint(ValuePtr);
+
+				// don't add after Finalize happened
+				wconstraint(OptionalDataSize >= 0);
+
+				ShaderCodeWithOptionalData.emplace_back(Key);
+				ShaderCodeWithOptionalData.insert(ShaderCodeWithOptionalData.end(),(const uint8*)&ValueSize, (const uint8*)&ValueSize+sizeof(ValueSize));
+				ShaderCodeWithOptionalData.insert(ShaderCodeWithOptionalData.end(),ValuePtr, ValuePtr+ValueSize);
+				OptionalDataSize += sizeof(uint8) + sizeof(ValueSize) + (uint32)ValueSize;
+			}
+
+			// Note: we don't hash the optional attachments in GenerateOutputHash() as they would prevent sharing (e.g. many material share the save VS)
+			// convenience, silently drops the data if string is too long
+			// @param e.g. 'n' for the ShaderSourceFileName
+			void AddOptionalData(uint8 Key, const char* InString)
+			{
+				uint32 Size =static_cast<uint32>(std::char_traits<char>::length(InString)) + 1;
+				AddOptionalData(Key, (uint8*)InString, Size);
+			}
+		};
+
+		struct ShaderCompilerOutput
+		{
+			ShaderCode ShaderCode;
+			ShaderParameterMap ParameterMap;
+			Digest::SHAHash OutputHash;
+
+			void CompressOutput(const std::string& ShaderCompressionFormat);
+
+			void GenerateOutputHash();
 		};
 	}
 }

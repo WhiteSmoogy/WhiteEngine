@@ -166,15 +166,15 @@ std::shared_ptr<Render::Texture> platform::CombineLUTPass(const CombineLUTSettin
 
 		GraphicsPSOInit.Primitive = Render::PrimtivteType::TriangleStrip;
 		GraphicsPSOInit.ShaderPass.VertexDeclaration = GScreenVertexDeclaration();
-		GraphicsPSOInit.ShaderPass.VertexShader = VertexShader->GetVertexShader();
-		GraphicsPSOInit.ShaderPass.GeometryShader = GeometryShader->GetGeometryShader();
-		GraphicsPSOInit.ShaderPass.PixelShader = PixelShader->GetPixelShader();
+		GraphicsPSOInit.ShaderPass.VertexShader = VertexShader.GetVertexShader();
+		GraphicsPSOInit.ShaderPass.GeometryShader = GeometryShader.GetGeometryShader();
+		GraphicsPSOInit.ShaderPass.PixelShader = PixelShader.GetPixelShader();
 
 		SetGraphicsPipelineState(CmdList, GraphicsPSOInit);
 
 		VertexShader->SetParameters(CmdList, Bounds, white::math::int3(Bounds.MaxX - Bounds.MinX));
 
-		SetShaderParameters(CmdList, PixelShader, PixelShader->GetPixelShader(), PassParameters);
+		SetShaderParameters(CmdList, PixelShader, PixelShader.GetPixelShader(), PassParameters);
 
 		RasterizeToVolumeTexture(CmdList, Bounds);
 	}

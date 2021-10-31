@@ -14,7 +14,7 @@ void PixelShaderUtils::InitFullscreenPipelineState(CommandList& CmdList, const S
 	GraphicsPSOInit.Primitive = Render::PrimtivteType::TriangleList;
 
 	GraphicsPSOInit.ShaderPass.VertexDeclaration = GFilterVertexDeclaration();
-	GraphicsPSOInit.ShaderPass.PixelShader = PixelShader->GetPixelShader();
+	GraphicsPSOInit.ShaderPass.PixelShader = PixelShader.GetPixelShader();
 }
 
 void PixelShaderUtils::DrawFullscreenTriangle(CommandList& RHICmdList, uint32 InstanceCount)

@@ -20,7 +20,7 @@ namespace platform
 		template<typename TShaderClass>
 		static void Dispatch(Render::CommandList& CmdList, const Render::ShaderRef<TShaderClass>& ComputeShader, const typename TShaderClass::Parameters& Parameters, white::math::int3 GroupCount)
 		{
-			auto ShaderRHI = ComputeShader->GetComputeShader();
+			auto ShaderRHI = ComputeShader.GetComputeShader();
 			CmdList.SetComputeShader(ShaderRHI);
 			Render::SetShaderParameters(CmdList, ComputeShader, ShaderRHI, Parameters);
 			CmdList.DispatchComputeShader(GroupCount.x, GroupCount.y, GroupCount.z);

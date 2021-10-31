@@ -81,8 +81,8 @@ bool GizmosElements::Draw(platform::Render::CommandList& CmdList, const WhiteEng
 		psoInit.ShaderPass.VertexDeclaration = GizmosElementVertex::VertexDeclaration;
 
 		auto VertexShader = GetBuiltInShaderMap()->GetShader< GizmosElementVertexShader>();
-		psoInit.ShaderPass.VertexShader = VertexShader->GetVertexShader();
-		psoInit.ShaderPass.PixelShader = GetBuiltInShaderMap()->GetShader<GizmosPixelShader>()->GetPixelShader();
+		psoInit.ShaderPass.VertexShader = VertexShader.GetVertexShader();
+		psoInit.ShaderPass.PixelShader = GetBuiltInShaderMap()->GetShader<GizmosPixelShader>().GetPixelShader();
 
 		SetGraphicsPipelineState(CmdList, psoInit);
 		

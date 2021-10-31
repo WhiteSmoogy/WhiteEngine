@@ -143,7 +143,7 @@ void platform::imgui::Context_RenderDrawData(ImDrawData* draw_data)
             };
             vsParameters.ProjectionMatrix = white::math::transpose(mvp);
 
-            SetShaderParameters(CmdList, VertexShader, VertexShader->GetVertexShader(), vsParameters);
+            SetShaderParameters(CmdList, VertexShader, VertexShader.GetVertexShader(), vsParameters);
         }
 
         CmdList.SetVertexBuffer(0, GVertexBuffer);
@@ -242,9 +242,9 @@ void FillGraphicsPipelineState(GraphicsPipelineStateInitializer& GraphicsPSOInit
 
         auto PixelShader = Render::GetBuiltInShaderMap()->GetShader<imguiPS>();
 
-        GraphicsPSOInit.ShaderPass.VertexShader = VertexShader->GetVertexShader();
+        GraphicsPSOInit.ShaderPass.VertexShader = VertexShader.GetVertexShader();
 
-        GraphicsPSOInit.ShaderPass.PixelShader = PixelShader->GetPixelShader();
+        GraphicsPSOInit.ShaderPass.PixelShader = PixelShader.GetPixelShader();
     }
 }
 

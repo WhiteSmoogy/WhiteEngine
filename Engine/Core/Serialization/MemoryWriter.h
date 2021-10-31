@@ -38,6 +38,8 @@ namespace WhiteEngine
 				std::memcpy(&Bytes[(int32)Offset], Data, Num);
 				Offset += Num;
 			}
+
+			return *this;
 		}
 
 		int64 TotalSize()

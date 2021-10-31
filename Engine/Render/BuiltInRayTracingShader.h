@@ -23,9 +23,25 @@ inline namespace Shader
 		{}
 
 		BuiltInRayTracingShader(){}
-
-		RayTracingShader* GetRayTracingShader();
 	private:
+	};
+
+	template<typename ShaderContentType>
+	requires std::is_base_of_v<BuiltInRayTracingShader, ShaderContentType>
+	class RayTracingShaderRef : public ShaderRefBase<ShaderContentType>
+	{
+	public:
+		using base = ShaderRefBase<ShaderContentType>;
+		using base::GetShader;
+
+		RayTracingShaderRef(const base& Rhs)
+			:base(Rhs.GetShader(),Rhs.GetShaderMap())
+		{}
+
+		inline RayTracingShader* GetRayTracingShader() const
+		{
+			return base::template GetShaderBase<RayTracingShader>(GetShader()->GetShaderType());
+		}
 	};
 }
 

@@ -1,5 +1,6 @@
 #include "ShaderCore.h"
 #include "Core/Serialization/AsyncArchive.h"
+#include "Core/Compression.h"
 
 using namespace platform::Render;
 using namespace platform::Render::Shader;
@@ -83,4 +84,66 @@ bool ShaderParameterMap::FindParameterAllocation(const std::string& ParameterNam
 	}
 
 	return false;
+}
+
+void ShaderParameterMap::UpdateHash(Digest::SHA1& HashState) const
+{
+	for (auto& ParameterIt :ParameterMap)
+	{
+		const auto& ParamValue = ParameterIt.second;
+		HashState.Update((const uint8*)*ParameterIt.first.data(), ParameterIt.first.length() * sizeof(char));
+		HashState.Update((const uint8*)&ParamValue.BufferIndex, sizeof(ParamValue.BufferIndex));
+		HashState.Update((const uint8*)&ParamValue.BaseIndex, sizeof(ParamValue.BaseIndex));
+		HashState.Update((const uint8*)&ParamValue.Size, sizeof(ParamValue.Size));
+	}
+}
+
+void ShaderCode::Compress(const std::string& ShaderCompressionFormat)
+{
+	WAssert(OptionalDataSize == -1, "ShaderCode::Compress() was called before calling ShaderCode::FinalizeShaderCode()");
+
+	std::vector<uint8> Compressed;
+	int32 CompressedSize =static_cast<int32>(ShaderCodeWithOptionalData.size());
+	Compressed.resize(CompressedSize);
+
+	// there is code that assumes that if CompressedSize == CodeSize, the shader isn't compressed. Because of that, do not accept equal compressed size (very unlikely anyway)
+	if (Compression::CompressMemory(ShaderCompressionFormat, Compressed.data(), CompressedSize, ShaderCodeWithOptionalData.data(), ShaderCodeWithOptionalData.size()) && CompressedSize < ShaderCodeWithOptionalData.size())
+	{
+		// cache the ShaderCodeSize since it will no longer possible to get it as the reader will fail to parse the compressed data
+		ShaderCodeReader Wrapper(ShaderCodeWithOptionalData);
+		ShaderCodeSize = Wrapper.GetShaderCodeSize();
+
+		// finalize the compression
+		CompressionFormat = ShaderCompressionFormat;
+		UncompressedSize = ShaderCodeWithOptionalData.size();
+
+		Compressed.resize(CompressedSize);
+		ShaderCodeWithOptionalData = Compressed;
+	}
+}
+
+void ShaderCompilerOutput::GenerateOutputHash()
+{
+	Digest::SHA1 HashState;
+
+	auto& Code = ShaderCode.GetReadAccess();
+
+	// we don't hash the optional attachments as they would prevent sharing (e.g. many materials share the same VS)
+	uint32 ShaderCodeSize = ShaderCode.GetShaderCodeSize();
+
+	// make sure we are not generating the hash on compressed data
+	WAssert(!ShaderCode.IsCompressed(), "Attempting to generate the output hash of a compressed code");
+
+	HashState.Update(Code.data(), ShaderCodeSize * sizeof(uint8));
+	ParameterMap.UpdateHash(HashState);
+	HashState.Final();
+	HashState.GetHash(&OutputHash.Hash[0]);
+}
+
+void ShaderCompilerOutput::CompressOutput(const std::string& ShaderCompressionFormat)
+{
+	// make sure the hash has been generated
+	WAssert(OutputHash !=Digest::SHAHash(), "Output hash must be generated before compressing the shader code.");
+	WAssert(!ShaderCompressionFormat.empty(), "Compression format should be valid");
+	ShaderCode.Compress(ShaderCompressionFormat);
 }

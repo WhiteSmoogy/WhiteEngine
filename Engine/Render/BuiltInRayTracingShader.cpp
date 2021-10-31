@@ -3,8 +3,3 @@
 
 using namespace platform::Render;
 
-RayTracingShader* Shader::BuiltInRayTracingShader::GetRayTracingShader()
-{
-	return GetHardwareShader<RayTracingShader>();
-}
-

@@ -47,7 +47,7 @@ void platform::TonemapPass(const TonemapInputs& Inputs)
 	PixelShaderUtils::InitFullscreenPipelineState(CmdList,PixelShader,GraphicsPSOInit);
 
 	auto VertexShader = Render::GetBuiltInShaderMap()->GetShader<TonemapVS>();
-	GraphicsPSOInit.ShaderPass.VertexShader = VertexShader->GetVertexShader();
+	GraphicsPSOInit.ShaderPass.VertexShader = VertexShader.GetVertexShader();
 
 	SetGraphicsPipelineState(CmdList, GraphicsPSOInit);
 
@@ -62,7 +62,7 @@ void platform::TonemapPass(const TonemapInputs& Inputs)
 	CommonParameters.ColorGradingLUTSampler = BilinearClampSampler;
 	CommonParameters.ColorSampler = BilinearClampSampler;
 
-	SetShaderParameters(CmdList, PixelShader, PixelShader->GetPixelShader(), CommonParameters);
+	SetShaderParameters(CmdList, PixelShader, PixelShader.GetPixelShader(), CommonParameters);
 
 	PixelShaderUtils::DrawFullscreenTriangle(CmdList);
 }

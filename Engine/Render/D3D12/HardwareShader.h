@@ -69,6 +69,7 @@ namespace platform_ex::Windows::D3D12 {
 	{
 	public:
 		using D3D12HardwareShader::D3D12HardwareShader;
+		using D3D12HardwareShader::GetHash;
 
 		const RootSignature* pRootSignature;
 	};

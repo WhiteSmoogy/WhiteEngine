@@ -1,9 +1,9 @@
 #pragma once
 
 #include <WBase/smart_ptr.hpp>
+#include "emacro.h"
 #include "ShaderCore.h"
 #include "ShaderPermutation.h"
-#include "Core/Hash/MessageDigest.h"
 #include <concepts>
 #include <shared_mutex>
 
@@ -166,10 +166,6 @@ inline namespace Shader
 		const platform::Render::ShaderInfo* pInfo;
 	};
 
-	struct ShaderCompilerOutput :public ShaderInitializer
-	{
-	};
-
 	class ShaderMapResourceCode
 	{
 	public:
@@ -186,7 +182,7 @@ inline namespace Shader
 
 		int32 FindShaderIndex(const Digest::SHAHash& InHash) const;
 
-		void AddShaderCode(ShaderType InType, const Digest::SHAHash& InHash, const ShaderInitializer& InCode);
+		void AddShaderCode(ShaderType InType, const Digest::SHAHash& InHash, const ShaderCode& InCode);
 
 		std::vector<Digest::SHAHash> ShaderHashes;
 		std::vector<ShaderEntry> ShaderEntries;
@@ -214,9 +210,14 @@ inline namespace Shader
 
 		struct CompiledShaderInitializer
 		{
-			HardwareShader* Shader;
-			ShaderParameterMap ParameterMap;
 			ShaderMeta* Meta;
+			const std::vector<uint8>& Code;
+			const ShaderParameterMap& ParameterMap;
+			const Digest::SHAHash& OutputHash;
+
+			CompiledShaderInitializer(ShaderMeta* InMeta,
+				const ShaderCompilerOutput& CompilerOutput
+			);
 		};
 
 		RenderShader();
@@ -225,14 +226,13 @@ inline namespace Shader
 
 		RenderShader(const CompiledShaderInitializer& initializer);
 
+		void Finalize(const ShaderMapResourceCode* Code);
 
 		inline ShaderMeta* GetMeta() const { return Meta; }
+		ShaderType GetShaderType() const;
 
-		VertexHWShader* GetVertexShader() const;
-		GeometryHWShader* GetGeometryShader() const;
-		PixelHWShader* GetPixelShader() const;
+		int32 GetResourceIndex() const { return ResourceIndex; }
 
-		ComputeHWShader* GetComputeShader() const;
 		/** Returns the meta data for the root shader parameter struct. */
 		static inline const ShaderParametersMetadata* GetRootParametersMetadata()
 		{
@@ -243,16 +243,19 @@ inline namespace Shader
 		static void ModifyCompilationEnvironment(const FShaderPermutationParameters&, FShaderCompilerEnvironment&) {}
 		/** Can be overridden by FShader subclasses to determine whether a specific permutation should be compiled. */
 		static bool ShouldCompilePermutation(const FShaderPermutationParameters&) { return true; }
-	protected:
-		template<class THardwareShader>
-		THardwareShader* GetHardwareShader() const
-		{
-			return (THardwareShader*)(Shader.get());
-		}
 	public:
-		std::unique_ptr<HardwareShader> Shader;
 		RenderShaderParameterBindings Bindings;
 		ShaderMeta* Meta;
+		int32 ResourceIndex;
+
+#if WE_EDITOR
+		/**
+		* Hash of the compiled output from this shader and the resulting parameter map.
+		* This is used to find a matching resource.
+		*/
+		Digest::SHAHash OutputHash;
+#endif
+
 	};
 
 	class BuiltInShaderMeta;
@@ -333,28 +336,6 @@ inline namespace Shader
 		const ShaderParametersMetadata* const RootParametersMetadata;
 	};
 
-	inline VertexHWShader* RenderShader::GetVertexShader() const
-	{
-		WAssert(GetMeta()->GetShaderType() == VertexShader, "mismatch vertexshader type");
-		return GetHardwareShader<VertexHWShader>();
-	}
-	inline GeometryHWShader* RenderShader::GetGeometryShader() const
-	{
-		WAssert(GetMeta()->GetShaderType() == GeometryShader, "mismatch geometryshader type");
-		return GetHardwareShader<GeometryHWShader>();
-	}
-	inline PixelHWShader* RenderShader::GetPixelShader() const
-	{
-		WAssert(GetMeta()->GetShaderType() == PixelShader, "mismatch pixelshader type");
-		return GetHardwareShader<PixelHWShader>();
-	}
-
-	inline ComputeHWShader* RenderShader::GetComputeShader() const
-	{
-		WAssert(GetMeta()->GetShaderType() == ComputeShader, "mismatch computeshader type");
-		return GetHardwareShader<ComputeHWShader>();
-	}
-
 	template <typename ParameterStruct>
 	inline void BindForLegacyShaderParameters(RenderShader* Shader, const ShaderParameterMap& ParameterMap)
 	{
@@ -404,43 +385,104 @@ inline namespace Shader
 	}
 
 
-	template<typename ShaderType>
+	class ShaderMapBase
+	{
+	public:
+		virtual ~ShaderMapBase();
+
+		ShaderMapResourceCode* GetResourceCode()
+		{
+			if (!Code)
+			{
+				Code = std::make_shared<ShaderMapResourceCode>();
+			}
+			return Code.get();
+		}
+
+		inline ShaderMapResource* GetResource() const { return Resource.get(); }
+
+		void InitResource();
+
+		void FinalizeContent();
+	private:
+		std::shared_ptr<ShaderMapResource> Resource;
+		std::shared_ptr<ShaderMapResourceCode> Code;
+	};
+
+	template<typename ShaderContentType>
 	class ShaderRefBase
 	{
 	public:
 		ShaderRefBase():ShaderContent(nullptr)
 		{}
 
-		ShaderRefBase(ShaderType* InShader) :ShaderContent(InShader)
+		ShaderRefBase(ShaderContentType* InShader,const ShaderMapBase& InShaderMap) :ShaderContent(InShader),ShaderMap(&InShaderMap)
 		{}
 
-		template<std::derived_from<ShaderType> OtherShaderType>
+		template<std::derived_from<ShaderContentType> OtherShaderType>
 		ShaderRefBase(const ShaderRefBase<OtherShaderType>& Rhs) 
-		: ShaderContent(Rhs.GetShader()) 
+		: ShaderContent(Rhs.GetShader()),ShaderMap(Rhs.GetShaderMap())
 		{
 		}
 
-		inline ShaderType* operator->() const { return ShaderContent; }
+		inline ShaderContentType* operator->() const { return ShaderContent; }
 
-		inline ShaderType* GetShader() const { return ShaderContent; }
+		inline ShaderContentType* GetShader() const { return ShaderContent; }
+		inline const ShaderMapBase* GetShaderMap() const { return ShaderMap; }
+		ShaderMapResource* GetResource() const
+		{
+			return ShaderMap->GetResource();
+		}
 
+		inline VertexHWShader* GetVertexShader() const
+		{
+			return GetShaderBase<VertexHWShader>(VertexShader);
+		}
+		inline GeometryHWShader* GetGeometryShader() const
+		{
+			return GetShaderBase<GeometryHWShader>(GeometryShader);
+		}
+		inline PixelHWShader*GetPixelShader() const
+		{
+			return GetShaderBase<PixelHWShader>(PixelShader);
+		}
 
+		inline ComputeHWShader* GetComputeShader() const
+		{
+			return GetShaderBase<ComputeHWShader>(ComputeShader);
+		}
+
+		template<typename TargetShader>
+		inline TargetShader* GetShaderBase(ShaderType Type) const
+		{
+			HardwareShader* HWShader = nullptr;
+			if (ShaderContent)
+			{
+				WAssert(ShaderContent->GetShaderType() == Type, "mismatch shader type");
+				HWShader = GetResource()->GetShader(ShaderContent->GetResourceIndex());
+			}
+			return static_cast<TargetShader*>(HWShader);
+		}
 
 		template<typename OtherShaderType>
-		static ShaderRefBase<ShaderType> Cast(const ShaderRefBase<OtherShaderType>& Rhs)
+		static ShaderRefBase<ShaderContentType> Cast(const ShaderRefBase<OtherShaderType>& Rhs)
 		{
-			return ShaderRefBase<ShaderType>(static_cast<ShaderType*>(Rhs.GetShader()));
+			return ShaderRefBase<ShaderContentType>(static_cast<ShaderContentType*>(Rhs.GetShader()),Rhs.GetShaderMap());
 		}
 
 		inline bool IsValid() const { return ShaderContent != nullptr; }
 
 		inline explicit operator bool() const { return IsValid(); }
-	private:
-		ShaderType* ShaderContent;
+	protected:
+		ShaderRefBase(ShaderContentType* InShader, const ShaderMapBase* InShaderMap) :ShaderContent(InShader), ShaderMap(InShaderMap)
+		{}
+
+		ShaderContentType* ShaderContent;
+		const ShaderMapBase* ShaderMap;
 	};
 
-	template<typename ShaderType>
-	using ShaderRef = ShaderRefBase< ShaderType>;
+	template<typename ShaderContentType>
+	using ShaderRef = ShaderRefBase< ShaderContentType>;
 
 	
 
@@ -570,6 +612,8 @@ public:\
 
 		/** @return The number of shaders in the map. */
 		uint32 GetNumShaders() const;
+
+		void Finalize(const ShaderMapResourceCode* Code);
 	private:
 		std::vector<RenderShader*> Shaders;
 		std::vector<size_t> ShaderTypes;
@@ -582,8 +626,6 @@ public:\
 	void CompileShaderMap();
 
 }
-
-using Shader::ShaderInitializer;
 
 PR_NAMESPACE_END
 

@@ -11,12 +11,14 @@
 #include "../System/SystemEnvironment.h"
 #include "../Asset/ShaderAsset.h"
 #include "../Core/Hash/CityHash.h"
+#include "../Core/Serialization/MemoryWriter.h"
 #include "BuiltInShader.h"
 #include "ShaderParametersMetadata.h"
 #include "ShaderDB.h"
 #include "spdlog/spdlog.h"
 #include "Core/Path.h"
 #include "Core/Serialization/AsyncArchive.h"
+#include "Core/Container/vector.hpp"
 #include "spdlog/stopwatch.h"
 #include <format>
 
@@ -87,14 +89,51 @@ namespace platform::Render::Shader
 		GetTypeList().emplace_front(this);
 	}
 
+	void Shader::ShaderMapBase::InitResource()
+	{
+		Resource.reset();
+		if (Code)
+		{
+			//Code->Finalize();
+			Resource = std::make_shared<ShaderMapResource_InlineCode>(Code.get());
+			//BeginInitResource(Resource);
+		}
+	}
+
+	void Shader::ShaderMapBase::FinalizeContent()
+	{
+		InitResource();
+	}
+
 	ImplDeCtor(RenderShader);
 	ImplDeDtor(RenderShader);
 
-	RenderShader::RenderShader(const CompiledShaderInitializer& initializer)
+	RenderShader::RenderShader(const CompiledShaderInitializer& Initializer)
 		:
-		Shader(initializer.Shader),
-		Meta(initializer.Meta)
+		ResourceIndex(white::INDEX_NONE),
+		Meta(Initializer.Meta)
 	{
+#if WE_EDITOR
+		wassume(Initializer.OutputHash != Digest::SHAHash());
+
+		OutputHash = Initializer.OutputHash;
+#endif
+	}
+
+	ShaderType RenderShader::GetShaderType() const
+	{
+		return Meta->GetShaderType();
+	}
+
+	void RenderShader::Finalize(const ShaderMapResourceCode* Code)
+	{
+		Digest::SHAHash Hash{};
+#if WE_EDITOR
+		Hash = OutputHash;
+#endif
+		const int32 NewResourceIndex = Code->FindShaderIndex(Hash);
+		WAssert(NewResourceIndex != white::INDEX_NONE, "Missing shader code");
+		ResourceIndex = NewResourceIndex;
 	}
 
 	static void FillParameterMapByShaderInfo(ShaderParameterMap& target, const ShaderInfo& src);
@@ -227,6 +266,35 @@ namespace platform::Render::Shader
 
 	white::coroutine::Task<void> WriteShaderCache(BuiltInShaderMeta* meta, std::set<std::string>&& sets);
 
+	void GenerateOuput(platform::Render::ShaderInitializer initializer, ShaderCompilerOutput& Output)
+	{
+		MemoryWriter Ar(Output.ShaderCode.GetWriteAccess());
+
+		Ar.Serialize(initializer.pBlob->first.get(), initializer.pBlob->second);
+
+		// Append data that is generate from the shader code and assist the usage, mostly needed for DX12 
+		{
+			Output.ShaderCode.AddOptionalData(initializer.pInfo->ResourceCounts);
+
+			std::vector<std::string> UniformBufferNames;
+			for (auto& cb : initializer.pInfo->ConstantBufferInfos)
+			{
+				UniformBufferNames.emplace_back(cb.name);
+			}
+
+			std::vector<uint8> UniformBufferNameBytes;
+			MemoryWriter UniformBufferNameWriter(UniformBufferNameBytes);
+			UniformBufferNameWriter >> UniformBufferNames;
+
+			Output.ShaderCode.AddOptionalData('u', UniformBufferNameBytes.data(),static_cast<uint32>(UniformBufferNameBytes.size()));
+		}
+
+		FillParameterMapByShaderInfo(Output.ParameterMap, *initializer.pInfo);
+
+		Output.GenerateOutputHash();
+		Output.CompressOutput(GetShaderCompressionFormat());
+	}
+
 	void InsertCompileOuput(BuiltInShaderMeta* meta, platform::Render::ShaderInitializer initializer, int32 PermutationId)
 	{
 		auto pBuiltInMeta = meta->GetBuiltInShaderType();
@@ -235,29 +303,28 @@ namespace platform::Render::Shader
 
 		if (IsRayTracingShader(meta->GetShaderType()))
 		{
+			ShaderCompilerOutput Output;
+			GenerateOuput(initializer, Output);
 
-			auto& RayDevice = Context::Instance().GetRayContext().GetDevice();
-			auto pRayTracingShaderRHI = RayDevice.CreateRayTracingSahder(initializer);
+			auto Section = GGlobalBuiltInShaderMap.FindOrAddSection(meta);
 
-			RenderShader::CompiledShaderInitializer compileOuput;
-			compileOuput.Shader = pRayTracingShaderRHI;
-			compileOuput.Meta = meta;
-			FillParameterMapByShaderInfo(compileOuput.ParameterMap, *initializer.pInfo);
+			Section->GetResourceCode()->AddShaderCompilerOutput(Output);
+
+			RenderShader::CompiledShaderInitializer compileOuput {meta,Output };
 
 			auto pShader = static_cast<BuiltInRayTracingShader*>(pBuiltInMeta->Construct(compileOuput));
 
 			GGlobalBuiltInShaderMap.FindOrAddShader(meta, PermutationId, pShader);
 		}
 		else {
-			auto& Device = Context::Instance().GetDevice();
+			ShaderCompilerOutput Output;
+			GenerateOuput(initializer,Output);
 
-			auto pShaderRHI = Device.CreateShader(initializer);
+			auto Section = GGlobalBuiltInShaderMap.FindOrAddSection(meta);
 
-			RenderShader::CompiledShaderInitializer compileOuput;
-			compileOuput.Shader = pShaderRHI;
-			compileOuput.Meta = meta;
+			Section->GetResourceCode()->AddShaderCompilerOutput(Output);
 
-			FillParameterMapByShaderInfo(compileOuput.ParameterMap, *initializer.pInfo);
+			RenderShader::CompiledShaderInitializer compileOuput{ meta,Output };
 
 			auto pShader = pBuiltInMeta->Construct(compileOuput);
 
@@ -336,11 +403,13 @@ namespace platform::Render::Shader
 
 		std::vector< white::coroutine::Task<void>> tasks;
 		FileTimeCacheContext context;
+		std::set<std::string> ShadeFileNames;
 		for (auto meta : ShaderMeta::GetTypeList())
 		{
 			//TODO:dispatch type
 			if (auto pBuiltInMeta = meta->GetBuiltInShaderType())
 			{
+				ShadeFileNames.emplace(meta->GetSourceFileName());
 				tasks.emplace_back([&context](BuiltInShaderMeta* meta) -> white::coroutine::Task<void>
 				{
 					std::vector< white::coroutine::Task<void>> tasks;
@@ -378,6 +447,15 @@ namespace platform::Render::Shader
 		}
 
 		white::coroutine::SyncWait(white::coroutine::WhenAllReady(std::move(tasks)));
+		for (auto& key : ShadeFileNames)
+		{
+			auto Section = GGlobalBuiltInShaderMap.FindSection(std::hash<std::string>()(key));
+			if (Section)
+			{
+				Section->FinalizeContent();
+			}
+		}
+
 		spdlog::info("CompileShaderMap: {} seconds", sw);
 	}
 
@@ -565,6 +643,13 @@ uint32 Shader::ShaderMapContent::GetNumShaders() const
 	return static_cast<int32>(Shaders.size());
 }
 
+void Shader::ShaderMapContent::Finalize(const ShaderMapResourceCode* Code)
+{
+	for (auto Shader : Shaders)
+	{
+		Shader->Finalize(Code);
+	}
+}
 
 void Shader::PullRootShaderParametersLayout(asset::X::Shader::ShaderCompilerInput& Input, const ShaderParametersMetadata& ParameterMeta)
 {

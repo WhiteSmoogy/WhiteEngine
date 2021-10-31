@@ -11,14 +11,14 @@ namespace platform_ex::Windows::D3D12 {
 
 	using namespace platform::Render::Shader;
 
-	template<typename ShaderType>
+	template<typename ShaderContentType>
 	inline platform::Render::RayTracingShader* GetBuildInRayTracingShader()
 	{
 		auto ShaderMap = GetBuiltInShaderMap();
 
-		auto Shader = ShaderMap->GetShader<ShaderType>();
+		RayTracingShaderRef<ShaderContentType> Shader{ ShaderMap->GetShader<ShaderContentType>() };
 
-		auto RayTracingShader = Shader->GetRayTracingShader();
+		auto RayTracingShader = Shader.GetRayTracingShader();
 
 		return RayTracingShader;
 	}

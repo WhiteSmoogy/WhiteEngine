@@ -103,11 +103,16 @@ inline namespace Shader
 		std::size_t HashedSourceFilename;
 	};
 
-	class BuiltInShaderMapSection
+	class BuiltInShaderMapSection :public ShaderMapBase
 	{
 	public:
 		friend class BuiltInShaderMap;
 
+		void FinalizeContent()
+		{
+			Content.Finalize(this->GetResourceCode());
+			ShaderMapBase::FinalizeContent();
+		}
 	private:
 		BuiltInShaderMapSection(std::size_t InHashedSourceFilename)
 			:Content(InHashedSourceFilename)
@@ -115,34 +120,40 @@ inline namespace Shader
 
 		ShaderRef<RenderShader> GetShader(ShaderMeta* ShaderType, int32 PermutationId = 0) const;
 
+
 		BuiltInShaderMapContent Content;
 	};
 
 	class BuiltInShaderMap
 	{
 	public:
+		using FHashedName = uint64_t;
+
 		~BuiltInShaderMap();
 
 		ShaderRef<RenderShader> GetShader(ShaderMeta* ShaderType, int32 PermutationId = 0) const;
 
 		/** Finds the shader with the given type.  Asserts on failure. */
-		template<typename ShaderType>
-		ShaderRef<ShaderType> GetShader(int32 PermutationId = 0) const
+		template<typename ShaderContentType>
+		ShaderRef<ShaderContentType> GetShader(int32 PermutationId = 0) const
 		{
-			auto Shader = GetShader(&ShaderType::StaticType, PermutationId);
-			WAssert(Shader.IsValid(), white::sfmt("Failed to find shader type %s in Platform %s", ShaderType::StaticType.GetTypeName().c_str(), "PCD3D_SM5").c_str());
-			return ShaderRef<ShaderType>::Cast(Shader);
+			auto Shader = GetShader(&ShaderContentType::StaticType, PermutationId);
+			WAssert(Shader.IsValid(), white::sfmt("Failed to find shader type %s in Platform %s", ShaderContentType::StaticType.GetTypeName().c_str(), "PCD3D_SM5").c_str());
+			return ShaderRef<ShaderContentType>::Cast(Shader);
 		}
 
 		/** Finds the shader with the given type.  Asserts on failure. */
-		template<typename ShaderType>
-		ShaderRef<ShaderType> GetShader(const typename ShaderType::FPermutationDomain& PermutationVector) const
+		template<typename ShaderContentType>
+		ShaderRef<ShaderContentType> GetShader(const typename ShaderContentType::FPermutationDomain& PermutationVector) const
 		{
-			return GetShader<ShaderType>(PermutationVector.ToDimensionValueId());
+			return GetShader<ShaderContentType>(PermutationVector.ToDimensionValueId());
 		}
 
 		RenderShader* FindOrAddShader(const ShaderMeta* ShaderType, int32 PermutationId, RenderShader* Shader);
 
+		void AddSection(BuiltInShaderMapSection* InSection);
+		BuiltInShaderMapSection* FindSection(const FHashedName& HashedShaderFilename);
+		BuiltInShaderMapSection* FindOrAddSection(const ShaderMeta* ShaderType);
 	private:
 		std::shared_mutex MapMutex;
 		std::unordered_map<std::size_t, BuiltInShaderMapSection*> SectionMap;

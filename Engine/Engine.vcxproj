@@ -227,6 +227,8 @@
     <ClInclude Include="Core\Hash\MessageDigest.h" />
     <ClInclude Include="Core\Hash\Murmur.h" />
     <ClInclude Include="Core\LFile.h" />
+    <ClInclude Include="Core\Serialization\MemoryArchive.h" />
+    <ClInclude Include="Core\Serialization\MemoryWriter.h" />
     <ClInclude Include="Core\WSLEvaluator.h" />
     <ClInclude Include="Core\WSLBuilder.h" />
     <ClInclude Include="Core\Materail.h" />

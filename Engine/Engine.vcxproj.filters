@@ -1074,6 +1074,12 @@
     <ClInclude Include="Core\Hash\MessageDigest.h">
       <Filter>Core\Hash</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Serialization\MemoryWriter.h">
+      <Filter>Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Serialization\MemoryArchive.h">
+      <Filter>Core\Serialization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Render">

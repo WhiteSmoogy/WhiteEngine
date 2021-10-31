@@ -49,6 +49,12 @@ namespace WhiteEngine
 	class Archive : public ArchiveState
 	{
 	public:
+		using uint64 = white::uint64;
+		using uint8 = white::uint8;
+		using int8 = white::int8;
+		using int64 = white::int64;
+		using int32 = white::int32;
+
 		virtual ~Archive() = default;
 
 		Archive& operator>>(std::integral auto& v)

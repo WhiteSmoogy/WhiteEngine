@@ -9,7 +9,7 @@
 
 namespace WhiteEngine
 {
-	namespace lr = platform::Render;
+	namespace wr = platform::Render;
 	namespace wm = white::math;
 
 	class ProjectedShadowInfo
@@ -23,7 +23,7 @@ namespace WhiteEngine
 
 		float InvMaxSubjectDepth = 0;
 
-		lr::Texture2D* DepthTarget;
+		wr::Texture2D* DepthTarget;
 
 		float MaxSubjectZ = 0;
 		float MinSubjectZ = 0;
@@ -52,9 +52,9 @@ namespace WhiteEngine
 
 		void SetupWholeSceneProjection(const SceneInfo& scne, const WholeSceneProjectedShadowInitializer& ShadowInfo, uint32 InResolutionX, uint32 InResoultionY, uint32 InBorderSize);
 
-		lr::GraphicsPipelineStateInitializer SetupShadowDepthPass(lr::CommandList& CmdList, lr::Texture2D* Target);
+		wr::GraphicsPipelineStateInitializer SetupShadowDepthPass(wr::CommandList& CmdList, wr::Texture2D* Target);
 
-		void RenderProjection(lr::CommandList& CmdList, const SceneInfo& scene);
+		void RenderProjection(wr::CommandList& CmdList, const SceneInfo& scene);
 
 		wm::float4x4 GetScreenToShadowMatrix(const SceneInfo& scene) const
 		{

@@ -90,11 +90,11 @@ void ProjectedShadowInfo::SetupWholeSceneProjection(const SceneInfo& scne, const
 }
 
 
-lr::GraphicsPipelineStateInitializer ProjectedShadowInfo::SetupShadowDepthPass(lr::CommandList& CmdList,lr::Texture2D* Target)
+wr::GraphicsPipelineStateInitializer ProjectedShadowInfo::SetupShadowDepthPass(wr::CommandList& CmdList,wr::Texture2D* Target)
 {
 	DepthTarget = Target;
 
-	lr::GraphicsPipelineStateInitializer psoInit;
+	wr::GraphicsPipelineStateInitializer psoInit;
 
 	CmdList.FillRenderTargetsInfo(psoInit);
 
@@ -189,8 +189,8 @@ public:
 		SHADER_PARAMETER(wm::float4, ProjectionDepthBiasParameters)
 		SHADER_PARAMETER(float, FadePlaneOffset)
 		SHADER_PARAMETER(float, InvFadePlaneLength)
-		SHADER_PARAMETER_TEXTURE(lr::Texture2D, ShadowDepthTexture)
-		SHADER_PARAMETER_SAMPLER(lr::TextureSampleDesc, ShadowDepthTextureSampler)
+		SHADER_PARAMETER_TEXTURE(wr::Texture2D, ShadowDepthTexture)
+		SHADER_PARAMETER_SAMPLER(wr::TextureSampleDesc, ShadowDepthTextureSampler)
 
 		SHADER_PARAMETER(wm::float4, InvDeviceZToWorldZTransform)
 
@@ -202,7 +202,7 @@ public:
 
 	using FPermutationDomain = Render::TShaderPermutationDomain<FFadePlane>;
 
-	void Set(lr::CommandList& CmdList, lr::ShaderRef<ShadowProjectionPS> This, const SceneInfo& scene, const ProjectedShadowInfo* ShadowInfo)
+	void Set(wr::CommandList& CmdList, wr::ShaderRef<ShadowProjectionPS> This, const SceneInfo& scene, const ProjectedShadowInfo* ShadowInfo)
 	{
 		Parameters Parameters;
 
@@ -210,7 +210,7 @@ public:
 
 		Parameters.ShadowDepthTexture = ShadowInfo->DepthTarget;
 
-		Parameters.ShadowDepthTextureSampler.address_mode_u = Parameters.ShadowDepthTextureSampler.address_mode_v = lr::TexAddressingMode::Clamp;
+		Parameters.ShadowDepthTextureSampler.address_mode_u = Parameters.ShadowDepthTextureSampler.address_mode_v = wr::TexAddressingMode::Clamp;
 		Parameters.ProjectionDepthBiasParameters = wm::float4(
 			ShadowInfo->GetShaderDepthBias(), ShadowInfo->GetShaderSlopeDepthBias(), ShadowInfo->GetShaderReceiverDepthBias(), ShadowInfo->MaxSubjectZ - ShadowInfo->MinSubjectZ
 		);
@@ -222,43 +222,43 @@ public:
 		Parameters.SceneParameters = scene.GetParameters();
 		Parameters.InvDeviceZToWorldZTransform = CreateInvDeviceZToWorldZTransform(scene.Matrices.GetProjectionMatrix());
 
-		lr::SetShaderParameters(CmdList, This, This.GetPixelShader(), Parameters);
+		wr::SetShaderParameters(CmdList, This, This.GetPixelShader(), Parameters);
 	}
 };
 
 IMPLEMENT_BUILTIN_SHADER(ShadowProjectionVS, "ShadowProjectionVertexShader.wsl", "Main", platform::Render::VertexShader);
 IMPLEMENT_BUILTIN_SHADER(ShadowProjectionPS, "ShadowProjectionPixelShader.wsl", "Main", platform::Render::PixelShader);
 
-void ProjectedShadowInfo::RenderProjection(lr::CommandList& CmdList, const SceneInfo& scene)
+void ProjectedShadowInfo::RenderProjection(wr::CommandList& CmdList, const SceneInfo& scene)
 {
 	SCOPED_GPU_EVENTF(CmdList, "WholeScene split%d",CascadeSettings.ShadowSplitIndex);
 
-	lr::GraphicsPipelineStateInitializer psoInit;
+	wr::GraphicsPipelineStateInitializer psoInit;
 
 	CmdList.FillRenderTargetsInfo(psoInit);
 
 	psoInit.DepthStencilState.depth_enable = false;
-	psoInit.DepthStencilState.depth_func = lr::CompareOp::Pass;
+	psoInit.DepthStencilState.depth_func = wr::CompareOp::Pass;
 
 	psoInit.BlendState.blend_enable[0] = true;
-	psoInit.BlendState.src_blend[0] = lr::BlendFactor::Src_Alpha;
-	psoInit.BlendState.dst_blend[0] = lr::BlendFactor::Inv_Src_Alpha;
+	psoInit.BlendState.src_blend[0] = wr::BlendFactor::Src_Alpha;
+	psoInit.BlendState.dst_blend[0] = wr::BlendFactor::Inv_Src_Alpha;
 
-	psoInit.Primitive = lr::PrimtivteType::TriangleStrip;
-	psoInit.ShaderPass.VertexDeclaration =lr::VertexDeclarationElements { 
-		lr::CtorVertexElement(0,0,lr::Vertex::Usage::Position,0,lr::EF_ABGR32F,sizeof(wm::float4))
+	psoInit.Primitive = wr::PrimtivteType::TriangleStrip;
+	psoInit.ShaderPass.VertexDeclaration =wr::VertexDeclarationElements { 
+		wr::CtorVertexElement(0,0,wr::Vertex::Usage::Position,0,wr::EF_ABGR32F,sizeof(wm::float4))
 	};
 
 	//BindShadowProjectionShaders
 	ShadowProjectionPS::FPermutationDomain PermutationVector;
 	PermutationVector.Set < ShadowProjectionPS::FFadePlane>(CascadeSettings.FadePlaneLength > 0);
 
-	auto PixelShader = lr::GetBuiltInShaderMap()->GetShader< ShadowProjectionPS>(PermutationVector);
-	auto VertexShader = lr::GetBuiltInShaderMap()->GetShader< ShadowProjectionVS>();
+	auto PixelShader = wr::GetBuiltInShaderMap()->GetShader< ShadowProjectionPS>(PermutationVector);
+	auto VertexShader = wr::GetBuiltInShaderMap()->GetShader< ShadowProjectionVS>();
 	psoInit.ShaderPass.VertexShader = VertexShader.GetVertexShader();
 	psoInit.ShaderPass.PixelShader = PixelShader.GetPixelShader();
 
-	lr::SetGraphicsPipelineState(CmdList, psoInit);
+	wr::SetGraphicsPipelineState(CmdList, psoInit);
 
 	PixelShader->Set(CmdList, PixelShader, scene, this);
 

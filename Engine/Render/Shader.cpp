@@ -270,23 +270,36 @@ namespace platform::Render::Shader
 	{
 		MemoryWriter Ar(Output.ShaderCode.GetWriteAccess());
 
+		if (IsRayTracingShader(initializer.pInfo->Type))
+		{
+			auto& RayTracingInfos =const_cast<RayTracingShaderInfo&>(initializer.pInfo->RayTracingInfos.value());
+			Ar >> RayTracingInfos.EntryPoint;
+			Ar >> RayTracingInfos.AnyHitEntryPoint;
+			Ar >> RayTracingInfos.IntersectionEntryPoint;
+		}
+
 		Ar.Serialize(initializer.pBlob->first.get(), initializer.pBlob->second);
 
 		// Append data that is generate from the shader code and assist the usage, mostly needed for DX12 
 		{
 			Output.ShaderCode.AddOptionalData(initializer.pInfo->ResourceCounts);
 
+			bool bGlobalUniformBufferUsed = false;
 			std::vector<std::string> UniformBufferNames;
 			for (auto& cb : initializer.pInfo->ConstantBufferInfos)
 			{
 				UniformBufferNames.emplace_back(cb.name);
+				if (cb.name == "$Globals")
+					bGlobalUniformBufferUsed = true;
 			}
 
 			std::vector<uint8> UniformBufferNameBytes;
 			MemoryWriter UniformBufferNameWriter(UniformBufferNameBytes);
 			UniformBufferNameWriter >> UniformBufferNames;
 
-			Output.ShaderCode.AddOptionalData('u', UniformBufferNameBytes.data(),static_cast<uint32>(UniformBufferNameBytes.size()));
+			Output.ShaderCode.AddOptionalData('u', UniformBufferNameBytes.data(), static_cast<uint32>(UniformBufferNameBytes.size()));
+			Output.ShaderCode.AddOptionalData('b', reinterpret_cast<uint8*>(&bGlobalUniformBufferUsed), sizeof(bool));
+			Output.ShaderCode.AddOptionalData('t',reinterpret_cast<const uint8*>(&initializer.pInfo->Type), sizeof(initializer.pInfo->Type));
 		}
 
 		FillParameterMapByShaderInfo(Output.ParameterMap, *initializer.pInfo);

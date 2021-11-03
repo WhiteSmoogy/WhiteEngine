@@ -57,7 +57,12 @@ namespace platform_ex::Windows::D3D12 {
 		GraphicsBuffer* CreateVertexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
 		GraphicsBuffer* CreateIndexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
 
-		platform::Render::HardwareShader* CreateShader(const platform::Render::ShaderInitializer& initializer) override;
+		platform::Render::HardwareShader* CreateShader(const white::span<const uint8>& Code,platform::Render::ShaderType Type);
+
+		platform::Render::HardwareShader* CreateVertexShader(const white::span<const uint8>& Code)override;
+		platform::Render::HardwareShader* CreatePixelShader(const white::span<const uint8>& Code) override;
+		platform::Render::HardwareShader* CreateGeometryShader(const white::span<const uint8>& Code) override;
+		platform::Render::HardwareShader* CreateComputeShader(const white::span<const uint8>& Code)  override;
 
 		white::observer_ptr<RootSignature> CreateRootSignature(const QuantizedBoundShaderState& QBSS);
 

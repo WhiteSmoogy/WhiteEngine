@@ -158,9 +158,10 @@ namespace platform::Render {
 
 		virtual GraphicsPipelineState* CreateGraphicsPipelineState(const GraphicsPipelineStateInitializer& initializer) =0;
 
-		virtual HardwareShader* CreateShader(const ShaderInitializer& initializer) = 0;
-
-		virtual HardwareShader* CreateShader(const white::span<const uint8>& Code) = 0;
+		virtual HardwareShader* CreateVertexShader(const white::span<const uint8>& Code) = 0;
+		virtual HardwareShader* CreatePixelShader(const white::span<const uint8>& Code) = 0;
+		virtual HardwareShader* CreateGeometryShader(const white::span<const uint8>& Code) = 0;
+		virtual HardwareShader* CreateComputeShader(const white::span<const uint8>& Code) = 0;
 	};
 }
 

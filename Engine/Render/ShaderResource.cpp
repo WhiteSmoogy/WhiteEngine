@@ -2,6 +2,7 @@
 #include "Core/Compression.h"
 #include "IContext.h"
 #include "IDevice.h"
+#include "IRayContext.h"
 using namespace platform::Render;
 using namespace WhiteEngine;
 
@@ -38,15 +39,33 @@ HardwareShader* ShaderMapResource_InlineCode::CreateHWShader(int32 ShaderIndex)
 	}
 
 	HardwareShader* Shader = nullptr;
+	auto code = white::make_const_span(ShaderCode, ShaderEntry.UnCompressSize);
 
 #if D3D_RAYTRACING
 	if (ShaderEntry.Type >= RayGen)
 	{
+		Shader = Context::Instance().GetRayContext().GetDevice().CreateRayTracingSahder(code);
 	}
 	else
 #endif
 	{
-		Shader = Context::Instance().GetDevice().CreateShader(white::make_const_span(ShaderCode, ShaderEntry.UnCompressSize));
+		auto& Device = Context::Instance().GetDevice();
+		
+		switch (ShaderEntry.Type)
+		{
+		case VertexShader:
+			Shader = Device.CreateVertexShader(code);
+			break;
+		case PixelShader:
+			Shader = Device.CreatePixelShader(code);
+			break;
+		case GeometryShader:
+			Shader = Device.CreateGeometryShader(code);
+			break;
+		case ComputeShader:
+			Shader = Device.CreateComputeShader(code);
+			break;
+		}
 	}
 
 	if (Shader)

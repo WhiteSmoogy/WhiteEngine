@@ -1,25 +1,32 @@
 #include "HardwareShader.h"
 
 using namespace platform_ex::Windows::D3D12;
+using namespace platform::Render::Shader;
 
-D3D12HardwareShader::D3D12HardwareShader(const platform::Render::ShaderInitializer& initializer)
+D3D12HardwareShader::D3D12HardwareShader(const white::span<const uint8>& Code)
+	:bGlobalUniformBufferUsed(false)
 {
-	auto& blob = *initializer.pBlob;
-	ShaderByteCode.first = std::make_unique<byte[]>(blob.second);
-	ShaderByteCode.second = blob.second;
-	std::memcpy(ShaderByteCode.first.get(), blob.first.get(), blob.second);
+	ShaderCodeReader ShaderCode(Code);
 
-	wconstraint(initializer.pInfo);
-	if (initializer.pInfo) {
-		for (auto& cb : initializer.pInfo->ConstantBufferInfos)
-		{
-			if (cb.name == "$Globals")
-			{
-				bGlobalUniformBufferUsed = true;
-				break;
-			}
-		}
+	int32 Offset = 0;
 
-		ResourceCounts = initializer.pInfo->ResourceCounts;
-	}
+	auto CodePtr = Code.data();
+	auto CodeSize = ShaderCode.GetActualShaderCodeSize() - Offset;
+
+	ShaderByteCode.first = std::make_unique<byte[]>(CodeSize);
+	ShaderByteCode.second = CodeSize;
+	std::memcpy(ShaderByteCode.first.get(),CodePtr,CodeSize);
+
+	auto PackedResourceCounts = ShaderCode.FindOptionalData<ShaderCodeResourceCounts>();
+	wassume(PackedResourceCounts);
+	ResourceCounts = *PackedResourceCounts;
+
+	auto GlobalUniformBufferUsed = reinterpret_cast<const bool*>(ShaderCode.FindOptionalData('u'));
+	wconstraint(GlobalUniformBufferUsed);
+
+	bGlobalUniformBufferUsed = *GlobalUniformBufferUsed;
 }
+
+D3D12HardwareShader::D3D12HardwareShader()
+	:bGlobalUniformBufferUsed(false)
+{}

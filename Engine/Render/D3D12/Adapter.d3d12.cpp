@@ -278,19 +278,19 @@ namespace platform_ex::Windows::D3D12 {
 		return CreateBuffer(usage, access, size_in_byte, format, init_data);
 	}
 
-	platform::Render::HardwareShader* Device::CreateShader(const platform::Render::ShaderInitializer& initializer)
+	platform::Render::HardwareShader* Device::CreateShader(const white::span<const uint8>& Code, platform::Render::ShaderType Type)
 	{
-		switch (initializer.pInfo->Type)
+		switch (Type)
 		{
 		case platform::Render::VertexShader:
-				return new VertexHWShader(initializer);
+				return new VertexHWShader(Code);
 		case platform::Render::PixelShader:
-			return new PixelHWShader(initializer);
+			return new PixelHWShader(Code);
 		case platform::Render::GeometryShader:
-			return new GeometryHWShader(initializer);
+			return new GeometryHWShader(Code);
 		case platform::Render::ComputeShader:
 		{
-			ComputeHWShader* Shader = new ComputeHWShader(initializer);
+			ComputeHWShader* Shader = new ComputeHWShader(Code);
 			QuantizedBoundShaderState QBSS;
 			QuantizeBoundShaderState(GetResourceBindingTier(), Shader, QBSS);
 
@@ -301,6 +301,24 @@ namespace platform_ex::Windows::D3D12 {
 		WAssert(false, "unimpl shader type");
 		return nullptr;
 	}
+
+	platform::Render::HardwareShader* Device::CreateVertexShader(const white::span<const uint8>& Code)
+	{
+		return CreateShader(Code, platform::Render::VertexShader);
+	}
+	platform::Render::HardwareShader* Device::CreatePixelShader(const white::span<const uint8>& Code)
+	{
+		return CreateShader(Code, platform::Render::PixelShader);
+	}
+	platform::Render::HardwareShader* Device::CreateGeometryShader(const white::span<const uint8>& Code)
+	{
+		return CreateShader(Code, platform::Render::GeometryShader);
+	}
+	platform::Render::HardwareShader* Device::CreateComputeShader(const white::span<const uint8>& Code) 
+	{
+		return CreateShader(Code, platform::Render::ComputeShader);
+	}
+
 
 	ID3D12Device*  Device::operator->() wnoexcept {
 		return d3d_device.Get();

@@ -62,9 +62,9 @@ RayTracingPipelineState* D12::RayDevice::CreateRayTracingPipelineState(const pla
 	return PipelineState;
 }
 
-RayTracingShader* D12::RayDevice::CreateRayTracingSahder(const platform::Render::RayTracingShaderInitializer& initializer)
+RayTracingShader* D12::RayDevice::CreateRayTracingSahder(white::span<const uint8> Code)
 {
-	auto Shader = new RayTracingShader(initializer);
+	auto Shader = new RayTracingShader(Code);
 
 	return Shader;
 }

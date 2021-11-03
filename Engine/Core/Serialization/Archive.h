@@ -44,6 +44,9 @@ namespace WhiteEngine
 
 		/** Whether this archive is for saving data. */
 		white::uint8 ArIsSaving : 1;
+
+		/** Whether this archive contains errors, which means that further serialization is generally not safe */
+		white::uint8 ArIsError : 1;
 	};
 
 	class Archive : public ArchiveState

@@ -16,6 +16,11 @@ namespace WhiteEngine
 		{
 		}
 
+		int64 Tell()
+		{
+			return Offset;
+		}
+
 		int64				Offset;
 	};
 }

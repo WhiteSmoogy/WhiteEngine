@@ -1080,6 +1080,9 @@
     <ClInclude Include="Core\Serialization\MemoryArchive.h">
       <Filter>Core\Serialization</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Serialization\MemoryReader.h">
+      <Filter>Core\Serialization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Render">

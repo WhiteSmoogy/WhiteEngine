@@ -14,6 +14,7 @@ using namespace white;
 struct RayTracingShaderAsset :public asset::ShadersAsset,public asset::AssetName
 {
 	std::unordered_map<ShaderType, std::string> EntryPoints;
+	std::unordered_map< ShaderType, ShaderCode> RayCodes;
 };
 
 class RayTracingShaderLoadingDesc : public asset::AssetLoading<RayTracingShaderAsset>, public platform::X::ShaderLoadingDesc<RayTracingShaderAsset> {
@@ -125,8 +126,13 @@ private:
 				, pInfo.get()
 			);
 
-			auto blob_hash = white::constfn_hash(input.EntryPoint);
-			GetAsset()->EmplaceBlob(blob_hash, asset::ShaderBlobAsset(input.Type, std::move(blob), pInfo.release()));
+			ShaderInitializer initializer;
+			initializer.pBlob = &blob;
+			initializer.pInfo = pInfo.get();
+
+			ShaderCompilerOutput Output;
+			GenerateOuput(initializer, Output);
+			GetAsset()->RayCodes.emplace(pair.first, Output.ShaderCode);
 		}
 	}
 };
@@ -142,18 +148,9 @@ std::shared_ptr<Render::RayTracingShader> platform::X::LoadRayTracingShader(Rend
 
 	auto& RayDevice = Context::Instance().GetRayContext().GetDevice();
 
-	for (auto& pair : pAsset->EntryPoints)
+	for (auto& pair : pAsset->RayCodes)
 	{
-		auto blob_hash = white::constfn_hash(pair.second);
-
-		RayTracingShaderInitializer initializer;
-
-		auto& blob_asset = pAsset->GetBlob(blob_hash);
-
-		initializer.pBlob = &(blob_asset.GetBlob());
-		initializer.pInfo = &(blob_asset.GetInfo());
-
-		return shared_raw_robject(RayDevice.CreateRayTracingSahder(initializer));
+		return shared_raw_robject(RayDevice.CreateRayTracingSahder(pair.second.GetReadAccess()));
 	}
 
 	return std::shared_ptr<Render::RayTracingShader>();

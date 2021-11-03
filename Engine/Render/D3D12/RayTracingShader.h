@@ -14,7 +14,7 @@ namespace platform_ex::Windows::D3D12 {
 	class RayTracingShader : public platform::Render::RayTracingShader,public D3D12HardwareShader
 	{
 	public:
-		RayTracingShader(const  platform::Render::RayTracingShaderInitializer& initializer);
+		RayTracingShader(const white::span<const uint8>& Code);
 	public:
 		white::observer_ptr<RootSignature> pRootSignature = nullptr;
 

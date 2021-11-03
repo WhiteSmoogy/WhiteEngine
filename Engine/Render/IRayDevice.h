@@ -110,7 +110,6 @@ namespace platform::Render {
 		white::span<RayTracingShader*> CallableTable;
 	};
 
-	using RayTracingShaderInitializer = ShaderInitializer;
 
 	class RayDevice
 	{
@@ -121,7 +120,7 @@ namespace platform::Render {
 
 		virtual RayTracingPipelineState* CreateRayTracingPipelineState(const RayTracingPipelineStateInitializer& initializer) = 0;
 
-		virtual RayTracingShader* CreateRayTracingSahder(const RayTracingShaderInitializer& initializer) = 0;
+		virtual RayTracingShader* CreateRayTracingSahder(white::span<const uint8> Code) = 0;
 
 		virtual void BuildAccelerationStructure(RayTracingGeometry* pGeometry) = 0;
 		virtual void BuildAccelerationStructure(RayTracingScene* pGeometry) =0;

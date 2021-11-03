@@ -9,7 +9,9 @@ namespace platform_ex::Windows::D3D12 {
 	class D3D12HardwareShader
 	{
 	public:
-		D3D12HardwareShader(const platform::Render::ShaderInitializer& initializer);
+		D3D12HardwareShader(const white::span<const uint8>& Code);
+
+		D3D12HardwareShader();
 
 		const ShaderBytecodeHash& GetHash() const { return Hash; }
 

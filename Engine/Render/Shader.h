@@ -622,6 +622,7 @@ public:\
 		std::shared_mutex ShaderMutex;
 	};
 
+	void GenerateOuput(ShaderInitializer initializer, ShaderCompilerOutput& Output);
 
 	void CompileShaderMap();
 

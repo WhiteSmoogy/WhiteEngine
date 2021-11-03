@@ -26,7 +26,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		RayTracingPipelineState* CreateRayTracingPipelineState(const platform::Render::RayTracingPipelineStateInitializer& initializer) final override;
 
-		RayTracingShader* CreateRayTracingSahder(const  platform::Render::RayTracingShaderInitializer& initializer) final override;
+		RayTracingShader* CreateRayTracingSahder(white::span<const uint8> Code) final override;
 
 
 		//TODO:state abstract cause performance(GPU sync point)

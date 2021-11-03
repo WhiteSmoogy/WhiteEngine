@@ -106,12 +106,12 @@ inline namespace Shader
 
 		int32 GetNumShaders() const
 		{
-			return NumRHIShaders;
+			return NumHWShaders;
 		}
 
 		inline bool IsValidShaderIndex(int32 ShaderIndex) const
 		{
-			return ShaderIndex >= 0 && ShaderIndex < NumRHIShaders;
+			return ShaderIndex >= 0 && ShaderIndex < NumHWShaders;
 		}
 
 		inline bool HasShader(int32 ShaderIndex) const
@@ -155,15 +155,8 @@ inline namespace Shader
 		/** An array of shader pointers . */
 		std::unique_ptr<std::atomic<HardwareShader*>[]> HWShaders;
 
-		/** Since the shaders are no longer a TArray, this is their count (the size of the RHIShadersArray). */
-		int32 NumRHIShaders;
-	};
-
-	class ShaderInitializer
-	{
-	public:
-		const platform::Render::ShaderBlob* pBlob;
-		const platform::Render::ShaderInfo* pInfo;
+		/** Since the shaders are no longer a vector, this is their count (the size of the HWShaders). */
+		int32 NumHWShaders;
 	};
 
 	class ShaderMapResourceCode

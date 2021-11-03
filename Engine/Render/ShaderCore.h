@@ -580,6 +580,7 @@ namespace platform::Render {
 
 		struct ShaderCompilerOutput
 		{
+			ShaderType Type;
 			ShaderCode ShaderCode;
 			ShaderParameterMap ParameterMap;
 			Digest::SHAHash OutputHash;
@@ -588,6 +589,15 @@ namespace platform::Render {
 
 			void GenerateOutputHash();
 		};
+
+		class ShaderInitializer
+		{
+		public:
+			const ShaderBlob* pBlob;
+			const ShaderInfo* pInfo;
+		};
+
+		void GenerateOuput(ShaderInitializer initializer, ShaderCompilerOutput& Output);
 	}
 }
 

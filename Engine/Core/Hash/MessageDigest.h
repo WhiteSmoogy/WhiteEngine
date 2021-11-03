@@ -21,6 +21,11 @@ namespace Digest {
 		{
 			return std::memcmp(&X.Hash, &Y.Hash, sizeof(X.Hash)) == 0;
 		}
+
+		friend std::strong_ordering operator<=>(const SHAHash& X, const SHAHash& Y)
+		{
+			return std::memcmp(&X.Hash, &Y.Hash, sizeof(X.Hash)) <=> 0;
+		}
 	};
 
 	/*-----------------------------------------------------------------------------

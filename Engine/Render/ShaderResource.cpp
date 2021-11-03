@@ -3,12 +3,21 @@
 #include "IContext.h"
 #include "IDevice.h"
 #include "IRayContext.h"
+#include "Core/Container/vector.hpp"
 using namespace platform::Render;
 using namespace WhiteEngine;
 
 const std::string& Shader::GetShaderCompressionFormat()
 {
 	return NAME_LZ4;
+}
+
+Shader::ShaderMapResource::ShaderMapResource(std::size_t Num)
+	:NumHWShaders(Num)
+{
+	HWShaders = std::make_unique<std::atomic<HardwareShader*>[]>(NumHWShaders);
+#if D3D_RAYTRACING
+#endif
 }
 
 HardwareShader* Shader::ShaderMapResource::CreateShader(int32 ShaderIndex)
@@ -22,6 +31,44 @@ HardwareShader* Shader::ShaderMapResource::CreateShader(int32 ShaderIndex)
 #endif
 
 	return HWShader;
+}
+
+void Shader::ShaderMapResourceCode::AddShaderCompilerOutput(const ShaderCompilerOutput& Output)
+{
+	AddShaderCode(Output.Type, Output.OutputHash, Output.ShaderCode);
+}
+
+int32 Shader::ShaderMapResourceCode::FindShaderIndex(const Digest::SHAHash& InHash) const
+{
+	auto index = std::distance(ShaderHashes.begin(),std::lower_bound(ShaderHashes.begin(), ShaderHashes.end(), InHash));
+	if (index != ShaderHashes.size() && ShaderHashes[index] == InHash)
+		return static_cast<int32>(index);
+	return white::INDEX_NONE;
+}
+
+void Shader::ShaderMapResourceCode::AddShaderCode(ShaderType InType, const Digest::SHAHash& InHash, const ShaderCode& InCode)
+{
+	auto index = std::distance(ShaderHashes.begin(), std::lower_bound(ShaderHashes.begin(), ShaderHashes.end(), InHash));
+	if (index >= ShaderHashes.size() || ShaderHashes[index] != InHash)
+	{
+		ShaderHashes.insert(ShaderHashes.begin() + index, InHash);
+
+		auto& Entry = *ShaderEntries.emplace(ShaderEntries.begin() + index);
+
+		Entry.Type = InType;
+
+		auto ShaderCompressionFormat = GetShaderCompressionFormat();
+		if (!ShaderCompressionFormat.empty())
+		{
+			Entry.UnCompressSize = InCode.GetUncompressedSize();
+			WAssert(ShaderCompressionFormat == InCode.GetCompressionFormat(), "shader compression format mismatch");
+		}
+		else
+		{
+			Entry.UnCompressSize =static_cast<int32>(InCode.GetReadAccess().size());
+		}
+		Entry.Code = InCode.GetReadAccess();
+	}
 }
 
 HardwareShader* ShaderMapResource_InlineCode::CreateHWShader(int32 ShaderIndex)

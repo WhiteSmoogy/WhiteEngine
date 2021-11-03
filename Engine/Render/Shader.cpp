@@ -89,6 +89,10 @@ namespace platform::Render::Shader
 		GetTypeList().emplace_front(this);
 	}
 
+	Shader::ShaderMapBase::~ShaderMapBase()
+	{
+	}
+
 	void Shader::ShaderMapBase::InitResource()
 	{
 		Resource.reset();
@@ -118,6 +122,11 @@ namespace platform::Render::Shader
 
 		OutputHash = Initializer.OutputHash;
 #endif
+	}
+
+	Shader::RenderShader::CompiledShaderInitializer::CompiledShaderInitializer(ShaderMeta* InMeta, const ShaderCompilerOutput& CompilerOutput)
+		:Meta(InMeta),Code(CompilerOutput.ShaderCode.GetReadAccess()),ParameterMap(CompilerOutput.ParameterMap),OutputHash(CompilerOutput.OutputHash)
+	{
 	}
 
 	ShaderType RenderShader::GetShaderType() const
@@ -270,6 +279,7 @@ namespace platform::Render::Shader
 	{
 		MemoryWriter Ar(Output.ShaderCode.GetWriteAccess());
 
+		Output.Type = initializer.pInfo->Type;
 		if (IsRayTracingShader(initializer.pInfo->Type))
 		{
 			auto& RayTracingInfos =const_cast<RayTracingShaderInfo&>(initializer.pInfo->RayTracingInfos.value());

@@ -183,11 +183,7 @@ platform_ex::Windows::D3D12::ShaderCompose::ShaderCompose(std::unordered_map<pla
 		if (pShaderBlob.count(type)) {
 			auto pBlobAsset = pShaderBlob[type];
 
-			platform::Render::ShaderInitializer initializer;
-			initializer.pBlob = &pBlobAsset->GetBlob();
-			initializer.pInfo = &pBlobAsset->GetInfo();
-
-			shader = new std::remove_reference_t<decltype(*shader)> (initializer);
+			shader = new std::remove_reference_t<decltype(*shader)> (pBlobAsset->GetCode().GetReadAccess());
 		}
 	};
 

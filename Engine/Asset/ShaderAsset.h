@@ -110,24 +110,32 @@ namespace asset
 		using ShaderBlob = platform::Render::ShaderBlob;
 
 		explicit ShaderBlobAsset(Type _type, ShaderBlob&& _blob, platform::Render::ShaderInfo* pinfo)
-			:type(_type), blob(wforward(_blob)), pInfo(pinfo)
-		{}
+			:type(_type), pInfo(pinfo)
+		{
+			platform::Render::ShaderInitializer initializer;
+			initializer.pBlob = &_blob;
+			initializer.pInfo = pinfo;
+
+			platform::Render::ShaderCompilerOutput Output;
+			platform::Render::GenerateOuput(initializer, Output);
+
+			code = Output.ShaderCode;
+		}
 
 		ShaderBlobAsset() = default;
 
 
 		DefGetter(const wnothrow, const Type&, ShaderType, type)
 
-			DefGetter(const wnothrow, const ShaderBlob&, Blob, blob)
+			DefGetter(const wnothrow, const platform::Render::ShaderCode&, Code, code)
 
+
+			DefGetter(wnothrow, platform::Render::ShaderCode&, Code, code)
 			DefGetter(const wnothrow, const platform::Render::ShaderInfo&, Info, *pInfo)
-
-			DefGetter(wnothrow,  ShaderBlob&, Blob, blob)
-
-			DefGetter(wnothrow,  platform::Render::ShaderInfo&, Info, *pInfo)
+			DefGetter(wnothrow, platform::Render::ShaderInfo&, Info, *pInfo)
 	private:
 		Type type;
-		ShaderBlob blob;
+		platform::Render::ShaderCode code;
 		std::unique_ptr<platform::Render::ShaderInfo> pInfo;
 	};
 

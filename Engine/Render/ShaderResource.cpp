@@ -7,6 +7,21 @@
 using namespace platform::Render;
 using namespace WhiteEngine;
 
+const uint8* Shader::TryUncompressCode(const std::vector<uint8>& Code, int32 UnCompressSize, std::vector<uint8>& UnCompressCode)
+{
+	const uint8* ShaderCode = Code.data();
+
+	if (static_cast<int32>(Code.size()) != UnCompressSize)
+	{
+		UnCompressCode.resize(white::Align(UnCompressSize, 16));
+		Compression::UnCompressMemory(GetShaderCompressionFormat(), UnCompressCode.data(), UnCompressSize, ShaderCode, Code.size());
+
+		ShaderCode = UnCompressCode.data();
+	}
+
+	return ShaderCode;
+}
+
 const std::string& Shader::GetShaderCompressionFormat()
 {
 	return NAME_LZ4;
@@ -74,19 +89,11 @@ void Shader::ShaderMapResourceCode::AddShaderCode(ShaderType InType, const Diges
 HardwareShader* ShaderMapResource_InlineCode::CreateHWShader(int32 ShaderIndex)
 {
 	auto& ShaderEntry = Code->ShaderEntries[ShaderIndex];
-	const uint8* ShaderCode = ShaderEntry.Code.data();
 
-	std::vector<uint8> UnCompressCode;
-	if (static_cast<int32>(ShaderEntry.Code.size()) != ShaderEntry.UnCompressSize)
-	{
-		UnCompressCode.resize(white::Align(ShaderEntry.UnCompressSize,16));
-		Compression::UnCompressMemory(GetShaderCompressionFormat(), UnCompressCode.data(), ShaderEntry.UnCompressSize, ShaderCode, ShaderEntry.Code.size());
-
-		ShaderCode = UnCompressCode.data();
-	}
 
 	HardwareShader* Shader = nullptr;
-	auto code = white::make_const_span(ShaderCode, ShaderEntry.UnCompressSize);
+	std::vector<uint8> UnCompressCode;
+	auto code = white::make_const_span(TryUncompressCode(ShaderEntry.Code,ShaderEntry.UnCompressSize,UnCompressCode), ShaderEntry.UnCompressSize);
 
 #if D3D_RAYTRACING
 	if (ShaderEntry.Type >= RayGen)

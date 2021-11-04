@@ -10,6 +10,7 @@
 #include "Texture.h"
 #include "Convert.h"
 #include "RootSignature.h"
+#include "Core/Compression.h"
 
 using namespace platform_ex::Windows;
 using platform::Render::ShaderType;
@@ -183,7 +184,14 @@ platform_ex::Windows::D3D12::ShaderCompose::ShaderCompose(std::unordered_map<pla
 		if (pShaderBlob.count(type)) {
 			auto pBlobAsset = pShaderBlob[type];
 
-			shader = new std::remove_reference_t<decltype(*shader)> (pBlobAsset->GetCode().GetReadAccess());
+			auto& ShaderEntry = pBlobAsset->GetCode();
+
+			std::vector<uint8> UnCompressCode;
+			auto ShaderCode = TryUncompressCode(ShaderEntry.Code, ShaderEntry.UnCompressSize, UnCompressCode);
+
+			auto code = white::make_const_span(ShaderCode, ShaderEntry.UnCompressSize);
+
+			shader = new std::remove_reference_t<decltype(*shader)>(code);
 		}
 	};
 

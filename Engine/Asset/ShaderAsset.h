@@ -106,6 +106,12 @@ namespace asset
 
 	class ShaderBlobAsset :white::noncopyable {
 	public:
+		struct ShaderEntry
+		{
+			std::vector<uint8> Code;
+			int32 UnCompressSize;
+		};
+
 		using Type = platform::Render::ShaderType;
 		using ShaderBlob = platform::Render::ShaderBlob;
 
@@ -119,7 +125,8 @@ namespace asset
 			platform::Render::ShaderCompilerOutput Output;
 			platform::Render::GenerateOuput(initializer, Output);
 
-			code = Output.ShaderCode;
+			code.Code = Output.ShaderCode.GetReadAccess();
+			code.UnCompressSize = Output.ShaderCode.GetUncompressedSize();
 		}
 
 		ShaderBlobAsset() = default;
@@ -127,15 +134,15 @@ namespace asset
 
 		DefGetter(const wnothrow, const Type&, ShaderType, type)
 
-			DefGetter(const wnothrow, const platform::Render::ShaderCode&, Code, code)
+			DefGetter(const wnothrow, const ShaderEntry&, Code, code)
 
 
-			DefGetter(wnothrow, platform::Render::ShaderCode&, Code, code)
+			DefGetter(wnothrow, ShaderEntry&, Code, code)
 			DefGetter(const wnothrow, const platform::Render::ShaderInfo&, Info, *pInfo)
 			DefGetter(wnothrow, platform::Render::ShaderInfo&, Info, *pInfo)
 	private:
 		Type type;
-		platform::Render::ShaderCode code;
+		ShaderEntry code;
 		std::unique_ptr<platform::Render::ShaderInfo> pInfo;
 	};
 

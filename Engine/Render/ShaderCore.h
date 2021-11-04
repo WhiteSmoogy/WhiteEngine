@@ -598,6 +598,8 @@ namespace platform::Render {
 		};
 
 		void GenerateOuput(ShaderInitializer initializer, ShaderCompilerOutput& Output);
+
+		const uint8* TryUncompressCode(const std::vector<uint8>& Code, int32 UnCompressSize, std::vector<uint8>& UnCompressCode);
 	}
 }
 

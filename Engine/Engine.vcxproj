@@ -388,6 +388,7 @@
     <ClInclude Include="Shaders\SSD\SSDSignalCore.h" />
     <ClInclude Include="Shaders\SSD\SSDSignalFramework.h" />
     <ClInclude Include="Shaders\SSD\SSDSpatialKernel.h" />
+    <ClInclude Include="Shaders\Util.h" />
     <ClInclude Include="System\NinthTimer.h" />
     <ClInclude Include="System\SystemEnvironment.h" />
     <ClInclude Include="System\TimeValue.h" />
@@ -409,7 +410,6 @@
     <None Include="Render\Effect\material.wsl" />
     <None Include="Render\Effect\PostProcess.wsl" />
     <None Include="Render\Effect\PreZ.wsl" />
-    <None Include="Render\Effect\Util.wsl" />
     <None Include="Render\Material\FPDS.mat.wsl" />
     <None Include="Shaders\ACES.h" />
     <None Include="Shaders\Common.h" />

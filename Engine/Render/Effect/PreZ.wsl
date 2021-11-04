@@ -1,5 +1,5 @@
 (effect
-	(refer Util.wsl)
+	(include Util.h)
 	(cbuffer obj
 		(float4x4 world)
 	)

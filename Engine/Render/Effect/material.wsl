@@ -1,5 +1,5 @@
 (effect
-	(refer Util.wsl)
+	(include Util.h)
 	(shader 
 			"
 			struct Material{

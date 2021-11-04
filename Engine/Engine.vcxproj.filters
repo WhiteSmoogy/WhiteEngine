@@ -1083,6 +1083,9 @@
     <ClInclude Include="Core\Serialization\MemoryReader.h">
       <Filter>Core\Serialization</Filter>
     </ClInclude>
+    <ClInclude Include="Shaders\Util.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Render">
@@ -1287,9 +1290,6 @@
     </None>
     <None Include="Shaders\PostProcess\TonemapCommon.h">
       <Filter>Shaders\PostProcess</Filter>
-    </None>
-    <None Include="Render\Effect\Util.wsl">
-      <Filter>Shaders\Legacy</Filter>
     </None>
     <None Include="Shaders\ShadowDepthPixelShader.wsl">
       <Filter>Shaders</Filter>

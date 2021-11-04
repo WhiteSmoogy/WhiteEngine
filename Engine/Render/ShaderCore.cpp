@@ -91,7 +91,7 @@ void ShaderParameterMap::UpdateHash(Digest::SHA1& HashState) const
 	for (auto& ParameterIt :ParameterMap)
 	{
 		const auto& ParamValue = ParameterIt.second;
-		HashState.Update((const uint8*)*ParameterIt.first.data(), ParameterIt.first.length() * sizeof(char));
+		HashState.Update((const uint8*)ParameterIt.first.data(), ParameterIt.first.length() * sizeof(char));
 		HashState.Update((const uint8*)&ParamValue.BufferIndex, sizeof(ParamValue.BufferIndex));
 		HashState.Update((const uint8*)&ParamValue.BaseIndex, sizeof(ParamValue.BaseIndex));
 		HashState.Update((const uint8*)&ParamValue.Size, sizeof(ParamValue.Size));

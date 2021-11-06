@@ -25,6 +25,8 @@ D3D12HardwareShader::D3D12HardwareShader(const white::span<const uint8>& Code)
 	wconstraint(GlobalUniformBufferUsed);
 
 	bGlobalUniformBufferUsed = *GlobalUniformBufferUsed;
+
+	HashShader();
 }
 
 D3D12HardwareShader::D3D12HardwareShader()

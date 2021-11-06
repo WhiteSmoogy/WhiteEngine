@@ -15,12 +15,12 @@ namespace WhiteEngine
 			: Archive(), Offset(0)
 		{
 		}
-
+	public:
 		int64 Tell()
 		{
 			return Offset;
 		}
-
+	protected:
 		int64				Offset;
 	};
 }

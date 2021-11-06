@@ -72,9 +72,9 @@ RayTracingShader::RayTracingShader(const white::span<const uint8>& Code)
 	Ar >> RayAnyHitEntryPoint;
 	Ar >> RayIntersectionEntryPoint;
 
-	int32 Offset = 0;
+	int32 Offset =Ar.Tell();
 
-	auto CodePtr = Code.data();
+	auto CodePtr = Code.data()+ Offset;
 	auto CodeSize = ShaderCode.GetActualShaderCodeSize() - Offset;
 
 	ShaderByteCode.first = std::make_unique<byte[]>(CodeSize);
@@ -99,4 +99,6 @@ RayTracingShader::RayTracingShader(const white::span<const uint8>& Code)
 	EntryPoint =white::Text::String(RayEntryPoint);
 	AnyHitEntryPoint = white::Text::String(RayAnyHitEntryPoint);
 	IntersectionEntryPoint = white::Text::String(RayIntersectionEntryPoint);
+
+	HashShader();
 }

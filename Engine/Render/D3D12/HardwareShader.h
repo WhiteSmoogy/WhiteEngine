@@ -19,7 +19,7 @@ namespace platform_ex::Windows::D3D12 {
 		platform::Render::ShaderCodeResourceCounts ResourceCounts;
 		bool bGlobalUniformBufferUsed = false;
 
-	private:
+	protected:
 		void HashShader()
 		{
 			if (ShaderByteCode.first && ShaderByteCode.second > 0)

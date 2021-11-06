@@ -16,7 +16,7 @@ namespace WhiteEngine
 			return std::min<int64>((int64)Bytes.size(), LimitSize);
 		}
 
-		void Serialize(void* Data, int64 Num)
+		MemoryReaderView& Serialize(void* Data, uint64 Num) override
 		{
 			if (Num && !ArIsError)
 			{
@@ -31,6 +31,7 @@ namespace WhiteEngine
 					ArIsError = true;
 				}
 			}
+			return *this;
 		}
 
 		explicit MemoryReaderView(white::span<const uint8> InBytes)

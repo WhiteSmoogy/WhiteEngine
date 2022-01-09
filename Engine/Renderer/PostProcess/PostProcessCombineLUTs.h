@@ -1,7 +1,7 @@
 #pragma once
 
 #include <WBase/wmathtype.hpp>
-#include "../../Render/ITexture.hpp"
+#include "RenderInterface/ITexture.hpp"
 
 namespace platform
 {

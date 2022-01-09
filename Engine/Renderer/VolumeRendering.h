@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Engine/Render/BuiltInShader.h>
-#include <Engine/Render/IGraphicsBuffer.hpp>
-#include <Engine/Render/IDevice.h>
-#include <Engine/Render/ICommandList.h>
-#include <Engine/Render/ShaderParamterTraits.hpp>
-#include <Engine/Render/ShaderParameterStruct.h>
+#include "RenderInterface/BuiltInShader.h"
+#include "RenderInterface/IGraphicsBuffer.hpp"
+#include "RenderInterface/IDevice.h"
+#include "RenderInterface/ICommandList.h"
+#include "RenderInterface/ShaderParamterTraits.hpp"
+#include "RenderInterface/ShaderParameterStruct.h"
 
 namespace platform
 {

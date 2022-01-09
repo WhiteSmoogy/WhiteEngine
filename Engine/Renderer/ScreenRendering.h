@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Render/IGraphicsBuffer.hpp"
+#include "RenderInterface/IGraphicsBuffer.hpp"
 
 namespace WhiteEngine
 {

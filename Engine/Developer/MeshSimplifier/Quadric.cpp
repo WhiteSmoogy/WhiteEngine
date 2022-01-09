@@ -1,7 +1,7 @@
 // Copyright (C) 2009 Nine Realms, Inc
 
 #include "Quadric.h"
-#include "Core/PlatformMemory.h"
+#include "Runtime/Core/PlatformMemory.h"
 #if defined(_MSC_VER) && !defined(__clang__)
 #pragma float_control( precise, on, push )
 #pragma warning(disable:6011)

@@ -1,5 +1,5 @@
 #include "SystemEnvironment.h"
-#include "../Render/Shader.h"
+#include "RenderInterface/Shader.h"
 
 using namespace WhiteEngine::System;
 

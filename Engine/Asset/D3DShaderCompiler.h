@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Render/Shader.h"
+#include "RenderInterface/Shader.h"
 #include <compare>
 
 namespace platform::Render {

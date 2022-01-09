@@ -3,8 +3,8 @@
 #include "MaterialX.h"
 #include "WSLAssetX.h"
 #include "EffectAsset.h"
-#include "../Core/Materail.h"
-#include "../Core/AssetResourceScheduler.h"
+#include "Runtime/Core/Materail.h"
+#include "Runtime/Core/AssetResourceScheduler.h"
 
 using namespace platform;
 using namespace scheme;

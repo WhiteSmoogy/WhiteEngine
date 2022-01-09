@@ -8,7 +8,7 @@
 #include <WBase/sutility.h>
 #include <WBase/wmathtype.hpp>
 
-#include "../Render/InputLayout.hpp"
+#include "RenderInterface/InputLayout.hpp"
 
 namespace asset {
 	class MeshAsset :white::noncopyable {

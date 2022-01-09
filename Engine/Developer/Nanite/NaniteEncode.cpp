@@ -3,10 +3,10 @@
 #endif
 
 #include "NaniteEncode.h"
-#include "Core/ParallelFor.h"
-#include "Core/Hash/CityHash.h"
-#include "Core/Compression.h"
-#include "Core/Container/map.hpp"
+#include "Runtime/Core/ParallelFor.h"
+#include "Runtime/Core/Hash/CityHash.h"
+#include "Runtime/Core/Compression.h"
+#include "Runtime/Core/Container/map.hpp"
 #include <WBase/wmemory.hpp>
 using namespace white::inttype;
 using white::uint32;

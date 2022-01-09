@@ -5,10 +5,10 @@
 #include <WBase/winttype.hpp>
 #include <WBase/span.hpp>
 #include "Renderer/Nanite.h"
-#include "Render/Color_T.hpp"
-#include "Core/Container/BitArray.h"
+#include "RenderInterface/Color_T.hpp"
+#include "Runtime/Core/Container/BitArray.h"
 #include "Bounds.h"
-#include "Math/Sphere.h"
+#include "Runtime/Core/Math/Sphere.h"
 
 #include <unordered_map>
 

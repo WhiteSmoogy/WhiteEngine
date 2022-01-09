@@ -1,7 +1,7 @@
 #include "RayTracingX.h"
 #include "ShaderAsset.h"
 #include "D3DShaderCompiler.h"
-#include "../Core/AssetResourceScheduler.h"
+#include "Runtime/Core/AssetResourceScheduler.h"
 #include "WFramework/Helper/ShellHelper.h"
 #include "ShaderLoadingDesc.h"
 #include <unordered_map>
@@ -137,8 +137,8 @@ private:
 	}
 };
 
-#include "../Render/IContext.h"
-#include "../Render/IRayContext.h"
+#include "RenderInterface/IContext.h"
+#include "RenderInterface/IRayContext.h"
 
 using namespace platform::Render;
 

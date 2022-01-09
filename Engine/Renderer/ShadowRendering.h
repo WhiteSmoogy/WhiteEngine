@@ -1,9 +1,9 @@
 #pragma once
 
 #include <WBase/wmath.hpp>
-#include "Render/ICommandList.h"
-#include "Math/IntRect.h"
-#include "Math/Sphere.h"
+#include "RenderInterface/ICommandList.h"
+#include "Runtime/Core/Math/IntRect.h"
+#include "Runtime/Core/Math/Sphere.h"
 #include "Runtime/SceneInfo.h"
 #include "Runtime/SceneClasses.h"
 

@@ -8,13 +8,13 @@
 #include <WScheme/WScheme.h>
 
 
-#include "../Render/IContext.h"
-#include "../Core/AssetResourceScheduler.h"
+#include "RenderInterface/IContext.h"
+#include "Runtime/Core/AssetResourceScheduler.h"
 
 #include "EffectX.h"
 #include "WSLAssetX.h"
 #include "D3DShaderCompiler.h"
-#include "../Core/Path.h"
+#include "Runtime/Core/Path.h"
 
 #pragma warning(disable:4715) //return value or throw exception;
 using namespace platform::Render::Shader;
@@ -59,7 +59,7 @@ namespace platform {
 
 		asset::path Path(const asset::path& path) const override
 		{
-			static std::filesystem::path effect_path = WhiteEngine::PathSet::EngineDir() / "Render/Effect";
+			static std::filesystem::path effect_path = WhiteEngine::PathSet::EngineDir() / "RenderInterface/Effect";
 
 			auto local_path = effect_path / path;
 			if (std::filesystem::exists(local_path))

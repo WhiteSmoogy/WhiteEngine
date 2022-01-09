@@ -13,7 +13,7 @@
 #include "TextureX.h"
 #include "Loader.hpp"
 #include "CompressionBC.hpp"
-#include "../Render/IContext.h"
+#include "RenderInterface/IContext.h"
 
 #include <filesystem>
 

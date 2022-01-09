@@ -7,7 +7,7 @@
 
 
 #include "EffectAsset.h"
-#include "../Render/Effect/Effect.hpp"
+#include "RenderInterface/Effect/Effect.hpp"
 #include <filesystem>
 #include <string_view>
 namespace platform {

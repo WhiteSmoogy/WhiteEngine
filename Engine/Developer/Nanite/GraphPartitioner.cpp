@@ -1,6 +1,6 @@
 #include "GraphPartitioner.h"
 #include <coroutine>
-#include "Core/Coroutine/SyncWait.h"
+#include "Runtime/Core/Coroutine/SyncWait.h"
 #include "System/SystemEnvironment.h"
 
 namespace WhiteEngine

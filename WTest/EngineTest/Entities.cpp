@@ -3,6 +3,7 @@
 #include "Engine/System/SystemEnvironment.h"
 #include "Engine/Core/Coroutine/WhenAllReady.h"
 #include "Engine/Core/Coroutine/SyncWait.h"
+#include "spdlog/spdlog.h"
 
 std::string Access(const char* name, const scheme::TermNode& node) {
 	auto it = std::find_if(node.begin(), node.end(), [&](const scheme::TermNode& child) {
@@ -28,6 +29,7 @@ Entities::Entities(const fs::path& file) {
 		auto mesh_name = Access("mesh", entity_node);
 
 		tasks.emplace_back(Environment->Scheduler->Schedule([&meshs](std::string mesh_name,int index)->white::coroutine::Task<void> {
+			spdlog::info("AsyncLoadMesh {}", mesh_name);
 			meshs[index] = co_await platform::X::AsyncLoadMesh(mesh_name + ".asset", mesh_name);
 			co_return;
 			}(mesh_name,index++)));

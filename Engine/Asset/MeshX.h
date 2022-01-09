@@ -6,10 +6,10 @@
 #define WE_ASSET_MESH_X_H 1
 
 
-#include "../Core/Mesh.h"
+#include "Runtime/Core/Mesh.h"
 #include <filesystem>
 #include <string_view>
-#include "../Core/Coroutine/Task.h"
+#include "Runtime/Core/Coroutine/Task.h"
 namespace platform {
 	namespace X {
 		using path = std::filesystem::path;

@@ -10,9 +10,9 @@
 #include <variant>
 #include <filesystem>
 
-#include "../Render/PipleState.h"
-#include "../Render/Effect/Effect.hpp"
-#include "../Core/Coroutine/Task.h"
+#include "RenderInterface/PipleState.h"
+#include "RenderInterface/Effect/Effect.hpp"
+#include "Runtime/Core/Coroutine/Task.h"
 
 namespace asset
 {

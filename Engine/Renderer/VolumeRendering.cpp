@@ -1,7 +1,7 @@
 #include "VolumeRendering.h"
 #include <WBase/wmathtype.hpp>
-#include <Engine/Render/IDevice.h>
-#include <Engine/Render/IContext.h>
+#include <RenderInterface/IDevice.h>
+#include <RenderInterface/IContext.h>
 #include <WBase/smart_ptr.hpp>
 
 using namespace platform;

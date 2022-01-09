@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Engine/Render/ITexture.hpp"
-#include "Engine/Render/RenderPassInfo.h"
+#include "RenderInterface/ITexture.hpp"
+#include "RenderInterface/RenderPassInfo.h"
 
 namespace platform
 {

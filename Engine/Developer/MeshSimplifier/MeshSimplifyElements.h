@@ -5,7 +5,7 @@
 
 #include "CoreTypes.h"
 #include "Developer/MeshSimplifier/UnrolledLinkList.h"
-#include "Core/Container/vector.hpp"
+#include "Runtime/Core/Container/vector.hpp"
 
 template< typename T > class TSimpTri;
 

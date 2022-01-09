@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Engine/Render/ICommandList.h>
-#include "Engine/Render/ShaderParamterTraits.hpp"
-#include "Engine/Render/ShaderParameterStruct.h"
-#include "Math/PlatformMath.h"
+#include <RenderInterface/ICommandList.h>
+#include "RenderInterface/ShaderParamterTraits.hpp"
+#include "RenderInterface/ShaderParameterStruct.h"
+#include "Runtime/Core/Math/PlatformMath.h"
 
 namespace platform
 {

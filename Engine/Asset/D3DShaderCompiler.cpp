@@ -6,12 +6,12 @@
 #include <WFramework/Win32/WCLib/NLS.h>
 #include <WBase/ConcurrentHashMap.h>
 #include "D3DShaderCompiler.h"
-#include "../Render/IContext.h"
-#include "../Render/RayTracingDefinitions.h"
-#include "../Render/BuiltInRayTracingShader.h"
+#include "RenderInterface/IContext.h"
+#include "RenderInterface/RayTracingDefinitions.h"
+#include "RenderInterface/BuiltInRayTracingShader.h"
 #include "../emacro.h"
-#include "../Core/LFile.h"
-#include "../Core/Path.h"
+#include "Runtime/Core/LFile.h"
+#include "Runtime/Core/Path.h"
 #include <filesystem>
 
 #include <algorithm>

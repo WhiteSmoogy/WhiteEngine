@@ -1,6 +1,6 @@
 #pragma once
-#include "Render/Color_T.hpp"
-#include "Render/ICommandList.h"
+#include "RenderInterface/Color_T.hpp"
+#include "RenderInterface/ICommandList.h"
 #include "Runtime/SceneInfo.h"
 
 

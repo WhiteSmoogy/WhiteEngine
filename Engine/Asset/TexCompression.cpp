@@ -1,6 +1,6 @@
 #include <WBase/smart_ptr.hpp>
 #include "TexCompression.hpp"
-#include "../Render/IContext.h"
+#include "RenderInterface/IContext.h"
 
 namespace tc {
 	using platform::Render::Texture;

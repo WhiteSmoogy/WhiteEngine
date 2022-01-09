@@ -4,10 +4,10 @@
 #include "Engine/Core/Mesh.h"
 #include "WBase/wmathtype.hpp"
 #include "Engine/Asset/MeshX.h"
-#include "Engine/Render/IRayTracingScene.h"
-#include "Engine/Render/IRayDevice.h"
-#include "Engine/Render/IContext.h"
-#include "Engine/Render/IRayContext.h"
+#include "RenderInterface/IRayTracingScene.h"
+#include "RenderInterface/IRayDevice.h"
+#include "RenderInterface/IContext.h"
+#include "RenderInterface/IRayContext.h"
 #include "WBase/span.hpp"
 
 #include <string>

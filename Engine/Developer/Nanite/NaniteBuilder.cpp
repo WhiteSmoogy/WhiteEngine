@@ -3,10 +3,10 @@
 #include "Cluster.h"
 #include "NaniteEncode.h"
 #include "GraphPartitioner.h"
-#include "Core/Container/BitArray.h"
-#include "Core/Container/HashTable.h"
-#include "Core/Container/DisjointSet.h"
-#include "Core/ParallelFor.h"
+#include "Runtime/Core/Container/BitArray.h"
+#include "Runtime/Core/Container/HashTable.h"
+#include "Runtime/Core/Container/DisjointSet.h"
+#include "Runtime/Core/ParallelFor.h"
 #include "Developer/MeshSimplifier/MeshSimplify.h"
 
 #define NumBitsPerDWORD ((int32)32)

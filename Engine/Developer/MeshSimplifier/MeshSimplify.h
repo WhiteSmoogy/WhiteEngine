@@ -10,13 +10,13 @@
 
 #include "MeshSimplifyElements.h"
 #include "Quadric.h"
-#include "Core/Hash/Murmur.h"
-#include "Core/Container/HashTable.h"
-#include "Core/Container/BitArray.h"
+#include "Runtime/Core/Hash/Murmur.h"
+#include "Runtime/Core/Container/HashTable.h"
+#include "Runtime/Core/Container/BitArray.h"
 #include <unordered_set>
-#include "Core/Container/BinaryHeap.h"
-#include "Core/Container/DisjointSet.h"
-#include "Math/BoxSphereBounds.h"
+#include "Runtime/Core/Container/BinaryHeap.h"
+#include "Runtime/Core/Container/DisjointSet.h"
+#include "Runtime/Core/Math/BoxSphereBounds.h"
 
 
 inline uint32 HashPosition( const wm::float3& Position )

@@ -1,12 +1,12 @@
 #include "ScreenSpaceDenoiser.h"
-#include "Engine/Render/BuiltInShader.h"
-#include "Engine/Render/ShaderParamterTraits.hpp"
-#include "Engine/Render/ShaderParameterStruct.h"
-#include "Engine/Render/ShaderTextureTraits.hpp"
-#include "Engine/Render/DrawEvent.h"
-#include "Engine/Render/ShaderPermutation.h"
-#include "Engine/Render/IContext.h"
-#include "Engine/Render/RenderObject.h"
+#include "RenderInterface/BuiltInShader.h"
+#include "RenderInterface/ShaderParamterTraits.hpp"
+#include "RenderInterface/ShaderParameterStruct.h"
+#include "RenderInterface/ShaderTextureTraits.hpp"
+#include "RenderInterface/DrawEvent.h"
+#include "RenderInterface/ShaderPermutation.h"
+#include "RenderInterface/IContext.h"
+#include "RenderInterface/RenderObject.h"
 
 using namespace platform;
 

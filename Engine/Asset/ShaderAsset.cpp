@@ -1,7 +1,7 @@
 #include "ShaderAsset.h"
 #include "../System/SystemEnvironment.h"
 #include "WFramework/Helper/ShellHelper.h"
-#include "../Core/Path.h"
+#include "Runtime/Core/Path.h"
 
 using namespace asset;
 using namespace platform::Render::Shader;
@@ -473,7 +473,7 @@ ShaderParamType asset::ShadersAsset::GetType(const std::string& name)
 	return (ShaderParamType)type_define::Instance().type_code(name);
 }
 
-#include "../Core/AssetResourceScheduler.h"
+#include "Runtime/Core/AssetResourceScheduler.h"
 #include "WFramework/Helper/ShellHelper.h"
 #include "ShaderLoadingDesc.h"
 using namespace platform::X;

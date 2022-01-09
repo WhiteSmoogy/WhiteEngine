@@ -3,16 +3,16 @@
 #include <WScheme/WScheme.h>
 #include <WFramework/Core/ValueNode.h>
 #include <WBase/type_traits.hpp>
-#include "../Render/RayTracingDefinitions.h"
+#include "RenderInterface/RayTracingDefinitions.h"
 
 #include <filesystem>
 #include <fstream>
 
 #include "ShaderAsset.h"
 #include "WSLAssetX.h"
-#include "../Core/Coroutine/ReadOnlyFile.h"
-#include "../Core/Coroutine/IOScheduler.h"
-#include "../Core/Coroutine/SyncWait.h"
+#include "Runtime/Core/Coroutine/ReadOnlyFile.h"
+#include "Runtime/Core/Coroutine/IOScheduler.h"
+#include "Runtime/Core/Coroutine/SyncWait.h"
 #include "../System/SystemEnvironment.h"
 
 namespace platform::X

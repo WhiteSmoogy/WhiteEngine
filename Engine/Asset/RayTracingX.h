@@ -1,8 +1,8 @@
 #pragma once
 
 #include <WBase/wmemory.hpp>
-#include "../Render/IRayTracingShader.h"
-#include "../Render/IRayDevice.h"
+#include "RenderInterface/IRayTracingShader.h"
+#include "RenderInterface/IRayDevice.h"
 #include <filesystem>
 
 namespace platform::X {

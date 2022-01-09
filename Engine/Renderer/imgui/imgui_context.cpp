@@ -1,10 +1,10 @@
 #include "imgui_context.h"
-#include "../../Render/ICommandList.h"
-#include "../../Render/PipelineStateUtility.h"
-#include "../../Render/BuiltInShader.h"
+#include "../RenderInterface/ICommandList.h"
+#include "../RenderInterface/PipelineStateUtility.h"
+#include "../RenderInterface/BuiltInShader.h"
 #include <WBase/wmathtype.hpp>
-#include <Engine/Render/ShaderParamterTraits.hpp>
-#include <Engine/Render/ShaderParameterStruct.h>
+#include <RenderInterface/ShaderParamterTraits.hpp>
+#include <RenderInterface/ShaderParameterStruct.h>
 
 using namespace platform;
 using namespace platform::imgui;

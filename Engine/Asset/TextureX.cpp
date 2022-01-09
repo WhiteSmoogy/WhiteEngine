@@ -4,10 +4,10 @@
 #include "CompressionBC.hpp"
 #include "CompressionETC.hpp"
 
-#include "../Render/Color_T.hpp"
-#include "../Render/IContext.h"
+#include "RenderInterface/Color_T.hpp"
+#include "RenderInterface/IContext.h"
 
-#include "../Core/AssetResourceScheduler.h"
+#include "Runtime/Core/AssetResourceScheduler.h"
 
 #include <WFramework/WCLib/Debug.h>
 #include <WBase/smart_ptr.hpp>

@@ -8,9 +8,9 @@
 #include <WBase/winttype.hpp>
 #include <WBase/operators.hpp>
 #include "../emacro.h"
-#include "../Render/IFormat.hpp"
-#include "../Render/ITexture.hpp"
-#include "../Render/Color_T.hpp"
+#include "RenderInterface/IFormat.hpp"
+#include "RenderInterface/ITexture.hpp"
+#include "RenderInterface/Color_T.hpp"
 
 namespace tc {
 	using namespace white::inttype;

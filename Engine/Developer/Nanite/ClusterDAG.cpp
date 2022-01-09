@@ -4,10 +4,10 @@
 #endif
 
 #include "ClusterDAG.h"
-#include "Core/ParallelFor.h"
+#include "Runtime/Core/ParallelFor.h"
 #include "GraphPartitioner.h"
 #include "Developer/MeshSimplifier/MeshSimplify.h"
-#include "Core/Container/BinaryHeap.h"
+#include "Runtime/Core/Container/BinaryHeap.h"
 #include <WBase/span.hpp>
 #include <atomic>
 

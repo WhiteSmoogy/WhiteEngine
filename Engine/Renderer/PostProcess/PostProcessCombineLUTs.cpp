@@ -1,12 +1,12 @@
 #include "PostProcessCombineLUTs.h"
-#include <Engine/Render/ShaderParamterTraits.hpp>
-#include <Engine/Render/BuiltInShader.h>
-#include <Engine/Render/IContext.h>
-#include <Engine/Render/PipelineStateUtility.h>
-#include <Engine/Render/ShaderParameterStruct.h>
+#include <RenderInterface/ShaderParamterTraits.hpp>
+#include <RenderInterface/BuiltInShader.h>
+#include <RenderInterface/IContext.h>
+#include <RenderInterface/PipelineStateUtility.h>
+#include <RenderInterface/ShaderParameterStruct.h>
 #include <Engine/System/SystemEnvironment.h>
 #include <WBase/smart_ptr.hpp>
-#include <Engine/Render/ICommandList.h>
+#include <RenderInterface/ICommandList.h>
 #include "../VolumeRendering.h"
 
 using namespace platform;

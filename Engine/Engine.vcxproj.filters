@@ -1,18 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Render\D3D12\d3d12_dxgi.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\Color_T.cpp">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="Win32\File.cpp">
-      <Filter>Win32</Filter>
-    </ClCompile>
-    <ClCompile Include="Win32\NTHandle.cpp">
-      <Filter>Win32</Filter>
-    </ClCompile>
     <ClCompile Include="Asset\Loader.cpp">
       <Filter>Asset</Filter>
     </ClCompile>
@@ -22,7 +10,6 @@
     <ClCompile Include="Asset\TextureX.cpp">
       <Filter>Asset</Filter>
     </ClCompile>
-    <ClCompile Include="test.cpp" />
     <ClCompile Include="Asset\CompressionBC.cpp">
       <Filter>Asset</Filter>
     </ClCompile>
@@ -35,62 +22,8 @@
     <ClCompile Include="Asset\EffectAsset.cpp">
       <Filter>Asset</Filter>
     </ClCompile>
-    <ClCompile Include="Render\Effect\Effect.cpp">
-      <Filter>Render\Effect</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\Texture1D.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\Texture2D.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\Texture3D.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\TextureCube.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\Texture.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\Display.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\ShaderCompose.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\Convert.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\Context.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\GraphicsBuffer.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\Effect\BiltEffect.cpp">
-      <Filter>Render\Effect</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\InputLayout.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\PipleState.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\Fence.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\FrameBuffer.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\Effect\CopyEffect.cpp">
-      <Filter>Render\Effect</Filter>
-    </ClCompile>
     <ClCompile Include="Asset\MeshX.cpp">
       <Filter>Asset</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\ResourceHolder.cpp">
-      <Filter>Render\D3D12</Filter>
     </ClCompile>
     <ClCompile Include="Asset\MaterialX.cpp">
       <Filter>Asset</Filter>
@@ -101,92 +34,8 @@
     <ClCompile Include="Asset\DDSX.cpp">
       <Filter>Asset</Filter>
     </ClCompile>
-    <ClCompile Include="Core\CameraController.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\IContext.cpp">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\InputLayout.cpp">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\ITexture.cpp">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\FrameBuffer.cpp">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\ResourceView.cpp">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\PipleState.cpp">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\GraphicsBuffer.cpp">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\ResourcesHolder.cpp">
-      <Filter>Core\Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\AssetResourceScheduler.cpp">
-      <Filter>Core\Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Materail.cpp">
-      <Filter>Core\Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Mesh.cpp">
-      <Filter>Core\Resource</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\WSLEvaluator.cpp">
-      <Filter>Core\LSL</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\WSLBuilder.cpp">
-      <Filter>Core\LSL</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Camera.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="System\SystemEnvironment.cpp">
       <Filter>System</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\IRayTracingGeometry.cpp">
-      <Filter>Render\DeviceInterface\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\IRayTracingPipelineState.cpp">
-      <Filter>Render\DeviceInterface\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\IRayTracingScene.cpp">
-      <Filter>Render\DeviceInterface\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\IRayTracingShader.cpp">
-      <Filter>Render\DeviceInterface\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\RayTracingGeometry.d3d12.cpp">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\RayTracingScene.d3d12.cpp">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\RayContext.cpp">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\RayTracingPipelineState.cpp">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\RenderObject.cpp">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Hash\CityHash.cpp">
-      <Filter>Core\Hash</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\RootSignature.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\D3D12RayTracing.cpp">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\RayTracingShader.cpp">
-      <Filter>Render\D3D12\RayTracing</Filter>
     </ClCompile>
     <ClCompile Include="Asset\ShaderAsset.cpp">
       <Filter>Asset</Filter>
@@ -197,131 +46,20 @@
     <ClCompile Include="Asset\RayTracingX.cpp">
       <Filter>Asset</Filter>
     </ClCompile>
-    <ClCompile Include="Render\D3D12\BuiltInRayTracingShaders.cpp">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\GraphicsPipelineState.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\VertexDeclaration.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer\PostProcess\PostProcessCombineLUTs.cpp">
       <Filter>Renderer\PostProcess</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\VolumeRendering.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="Render\ICommandList.cpp">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\ShaderParamterTraits.cpp">
-      <Filter>Render\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\Shader.cpp">
-      <Filter>Render\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\ShaderParameterUtility.cpp">
-      <Filter>Render\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\ShaderCore.cpp">
-      <Filter>Render\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\ShaderParametersMetadata.cpp">
-      <Filter>Render\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\BuiltInRayTracingShader.cpp">
-      <Filter>Render\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\HardwareShader.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\CommandContext.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\ConstantBuffer.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\ContextStateCache.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\DescriptorCache.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\NodeDevice.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\DXGIAdapter.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\Adapter.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\CommandList.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\CommandListManager.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\Utility.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\D3D12\SamplerState.d3d12.cpp">
-      <Filter>Render\D3D12</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer\imgui\imgui_context.cpp">
       <Filter>Renderer\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\RenderPassInfo.cpp">
-      <Filter>Render\DeviceInterface</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\PostProcess\PostProcessToneMap.cpp">
       <Filter>Renderer\PostProcess</Filter>
     </ClCompile>
-    <ClCompile Include="Render\CommonRenderResources.cpp">
-      <Filter>Render\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\PixelShaderUtils.cpp">
-      <Filter>Render\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\PipelineStateUtility.cpp">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Threading\ManualResetEvent.cpp">
-      <Filter>Core\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Threading\TaskScheduler.cpp">
-      <Filter>Core\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Threading\AutoResetEvent.cpp">
-      <Filter>Core\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Coroutine\IOScheduler.cpp">
-      <Filter>Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Coroutine\file_read_operation.cpp">
-      <Filter>Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Coroutine\readable_file.cpp">
-      <Filter>Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Coroutine\ReadOnlyFile.cpp">
-      <Filter>Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Coroutine\file.coroutine.cpp">
-      <Filter>Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Threading\Win32Thread.cpp">
-      <Filter>Core\Threading</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer\ScreenSpaceDenoiser.cpp">
       <Filter>Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\DrawEvent.cpp">
-      <Filter>Render\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\BuiltInShader.cpp">
-      <Filter>Render\Shader</Filter>
     </ClCompile>
     <ClCompile Include="Runtime\Light.cpp">
       <Filter>Runtime</Filter>
@@ -332,47 +70,20 @@
     <ClCompile Include="Renderer\ShadowRendering.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\SceneRendering.cpp">
-      <Filter>Runtime</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer\ScreenRendering.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Runtime\GizmosElements.cpp">
       <Filter>Runtime</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Path.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Plugins\sqlite\sqlite3.c">
       <Filter>Plugins\sqlite</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\ShaderDB.cpp">
-      <Filter>Render\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Serialization\Archive.cpp">
-      <Filter>Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Coroutine\file_write_operation.cpp">
-      <Filter>Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Coroutine\writable_file.cpp">
-      <Filter>Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Coroutine\WriteOnlyFile.cpp">
-      <Filter>Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Coroutine\FileAsyncStream.cpp">
-      <Filter>Core\Coroutine</Filter>
     </ClCompile>
     <ClCompile Include="Developer\MeshSimplifier\MeshSimplify.cpp">
       <Filter>Developer\MeshSimplifier</Filter>
     </ClCompile>
     <ClCompile Include="Developer\MeshSimplifier\Quadric.cpp">
       <Filter>Developer\MeshSimplifier</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Container\HashTable.cpp">
-      <Filter>Core\Container</Filter>
     </ClCompile>
     <ClCompile Include="Developer\Nanite\NaniteEncode.cpp">
       <Filter>Developer\Nanite</Filter>
@@ -383,68 +94,330 @@
     <ClCompile Include="Developer\Nanite\ClusterDAG.cpp">
       <Filter>Developer\Nanite</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Compression.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Compression\lz4.cpp">
-      <Filter>Core\Compression</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Compression\lz4hc.cpp">
-      <Filter>Core\Compression</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Serialization\BulkData.cpp">
-      <Filter>Core\Serialization</Filter>
-    </ClCompile>
     <ClCompile Include="Developer\Nanite\GraphPartitioner.cpp">
       <Filter>Developer\Nanite</Filter>
     </ClCompile>
     <ClCompile Include="Developer\Nanite\NaniteBuilder.cpp">
       <Filter>Developer\Nanite</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Threading\SpinWait.cpp">
-      <Filter>Core\Threading</Filter>
+    <ClCompile Include="Runtime\SceneRendering.cpp">
+      <Filter>Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Threading\SpinMutex.cpp">
-      <Filter>Core\Threading</Filter>
+    <ClCompile Include="Runtime\Core\Threading\AutoResetEvent.cpp">
+      <Filter>Runtime\Core\Threading</Filter>
     </ClCompile>
-    <ClCompile Include="Render\ShaderResource.cpp">
-      <Filter>Render\Shader</Filter>
+    <ClCompile Include="Runtime\Core\Threading\ManualResetEvent.cpp">
+      <Filter>Runtime\Core\Threading</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Hash\MessageDigest.cpp">
-      <Filter>Core\Hash</Filter>
+    <ClCompile Include="Runtime\Core\Threading\SpinMutex.cpp">
+      <Filter>Runtime\Core\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Threading\SpinWait.cpp">
+      <Filter>Runtime\Core\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Threading\TaskScheduler.cpp">
+      <Filter>Runtime\Core\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Threading\Win32Thread.cpp">
+      <Filter>Runtime\Core\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Serialization\Archive.cpp">
+      <Filter>Runtime\Core\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Serialization\BulkData.cpp">
+      <Filter>Runtime\Core\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\AssetResourceScheduler.cpp">
+      <Filter>Runtime\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Camera.cpp">
+      <Filter>Runtime\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\CameraController.cpp">
+      <Filter>Runtime\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Compression.cpp">
+      <Filter>Runtime\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Materail.cpp">
+      <Filter>Runtime\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Mesh.cpp">
+      <Filter>Runtime\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Path.cpp">
+      <Filter>Runtime\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\ResourcesHolder.cpp">
+      <Filter>Runtime\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\WSLBuilder.cpp">
+      <Filter>Runtime\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\WSLEvaluator.cpp">
+      <Filter>Runtime\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Hash\CityHash.cpp">
+      <Filter>Runtime\Core\Hash</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Hash\MessageDigest.cpp">
+      <Filter>Runtime\Core\Hash</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Coroutine\writable_file.cpp">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Coroutine\readable_file.cpp">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Coroutine\file_write_operation.cpp">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Coroutine\file_read_operation.cpp">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Coroutine\file.coroutine.cpp">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Coroutine\WriteOnlyFile.cpp">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Coroutine\ThreadScheduler.cpp">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Coroutine\ReadOnlyFile.cpp">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Coroutine\IOScheduler.cpp">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Coroutine\FileAsyncStream.cpp">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Container\HashTable.cpp">
+      <Filter>Runtime\Core\Container</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Compression\lz4.cpp">
+      <Filter>Runtime\Core\Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Core\Compression\lz4hc.cpp">
+      <Filter>Runtime\Core\Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\Adapter.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\CommandContext.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\CommandList.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\CommandListManager.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\ConstantBuffer.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\Context.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\ContextStateCache.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\Convert.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\d3d12_dxgi.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\DescriptorCache.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\Display.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\DXGIAdapter.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\Fence.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\FrameBuffer.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\GraphicsBuffer.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\GraphicsPipelineState.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\HardwareShader.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\InputLayout.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\NodeDevice.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\PipleState.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\ResourceHolder.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\RootSignature.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\SamplerState.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\ShaderCompose.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\Texture.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\Texture1D.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\Texture2D.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\Texture3D.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\TextureCube.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\Utility.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\VertexDeclaration.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\BuiltInRayTracingShaders.cpp">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\D3D12RayTracing.cpp">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\RayContext.cpp">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\RayTracingGeometry.d3d12.cpp">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\RayTracingPipelineState.cpp">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\RayTracingScene.d3d12.cpp">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\RayTracingShader.cpp">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\Effect\BiltEffect.cpp">
+      <Filter>RenderInterface\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\Effect\CopyEffect.cpp">
+      <Filter>RenderInterface\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\Effect\Effect.cpp">
+      <Filter>RenderInterface\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\BuiltInRayTracingShader.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\BuiltInShader.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\Color_T.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\CommonRenderResources.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\DrawEvent.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\FrameBuffer.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\GraphicsBuffer.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\ICommandList.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\IContext.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\InputLayout.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\IRayTracingGeometry.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\IRayTracingPipelineState.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\IRayTracingScene.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\IRayTracingShader.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\ITexture.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\PipelineStateUtility.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\PipleState.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\PixelShaderUtils.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\RenderObject.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\RenderPassInfo.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\ResourceView.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\Shader.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\ShaderCore.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\ShaderDB.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\ShaderParametersMetadata.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\ShaderParameterUtility.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\ShaderParamterTraits.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\ShaderResource.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="test.cpp" />
+    <ClCompile Include="System\Win32\File.cpp">
+      <Filter>System\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="System\Win32\NTHandle.cpp">
+      <Filter>System\Win32</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Render\D3D12\Context.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\Convert.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\d3d12_dxgi.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\Display.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\Texture.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\Color_T.hpp">
-      <Filter>Render</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IFormat.hpp">
-      <Filter>Render</Filter>
-    </ClInclude>
-    <ClInclude Include="Win32\File.h">
-      <Filter>Win32</Filter>
-    </ClInclude>
-    <ClInclude Include="Win32\Handle.h">
-      <Filter>Win32</Filter>
-    </ClInclude>
-    <ClInclude Include="Win32\NTHandle.h">
-      <Filter>Win32</Filter>
-    </ClInclude>
     <ClInclude Include="Asset\CompressionBC.hpp">
       <Filter>Asset</Filter>
     </ClInclude>
@@ -463,51 +436,17 @@
     <ClInclude Include="Asset\TextureX.h">
       <Filter>Asset</Filter>
     </ClInclude>
-    <ClInclude Include="emacro.h" />
     <ClInclude Include="Asset\EffectX.h">
       <Filter>Asset</Filter>
     </ClInclude>
     <ClInclude Include="Asset\EffectAsset.h">
       <Filter>Asset</Filter>
     </ClInclude>
-    <ClInclude Include="Render\Effect\Effect.hpp">
-      <Filter>Render\Effect</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\ShaderCompose.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\PipleState.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\GraphicsBuffer.hpp">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\Effect\EffectProperty.h">
-      <Filter>Render\Effect</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\Effect\BiltEffect.h">
-      <Filter>Render\Effect</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\InputLayout.hpp">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\Fence.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\FrameBuffer.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\Effect\CopyEffect.h">
-      <Filter>Render\Effect</Filter>
-    </ClInclude>
     <ClInclude Include="Asset\MeshAsset.h">
       <Filter>Asset</Filter>
     </ClInclude>
     <ClInclude Include="Asset\MeshX.h">
       <Filter>Asset</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\ResourceHolder.h">
-      <Filter>Render\D3D12</Filter>
     </ClInclude>
     <ClInclude Include="Asset\MaterialAsset.h">
       <Filter>Asset</Filter>
@@ -524,122 +463,8 @@
     <ClInclude Include="System\NinthTimer.h">
       <Filter>System</Filter>
     </ClInclude>
-    <ClInclude Include="Core\CameraController.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\DataStructures.h">
-      <Filter>Render</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\ViewPort.h">
-      <Filter>Render</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\DeviceCaps.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IDevice.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IContext.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IGPUResourceView.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\InputLayout.hpp">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IFrameBuffer.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\ITexture.hpp">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IGraphicsBuffer.hpp">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IDisplay.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\PipleState.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Resource.h">
-      <Filter>Core\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\ResourcesHolder.h">
-      <Filter>Core\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\AssetResourceScheduler.h">
-      <Filter>Core\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Materail.h">
-      <Filter>Core\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Mesh.h">
-      <Filter>Core\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\WSLEvaluator.h">
-      <Filter>Core\LSL</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\WSLBuilder.h">
-      <Filter>Core\LSL</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Camera.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\LFile.h">
-      <Filter>Core\Base</Filter>
-    </ClInclude>
     <ClInclude Include="System\SystemEnvironment.h">
       <Filter>System</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IRayContext.h">
-      <Filter>Render\DeviceInterface\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IRayDevice.h">
-      <Filter>Render\DeviceInterface\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IRayTracingGeometry.h">
-      <Filter>Render\DeviceInterface\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IRayTracingPipelineState.h">
-      <Filter>Render\DeviceInterface\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IRayTracingScene.h">
-      <Filter>Render\DeviceInterface\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IRayTracingShader.h">
-      <Filter>Render\DeviceInterface\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\RayTracingShader.h">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\RayTracingGeometry.h">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\RayTracingScene.h">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\RayContext.h">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\RayDevice.h">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\RayTracingPipelineState.h">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\D3D12RayTracing.h">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\RenderObject.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\RootSignature.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Hash\CityHash.h">
-      <Filter>Core\Hash</Filter>
     </ClInclude>
     <ClInclude Include="Asset\RayShaderAsset.h">
       <Filter>Asset</Filter>
@@ -656,101 +481,11 @@
     <ClInclude Include="Asset\RayTracingX.h">
       <Filter>Asset</Filter>
     </ClInclude>
-    <ClInclude Include="Render\D3D12\BuiltInRayTracingShaders.h">
-      <Filter>Render\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IGraphicsPipelineState.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\GraphicsPipelineState.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\IShaderCompose.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\VertexDeclaration.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\ICommandContext.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\ICommandList.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer\PostProcess\PostProcessCombineLUTs.h">
       <Filter>Renderer\PostProcess</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\VolumeRendering.h">
       <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\ShaderParamterTraits.hpp">
-      <Filter>Render\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\ShaderCore.h">
-      <Filter>Render\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\Shader.h">
-      <Filter>Render\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\BuiltInShader.h">
-      <Filter>Render\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\BuiltInRayTracingShader.h">
-      <Filter>Render\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\ShaderParametersMetadata.h">
-      <Filter>Render\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\HardwareShader.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\ShaderParameterStruct.h">
-      <Filter>Render\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\CommandContext.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\ContextStateCache.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\Common.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\ConstantBuffer.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\DescriptorCache.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Win32\WindowsPlatformMath.h">
-      <Filter>Win32</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\NodeDevice.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\DXGIAdapter.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\Adapter.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\View.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\D3DCommandList.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\Utility.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\CommandListManager.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\D3D12\SamplerState.h">
-      <Filter>Render\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\RenderPassInfo.h">
-      <Filter>Render\DeviceInterface</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\imgui\imgui_context.h">
       <Filter>Renderer\imgui</Filter>
@@ -758,89 +493,8 @@
     <ClInclude Include="Renderer\PostProcess\PostProcessToneMap.h">
       <Filter>Renderer\PostProcess</Filter>
     </ClInclude>
-    <ClInclude Include="Render\ShaderTextureTraits.hpp">
-      <Filter>Render\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\CommonRenderResources.h">
-      <Filter>Render\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\PixelShaderUtils.h">
-      <Filter>Render\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\PipelineStateUtility.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\RayTracingDefinitions.h">
-      <Filter>Render\DeviceInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\Task.h">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\ThreadScheduler.h">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Threading\ManualResetEvent.h">
-      <Filter>Core\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\sync_wait_task.h">
-      <Filter>Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\SyncWait.h">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Threading\TaskScheduler.h">
-      <Filter>Core\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\is_awaiter.h">
-      <Filter>Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\get_awaiter.h">
-      <Filter>Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\when_all_counter.h">
-      <Filter>Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\when_all_ready_awaitable.h">
-      <Filter>Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\when_all_task.h">
-      <Filter>Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\AwaitableTraits.h">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\WhenAllReady.h">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Threading\AutoResetEvent.h">
-      <Filter>Core\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\IOScheduler.h">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\io_state.h">
-      <Filter>Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\file_read_operation.h">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\filemode.h">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\file.h">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\readable_file.h">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\ReadOnlyFile.h">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer\ScreenSpaceDenoiser.h">
       <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\DrawEvent.h">
-      <Filter>Render\Core</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\SSD\SSDMetadata.h">
       <Filter>Shaders\SSD</Filter>
@@ -869,9 +523,6 @@
     <ClInclude Include="Shaders\Random.h">
       <Filter>Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="Render\ShaderPermutation.h">
-      <Filter>Render\Shader</Filter>
-    </ClInclude>
     <ClInclude Include="Shaders\SSD\SSDSignalFramework.h">
       <Filter>Shaders\SSD</Filter>
     </ClInclude>
@@ -880,12 +531,6 @@
     </ClInclude>
     <ClInclude Include="Shaders\SSD\SSDSignalCompression.h">
       <Filter>Shaders\SSD</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\ShaderParameters.h">
-      <Filter>Render\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\TextureSampleDesc.h">
-      <Filter>Render\DeviceInterface</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\Platform.h">
       <Filter>Shaders</Filter>
@@ -896,41 +541,14 @@
     <ClInclude Include="Runtime\Light.h">
       <Filter>Runtime</Filter>
     </ClInclude>
-    <ClInclude Include="Math\Rotator.h">
-      <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\RotationMatrix.h">
-      <Filter>Math</Filter>
-    </ClInclude>
     <ClInclude Include="Runtime\SceneClasses.h">
       <Filter>Runtime</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\InverseRotationMatrix.h">
-      <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Sphere.h">
-      <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Runtime\SceneInfo.h">
       <Filter>Runtime</Filter>
     </ClInclude>
-    <ClInclude Include="Math\ScaleMatrix.h">
-      <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\ShadowProjectionMatrix.h">
-      <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\BoxSphereBounds.h">
-      <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\TranslationMatrix.h">
-      <Filter>Math</Filter>
-    </ClInclude>
     <ClInclude Include="Renderer\ShadowRendering.h">
       <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\IntRect.h">
-      <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\ScreenRendering.h">
       <Filter>Renderer</Filter>
@@ -938,33 +556,11 @@
     <ClInclude Include="Runtime\GizmosElements.h">
       <Filter>Runtime</Filter>
     </ClInclude>
-    <ClInclude Include="CoreTypes.h" />
-    <ClInclude Include="Core\Path.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Plugins\sqlite\sqlite_orm.h">
       <Filter>Plugins\sqlite</Filter>
     </ClInclude>
     <ClInclude Include="Plugins\sqlite\sqlite3.h">
       <Filter>Plugins\sqlite</Filter>
-    </ClInclude>
-    <ClInclude Include="Render\ShaderDB.h">
-      <Filter>Render\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Serialization\Archive.h">
-      <Filter>Core\Serialization</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\file_write_operation.hpp">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\writable_file.h">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\WriteOnlyFile.h">
-      <Filter>Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Coroutine\FileAsyncStream.h">
-      <Filter>Core\Coroutine</Filter>
     </ClInclude>
     <ClInclude Include="Developer\MeshSimplifier\Cache.h">
       <Filter>Developer\MeshSimplifier</Filter>
@@ -990,33 +586,6 @@
     <ClInclude Include="Developer\MeshBuild.h">
       <Filter>Developer</Filter>
     </ClInclude>
-    <ClInclude Include="Core\PlatformMemory.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Hash\Murmur.h">
-      <Filter>Core\Hash</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\PlatformMath.h">
-      <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Container\vector.hpp">
-      <Filter>Core\Container</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\PlatformAtomics.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Container\BitArray.h">
-      <Filter>Core\Container</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Container\HashTable.h">
-      <Filter>Core\Container</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Container\BinaryHeap.h">
-      <Filter>Core\Container</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Container\DisjointSet.h">
-      <Filter>Core\Container</Filter>
-    </ClInclude>
     <ClInclude Include="Developer\Nanite\NaniteEncode.h">
       <Filter>Developer\Nanite</Filter>
     </ClInclude>
@@ -1029,109 +598,508 @@
     <ClInclude Include="Developer\Nanite\Bounds.h">
       <Filter>Developer\Nanite</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Container\map.hpp">
-      <Filter>Core\Container</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\Float32.h">
-      <Filter>Math</Filter>
-    </ClInclude>
     <ClInclude Include="Developer\Nanite\GraphPartitioner.h">
       <Filter>Developer\Nanite</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\ParallelFor.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Sorting.h">
-      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Developer\Nanite\ClusterDAG.h">
       <Filter>Developer\Nanite</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Compression.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Compression\lz4.h">
-      <Filter>Core\Compression</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Compression\lz4hc.h">
-      <Filter>Core\Compression</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Serialization\BulkData.h">
-      <Filter>Core\Serialization</Filter>
-    </ClInclude>
     <ClInclude Include="Developer\Nanite\NaniteBuilder.h">
       <Filter>Developer\Nanite</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Threading\SpinWait.h">
-      <Filter>Core\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Threading\SpinMutex.h">
-      <Filter>Core\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Serialization\AsyncArchive.h">
-      <Filter>Core\Serialization</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Hash\MessageDigest.h">
-      <Filter>Core\Hash</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Serialization\MemoryWriter.h">
-      <Filter>Core\Serialization</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Serialization\MemoryArchive.h">
-      <Filter>Core\Serialization</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Serialization\MemoryReader.h">
-      <Filter>Core\Serialization</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\Util.h">
       <Filter>Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="Runtime\Core\Math\BoxSphereBounds.h">
+      <Filter>Runtime\Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Math\Float32.h">
+      <Filter>Runtime\Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Math\IntRect.h">
+      <Filter>Runtime\Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Math\InverseRotationMatrix.h">
+      <Filter>Runtime\Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Math\PlatformMath.h">
+      <Filter>Runtime\Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Math\RotationMatrix.h">
+      <Filter>Runtime\Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Math\Rotator.h">
+      <Filter>Runtime\Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Math\ScaleMatrix.h">
+      <Filter>Runtime\Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Math\ShadowProjectionMatrix.h">
+      <Filter>Runtime\Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Math\Sphere.h">
+      <Filter>Runtime\Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Math\TranslationMatrix.h">
+      <Filter>Runtime\Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\SSD\SSDDefinitions.h">
+      <Filter>Shaders\SSD</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Threading\AutoResetEvent.h">
+      <Filter>Runtime\Core\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Threading\ManualResetEvent.h">
+      <Filter>Runtime\Core\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Threading\SpinMutex.h">
+      <Filter>Runtime\Core\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Threading\SpinWait.h">
+      <Filter>Runtime\Core\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Threading\TaskScheduler.h">
+      <Filter>Runtime\Core\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Serialization\Archive.h">
+      <Filter>Runtime\Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Serialization\AsyncArchive.h">
+      <Filter>Runtime\Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Serialization\BulkData.h">
+      <Filter>Runtime\Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Serialization\MemoryArchive.h">
+      <Filter>Runtime\Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Serialization\MemoryReader.h">
+      <Filter>Runtime\Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Serialization\MemoryWriter.h">
+      <Filter>Runtime\Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\AssetResourceScheduler.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Camera.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\CameraController.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Compression.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\LFile.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Materail.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Mesh.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\ParallelFor.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Path.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\PlatformAtomics.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\PlatformMemory.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Resource.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\ResourcesHolder.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Sorting.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\WSLBuilder.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\WSLEvaluator.h">
+      <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Hash\CityHash.h">
+      <Filter>Runtime\Core\Hash</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Hash\MessageDigest.h">
+      <Filter>Runtime\Core\Hash</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Hash\Murmur.h">
+      <Filter>Runtime\Core\Hash</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\writable_file.h">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\when_all_task.h">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\when_all_ready_awaitable.h">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\when_all_counter.h">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\sync_wait_task.h">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\readable_file.h">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\is_awaiter.h">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\io_state.h">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\get_awaiter.h">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\filemode.h">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\file_write_operation.hpp">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\file_read_operation.h">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\file.h">
+      <Filter>Runtime\Core\Coroutine\details</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\WriteOnlyFile.h">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\WhenAllReady.h">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\ThreadScheduler.h">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\Task.h">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\SyncWait.h">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\ReadOnlyFile.h">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\IOScheduler.h">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\FileAsyncStream.h">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Coroutine\AwaitableTraits.h">
+      <Filter>Runtime\Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Container\BinaryHeap.h">
+      <Filter>Runtime\Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Container\BitArray.h">
+      <Filter>Runtime\Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Container\DisjointSet.h">
+      <Filter>Runtime\Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Container\HashTable.h">
+      <Filter>Runtime\Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Container\map.hpp">
+      <Filter>Runtime\Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Container\vector.hpp">
+      <Filter>Runtime\Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Compression\lz4.h">
+      <Filter>Runtime\Core\Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\Compression\lz4hc.h">
+      <Filter>Runtime\Core\Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\Adapter.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\CommandContext.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\CommandListManager.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\Common.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\ConstantBuffer.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\Context.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\ContextStateCache.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\Convert.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\d3d12_dxgi.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\D3DCommandList.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\DescriptorCache.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\Display.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\DXGIAdapter.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\Fence.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\FrameBuffer.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\GraphicsBuffer.hpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\GraphicsPipelineState.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\HardwareShader.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\InputLayout.hpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\NodeDevice.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\PipleState.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\ResourceHolder.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\RootSignature.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\SamplerState.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\ShaderCompose.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\Texture.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\Utility.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\VertexDeclaration.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\View.h">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\BuiltInRayTracingShaders.h">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\D3D12RayTracing.h">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\RayContext.h">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\RayDevice.h">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\RayTracingGeometry.h">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\RayTracingPipelineState.h">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\RayTracingScene.h">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\RayTracingShader.h">
+      <Filter>RenderInterface\D3D12\RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\Effect\BiltEffect.h">
+      <Filter>RenderInterface\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\Effect\CopyEffect.h">
+      <Filter>RenderInterface\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\Effect\Effect.hpp">
+      <Filter>RenderInterface\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\Effect\EffectProperty.h">
+      <Filter>RenderInterface\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\BuiltInRayTracingShader.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\BuiltInShader.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\Color_T.hpp">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\CommonRenderResources.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\DataStructures.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\DeviceCaps.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\DrawEvent.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ICommandContext.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ICommandList.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IContext.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IDevice.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IDisplay.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IFormat.hpp">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IFrameBuffer.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IGPUResourceView.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IGraphicsBuffer.hpp">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IGraphicsPipelineState.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\InputLayout.hpp">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IRayContext.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IRayDevice.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IRayTracingGeometry.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IRayTracingPipelineState.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IRayTracingScene.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IRayTracingShader.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\IShaderCompose.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ITexture.hpp">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\PipelineStateUtility.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\PipleState.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\PixelShaderUtils.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\RayTracingDefinitions.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\RenderObject.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\RenderPassInfo.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\Shader.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ShaderCore.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ShaderDB.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ShaderParameters.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ShaderParametersMetadata.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ShaderParameterStruct.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ShaderParamterTraits.hpp">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ShaderPermutation.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ShaderTextureTraits.hpp">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\TextureSampleDesc.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ViewPort.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="CoreTypes.h" />
+    <ClInclude Include="emacro.h" />
+    <ClInclude Include="test.h" />
+    <ClInclude Include="System\Win32\File.h">
+      <Filter>System\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="System\Win32\Handle.h">
+      <Filter>System\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="System\Win32\NTHandle.h">
+      <Filter>System\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="System\Win32\WindowsPlatformMath.h">
+      <Filter>System\Win32</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Render">
-      <UniqueIdentifier>{5b26259c-bdd7-411b-a6cb-36c3e5376e43}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Render\D3D12">
-      <UniqueIdentifier>{2cf8afb0-fd5b-444b-b357-508760e055ec}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Win32">
-      <UniqueIdentifier>{0a8995ab-b9c1-4a75-ab33-bd2a46e25fd3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core">
-      <UniqueIdentifier>{d71e34b1-aaa2-42c7-8011-d97ac858468a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Asset">
       <UniqueIdentifier>{6fe807d3-6fd9-4d67-906d-40208594580a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Render\Effect">
-      <UniqueIdentifier>{2f13adcf-582b-42d5-ae5a-cbd369ded2c3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Render\Material">
-      <UniqueIdentifier>{661cd8e8-d189-4430-94d4-c68076f60cd9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="System">
       <UniqueIdentifier>{0005d704-97d9-4add-85d4-7c2e2e625828}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Render\DeviceInterface">
-      <UniqueIdentifier>{f5398575-73b2-48e9-a4a5-539b3edd2f2c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core\Resource">
-      <UniqueIdentifier>{b3934063-cb99-43f5-98ce-26b87c7342d3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core\LSL">
-      <UniqueIdentifier>{fc679982-849c-482b-ae24-474cb3afe0af}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core\Base">
-      <UniqueIdentifier>{53562c64-6239-4065-b2b0-0ed9aab29db3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core\Threading">
-      <UniqueIdentifier>{551030a7-f19e-45ed-87c8-0cd0d623401e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Render\DeviceInterface\RayTracing">
-      <UniqueIdentifier>{50488218-b202-4e5b-9b96-90240b372a8c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Render\D3D12\RayTracing">
-      <UniqueIdentifier>{cf26db45-8ae4-489e-9924-9d1945a35667}</UniqueIdentifier>
     </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{560ae77a-67da-46fd-b918-dad253d018e2}</UniqueIdentifier>
@@ -1145,9 +1113,6 @@
     <Filter Include="Renderer\PostProcess">
       <UniqueIdentifier>{13811411-eaf2-4603-a4a1-32513bf1e4cf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Render\Shader">
-      <UniqueIdentifier>{6e38963e-768a-4adf-89c0-524ac94af2a1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shaders\PostProcess">
       <UniqueIdentifier>{12c18834-075b-4cc8-9dc6-689f35954d1e}</UniqueIdentifier>
     </Filter>
@@ -1160,15 +1125,6 @@
     <Filter Include="Shaders\Legacy">
       <UniqueIdentifier>{439bc9dd-f311-48e1-8f4d-e393f3e1bb6d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Render\Core">
-      <UniqueIdentifier>{5946ba9f-6d8d-4651-ad75-c68d4c6d7e43}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core\Coroutine">
-      <UniqueIdentifier>{ed04117b-5f27-42a1-8c75-d5f552ae646e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core\Coroutine\details">
-      <UniqueIdentifier>{4729c41f-8d7d-4ed8-b252-8956f69e7282}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shaders\SSD">
       <UniqueIdentifier>{4cabf620-236e-4148-aa2b-a7059b3445ff}</UniqueIdentifier>
     </Filter>
@@ -1178,17 +1134,11 @@
     <Filter Include="Runtime">
       <UniqueIdentifier>{0652b36a-68ef-4cfe-b077-d44ab03e3ad0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Math">
-      <UniqueIdentifier>{d81b66ec-3168-4ea4-9210-ea8fe28dcb62}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Plugins">
       <UniqueIdentifier>{11f9c427-da87-4b6c-b09c-6b252d3c752c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Plugins\sqlite">
       <UniqueIdentifier>{7a47ae44-a60e-49c7-83f8-d7bfe26fb855}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core\Serialization">
-      <UniqueIdentifier>{dcb49f88-74ab-4e39-9f7b-6a779ea0a44b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Developer">
       <UniqueIdentifier>{a9ea965d-c745-47a2-b1ad-79385f34613e}</UniqueIdentifier>
@@ -1196,23 +1146,56 @@
     <Filter Include="Developer\MeshSimplifier">
       <UniqueIdentifier>{aa389c22-5081-45a3-80c2-585f9b1a2e7e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Core\Hash">
-      <UniqueIdentifier>{a8d87a4e-523e-4ac2-a78a-ea2f3c546b2d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core\Container">
-      <UniqueIdentifier>{4f6b6faa-0ecd-4484-bc11-1f1f4fae7f68}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Developer\Nanite">
       <UniqueIdentifier>{b5959718-dad7-408f-aa09-00c835d55dc8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Core\Compression">
+    <Filter Include="RenderInterface">
+      <UniqueIdentifier>{5b26259c-bdd7-411b-a6cb-36c3e5376e43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderInterface\D3D12">
+      <UniqueIdentifier>{2cf8afb0-fd5b-444b-b357-508760e055ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderInterface\D3D12\RayTracing">
+      <UniqueIdentifier>{cf26db45-8ae4-489e-9924-9d1945a35667}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderInterface\Effect">
+      <UniqueIdentifier>{2f13adcf-582b-42d5-ae5a-cbd369ded2c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderInterface\Material">
+      <UniqueIdentifier>{661cd8e8-d189-4430-94d4-c68076f60cd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Core">
+      <UniqueIdentifier>{d71e34b1-aaa2-42c7-8011-d97ac858468a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Core\Threading">
+      <UniqueIdentifier>{551030a7-f19e-45ed-87c8-0cd0d623401e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Core\Coroutine">
+      <UniqueIdentifier>{ed04117b-5f27-42a1-8c75-d5f552ae646e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Core\Coroutine\details">
+      <UniqueIdentifier>{4729c41f-8d7d-4ed8-b252-8956f69e7282}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Core\Serialization">
+      <UniqueIdentifier>{dcb49f88-74ab-4e39-9f7b-6a779ea0a44b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Core\Hash">
+      <UniqueIdentifier>{a8d87a4e-523e-4ac2-a78a-ea2f3c546b2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Core\Container">
+      <UniqueIdentifier>{4f6b6faa-0ecd-4484-bc11-1f1f4fae7f68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Core\Compression">
       <UniqueIdentifier>{ba2fb6d8-bcc3-4185-ae87-1cc813b543c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Core\Math">
+      <UniqueIdentifier>{d81b66ec-3168-4ea4-9210-ea8fe28dcb62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System\Win32">
+      <UniqueIdentifier>{f25aa773-20ec-4ddc-a773-3f1b98659fc5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Render\CommonTextureImpl.hcc">
-      <Filter>Render\DeviceInterface</Filter>
-    </None>
     <None Include="Shaders\RayTracing\RayTracingHitGroupCommon.wsl">
       <Filter>Shaders\RayTracing</Filter>
     </None>
@@ -1237,24 +1220,6 @@
     <None Include="Shaders\PostProcess\VolumeRendering.wsl">
       <Filter>Shaders\PostProcess</Filter>
     </None>
-    <None Include="Render\Effect\material.wsl">
-      <Filter>Shaders\Legacy</Filter>
-    </None>
-    <None Include="Render\Effect\PostProcess.wsl">
-      <Filter>Shaders\Legacy</Filter>
-    </None>
-    <None Include="Render\Effect\PreZ.wsl">
-      <Filter>Shaders\Legacy</Filter>
-    </None>
-    <None Include="Render\Effect\ForwardDirectLightShading.wsl">
-      <Filter>Shaders\Legacy</Filter>
-    </None>
-    <None Include="Render\Effect\brdf_common.wsl">
-      <Filter>Shaders\Legacy</Filter>
-    </None>
-    <None Include="Render\Effect\Copy.wsl">
-      <Filter>Shaders\Legacy</Filter>
-    </None>
     <None Include="Shaders\PostProcess\PostProcessToneMap.wsl">
       <Filter>Shaders\PostProcess</Filter>
     </None>
@@ -1263,9 +1228,6 @@
     </None>
     <None Include="Shaders\RayTracing\RayTracingDirectionalLight.h">
       <Filter>Shaders\RayTracing</Filter>
-    </None>
-    <None Include="Render\Effect\DirectLight.wsl">
-      <Filter>Shaders\Legacy</Filter>
     </None>
     <None Include="Shaders\SSD\Shadow\SSDInjest.wsl">
       <Filter>Shaders\SSD\Shadow</Filter>
@@ -1306,19 +1268,36 @@
     <None Include="Shaders\GizmosPixelShader.wsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Render\Material\FPDS.mat.wsl">
-      <Filter>Render\Material</Filter>
+    <None Include="RenderInterface\Effect\Bilt.wsl">
+      <Filter>RenderInterface\Effect</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="Render\Effect\Bilt.wsl">
-      <Filter>Render\Effect</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <CopyFileToFolders Include="Shaders\SSD\SSDDefinitions.h">
-      <Filter>Shaders\SSD</Filter>
-    </CopyFileToFolders>
+    <None Include="RenderInterface\Effect\brdf_common.wsl">
+      <Filter>RenderInterface\Effect</Filter>
+    </None>
+    <None Include="RenderInterface\Effect\Copy.wsl">
+      <Filter>RenderInterface\Effect</Filter>
+    </None>
+    <None Include="RenderInterface\Effect\DirectLight.wsl">
+      <Filter>RenderInterface\Effect</Filter>
+    </None>
+    <None Include="RenderInterface\Effect\ForwardDirectLightShading.wsl">
+      <Filter>RenderInterface\Effect</Filter>
+    </None>
+    <None Include="RenderInterface\Effect\material.wsl">
+      <Filter>RenderInterface\Effect</Filter>
+    </None>
+    <None Include="RenderInterface\Effect\PostProcess.wsl">
+      <Filter>RenderInterface\Effect</Filter>
+    </None>
+    <None Include="RenderInterface\Effect\PreZ.wsl">
+      <Filter>RenderInterface\Effect</Filter>
+    </None>
+    <None Include="RenderInterface\Material\FPDS.mat.wsl">
+      <Filter>RenderInterface\Material</Filter>
+    </None>
+    <None Include="RenderInterface\CommonTextureImpl.hcc">
+      <Filter>RenderInterface</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Shaders\ShadowProjectionVertexShader.wsl">

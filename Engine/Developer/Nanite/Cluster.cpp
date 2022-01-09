@@ -6,14 +6,14 @@
 #include "Cluster.h"
 #include "Bounds.h"
 #include "Developer/MeshSimplifier/MeshSimplify.h"
-#include "Core/Container/HashTable.h"
-#include "Core/PlatformMemory.h"
+#include "Runtime/Core/Container/HashTable.h"
+#include "Runtime/Core/PlatformMemory.h"
 #include "Developer/MeshBuild.h"
-#include "Core/Container/DisjointSet.h"
-#include "Math/Float32.h"
+#include "Runtime/Core/Container/DisjointSet.h"
+#include "Runtime/Core/Math/Float32.h"
 #include "GraphPartitioner.h"
 
-#include "Core/Container/map.hpp"
+#include "Runtime/Core/Container/map.hpp"
 
 template< typename T > inline uint32 Min3Index( const T A, const T B, const T C ) { return ( A < B ) ? ( ( A < C ) ? 0 : 2 ) : ( ( B < C ) ? 1 : 2 ); }
 template< typename T > inline uint32 Max3Index( const T A, const T B, const T C ) { return ( A > B ) ? ( ( A > C ) ? 0 : 2 ) : ( ( B > C ) ? 1 : 2 ); }

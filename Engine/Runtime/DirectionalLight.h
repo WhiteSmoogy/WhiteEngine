@@ -2,7 +2,7 @@
 
 #include "Light.h"
 #include "SceneClasses.h"
-#include "Math/Sphere.h"
+#include "Runtime/Core/Math/Sphere.h"
 #include "SceneInfo.h"
 
 namespace WhiteEngine

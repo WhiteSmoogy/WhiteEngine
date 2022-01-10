@@ -72,7 +72,7 @@ RayTracingShader::RayTracingShader(const white::span<const uint8>& Code)
 	Ar >> RayAnyHitEntryPoint;
 	Ar >> RayIntersectionEntryPoint;
 
-	int32 Offset =Ar.Tell();
+	int32 Offset =static_cast<int32>(Ar.Tell());
 
 	auto CodePtr = Code.data()+ Offset;
 	auto CodeSize = ShaderCode.GetActualShaderCodeSize() - Offset;

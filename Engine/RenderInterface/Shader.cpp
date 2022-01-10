@@ -384,6 +384,9 @@ namespace platform::Render::Shader
 		meta->SetupCompileEnvironment(PermutationId, input.Environment);
 		asset::X::Shader::AppendCompilerEnvironment(input.Environment, input.Type);
 
+		//loop sm_version in future,and reduce by check preprocessShader hash
+		input.Environment.SetDefine("SM_VERSION", "66");
+
 		auto Code = co_await platform::X::GenHlslShaderAsync(local_path);
 
 		auto PreprocessRet = asset::X::Shader::PreprocessShader(Code, input);
@@ -396,13 +399,17 @@ namespace platform::Render::Shader
 
 		ShaderInfo Info{ input.Type };
 
-		auto blob = asset::X::Shader::CompileAndReflect(input,
+		uint32 Flags = D3DFlags::D3DCOMPILE_HLSL_2021;
+
 #ifndef NDEBUG
-			D3DFlags::D3DCOMPILE_DEBUG
+		Flags |= D3DFlags::D3DCOMPILE_DEBUG;
 #else
-			D3DFlags::D3DCOMPILE_OPTIMIZATION_LEVEL3
+		Flags |= D3DFlags::D3DCOMPILE_OPTIMIZATION_LEVEL3;
 #endif
-			, &Info
+
+		auto blob = asset::X::Shader::CompileAndReflect(input,
+			Flags,
+			&Info
 		);
 
 		platform::Render::ShaderInitializer initializer{

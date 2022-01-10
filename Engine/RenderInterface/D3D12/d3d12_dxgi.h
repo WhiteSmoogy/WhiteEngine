@@ -8,8 +8,8 @@
 #include <WBase/wdef.h>
 #include <WBase/winttype.hpp>
 #include <WFramework/Win32/WCLib/COM.h>
-#include <UniversalDXSDK/d3d12.h>
-#include <UniversalDXSDK/dxgi1_6.h>
+#include <d3d12.h>
+#include <dxgi1_6.h>
 
 namespace platform_ex {
 	namespace Windows {

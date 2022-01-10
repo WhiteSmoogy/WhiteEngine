@@ -71,7 +71,7 @@ std::optional<fs::file_time_type> WhiteEngine::ShaderDB::QueryTime(const std::st
 	if (auto filetime = storage.get<FileTime>(path))
 		return std::filesystem::file_time_type(std::chrono::file_clock::duration(filetime->TimePoint));
 	else
-		spdlog::debug("QueryTime sqlite3 {}", filetime.error());
+		spdlog::debug("QueryTime sqlite3 {} {}",path,filetime.error());
 
 	return std::nullopt;
 }

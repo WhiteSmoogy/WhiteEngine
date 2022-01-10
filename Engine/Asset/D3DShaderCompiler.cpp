@@ -27,8 +27,6 @@ namespace asset::X::Shader {
 	{
 		using namespace  platform::Render;
 
-		environment.SetDefine("SM4", "40");
-
 		switch (type) {
 		case ShaderType::VertexShader:
 			environment.SetDefine("VS", "1");
@@ -39,7 +37,7 @@ namespace asset::X::Shader {
 		}
 	}
 
-	std::string_view CompileProfile(ShaderType type)
+	std::string_view CompileDXBCProfile(ShaderType type)
 	{
 		using namespace  platform::Render;
 
@@ -52,11 +50,29 @@ namespace asset::X::Shader {
 			return "gs_5_0";
 		case ShaderType::ComputeShader:
 			return "cs_5_0";
+		}
+
+		return "";
+	}
+
+	std::string_view CompileDXILProfile(ShaderType type)
+	{
+		using namespace  platform::Render;
+
+		switch (type) {
+		case ShaderType::VertexShader:
+			return "vs_6_6";
+		case ShaderType::PixelShader:
+			return "ps_6_6";
+		case ShaderType::GeometryShader:
+			return "gs_6_6";
+		case ShaderType::ComputeShader:
+			return "cs_6_6";
 		case ShaderType::RayGen:
 		case ShaderType::RayMiss:
 		case ShaderType::RayHitGroup:
 		case ShaderType::RayCallable:
-			return "lib_6_3";
+			return "lib_6_6";
 		}
 
 		return "";
@@ -66,11 +82,11 @@ namespace asset::X::Shader {
 
 
 #ifdef WFL_Win32
-#include <UniversalDXSDK/d3dcompiler.h>
+#include <d3dcompiler.h>
 #ifdef WFL_Win64
-#pragma comment(lib,"UniversalDXSDK/Lib/x64/d3dcompiler.lib")
+#pragma comment(lib,"d3dcompiler.lib")
 #else
-#pragma comment(lib,"UniversalDXSDK/Lib/x86/d3dcompiler.lib")
+#pragma comment(lib,"d3dcompiler.lib")
 #endif
 #include <dxc/Support/dxcapi.use.h>
 
@@ -354,7 +370,7 @@ namespace asset::X::Shader::DXBC {
 		platform_ex::COMPtr<ID3DBlob> code_blob;
 		platform_ex::COMPtr<ID3DBlob> error_blob;
 
-		auto hr = D3DCompile(input.Code.data(), input.Code.size(), input.SourceName.data(), defines.data(), nullptr, input.EntryPoint.data(), CompileProfile(input.Type).data(), flags, 0, &code_blob, &error_blob);
+		auto hr = D3DCompile(input.Code.data(), input.Code.size(), input.SourceName.data(), defines.data(), nullptr, input.EntryPoint.data(), CompileDXBCProfile(input.Type).data(), flags, 0, &code_blob, &error_blob);
 		if (error_blob)
 		{
 			auto error = reinterpret_cast<char*>(error_blob->GetBufferPointer());
@@ -638,6 +654,12 @@ namespace asset::X::Shader::DXIL {
 			OutArgs.push_back(L"/Gec");
 		}
 
+		if (CompileFlags & D3DCOMPILE_HLSL_2021)
+		{
+			CompileFlags &= ~D3DCOMPILE_HLSL_2021;
+			OutArgs.push_back(L"-HV 2021");
+		}
+
 		switch (CompileFlags & SHADER_OPTIMIZATION_LEVEL_MASK)
 		{
 		case D3DCOMPILE_OPTIMIZATION_LEVEL0:
@@ -733,7 +755,7 @@ namespace asset::X::Shader::DXIL {
 			TextBlob.Get(),
 			L"hlsl.hlsl",
 			(wchar_t*)String(input.EntryPoint).data(),
-			(wchar_t*)String(CompileProfile(input.Type)).data(),
+			(wchar_t*)String(CompileDXILProfile(input.Type)).data(),
 			args.data(),
 			static_cast<UINT32>(args.size()),
 			NULL,
@@ -939,6 +961,9 @@ namespace asset::X::Shader
 		white::uint32 flags, ShaderInfo* pInfo)
 	{
 		bool use_dxc = IsRayTracingShader(input.Type);
+
+		if (flags & D3DCOMPILE_HLSL_2021)
+			use_dxc = true;
 
 		bool use_dxbc = !use_dxc;
 

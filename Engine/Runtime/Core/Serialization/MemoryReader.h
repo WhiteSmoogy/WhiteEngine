@@ -21,7 +21,7 @@ namespace WhiteEngine
 			if (Num && !ArIsError)
 			{
 				// Only serialize if we have the requested amount of data
-				if (Offset + Num <= TotalSize())
+				if (static_cast<int64>(Offset + Num) <= TotalSize())
 				{
 					std::memcpy(Data, &Bytes[(int32)Offset], Num);
 					Offset += Num;

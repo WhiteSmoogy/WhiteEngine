@@ -1298,6 +1298,7 @@
     <None Include="RenderInterface\CommonTextureImpl.hcc">
       <Filter>RenderInterface</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Shaders\ShadowProjectionVertexShader.wsl">

@@ -66,6 +66,8 @@ namespace D3DFlags {
 		D3DCOMPILE_RESOURCES_MAY_ALIAS = (1 << 19),
 		D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES = (1 << 20),
 		D3DCOMPILE_ALL_RESOURCES_BOUND = (1 << 21),
+
+		D3DCOMPILE_HLSL_2021 = (1<<30),
 	};
 
 	enum COMPILER_STRIP_FLAGS
@@ -121,5 +123,4 @@ namespace asset::X::Shader
 	ShaderBlob Strip(const ShaderBlob& blob, ShaderType type, white::uint32 flags);
 
 	void AppendCompilerEnvironment(FShaderCompilerEnvironment& environment, ShaderType type);
-	std::string_view CompileProfile(ShaderType type);
 }

@@ -179,6 +179,8 @@ inline namespace Shader
 
 		std::vector<Digest::SHAHash> ShaderHashes;
 		std::vector<ShaderEntry> ShaderEntries;
+
+		std::mutex ShaderCriticalSection;
 	};
 
 	class ShaderMapResource_InlineCode : public ShaderMapResource

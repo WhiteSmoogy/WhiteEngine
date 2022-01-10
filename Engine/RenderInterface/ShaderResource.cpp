@@ -63,6 +63,7 @@ int32 Shader::ShaderMapResourceCode::FindShaderIndex(const Digest::SHAHash& InHa
 
 void Shader::ShaderMapResourceCode::AddShaderCode(ShaderType InType, const Digest::SHAHash& InHash, const ShaderCode& InCode)
 {
+	std::unique_lock lock{ ShaderCriticalSection };
 	auto index = std::distance(ShaderHashes.begin(), std::lower_bound(ShaderHashes.begin(), ShaderHashes.end(), InHash));
 	if (index >= ShaderHashes.size() || ShaderHashes[index] != InHash)
 	{

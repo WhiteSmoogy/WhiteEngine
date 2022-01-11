@@ -395,7 +395,7 @@ float3 ComputeVectorFromNeighborToRef(
 /** Returns whether this sample is outside the viewport. */
 bool IsOutsideViewport(FSSDKernelConfig KernelConfig, float2 SampleBufferUV)
 {
-	return any(SampleBufferUV < KernelConfig.BufferBilinearUVMinMax.xy || SampleBufferUV > KernelConfig.BufferBilinearUVMinMax.zw);
+	return any(or(SampleBufferUV < KernelConfig.BufferBilinearUVMinMax.xy,SampleBufferUV > KernelConfig.BufferBilinearUVMinMax.zw));
 }
 
 /** Sample multiplexed samples and their metadata for kernel use. */

@@ -14,7 +14,7 @@ const uint8* Shader::TryUncompressCode(const std::vector<uint8>& Code, int32 UnC
 	if (static_cast<int32>(Code.size()) != UnCompressSize)
 	{
 		UnCompressCode.resize(white::Align(UnCompressSize, 16));
-		Compression::UnCompressMemory(GetShaderCompressionFormat(), UnCompressCode.data(), UnCompressSize, ShaderCode, Code.size());
+		Compression::UnCompressMemory(GetShaderCompressionFormat(), UnCompressCode.data(), UnCompressSize, ShaderCode,static_cast<int32>(Code.size()));
 
 		ShaderCode = UnCompressCode.data();
 	}
@@ -28,7 +28,7 @@ const std::string& Shader::GetShaderCompressionFormat()
 }
 
 Shader::ShaderMapResource::ShaderMapResource(std::size_t Num)
-	:NumHWShaders(Num)
+	:NumHWShaders(static_cast<int32>(Num))
 {
 	HWShaders = std::make_unique<std::atomic<HardwareShader*>[]>(NumHWShaders);
 #if D3D_RAYTRACING
@@ -65,7 +65,7 @@ void Shader::ShaderMapResourceCode::AddShaderCode(ShaderType InType, const Diges
 {
 	std::unique_lock lock{ ShaderCriticalSection };
 	auto index = std::distance(ShaderHashes.begin(), std::lower_bound(ShaderHashes.begin(), ShaderHashes.end(), InHash));
-	if (index >= ShaderHashes.size() || ShaderHashes[index] != InHash)
+	if (index >=static_cast<int32>(ShaderHashes.size()) || ShaderHashes[index] != InHash)
 	{
 		ShaderHashes.insert(ShaderHashes.begin() + index, InHash);
 

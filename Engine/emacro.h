@@ -44,14 +44,6 @@
 #	define WE_API
 #endif
 
-#ifndef WE_LogError
-#define WE_LogError(...) platform_ex::SendDebugString(platform::Descriptions::Err,white::sfmt(__VA_ARGS__).c_str())
-#endif
-
-#ifndef WE_LogWarning
-#define WE_LogWarning(...) platform_ex::SendDebugString(platform::Descriptions::Warning,white::sfmt(__VA_ARGS__).c_str())
-#endif
-
 #define WE_EDITOR 1
 
 #endif

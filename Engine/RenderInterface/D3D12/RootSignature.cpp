@@ -1,6 +1,7 @@
 #include "RootSignature.h"
 #include "Context.h"
 #include "D3D12RayTracing.h"
+#include "spdlog/spdlog.h"
 
 #include "System/Win32/WindowsPlatformMath.h"
 #include "Runtime/Core/Hash/CityHash.h"
@@ -97,7 +98,7 @@ void RootSignature::Init(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& InDesc, uint
 	if(Error.GetRef())
 	{
 		auto error = reinterpret_cast<char*>(Error->GetBufferPointer());
-		WE_LogError(error);
+		spdlog::error(error);
 	}
 
 	CheckHResult(SerializeHR);

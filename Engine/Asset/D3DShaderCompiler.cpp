@@ -9,9 +9,12 @@
 #include "RenderInterface/IContext.h"
 #include "RenderInterface/RayTracingDefinitions.h"
 #include "RenderInterface/BuiltInRayTracingShader.h"
-#include "../emacro.h"
 #include "Runtime/Core/LFile.h"
 #include "Runtime/Core/Path.h"
+#include "spdlog/spdlog.h"
+
+#include "../emacro.h"
+
 #include <filesystem>
 
 #include <algorithm>
@@ -356,7 +359,7 @@ void FillD3D11Reflect(ID3D11ShaderReflection* pReflection, ShaderInfo* pInfo, Sh
 
 void ReportCompileResult(HRESULT hr, const char* msg)
 {
-	hr == S_OK ? WE_LogWarning(msg) : WE_LogError(msg);
+	hr == S_OK ? spdlog::warn(msg) : spdlog::error(msg);
 	CheckHResult(hr);
 }
 
@@ -600,7 +603,7 @@ namespace asset::X::Shader::DXIL {
 		}
 		else if (AutoBindingSpace != ~0u)
 		{
-			WE_LogError("Unsupported register binding space %d", AutoBindingSpace);
+			spdlog::error("Unsupported register binding space {}", AutoBindingSpace);
 		}
 
 		if (Exports && *Exports)
@@ -683,7 +686,7 @@ namespace asset::X::Shader::DXIL {
 			break;
 
 		default:
-			WE_LogError("Unknown optimization level flag");
+			spdlog::error("Unknown optimization level flag");
 			break;
 		}
 

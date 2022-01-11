@@ -3,6 +3,7 @@
 #include <WFramework/WCLib/Logger.h>
 
 #include "../Effect/CopyEffect.h"
+#include "spdlog/spdlog.h"
 
 #include "NodeDevice.h"
 #include "Adapter.h"
@@ -407,7 +408,7 @@ namespace platform_ex::Windows::D3D12 {
 		}
 		else
 		{
-			WE_LogError("ERROR: DirectX Raytracing is not supported by your OS, GPU and/or driver.");
+			spdlog::error("ERROR: DirectX Raytracing is not supported by your OS, GPU and/or driver.");
 		}
 
 		InitializeRayTracing();

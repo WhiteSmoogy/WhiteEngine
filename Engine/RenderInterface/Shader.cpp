@@ -776,7 +776,7 @@ std::string Shader::ParseAndMoveShaderParametersToRootConstantBuffer(std::string
 
 		auto EmitError = [&](const std::string& ErrorMessage)
 		{
-			WE_LogError(ErrorMessage.c_str());
+			spdlog::error(ErrorMessage);
 		};
 
 		auto EmitUnpextectedHLSLSyntaxError = [&]()

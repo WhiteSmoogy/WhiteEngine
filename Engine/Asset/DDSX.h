@@ -15,6 +15,8 @@
 #include "CompressionBC.hpp"
 #include "RenderInterface/IContext.h"
 
+#include "spdlog/spdlog.h"
+
 #include <filesystem>
 
 namespace dds {
@@ -1293,7 +1295,7 @@ namespace dds {
 
 				if (!found)
 				{
-					WE_LogError("format (%ld) is not supported.", pAsset->GetFormat());
+					spdlog::error("format ({}) is not supported.", pAsset->GetFormat());
 					break;
 				}
 			}

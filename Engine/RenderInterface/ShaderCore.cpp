@@ -107,7 +107,7 @@ void ShaderCode::Compress(const std::string& ShaderCompressionFormat)
 	Compressed.resize(CompressedSize);
 
 	// there is code that assumes that if CompressedSize == CodeSize, the shader isn't compressed. Because of that, do not accept equal compressed size (very unlikely anyway)
-	if (Compression::CompressMemory(ShaderCompressionFormat, Compressed.data(), CompressedSize, ShaderCodeWithOptionalData.data(), ShaderCodeWithOptionalData.size()) && CompressedSize < ShaderCodeWithOptionalData.size())
+	if (Compression::CompressMemory(ShaderCompressionFormat, Compressed.data(), CompressedSize, ShaderCodeWithOptionalData.data(),static_cast<int32>(ShaderCodeWithOptionalData.size())) && CompressedSize < static_cast<int32>(ShaderCodeWithOptionalData.size()))
 	{
 		// cache the ShaderCodeSize since it will no longer possible to get it as the reader will fail to parse the compressed data
 		ShaderCodeReader Wrapper(ShaderCodeWithOptionalData);
@@ -115,7 +115,7 @@ void ShaderCode::Compress(const std::string& ShaderCompressionFormat)
 
 		// finalize the compression
 		CompressionFormat = ShaderCompressionFormat;
-		UncompressedSize = ShaderCodeWithOptionalData.size();
+		UncompressedSize =static_cast<int32>(ShaderCodeWithOptionalData.size());
 
 		Compressed.resize(CompressedSize);
 		ShaderCodeWithOptionalData = Compressed;

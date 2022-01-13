@@ -25,9 +25,10 @@
 #include "Runtime/Core/Math/ScaleMatrix.h"
 #include "Runtime/Core/Math/ShadowProjectionMatrix.h"
 #include "Runtime/Core/Math/TranslationMatrix.h"
-#include "Engine/Core/Coroutine/WhenAllReady.h"
-#include "Engine/Core/Coroutine/SyncWait.h"
-#include "Engine/Core/Path.h"
+#include "Runtime/Core/Coroutine/WhenAllReady.h"
+#include "Runtime/Core/Coroutine/SyncWait.h"
+#include "Runtime/Core/Path.h"
+#include "Runtime/Core/ParallelFor.h"
 
 #include "WFramework/Win32/WCLib/Mingw32.h"
 #include "WFramework/Helper/ShellHelper.h"
@@ -102,7 +103,6 @@ public:
 	unsigned StateFrameIndex = 0;
 
 	std::vector<std::unique_ptr<we::ProjectedShadowInfo>> ShadowInfos;
-	std::vector<we::Sphere> ShadowSphere;
 private:
 	bool SubWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam) override
 	{
@@ -383,9 +383,8 @@ private:
 		{
 			std::vector<white::coroutine::Task<>> taskes;
 
-			for (int32 ShadowIndex = 0; ShadowIndex < ShadowInfos.size(); ++ShadowIndex)
-			{
-				taskes.emplace_back([this,&Subjects](int ShadowIndex)->white::coroutine::Task<void> {
+			WhiteEngine::ParallelFor(static_cast<int32>(ShadowInfos.size()),
+				[this, &Subjects](int ShadowIndex) {
 					for (int32 PrimitiveIndex = 0; PrimitiveIndex < pEntities->GetRenderables().size(); ++PrimitiveIndex)
 					{
 						auto& Primitive = pEntities->GetRenderables()[PrimitiveIndex];
@@ -402,17 +401,14 @@ private:
 						const auto ProjectedDistanceFromShadowOriginAlongLightDir = wm::dot(PrimitiveToShadowCenter, LightDirection);
 						const auto PrimitiveDistanceFromCylinderAxisSq = wm::length_sq(LightDirection * (-ProjectedDistanceFromShadowOriginAlongLightDir) + PrimitiveToShadowCenter);
 						const auto CombinedRadiusSq = Square(ShadowBounds.W + PrimitiveBounds.Radius);
-						//if (PrimitiveDistanceFromCylinderAxisSq < CombinedRadiusSq)
+						if (PrimitiveDistanceFromCylinderAxisSq < CombinedRadiusSq)
 						{
 							Subjects[ShadowIndex].emplace_back(&Primitive);
 						}
 					}
-					co_return;
-					}(ShadowIndex));
-			}
-
-			white::coroutine::SyncWait(white::coroutine::WhenAllReady(std::move(taskes)));
+				});
 		}
+
 		//RenderShadowDepthMapAtlases
 		auto BeginShadowRenderPass = [this](platform::Render::CommandList& CmdList, bool Clear)
 		{
@@ -638,10 +634,11 @@ private:
 			wm::float4{0,0,1,1},//Blue
 		};
 
-		int Count = std::min<int>(4, ShadowSphere.size());
+		int Count = std::min<int>(4, ShadowInfos.size());
 		for (int i = 0; i != Count;++i)
 		{
-			gizmos.AddSphere(ShadowSphere[i].Center, ShadowSphere[i].W, Colors[i]);
+			auto sphere = ShadowInfos[i]->ShadowBounds;
+			gizmos.AddSphere(sphere.Center, sphere.W, Colors[i]);
 		}
 
 		platform::Render::RenderPassInfo GeometryPass(
@@ -733,7 +730,7 @@ private:
 
 		sun_light.SetTransform(we::RotationMatrix(we::Rotator(-directioal_light.direction)));
 
-		sun_light.DynamicShadowCascades = 1;
+		sun_light.DynamicShadowCascades = 3;
 		sun_light.WholeSceneDynamicShadowRadius = modelRaidus *1.5f;
 
 
@@ -875,35 +872,16 @@ private:
 		if (ImGui::CollapsingHeader("Gizmos"))
 		{
 			ImGui::SameLine();
-			if (ImGui::Button("Clear"))
+			//if (ImGui::Button("Clear"))
 			{
-				ShadowSphere.clear();
 			}
 
 			ImGui::Indent(16);
 
-			for (int i = 0; i != ShadowSphere.size(); ++i)
+
+			for (int i = 0; i != ShadowInfos.size();++i)
 			{
-				sphere(i,ShadowSphere[i]);
-				ImGui::SameLine();
-
-				if (ImGui::Button("-"))
-				{
-					ShadowSphere.erase(ShadowSphere.begin() + i);
-					break;
-				}
-			}
-
-			for (int i = 0; i != ShadowInfos.size() && ShadowSphere.size() < 4; ++i)
-			{
-				sphere(i+ ShadowSphere.size(), ShadowInfos[i]->ShadowBounds);
-				ImGui::SameLine();
-
-				if (ImGui::Button("+"))
-				{
-					ShadowSphere.emplace_back(ShadowInfos[i]->ShadowBounds);
-					break;
-				}
+				sphere(i ,ShadowInfos[i]->ShadowBounds);
 			}
 
 			ImGui::Unindent(16);
@@ -935,7 +913,7 @@ void SetupLog()
 
 #ifndef NDEBUG
 	auto break_sink = std::make_shared<DebugBreakSink>();
-	break_sink->set_level(spdlog::level::critical);
+	break_sink->set_level(spdlog::level::err);
 #endif
 
 	spdlog::set_default_logger(white::share_raw(new spdlog::logger("spdlog", { file_sink,msvc_sink

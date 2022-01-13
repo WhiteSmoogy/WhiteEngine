@@ -1,8 +1,8 @@
 #include "Entities.h"
-#include "Engine/Asset/WSLAssetX.h"
-#include "Engine/System/SystemEnvironment.h"
-#include "Engine/Core/Coroutine/WhenAllReady.h"
-#include "Engine/Core/Coroutine/SyncWait.h"
+#include "Asset/WSLAssetX.h"
+#include "System/SystemEnvironment.h"
+#include "Runtime/Core/Coroutine/WhenAllReady.h"
+#include "Runtime/Core/Coroutine/SyncWait.h"
 #include "spdlog/spdlog.h"
 
 std::string Access(const char* name, const scheme::TermNode& node) {

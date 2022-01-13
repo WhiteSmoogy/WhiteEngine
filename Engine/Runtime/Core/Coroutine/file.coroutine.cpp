@@ -1,7 +1,7 @@
 #include "file.h"
 #include <WFramework/WCLib/NativeAPI.h>
 #include "IOScheduler.h"
-#include <Engine/emacro.h>
+#include "spdlog/spdlog.h"
 
 white::coroutine::file::~file()
 {
@@ -108,7 +108,7 @@ white::coroutine::win32::handle_t white::coroutine::file::open(
 	if (fileHandle == INVALID_HANDLE_VALUE)
 	{
 		const DWORD errorCode = ::GetLastError();
-		WE_LogError("CreateFileW(%s) Failed,%d", path.string().c_str(),errorCode);
+		spdlog::error("CreateFileW({}) Failed,{}", path.string(),errorCode);
 		throw std::system_error
 		{
 			static_cast<int>(errorCode),

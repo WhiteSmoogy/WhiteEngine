@@ -4,6 +4,7 @@
 #include "../Coroutine/Task.h"
 #include "../Coroutine/ThreadScheduler.h"
 #include "../Coroutine/IOScheduler.h"
+#include "../Coroutine/AwaitableTraits.h"
 
 namespace white::threading {
 	class TaskScheduler
@@ -15,11 +16,20 @@ namespace white::threading {
 		TaskScheduler();
 
 		template<typename AWAITABLE>
+		requires requires{typename white::coroutine::AwaitableTraits<AWAITABLE>::awaiter_t; }
 		white::coroutine::Task<void> Schedule(AWAITABLE awaitable)
 		{
 			co_await schedule();
 
 			co_return co_await std::move(awaitable);
+		}
+
+		template<typename F,class... ArgTypes>
+		white::coroutine::Task<invoke_result_t<F, ArgTypes...>> Schedule(F&& f, ArgTypes&&... args)
+		{
+			co_await schedule();
+
+			co_return  std::invoke(std::forward<F>(f),std::forward<ArgTypes>(args)...);
 		}
 
 		white::coroutine::IOScheduler& GetIOScheduler() noexcept;

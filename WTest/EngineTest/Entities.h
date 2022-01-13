@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Engine/Asset/MaterialX.h"
-#include "Engine/Core/Mesh.h"
+#include "Runtime/Core/Mesh.h"
 #include "WBase/wmathtype.hpp"
 #include "Engine/Asset/MeshX.h"
 #include "RenderInterface/IRayTracingScene.h"

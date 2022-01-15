@@ -146,6 +146,7 @@
     <ClCompile Include="Runtime\Core\Hash\CityHash.cpp" />
     <ClCompile Include="Runtime\Core\Hash\MessageDigest.cpp" />
     <ClCompile Include="Runtime\Core\Materail.cpp" />
+    <ClCompile Include="Runtime\Core\MemStack.cpp" />
     <ClCompile Include="Runtime\Core\Mesh.cpp" />
     <ClCompile Include="Runtime\Core\Path.cpp" />
     <ClCompile Include="Runtime\Core\ResourcesHolder.cpp" />
@@ -337,6 +338,7 @@
     <ClInclude Include="Runtime\Core\Hash\Murmur.h" />
     <ClInclude Include="Runtime\Core\LFile.h" />
     <ClInclude Include="Runtime\Core\Materail.h" />
+    <ClInclude Include="Runtime\Core\MemStack.h" />
     <ClInclude Include="Runtime\Core\Mesh.h" />
     <ClInclude Include="Runtime\Core\ParallelFor.h" />
     <ClInclude Include="Runtime\Core\Path.h" />

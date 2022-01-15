@@ -416,6 +416,9 @@
     <ClCompile Include="System\Win32\NTHandle.cpp">
       <Filter>System\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="Runtime\Core\MemStack.cpp">
+      <Filter>Runtime\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">
@@ -1092,6 +1095,9 @@
     </ClInclude>
     <ClInclude Include="System\Win32\WindowsPlatformMath.h">
       <Filter>System\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\MemStack.h">
+      <Filter>Runtime\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

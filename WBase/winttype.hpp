@@ -169,6 +169,21 @@ namespace white
 	{
 		return (T)(((uint64)Val + Alignment - 1) & ~(Alignment - 1));
 	}
+
+	/**
+	 * Aligns a value to the nearest higher multiple of 'Alignment'.
+	 *
+	 * @param  Val        The value to align.
+	* @param  Alignment  The alignment value, can be any arbitrary value.
+	 *
+	* @return The value aligned up to the specified alignment.
+	*/
+	template <typename T>
+	requires std::is_integral_v<T> || std::is_pointer_v<T>
+	inline constexpr T AlignArbitrary(T Val, uint64 Alignment)
+	{
+		return (T)((((uint64)Val + Alignment - 1) / Alignment) * Alignment);
+	}
 }
 
 #endif

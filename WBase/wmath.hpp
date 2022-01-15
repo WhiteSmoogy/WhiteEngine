@@ -265,6 +265,11 @@ namespace white {
 		}
 
 		template<typename _type, wimpl(typename = enable_if_t<is_wmathtype_v<_type>>)>
+		inline float length_sq(const _type& l, const _type& r) noexcept {
+			return dot(l-r, l-r);
+		}
+
+		template<typename _type, wimpl(typename = enable_if_t<is_wmathtype_v<_type>>)>
 		inline _type normalize(const _type& l) noexcept {
 			auto mod = length(l);
 			auto ret = l;

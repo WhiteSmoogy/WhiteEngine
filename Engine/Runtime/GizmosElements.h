@@ -28,6 +28,8 @@ namespace WhiteEngine
 		bool Draw(platform::Render::CommandList& CmdList, const WhiteEngine::SceneInfo& Info);
 	public:
 		void AddSphere(wm::float3 Center, float Radius, const LinearColor& Color, int32 Segments = 16, float Thickness = 0.0f);
+
+		void AddAABB(wm::float3 Min, wm::float3 Max, const LinearColor& Color, float Thickness = 0.0f);
 	private:
 		struct BatchPoint
 		{

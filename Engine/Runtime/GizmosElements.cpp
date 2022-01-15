@@ -153,3 +153,30 @@ void GizmosElements::AddSphere(wm::float3 Center, float Radius, const LinearColo
 		Latitude += AngleInc;
 	}
 }
+
+void GizmosElements::AddAABB(wm::float3 Min, wm::float3 Max, const LinearColor& Color, float Thickness)
+{
+	wm::float3	B[2], P, Q;
+	int32 i, j;
+
+	B[0] = Min;
+	B[1] = Max;
+
+	for (i = 0; i < 2; i++) for (j = 0; j < 2; j++)
+	{
+		P.x = B[i].x; Q.x = B[i].x;
+		P.y = B[j].y; Q.y = B[j].y;
+		P.z = B[0].z; Q.z = B[1].z;
+		AddLine(P, Q, Color, Thickness);
+
+		P.y = B[i].y; Q.y = B[i].y;
+		P.z = B[j].z; Q.z = B[j].z;
+		P.x = B[0].x; Q.x = B[1].x;
+		AddLine(P, Q, Color, Thickness);
+
+		P.z = B[i].z; Q.z = B[i].z;
+		P.x = B[j].x; Q.x = B[j].x;
+		P.y = B[0].y; Q.y = B[1].y;
+		AddLine(P, Q, Color, Thickness);
+	}
+}

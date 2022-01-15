@@ -756,7 +756,7 @@ namespace asset::X::Shader::DXIL {
 		COMPtr<IDxcOperationResult> CompileResult;
 		CheckHResult(Compiler->Compile(
 			TextBlob.Get(),
-			L"hlsl.hlsl",
+			(wchar_t*)String(input.SourceName).data(),
 			(wchar_t*)String(input.EntryPoint).data(),
 			(wchar_t*)String(CompileDXILProfile(input.Type)).data(),
 			args.data(),

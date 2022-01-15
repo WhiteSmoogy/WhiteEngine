@@ -20,6 +20,7 @@ namespace WhiteEngine
 
 	class MemStackBase
 	{
+	public:
 		MemStackBase(int32 InMinMarksToAlloc = 1)
 			: Top(nullptr)
 			, End(nullptr)

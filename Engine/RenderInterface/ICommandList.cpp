@@ -28,6 +28,8 @@ void platform::Render::CommandListBase::Reset()
 {
 	Context = platform::Render::Context::Instance().GetDefaultCommandContext();
 	ComputeContext = Context;
+
+	MemManager.Flush();
 }
 
 void platform::Render::CommandList::BeginFrame()

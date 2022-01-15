@@ -65,9 +65,9 @@ namespace platform::Render {
 		template<typename CharT>
 		CharT* AllocString(const CharT* Name)
 		{
-			int32 Len = std::char_traits<CharT>::length(Name) + 1;
+			int32 Len =static_cast<int32>(std::char_traits<CharT>::length(Name) + 1);
 			CharT* NameCopy = (CharT*)Alloc(Len * (int32)sizeof(CharT), (int32)sizeof(CharT));
-			std::char_traits<CharT>::::copy(NameCopy, Name,Len);
+			std::char_traits<CharT>::copy(NameCopy, Name,Len);
 			return NameCopy;
 		}
 
@@ -77,8 +77,11 @@ namespace platform::Render {
 
 			*CommandLink = Result;
 			CommandLink = &Result->Next;
+
+			return Result;
 		}
 	private:
+		CommandBase* Root;
 		CommandBase** CommandLink;
 
 		CommandContext* Context;
@@ -166,7 +169,7 @@ namespace platform::Render {
 		{
 			InsertCommand([=](CommandListBase& CmdList) {
 				CmdList.GetContext().SetShaderSampler(Shader, SamplerIndex, Desc);
-				}):
+				});
 		}
 
 		using ComputeCommandList::SetShaderSampler;
@@ -194,7 +197,7 @@ namespace platform::Render {
 		{
 			InsertCommand([=](CommandListBase& CmdList) {
 				CmdList.GetContext().SetShaderConstantBuffer(Shader, BaseIndex, Buffer);
-				}):
+				});
 		}
 
 		void DrawIndexedPrimitive(GraphicsBuffer* IndexBuffer, int32 BaseVertexIndex, uint32 FirstInstance, uint32 NumVertices, uint32 StartIndex, uint32 NumPrimitives, uint32 NumInstances)

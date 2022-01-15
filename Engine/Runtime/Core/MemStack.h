@@ -94,11 +94,6 @@ namespace WhiteEngine
 		// Returns true if the pointer was allocated using this allocator
 		bool ContainsPointer(const void* Pointer) const;
 
-		// Friends.
-		friend class FMemMark;
-		friend void* operator new(size_t Size, MemStackBase& Mem, int32 Count, int32 Align);
-		friend void* operator new[](size_t Size, MemStackBase& Mem, int32 Count, int32 Align);
-
 		// Types.
 		struct FTaggedMemory
 		{
@@ -133,10 +128,26 @@ namespace WhiteEngine
 		/** The number of marks on this stack. */
 		int32 NumMarks;
 
-		/** Used for a checkSlow. Most stacks require a mark to allocate. Command lists don't because they never mark, only flush*/
+		/** Used for a constraint. Most stacks require a mark to allocate. Command lists don't because they never mark, only flush*/
 		int32 MinMarksToAlloc;
 
 	protected:
 		bool bShouldEnforceAllocMarks;
 	};
+}
+
+inline void* operator new(size_t Size, WhiteEngine::MemStackBase& Mem, int32 Count = 1, int32 Align = 0)
+{
+	// Get uninitialized memory.
+	const size_t SizeInBytes = Size * Count;
+	wconstraint(SizeInBytes <= (size_t)std::numeric_limits<int32>::max());
+	return Mem.PushBytes((int32)SizeInBytes, Align);
+}
+
+inline void* operator new[](size_t Size, WhiteEngine::MemStackBase& Mem, int32 Count = 1, int32 Align = 0)
+{
+	// Get uninitialized memory.
+	const size_t SizeInBytes = Size * Count;
+	wconstraint(SizeInBytes <= (size_t)std::numeric_limits<int32>::max());
+	return Mem.PushBytes((int32)SizeInBytes, Align);
 }

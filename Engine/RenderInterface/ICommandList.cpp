@@ -19,7 +19,7 @@ CommandList& platform::Render::GetCommandList()
 }
 
 platform::Render::CommandListBase::CommandListBase()
-	:Context(nullptr)
+	:Context(nullptr),MemManager(0)
 {
 	Reset();
 }
@@ -30,6 +30,9 @@ void platform::Render::CommandListBase::Reset()
 	ComputeContext = Context;
 
 	MemManager.Flush();
+
+	Root = nullptr;
+	CommandLink = &Root;
 }
 
 void platform::Render::CommandList::BeginFrame()

@@ -33,10 +33,8 @@ public:
 
 IMPLEMENT_BUILTIN_SHADER(TonemapPS, "PostProcess/PostProcessToneMap.wsl", "MainPS", platform::Render::PixelShader);
 
-void platform::TonemapPass(const TonemapInputs& Inputs)
+void platform::TonemapPass(Render::CommandList& CmdList, const TonemapInputs& Inputs)
 {
-	auto& CmdList = Render::GetCommandList();
-
 	auto PixelShader = Render::GetBuiltInShaderMap()->GetShader<TonemapPS>();
 
 	Render::RenderPassInfo passInfo(Inputs.OverrideOutput.Texture, Render::RenderTargetActions::Clear_Store);

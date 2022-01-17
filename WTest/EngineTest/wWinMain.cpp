@@ -134,7 +134,7 @@ private:
 
 		auto entityId = ecs::EntitySystem::Instance().AddEntity<ecs::Entity>();
 
-		auto& CmdList = platform::Render::GetCommandList();
+		auto& CmdList = platform::Render::CommandListExecutor::GetImmediateCommandList();
 
 		SCOPED_GPU_EVENT(CmdList, Frame);
 
@@ -241,7 +241,7 @@ private:
 			}
 		}
 
-		OnDrawLights(viewmatrix,projmatrix);
+		OnDrawLights(CmdList,viewmatrix,projmatrix);
 
 		if(RayShadowMaskDenoiser)
 			pEffect->GetParameter("rayshadow_tex") = TextureSubresource(RayShadowMaskDenoiser, 0, RayShadowMask->GetArraySize(), 0, RayShadowMaskDenoiser->GetNumMipMaps());
@@ -263,9 +263,9 @@ private:
 			}
 		}
 
-		OnPostProcess();
-		OnDrawGizmos(depth_tex);
-		OnDrawUI();
+		OnPostProcess(CmdList);
+		OnDrawGizmos(depth_tex, CmdList);
+		OnDrawUI(CmdList);
 
 		Context::Instance().EndFrame();
 		CmdList.EndFrame();
@@ -420,7 +420,7 @@ private:
 			CmdList.BeginRenderPass(RPInfo, "ShadowDepth Atlas");
 		};
 
-		auto& CmdList = platform::Render::GetCommandList();
+		auto& CmdList = platform::Render::CommandListExecutor::GetImmediateCommandList();
 		SCOPED_GPU_EVENTF(CmdList, "ShadowDepth Atlas %dx%d", LayoutWidth, LayoutHeight);
 		BeginShadowRenderPass(CmdList, true);
 		for (int32 ShadowIndex = 0; ShadowIndex < ShadowInfos.size(); ++ShadowIndex)
@@ -499,15 +499,14 @@ private:
 		}
 	}
 
-	void OnPostProcess()
+	void OnPostProcess(CommandList& CmdList)
 	{
-		auto& CmdList = platform::Render::GetCommandList(); 
 		SCOPED_GPU_EVENT(CmdList, PostProcess);
 
 		//PostProcess
 		if (/*true ||*/ lut_dirty || !lut_texture)
 		{
-			lut_texture = platform::CombineLUTPass(lut_params);
+			lut_texture = platform::CombineLUTPass(CmdList,lut_params);
 		}
 
 		platform::TonemapInputs tonemap_inputs;
@@ -517,10 +516,10 @@ private:
 		tonemap_inputs.ColorGradingTexture = lut_texture;
 		tonemap_inputs.SceneColor = HDROutput;
 
-		platform::TonemapPass(tonemap_inputs);
+		platform::TonemapPass(CmdList,tonemap_inputs);
 	}
 
-	void OnDrawLights(const white::math::float4x4& viewmatrix,const white::math::float4x4& projmatrix)
+	void OnDrawLights(CommandList& CmdList,const white::math::float4x4& viewmatrix,const white::math::float4x4& projmatrix)
 	{
 		auto& screen_frame = Context::Instance().GetScreenFrame();
 		auto screen_tex = screen_frame->Attached(FrameBuffer::Target0);
@@ -566,11 +565,7 @@ private:
 		auto Scene = pEntities->BuildRayTracingScene();
 		Context::Instance().GetRayContext().GetDevice().BuildAccelerationStructure(Scene.get());
 
-		auto& CmdList = platform::Render::GetCommandList();
-
 		SCOPED_GPU_EVENT(CmdList, DrawLights);
-
-		
 
 		//clear rt?
 		Context::Instance().GetRayContext().RayTraceShadow(Scene.get(),
@@ -620,11 +615,9 @@ private:
 		RenderShadowDepth();
 	}
 
-	void OnDrawGizmos(Texture2D* depth_tex)
+	void OnDrawGizmos(Texture2D* depth_tex,CommandList& CmdList)
 	{
 		we::GizmosElements gizmos;
-
-		auto& CmdList = platform::Render::GetCommandList();
 
 		we::LinearColor Colors[] =
 		{
@@ -641,6 +634,8 @@ private:
 			gizmos.AddSphere(sphere.Center, sphere.W, Colors[i]);
 		}
 
+		gizmos.AddAABB(pEntities->min, pEntities->max, Colors[1]);
+
 		platform::Render::RenderPassInfo GeometryPass(
 			GetScreenTex(), platform::Render::RenderTargetActions::Load_Store,
 			depth_tex, platform::Render::DepthStencilTargetActions::LoadDepthStencil_StoreDepthStencil);
@@ -649,16 +644,14 @@ private:
 		gizmos.Draw(CmdList, scene);
 	}
 
-	void OnDrawUI()
+	void OnDrawUI(CommandList& CmdList)
 	{
-		auto& CmdList = platform::Render::GetCommandList();
-
 		platform::Render::RenderPassInfo passInfo(GetScreenTex(), RenderTargetActions::Load_Store);
 
 		SCOPED_GPU_EVENT(CmdList, Imgui);
 		CmdList.BeginRenderPass(passInfo, "imguiPass");
 
-		platform::imgui::Context_RenderDrawData(ImGui::GetDrawData());
+		platform::imgui::Context_RenderDrawData(CmdList,ImGui::GetDrawData());
 	}
 
 	void OnCreate() override {
@@ -670,8 +663,6 @@ private:
 
 		Context::Instance().CreateDeviceAndDisplay(display_setting);
 
-
-		
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
@@ -730,8 +721,8 @@ private:
 
 		sun_light.SetTransform(we::RotationMatrix(we::Rotator(-directioal_light.direction)));
 
-		sun_light.DynamicShadowCascades = 3;
-		sun_light.WholeSceneDynamicShadowRadius = modelRaidus *1.5f;
+		sun_light.DynamicShadowCascades = 2;
+		sun_light.WholeSceneDynamicShadowRadius = modelRaidus;
 
 
 		pLightConstatnBuffer = white::share_raw(Device.CreateConstanBuffer(Buffer::Usage::Dynamic, EAccessHint::EA_GPURead | EAccessHint::EA_GPUStructured, sizeof(DirectLight)*lights.size(), static_cast<EFormat>(sizeof(DirectLight)),lights.data()));

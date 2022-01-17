@@ -2,6 +2,7 @@
 
 #include <WBase/wmathtype.hpp>
 #include "RenderInterface/ITexture.hpp"
+#include "RenderInterface/ICommandList.h"
 
 namespace platform
 {
@@ -48,5 +49,5 @@ namespace platform
 		float FilmWhiteClip;
 	};
 
-	std::shared_ptr<Render::Texture> CombineLUTPass(const CombineLUTSettings& args);
+	std::shared_ptr<Render::Texture> CombineLUTPass(Render::CommandList& CmdList,const CombineLUTSettings& args);
 }

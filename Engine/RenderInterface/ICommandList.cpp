@@ -6,17 +6,9 @@
 
 using namespace platform::Render;
 
-CommandList& platform::Render::GetCommandList()
-{
-	static std::once_flag flag;
-	static CommandList Instance;
-	std::call_once(flag, [&]()
-		{
-		}
-	);
+bool platform::Render::GRenderInterfaceSupportCommandThread = true;
 
-	return Instance;
-}
+CommandListExecutor platform::Render::GCommandList;
 
 platform::Render::CommandListBase::CommandListBase()
 	:Context(nullptr),MemManager(0)
@@ -26,9 +18,6 @@ platform::Render::CommandListBase::CommandListBase()
 
 void platform::Render::CommandListBase::Reset()
 {
-	Context = platform::Render::Context::Instance().GetDefaultCommandContext();
-	ComputeContext = Context;
-
 	MemManager.Flush();
 
 	Root = nullptr;
@@ -42,6 +31,7 @@ void platform::Render::CommandList::BeginFrame()
 
 void platform::Render::CommandList::EndFrame()
 {
+	Flush();
 	GetContext().EndFrame();
 	platform::Render::Context::Instance().AdvanceFrameFence();
 	RObject::FlushPendingDeletes();

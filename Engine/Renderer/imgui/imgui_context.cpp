@@ -61,10 +61,8 @@ public:
     EXPORTED_BUILTIN_SHADER(imguiPS);
 };
 
-void platform::imgui::Context_RenderDrawData(ImDrawData* draw_data)
+void platform::imgui::Context_RenderDrawData(platform::Render::CommandList& CmdList,ImDrawData* draw_data)
 {
-    auto& CmdList = Render::GetCommandList();
-
     //store  viewport& scissor
 
      // Create and grow vertex/index buffers if needed

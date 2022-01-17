@@ -10,10 +10,16 @@ namespace white::threading
 }
 
 namespace white::coroutine {
+	struct schedule_operation_basic
+	{
+		std::coroutine_handle<> continuation_handle;
+	};
+
+
 	class ThreadScheduler
 	{
 	public:
-		class schedule_operation
+		class schedule_operation :public schedule_operation_basic
 		{
 		public:
 			schedule_operation(ThreadScheduler* ts) noexcept : scheduler(ts), any_scheduler(nullptr), next_oper(nullptr){}
@@ -26,13 +32,12 @@ namespace white::coroutine {
 			void await_resume() noexcept {}
 		public:
 			schedule_operation* next_oper;
-		private:
+		protected:
 
 			friend class ThreadScheduler;
 
 			ThreadScheduler* scheduler;
 			white::threading::TaskScheduler* any_scheduler;
-			std::coroutine_handle<> continuation_handle;
 		};
 
 		[[nodiscard]]

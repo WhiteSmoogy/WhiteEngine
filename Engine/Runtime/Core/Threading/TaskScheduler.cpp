@@ -287,7 +287,7 @@ namespace white::coroutine {
 		while (true)
 		{
 			// Process operations from the local queue.
-			schedule_operation* op;
+			schedule_operation_basic* op;
 
 			auto get_remote = [&]() ->schedule_operation*
 			{

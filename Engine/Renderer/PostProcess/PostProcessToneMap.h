@@ -2,6 +2,7 @@
 
 #include "RenderInterface/ITexture.hpp"
 #include "RenderInterface/RenderPassInfo.h"
+#include "RenderInterface/ICommandList.h"
 
 namespace platform
 {
@@ -18,5 +19,5 @@ namespace platform
 		Render::TexturePtr ColorGradingTexture;
 	};
 
-	void TonemapPass(const TonemapInputs& Inputs);
+	void TonemapPass(Render::CommandList& CmdList, const TonemapInputs& Inputs);
 }

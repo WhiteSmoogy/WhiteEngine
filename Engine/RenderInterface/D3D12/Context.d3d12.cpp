@@ -261,6 +261,9 @@ namespace platform_ex::Windows::D3D12 {
 		ContextEx(device->d3d_device.Get(), nullptr);
 
 		display = std::make_shared<Display>(GetDXGIFactory4(), device->GetNodeDevice(0)->GetD3DCommandQueue(CommandQueueType::Default), setting, g_hwnd);//test code
+
+		platform::Render::GCommandList.GetImmediateCommandList().SetContext(GetDefaultCommandContext());
+		
 		screen_frame_buffer = display->GetFrameBuffer();
 		SetFrame(display->GetFrameBuffer());
 	}

@@ -39,6 +39,8 @@ namespace platform::Render {
 	public:
 		CommandListBase();
 
+		void Flush();
+
 		void SetContext(CommandContext* InContext)
 		{
 			Context = InContext;
@@ -88,6 +90,9 @@ namespace platform::Render {
 		ComputeContext* ComputeContext;
 
 		WhiteEngine::MemStackBase MemManager;
+
+		friend class CommandListIterator;
+		friend class CommandListExecutor;
 	};
 
 	class ComputeCommandList : public CommandListBase
@@ -296,6 +301,7 @@ namespace platform::Render {
 
 		void BeginFrame();
 		void EndFrame();
+
 	protected:
 		struct PSOContext
 		{
@@ -322,5 +328,67 @@ namespace platform::Render {
 		}
 	};
 
-	CommandList& GetCommandList();
+	class CommandListImmediate : public CommandList
+	{
+	public:
+		void ImmediateFlush();
+	};
+
+	class CommandListExecutor
+	{
+	public:
+		void ExecuteList(CommandListBase& CmdList);
+
+		static inline CommandListImmediate& GetImmediateCommandList();
+	private:
+		void ExecuteInner(CommandListBase& CmdList);
+
+		static void Execute(CommandListBase& CmdList);
+
+		CommandListImmediate Immediate;
+	};
+
+	extern CommandListExecutor GCommandList;
+
+	CommandListImmediate& CommandListExecutor::GetImmediateCommandList()
+	{
+		return GCommandList.Immediate;
+	}
+
+	class CommandListIterator
+	{
+	public:
+		CommandListIterator(CommandListBase& CmdList)
+			:CmdPtr(CmdList.Root),NumCommands(0)
+		{
+		}
+
+		operator bool() const
+		{
+			return !!CmdPtr;
+		}
+
+		CommandListIterator& operator++()
+		{
+			CmdPtr = CmdPtr->Next;
+			++NumCommands;
+			return *this;
+		}
+
+		CommandBase* operator->()
+		{
+			return CmdPtr;
+		}
+
+	private:
+		CommandBase* CmdPtr;
+		uint32 NumCommands;
+	};
+
+	bool extern GRenderInterfaceSupportCommandThread;
+
+	inline bool IsRunningCommandInThread()
+	{
+		return GRenderInterfaceSupportCommandThread;
+	}
 }

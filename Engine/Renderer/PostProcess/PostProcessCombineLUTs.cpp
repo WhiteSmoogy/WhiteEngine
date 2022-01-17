@@ -118,7 +118,7 @@ void GetCombineLUTParameters(CombineLUTParameters& Parameters, const CombineLUTS
 
 constexpr int32 GLUTSize = 32;
 
-std::shared_ptr<Render::Texture> platform::CombineLUTPass(const CombineLUTSettings& args)
+std::shared_ptr<Render::Texture> platform::CombineLUTPass(Render::CommandList& CmdList, const CombineLUTSettings& args)
 {
 	const bool bUseVolumeTextureLUT = true;
 
@@ -136,8 +136,6 @@ std::shared_ptr<Render::Texture> platform::CombineLUTPass(const CombineLUTSettin
 	data.clear_value = &Render::ClearValueBinding::Black;
 	if(bUseVolumeTextureLUT)
 		OutputTexture = Render::Context::Instance().GetDevice().CreateTexture(initializer,&data);
-
-	auto& CmdList = Render::GetCommandList();
 
 	Render::RenderPassInfo passInfo(OutputTexture,Render::RenderTargetActions::Clear_Store);
 

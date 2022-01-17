@@ -60,6 +60,7 @@
     <ClCompile Include="RenderInterface\BuiltInRayTracingShader.cpp" />
     <ClCompile Include="RenderInterface\BuiltInShader.cpp" />
     <ClCompile Include="RenderInterface\Color_T.cpp" />
+    <ClCompile Include="RenderInterface\CommandListExecutor.cpp" />
     <ClCompile Include="RenderInterface\CommonRenderResources.cpp" />
     <ClCompile Include="RenderInterface\D3D12\Adapter.d3d12.cpp" />
     <ClCompile Include="RenderInterface\D3D12\BuiltInRayTracingShaders.cpp" />

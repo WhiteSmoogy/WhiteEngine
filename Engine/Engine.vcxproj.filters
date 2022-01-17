@@ -419,6 +419,9 @@
     <ClCompile Include="Runtime\Core\MemStack.cpp">
       <Filter>Runtime\Core</Filter>
     </ClCompile>
+    <ClCompile Include="RenderInterface\CommandListExecutor.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">

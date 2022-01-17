@@ -1,7 +1,9 @@
 #pragma once
 
-#include "RenderInterface/IContext.h"
+#include <WBase/wdef.h>
 #include <imgui/imgui.h>
+#include "RenderInterface/IContext.h"
+#include "RenderInterface/ICommandList.h"
 
 namespace platform::imgui
 {
@@ -12,5 +14,5 @@ namespace platform::imgui
 	bool     Context_Init(Render::Context& context);
 	void     Context_Shutdown();
 	void     Context_NewFrame();
-	void     Context_RenderDrawData(ImDrawData* draw_data);
+	void     Context_RenderDrawData(platform::Render::CommandList& CmdList, ImDrawData* draw_data);
 }

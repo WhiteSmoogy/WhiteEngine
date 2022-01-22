@@ -82,7 +82,30 @@ namespace platform::Render {
 
 			return Result;
 		}
-	private:
+
+		void ExchangeCmdList(CommandListBase& CmdList)
+		{
+			std::byte storage[sizeof(CommandListBase)];
+			std::memcpy(storage, &CmdList, sizeof(storage));
+			std::memcpy(&CmdList, this, sizeof(storage));
+			std::memcpy(this, storage, sizeof(storage));
+
+			if (CommandLink == &CmdList.Root)
+			{
+				CommandLink = &Root;
+			}
+			if (CmdList.CommandLink == &Root)
+			{
+				CmdList.CommandLink = &CmdList.Root;
+			}
+		}
+
+		void CopyContext(CommandListBase& CmdList)
+		{
+			Context = CmdList.Context;
+			ComputeContext = CmdList.ComputeContext;
+		}
+	protected:
 		CommandBase* Root;
 		CommandBase** CommandLink;
 
@@ -93,6 +116,14 @@ namespace platform::Render {
 
 		friend class CommandListIterator;
 		friend class CommandListExecutor;
+
+		struct PSOContext
+		{
+			uint32 CachedNumSimultanousRenderTargets = 0;
+			std::array<RenderTarget, MaxSimultaneousRenderTargets> CachedRenderTargets;
+			DepthRenderTarget CachedDepthStencilTarget;
+
+		} PSOContext;
 	};
 
 	class ComputeCommandList : public CommandListBase
@@ -303,13 +334,7 @@ namespace platform::Render {
 		void EndFrame();
 
 	protected:
-		struct PSOContext
-		{
-			uint32 CachedNumSimultanousRenderTargets = 0;
-			std::array<RenderTarget, MaxSimultaneousRenderTargets> CachedRenderTargets;
-			DepthRenderTarget CachedDepthStencilTarget;
-
-		} PSOContext;
+		
 
 		void CacheActiveRenderTargets(
 			uint32 NewNumSimultaneousRenderTargets,

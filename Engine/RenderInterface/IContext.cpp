@@ -1,6 +1,7 @@
 #include "IFrameBuffer.h"
 #include "IContext.h"
 
+platform::Render::Context* GRenderIF;
 
 enum ContextType {
 	Context_D3D12
@@ -19,7 +20,11 @@ namespace platform::Render {
 	HardwareShader::~HardwareShader() = default;
 
 	Context& Context::Instance() {
-		return platform_ex::Windows::D3D12::GetContext();
+		static bool call_onece = [&]()->bool {
+			GRenderIF = &platform_ex::Windows::D3D12::GetContext();
+			return GRenderIF != nullptr;
+		}();
+		return *GRenderIF;
 	}
 
 	void Context::SetFrame(const std::shared_ptr<FrameBuffer>& framebuffer)

@@ -101,7 +101,13 @@ void CommandListExecutor::ExecuteInner(CommandListBase& CmdList)
 {
 	if (IsRunningCommandInThread())
 	{
-		CommandListBase* SwapCmdList = nullptr;
+		CommandListBase* SwapCmdList = new CommandList();
+
+		static_assert(sizeof(CommandList) == sizeof(CommandListImmediate));
+
+		SwapCmdList->ExchangeCmdList(CmdList);
+		CmdList.CopyContext(*SwapCmdList);
+		CmdList.PSOContext = SwapCmdList->PSOContext;
 
 		CommandTask = [=]()->render_task
 		{
@@ -127,6 +133,8 @@ void CommandListExecutor::Execute(CommandListBase& CmdList)
 		Iter->ExecuteAndDestruct(CmdList, Context);
 		++Iter;
 	}
+
+	CmdList.Reset();
 }
 
 void CommandListBase::Flush()

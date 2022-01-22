@@ -728,4 +728,27 @@ namespace platform_ex::Windows::D3D12 {
 		}
 		RootSignatureVersion = D3D12RootSignatureCaps.HighestVersion;
 	}
+
+	void D3D12::Device::EndFrame()
+	{
+		//TODO:support CLSyncPoint move;
+		ReclaimPool.push(ResidencyPool);
+		ResidencyPool.recycle_after_sync_residency_buffs.clear();
+		ResidencyPool.recycle_after_sync_upload_buffs.clear();
+		ResidencyPool.recycle_after_sync_upload_buffs.clear();
+
+		while (!ReclaimPool.empty() && ReclaimPool.front().SyncPoint.IsComplete())
+		{
+			auto& Residency = ReclaimPool.front();
+
+			for (auto const& item : Residency.recycle_after_sync_upload_buffs)
+				upload_resources.emplace(item.second, item.first);
+			for (auto const& item : Residency.recycle_after_sync_readback_buffs)
+				readback_resources.emplace(item.second, item.first);
+
+			ReclaimPool.pop();
+		}
+
+		platform::Render::RObject::FlushPendingDeletes();
+	}
 }

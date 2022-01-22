@@ -88,7 +88,7 @@ namespace platform_ex::Windows::D3D12 {
 		GetDefaultCommandContext()->CommandListHandle.FlushResourceBarriers();
 		GetDefaultCommandContext()->FlushCommands();
 
-		ClearPSOCache();
+		device->EndFrame();
 	}
 
 	const COMPtr<ID3D12GraphicsCommandList> & D3D12::Context::GetCommandList(Device::CommandType index) const
@@ -131,27 +131,6 @@ namespace platform_ex::Windows::D3D12 {
 
 			GetDevice().d3d_cmd_allocators[type]->Reset();
 			ResetCommand(type);
-		}
-	}
-
-	void D3D12::Context::ClearPSOCache()
-	{
-		//TODO:support CLSyncPoint move;
-		device->ReclaimPool.push(device->ResidencyPool);
-		device->ResidencyPool.recycle_after_sync_residency_buffs.clear();
-		device->ResidencyPool.recycle_after_sync_upload_buffs.clear();
-		device->ResidencyPool.recycle_after_sync_upload_buffs.clear();
-
-		while (!device->ReclaimPool.empty() && device->ReclaimPool.front().SyncPoint.IsComplete())
-		{
-			auto& Residency = device->ReclaimPool.front();
-
-			for (auto const& item : Residency.recycle_after_sync_upload_buffs)
-				device->upload_resources.emplace(item.second, item.first);
-			for (auto const& item : Residency.recycle_after_sync_readback_buffs)
-				device->readback_resources.emplace(item.second, item.first);
-
-			device->ReclaimPool.pop();
 		}
 	}
 
@@ -386,13 +365,9 @@ namespace platform_ex::Windows::D3D12 {
 	}
 	void Context::BeginFrame()
 	{
-		
 		SetFrame(GetScreenFrame());
 	}
-	void Context::EndFrame()
-	{
-		ClearPSOCache();
-	}
+	
 	Display & Context::GetDisplay()
 	{
 		return *display;

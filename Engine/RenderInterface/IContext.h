@@ -26,7 +26,6 @@ namespace platform::Render {
 
 
 		virtual void BeginFrame() = 0;
-		virtual void EndFrame() = 0;
 
 		virtual CommandContext* GetDefaultCommandContext() = 0;
 
@@ -47,5 +46,7 @@ namespace platform::Render {
 		std::shared_ptr<FrameBuffer> screen_frame_buffer;
 	};
 }
+
+extern platform::Render::Context* GRenderIF;
 
 #endif

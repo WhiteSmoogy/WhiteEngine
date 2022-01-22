@@ -349,7 +349,8 @@ void CommandContext::BeginFrame()
 
 void CommandContext::EndFrame()
 {
-	//CleraPSOCache
+	ParentAdapter->EndFrame();
+
 	auto GPUIndex = 0;
 
 	auto Device = ParentAdapter->GetNodeDevice(GPUIndex);

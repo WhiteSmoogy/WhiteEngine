@@ -26,7 +26,6 @@ namespace platform_ex {
 				void Render(platform::Render::CommandList& CmdList, const Effect::Effect& effect, const Effect::Technique& tech, const platform::Render::InputLayout& layout) override;
 
 				void BeginFrame() override;
-				void EndFrame() override;
 
 				Display& GetDisplay() override;
 
@@ -59,8 +58,6 @@ namespace platform_ex {
 
 				void CommitCommandList(Device::CommandType);
 				friend class Device;
-
-				void ClearPSOCache();
 
 				enum  InnerReourceType{
 					Upload,

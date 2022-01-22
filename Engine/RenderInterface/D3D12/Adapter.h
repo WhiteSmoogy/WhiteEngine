@@ -103,6 +103,8 @@ namespace platform_ex::Windows::D3D12 {
 		void InitializeRayTracing();
 
 		ManualFence& GetFrameFence() { return *frame_fence; }
+
+		void EndFrame();
 	public:
 		friend class Context;
 		friend class RayContext;

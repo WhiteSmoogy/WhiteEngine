@@ -26,13 +26,15 @@ void platform::Render::CommandListBase::Reset()
 
 void platform::Render::CommandList::BeginFrame()
 {
-	GetContext().BeginFrame();
+	InsertCommand([=](CommandListBase& CmdList) {
+		CmdList.GetContext().BeginFrame();
+	});
 }
 
 void platform::Render::CommandList::EndFrame()
 {
-	Flush();
-	GetContext().EndFrame();
-	platform::Render::Context::Instance().AdvanceFrameFence();
-	RObject::FlushPendingDeletes();
+	InsertCommand([=](CommandListBase& CmdList) {
+		CmdList.GetContext().EndFrame();
+	});
+	GRenderIF->AdvanceFrameFence();
 }

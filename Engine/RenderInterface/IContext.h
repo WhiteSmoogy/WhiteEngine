@@ -15,7 +15,8 @@ namespace platform::Render {
 	class CommandContext;
 	class CommandList;
 
-	class Context {
+	class Context
+ {
 	public:
 		virtual Device& GetDevice() = 0;
 		virtual Display& GetDisplay() = 0;
@@ -30,6 +31,7 @@ namespace platform::Render {
 		virtual CommandContext* GetDefaultCommandContext() = 0;
 
 		virtual void AdvanceFrameFence() = 0;
+		virtual void AdvanceDisplayBuffer() = 0;
 	public:
 		virtual void CreateDeviceAndDisplay(DisplaySetting setting) = 0;
 	private:

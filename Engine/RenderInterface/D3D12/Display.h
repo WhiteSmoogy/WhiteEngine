@@ -31,6 +31,8 @@ namespace platform_ex {
 				void SwapBuffers() override;
 				void WaitOnSwapBuffers() override;
 
+				void AdvanceBackBuffer();
+
 				bool CheckHDRSupport();
 			private:
 				void CreateSwapChain(IDXGIFactory4* factory_4,ID3D12CommandQueue* cmd_queue);
@@ -63,6 +65,7 @@ namespace platform_ex {
 				std::shared_ptr<Texture2D> depth_stencil;
 
 				UINT back_buffer_index;
+				UINT expected_back_buffer_index;
 				std::shared_ptr<FrameBuffer> frame_buffer;
 				HANDLE frame_waitable_object;
 

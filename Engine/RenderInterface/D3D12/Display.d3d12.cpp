@@ -94,7 +94,7 @@ Display::Display(IDXGIFactory4 * factory_4, ID3D12CommandQueue* cmd_queue, const
 
 	CreateSwapChain(factory_4, cmd_queue);
 
-	back_buffer_index = swap_chain->GetCurrentBackBufferIndex();
+	expected_back_buffer_index = back_buffer_index = swap_chain->GetCurrentBackBufferIndex();
 	UpdateFramewBufferView();
 }
 
@@ -131,12 +131,18 @@ void platform_ex::Windows::D3D12::Display::SwapBuffers()
 		CheckHResult(swap_chain->Present(0, present_flags));
 
 		back_buffer_index = swap_chain->GetCurrentBackBufferIndex();
-
-		platform::Render::RenderTarget view;
-		view.Texture = render_targets_texs[back_buffer_index].get();
-
-		frame_buffer->Attach(FrameBuffer::Target0, view);
 	}
+}
+
+void platform_ex::Windows::D3D12::Display::AdvanceBackBuffer()
+{
+	++expected_back_buffer_index;
+	expected_back_buffer_index = expected_back_buffer_index % NUM_BACK_BUFFERS;
+
+	platform::Render::RenderTarget view;
+	view.Texture = render_targets_texs[expected_back_buffer_index].get();
+
+	frame_buffer->Attach(FrameBuffer::Target0, view);
 }
 
 void platform_ex::Windows::D3D12::Display::WaitOnSwapBuffers()
@@ -221,4 +227,9 @@ void Context::AdvanceFrameFence()
 	const uint64 PreviousFence = FrameFence->IncrementCurrentFence();
 
 	FrameFence->Signal(CommandQueueType::Default, PreviousFence);
+}
+
+void Context::AdvanceDisplayBuffer()
+{
+	GetDisplay().AdvanceBackBuffer();
 }

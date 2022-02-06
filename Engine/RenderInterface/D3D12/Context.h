@@ -34,6 +34,8 @@ namespace platform_ex {
 				CommandContext* GetDefaultCommandContext() override;
 
 				void AdvanceFrameFence() override;
+
+				void AdvanceDisplayBuffer() override;
 			public:
 				void CreateDeviceAndDisplay(platform::Render::DisplaySetting setting) override;
 			private:

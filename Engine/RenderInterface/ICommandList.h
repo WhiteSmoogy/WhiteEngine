@@ -7,6 +7,7 @@
 
 namespace platform::Render {
 	class CommandListBase;
+	class Display;
 
 	struct CommandListContext
 	{};
@@ -333,6 +334,7 @@ namespace platform::Render {
 		void BeginFrame();
 		void EndFrame();
 
+		void Present(Display* display);
 	protected:
 		
 

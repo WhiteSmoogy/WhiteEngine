@@ -37,4 +37,21 @@ void platform::Render::CommandList::EndFrame()
 		CmdList.GetContext().EndFrame();
 	});
 	GRenderIF->AdvanceFrameFence();
+
+	CommandListExecutor::GetImmediateCommandList().ImmediateFlush();
+}
+
+void platform::Render::CommandList::Present(Display* display)
+{
+	InsertCommand([=](CommandListBase& CmdList) {
+		display->SwapBuffers();
+	});
+
+	//get event
+
+	CommandListExecutor::GetImmediateCommandList().ImmediateFlush();
+
+	//wait prev
+
+	GRenderIF->AdvanceDisplayBuffer();
 }

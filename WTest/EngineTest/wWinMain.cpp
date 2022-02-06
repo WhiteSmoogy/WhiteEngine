@@ -267,11 +267,10 @@ private:
 		OnDrawGizmos(depth_tex, CmdList);
 		OnDrawUI(CmdList);
 
-		Context::Instance().EndFrame();
 		CmdList.EndFrame();
 		
-		Context::Instance().GetDisplay().SwapBuffers();
-		//what can i do in this duration?
+		CmdList.Present(&Context::Instance().GetDisplay());
+
 		Context::Instance().GetDisplay().WaitOnSwapBuffers();
 
 		++StateFrameIndex;
@@ -757,9 +756,6 @@ private:
 		Context::Instance().GetDisplay().SwapBuffers();
 		//what can i do in this duration?
 		Context::Instance().GetDisplay().WaitOnSwapBuffers();
-
-		Context::Instance().EndFrame();
-
 	}
 
 	void OnCombineLUTUI()

@@ -566,9 +566,11 @@ private:
 
 		SCOPED_GPU_EVENT(CmdList, DrawLights);
 
+		//TODO: don't support create resource at other thread when cmd execute
+		//D3D12 CORRUPTION: Two threads were found to be executing methods associated with the same CommandList at the same time. 
+#if 0
 		//clear rt?
-		Context::Instance().GetRayContext().RayTraceShadow(Scene.get(),
-			shadowconstant);
+		Context::Instance().GetRayContext().RayTraceShadow(Scene.get(),shadowconstant);
 
 
 		platform::ScreenSpaceDenoiser::ShadowVisibilityInput svinput =
@@ -610,6 +612,7 @@ private:
 				svoutput
 			);
 		}
+#endif
 
 		RenderShadowDepth();
 	}

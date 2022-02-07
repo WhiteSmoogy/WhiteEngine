@@ -263,7 +263,7 @@ private:
 			}
 		}
 
-		OnPostProcess(CmdList);
+		OnPostProcess(CmdList,screen_tex);
 		OnDrawGizmos(depth_tex, CmdList);
 		OnDrawUI(CmdList);
 
@@ -498,7 +498,7 @@ private:
 		}
 	}
 
-	void OnPostProcess(CommandList& CmdList)
+	void OnPostProcess(CommandList& CmdList,Texture2D* display)
 	{
 		SCOPED_GPU_EVENT(CmdList, PostProcess);
 
@@ -509,7 +509,7 @@ private:
 		}
 
 		platform::TonemapInputs tonemap_inputs;
-		tonemap_inputs.OverrideOutput.Texture = GetScreenTex();
+		tonemap_inputs.OverrideOutput.Texture = display;
 		tonemap_inputs.OverrideOutput.LoadAction = RenderTargetLoadAction::NoAction;
 		tonemap_inputs.OverrideOutput.StoreAction = RenderTargetStoreAction::Store;
 		tonemap_inputs.ColorGradingTexture = lut_texture;
@@ -520,6 +520,11 @@ private:
 
 	void OnDrawLights(CommandList& CmdList,const white::math::float4x4& viewmatrix,const white::math::float4x4& projmatrix)
 	{
+		SCOPED_GPU_EVENT(CmdList, DrawLights);
+
+		//TODO: don't support create resource at other thread when cmd execute
+//D3D12 CORRUPTION: Two threads were found to be executing methods associated with the same CommandList at the same time. 
+#if 0
 		auto& screen_frame = Context::Instance().GetScreenFrame();
 		auto screen_tex = screen_frame->Attached(FrameBuffer::Target0);
 		auto depth_tex =static_cast<Texture2D*>(screen_frame->Attached(FrameBuffer::DepthStencil));
@@ -564,11 +569,6 @@ private:
 		auto Scene = pEntities->BuildRayTracingScene();
 		Context::Instance().GetRayContext().GetDevice().BuildAccelerationStructure(Scene.get());
 
-		SCOPED_GPU_EVENT(CmdList, DrawLights);
-
-		//TODO: don't support create resource at other thread when cmd execute
-		//D3D12 CORRUPTION: Two threads were found to be executing methods associated with the same CommandList at the same time. 
-#if 0
 		//clear rt?
 		Context::Instance().GetRayContext().RayTraceShadow(Scene.get(),shadowconstant);
 
@@ -613,7 +613,6 @@ private:
 			);
 		}
 #endif
-
 		RenderShadowDepth();
 	}
 
@@ -679,8 +678,6 @@ private:
 
 		auto& Device = Context::Instance().GetDevice();
 
-		Context::Instance().BeginFrame();
-
 		ElementInitData data;
 		data.clear_value = &ClearValueBinding::Black;
 
@@ -737,6 +734,8 @@ private:
 		RayShadowMaskUAV = white::share_raw(Device.CreateUnorderedAccessView(RayShadowMask.get()));
 		RayShadowMaskDenoiserUAV = white::share_raw(Device.CreateUnorderedAccessView(RayShadowMaskDenoiser.get()));
 
+		ShadowMap = white::share_raw(Device.CreateTexture(4096, 4096, 1, 1, EFormat::EF_D32F, EA_GPURead | EA_DSV, {}));
+
 		GetMessageMap()[WM_MOUSEMOVE] += [&](::WPARAM wParam, ::LPARAM lParam) {
 			static auto lastxPos = GET_X_LPARAM(lParam);
 			static auto lastyPos = GET_Y_LPARAM(lParam);
@@ -755,10 +754,6 @@ private:
 				pCameraMainpulator->Zoom(offset);
 			}
 		};
-
-		Context::Instance().GetDisplay().SwapBuffers();
-		//what can i do in this duration?
-		Context::Instance().GetDisplay().WaitOnSwapBuffers();
 	}
 
 	void OnCombineLUTUI()

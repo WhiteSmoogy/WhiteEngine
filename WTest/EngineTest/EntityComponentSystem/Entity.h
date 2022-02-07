@@ -27,7 +27,7 @@ namespace ecs {
 		template<typename _type,typename ..._tParams>
 		white::observer_ptr<_type> AddComponent(_tParams&&... args) {
 			TryRet(white::make_observer(static_cast<_type*>(Add(white::type_id<_type>(), std::make_unique<_type>(white::type_id<_type>(),wforward(args)...)).get())))
-				CatchThrow(ECSException& e, white::LoggedEvent(white::sfmt("AddComponent failed. (Inner %s)", e.message()), Warning))
+				CatchThrow(ECSException& e, white::LoggedEvent(white::sfmt("AddComponent failed. (Inner %s)", e.what()), Warning))
 		}
 
 		template<typename _type>

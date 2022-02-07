@@ -18,7 +18,7 @@ namespace ecs {
 		template<typename _type,typename... _tParams>
 		white::observer_ptr<_type> AddSystem(_tParams&&... args) {
 			TryRet(white::make_observer(static_cast<_type*>(Add(white::type_id<_type>(),std::make_unique<_type>(lforward(args)...)).get())))
-				CatchThrow(ECSException& e, white::LoggedEvent(white::sfmt("AddSystem failed. (Inner %s)",e.message()),Warning))
+				CatchThrow(ECSException& e, white::LoggedEvent(white::sfmt("AddSystem failed. (Inner %s)",e.what()),Warning))
 		}
 
 		template<typename _type, typename... _tParams>

@@ -60,12 +60,6 @@ public:
 		t.coroutine_handle = nullptr;
 	}
 
-	void operator=(render_task&& t) noexcept
-	{
-		coroutine_handle = t.coroutine_handle;
-		t.coroutine_handle = nullptr;
-	}
-
 	~render_task()
 	{
 		if (coroutine_handle)
@@ -77,6 +71,11 @@ public:
 	bool is_ready() const noexcept
 	{
 		return !coroutine_handle || coroutine_handle.done();
+	}
+
+	void swap(render_task&& t) noexcept
+	{
+		std::swap(coroutine_handle, t.coroutine_handle);
 	}
 
 private:
@@ -109,14 +108,16 @@ void CommandListExecutor::ExecuteInner(CommandListBase& CmdList)
 		CmdList.CopyContext(*SwapCmdList);
 		CmdList.PSOContext = SwapCmdList->PSOContext;
 
-		CommandTask = [=]()->render_task
+		CommandTask.swap([](CommandListBase* cmdlist,render_task&& swap_task)->render_task
 		{
-			Execute(*SwapCmdList);
+			//await swap_task
 
-			delete SwapCmdList;
+			Execute(*cmdlist);
+
+			delete cmdlist;
 
 			co_return;
-		}();
+		}(SwapCmdList,std::move(CommandTask)));
 		return;
 	}
 

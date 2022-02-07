@@ -618,6 +618,7 @@ static void CreateGraphicsPipelineState(ID3D12PipelineState** PSO, D3D12Adapter*
 
 	const D3D12_GRAPHICS_PIPELINE_STATE_DESC Desc = CreationArgs->Desc->Desc.GraphicsDesc();
 	HRESULT hr = CreatePipelineState(*PSO, Adapter->GetDevice(), &Desc, CreationArgs->Library, Name);
+	CheckHResult(hr);
 }
 
 static void CreateComputePipelineState(ID3D12PipelineState** PSO, D3D12Adapter* Adapter, const ComputePipelineCreationArgs* CreationArgs)
@@ -628,6 +629,7 @@ static void CreateComputePipelineState(ID3D12PipelineState** PSO, D3D12Adapter* 
 
 	const auto Desc = CreationArgs->Desc->Desc.ComputeDescV0();
 	HRESULT hr = CreatePipelineState(*PSO, Adapter->GetDevice(), &Desc, CreationArgs->Library, Name);
+	CheckHResult(hr);
 }
 
 

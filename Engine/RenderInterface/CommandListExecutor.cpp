@@ -66,6 +66,7 @@ public:
 		{
 			coroutine_handle.destroy();
 		}
+		coroutine_handle = nullptr;
 	}
 
 	bool is_ready() const noexcept
@@ -76,6 +77,12 @@ public:
 	void swap(render_task&& t) noexcept
 	{
 		std::swap(coroutine_handle, t.coroutine_handle);
+	}
+
+	void assign(render_task&& t) noexcept
+	{
+		this->~render_task();
+		swap(std::move(t));
 	}
 
 private:
@@ -89,6 +96,31 @@ render_task render_promise::get_return_object() noexcept
 
 using namespace platform::Render;
 
+class RenderTaskArray
+{
+public:
+	RenderTaskArray()
+		:tasks{ render_task(nullptr),render_task(nullptr),render_task(nullptr) }
+	{}
+
+	void assign(render_task&& t)
+	{
+		for (size_t i = 0; i != white::arrlen(tasks); ++i)
+		{
+			if (tasks[i].is_ready())
+			{
+				tasks[i].assign(std::move(t));
+				return;
+			}
+		}
+
+		WAssert(false, "out of max render_tasks");
+	}
+
+	render_task tasks[3];
+};
+
+RenderTaskArray SwapTasks;
 render_task CommandTask { nullptr };
 
 void CommandListExecutor::ExecuteList(CommandListBase& CmdList)
@@ -108,16 +140,15 @@ void CommandListExecutor::ExecuteInner(CommandListBase& CmdList)
 		CmdList.CopyContext(*SwapCmdList);
 		CmdList.PSOContext = SwapCmdList->PSOContext;
 
-		CommandTask.swap([](CommandListBase* cmdlist,render_task&& swap_task)->render_task
+		SwapTasks.assign(std::move(CommandTask));
+		CommandTask.swap([](CommandListBase* cmdlist)->render_task
 		{
-			//await swap_task
-
 			Execute(*cmdlist);
 
 			delete cmdlist;
 
 			co_return;
-		}(SwapCmdList,std::move(CommandTask)));
+		}(SwapCmdList));
 		return;
 	}
 

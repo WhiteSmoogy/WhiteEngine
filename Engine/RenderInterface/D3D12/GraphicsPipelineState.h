@@ -202,7 +202,6 @@ namespace platform_ex::Windows::D3D12
 
 		D3DPipelineState& operator=(const D3DPipelineState& other) = delete;
 	private:
-		KeyGraphicsPipelineStateDesc Key;
 
 		COMPtr<ID3D12PipelineState> PipelineState;
 	};

@@ -7,6 +7,7 @@
 #include "RootSignature.h"
 #include "Adapter.h"
 #include "SamplerState.h"
+#include <spdlog/spdlog.h>
 
 using namespace platform_ex::Windows::D3D12;
 using white::BitMask;

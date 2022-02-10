@@ -4,7 +4,7 @@
 #include "CommandContext.h"
 #include "Context.h"
 #include <WFramework/WCLib/Platform.h>
-
+#include <spdlog/spdlog.h>
 
 
 using namespace platform_ex::Windows::D3D12;
@@ -143,6 +143,7 @@ void platform_ex::Windows::D3D12::Display::AdvanceBackBuffer()
 	view.Texture = render_targets_texs[expected_back_buffer_index].get();
 
 	frame_buffer->Attach(FrameBuffer::Target0, view);
+
 }
 
 void platform_ex::Windows::D3D12::Display::WaitOnSwapBuffers()
@@ -176,6 +177,8 @@ void Display::UpdateFramewBufferView()
 		COMPtr<ID3D12Resource> pResources = nullptr;
 		swap_chain->GetBuffer(rt_tex_index, COMPtr_RefParam(pResources, IID_ID3D12Resource));
 		rt_tex = make_shared<Texture2D>(pResources);
+		rt_tex->SetName(std::format("backbuffer {}", rt_tex_index).c_str());
+
 		render_target_views[rt_tex_index] = new RenderTargetView(GetDefaultNodeDevice(),rt_tex->CreateRTVDesc(0,1,0),*rt_tex);
 
 		rt_tex->SetNumRenderTargetViews(1);

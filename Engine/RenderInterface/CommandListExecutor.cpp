@@ -22,7 +22,7 @@ public:
 
 	auto final_suspend() noexcept
 	{
-		return std::suspend_never{};
+		return std::suspend_always{};
 	}
 
 	render_task get_return_object() noexcept;

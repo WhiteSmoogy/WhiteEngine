@@ -23,7 +23,7 @@ namespace white::coroutine
 			do
 			{
 				operation->next_oper = tail;
-			} while (queue_tail.compare_exchange_weak(tail, operation, std::memory_order_seq_cst,
+			} while (!queue_tail.compare_exchange_weak(tail, operation, std::memory_order_seq_cst,
 				std::memory_order_relaxed));
 		}
 

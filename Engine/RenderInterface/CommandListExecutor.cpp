@@ -10,7 +10,53 @@ namespace white::threading {
 }
 namespace white::coroutine
 {
+	class RenderThreadScheduler::thread_state
+	{
+		std::atomic<schedule_operation*> queue_tail;
+		std::atomic< schedule_operation*> queue_head;
+
+	public:
+		void push(schedule_operation* operation)
+		{
+			auto tail = queue_tail.load(std::memory_order_relaxed);
+
+			do
+			{
+				operation->next_oper = tail;
+			} while (queue_tail.compare_exchange_weak(tail, operation, std::memory_order_seq_cst,
+				std::memory_order_relaxed));
+		}
+
+		schedule_operation* pop()
+		{
+			auto head = queue_head.load(std::memory_order_relaxed);
+
+			if (head == nullptr)
+			{
+
+				if (queue_tail.load(std::memory_order_seq_cst) == nullptr)
+					return nullptr;
+
+				auto tail = queue_tail.exchange(nullptr, std::memory_order_acquire);
+
+				if (tail == nullptr)
+					return nullptr;
+
+				do
+				{
+					auto next = std::exchange(tail->next_oper, head);
+					head = std::exchange(tail, next);
+				} while (tail != nullptr);
+			}
+
+			queue_head = head->next_oper;
+
+			return head;
+		}
+	};
+
 	RenderThreadScheduler::RenderThreadScheduler()
+		:current_state(new thread_state())
 	{
 		std::thread fire_forget(
 			[this] {
@@ -27,11 +73,21 @@ namespace white::coroutine
 
 	bool RenderThreadScheduler::schedule_impl(schedule_operation* operation) noexcept
 	{
-		return false;
+		current_state->push(operation);
+		return true;
 	}
 
 	void RenderThreadScheduler::run() noexcept
 	{
+		while (true)
+		{
+			auto operation = current_state->pop();
+
+			if (operation == nullptr)
+				continue;
+
+			operation->continuation_handle.resume();
+		}
 	}
 }
 

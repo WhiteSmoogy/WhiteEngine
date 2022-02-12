@@ -76,7 +76,7 @@ namespace platform::Render {
 
 		void* AllocCommand(int32 AllocSize, int32 Aligment)
 		{
-			CommandBase* Result = (CommandBase*)::operator new(AllocSize, (std::align_val_t)Aligment);
+			CommandBase* Result = (CommandBase*)Alloc(AllocSize,Aligment);
 
 			*CommandLink = Result;
 			CommandLink = &Result->Next;

@@ -4,6 +4,37 @@
 #include <spdlog/spdlog.h>
 #include <coroutine>
 
+extern thread_local white::coroutine::ThreadScheduler* thread_local_scheduler;
+namespace white::threading {
+	void SetThreadDescription(void* hThread, const wchar_t* lpThreadDescription);
+}
+namespace white::coroutine
+{
+	RenderThreadScheduler::RenderThreadScheduler()
+	{
+		std::thread fire_forget(
+			[this] {
+				thread_local_scheduler = this;
+				this->run();
+			}
+		);
+		native_handle = fire_forget.native_handle();
+
+		white::threading::SetThreadDescription(native_handle, L"Scheduler Render");
+
+		fire_forget.detach();
+	}
+
+	bool RenderThreadScheduler::schedule_impl(schedule_operation* operation) noexcept
+	{
+		return false;
+	}
+
+	void RenderThreadScheduler::run() noexcept
+	{
+	}
+}
+
 class render_task;
 
 using schedule_operation = white::coroutine::ThreadScheduler::schedule_operation;

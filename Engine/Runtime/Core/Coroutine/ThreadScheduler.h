@@ -15,7 +15,6 @@ namespace white::coroutine {
 		std::coroutine_handle<> continuation_handle;
 	};
 
-
 	class ThreadScheduler
 	{
 	public:
@@ -42,23 +41,46 @@ namespace white::coroutine {
 
 		[[nodiscard]]
 		schedule_operation schedule() noexcept { return schedule_operation{ this }; }
+	protected:
+		virtual bool schedule_impl(schedule_operation* operation) noexcept = 0;
 
-		ThreadScheduler(unsigned thread_index, const std::wstring& name = {});
-	private:
-		void schedule_impl(schedule_operation* operation) noexcept;
+		friend class white::threading::TaskScheduler;
+	};
 
-		void wake_up() noexcept;
-
-		void run(unsigned thread_index) noexcept;
-
+	class PoolThreadScheduler :public ThreadScheduler
+	{
 		class thread_state;
 
 		thread_state* current_state;
 
-		static thread_local thread_state* thread_local_state;
+	public:
+		PoolThreadScheduler(unsigned thread_index);
+	protected:
+		bool schedule_impl(schedule_operation* operation) noexcept final;
 
-		std::thread::native_handle_type native_handle;
+		void run(unsigned thread_index) noexcept;
+
+		void wake_up() noexcept;
 
 		friend class white::threading::TaskScheduler;
+
+	private:
+
+		std::thread::native_handle_type native_handle;
+	};
+
+	class RenderThreadScheduler : public ThreadScheduler
+	{
+		class thread_state;
+
+		thread_state* current_state;
+	public:
+		RenderThreadScheduler();
+	protected:
+		bool schedule_impl(schedule_operation* operation) noexcept final;
+
+		void run() noexcept;
+
+		std::thread::native_handle_type native_handle;
 	};
 }

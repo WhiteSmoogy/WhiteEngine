@@ -28,12 +28,12 @@ namespace white::threading {
 }
 
 thread_local white::coroutine::ThreadScheduler* thread_local_scheduler = nullptr;
-thread_local white::coroutine::ThreadScheduler::thread_state* white::coroutine::ThreadScheduler::thread_local_state = nullptr;
 
 white::threading::TaskScheduler* task_scheduler = nullptr;
 
+//PoolThreadScheduler
 namespace white::coroutine {
-	class ThreadScheduler::thread_state
+	class PoolThreadScheduler::thread_state
 	{
 	public:
 		thread_state()
@@ -249,40 +249,26 @@ namespace white::coroutine {
 		white::threading::auto_reset_event wakeup_event;
 	};
 
-	void ThreadScheduler::schedule_operation::await_suspend(std::coroutine_handle<> continuation) noexcept
-	{
-		continuation_handle = continuation;
-		scheduler ? scheduler->schedule_impl(this): (any_scheduler->schedule_impl(this));
-	}
-
-	ThreadScheduler::schedule_operation::~schedule_operation()
-	{
-	}
-
-	ThreadScheduler::ThreadScheduler(unsigned thread_index,const std::wstring& name)
+	PoolThreadScheduler::PoolThreadScheduler(unsigned thread_index)
 		:current_state(new thread_state())
 	{
 		std::thread fire_forget(
-		[this,thread_index] {
-			thread_local_scheduler = this;
-			thread_local_state = current_state;
-			this->run(thread_index);
+			[this, thread_index] {
+				thread_local_scheduler = this;
+				this->run(thread_index);
 			}
 		);
 		native_handle = fire_forget.native_handle();
 
-		std::wstring descirption = name;
-		if (descirption.empty())
-		{
-			descirption = white::sfmt(L"Scheduler Worker%d", thread_index);
-		}
+		
+		std::wstring descirption = white::sfmt(L"Scheduler Worker%d", thread_index);
 
 		white::threading::SetThreadDescription(native_handle, descirption.c_str());
 
 		fire_forget.detach();
 	}
 
-	void ThreadScheduler::run(unsigned thread_index) noexcept
+	void PoolThreadScheduler::run(unsigned thread_index) noexcept
 	{
 		while (true)
 		{
@@ -334,17 +320,31 @@ namespace white::coroutine {
 		}
 	}
 
-	void ThreadScheduler::schedule_impl(schedule_operation* oper) noexcept
+	bool PoolThreadScheduler::schedule_impl(schedule_operation* oper) noexcept
 	{
-		current_state->try_local_enqueue(oper);
+		bool ret = current_state->try_local_enqueue(oper);
 		wake_up();
+		return ret;
 	}
 
-	void ThreadScheduler::wake_up() noexcept
+	void PoolThreadScheduler::wake_up() noexcept
 	{
 		current_state->try_wake_up();
 	}
+}
 
+namespace white::coroutine {
+	
+
+	void ThreadScheduler::schedule_operation::await_suspend(std::coroutine_handle<> continuation) noexcept
+	{
+		continuation_handle = continuation;
+		scheduler ? (void)scheduler->schedule_impl(this): (any_scheduler->schedule_impl(this));
+	}
+
+	ThreadScheduler::schedule_operation::~schedule_operation()
+	{
+	}
 }
 
 namespace white::threading {
@@ -367,14 +367,14 @@ namespace white::threading {
 			io_thread1.detach();
 			io_thread2.detach();
 
-			std::allocator<white::coroutine::ThreadScheduler> allocate{};
+			std::allocator<white::coroutine::PoolThreadScheduler> allocate{};
 			schedulers = allocate.allocate(max_scheduler);
 			for (unsigned threadIndex = 0; threadIndex != max_scheduler; ++threadIndex)
 			{
-				new (&schedulers[threadIndex]) white::coroutine::ThreadScheduler(threadIndex);
+				new (&schedulers[threadIndex]) white::coroutine::PoolThreadScheduler(threadIndex);
 			}
 
-			render_scheduler = new white::coroutine::ThreadScheduler(max_scheduler,L"Scheduler Render");
+			render_scheduler = new white::coroutine::RenderThreadScheduler();
 		}
 
 	private:
@@ -384,7 +384,7 @@ namespace white::threading {
 		std::atomic<white::coroutine::ThreadScheduler::schedule_operation*> queue_head;
 
 		white::coroutine::IOScheduler io_scheduler;
-		white::coroutine::ThreadScheduler* schedulers;
+		white::coroutine::PoolThreadScheduler* schedulers;
 		white::coroutine::ThreadScheduler* render_scheduler;
 		unsigned int max_scheduler;
 	};
@@ -417,7 +417,7 @@ namespace white::threading {
 
 	void TaskScheduler::schedule_impl(white::coroutine::ThreadScheduler::schedule_operation* operation) noexcept
 	{
-		if (is_render_schedule() || thread_local_scheduler == nullptr || !white::coroutine::ThreadScheduler::thread_local_state->try_local_enqueue(operation))
+		if (is_render_schedule() || thread_local_scheduler == nullptr || !thread_local_scheduler->schedule_impl(operation))
 		{
 			remote_enqueue(operation);
 		}

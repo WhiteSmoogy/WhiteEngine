@@ -39,6 +39,7 @@ namespace white::threading {
 		bool is_render_schedule() const noexcept;
 	private:
 		friend class white::coroutine::ThreadScheduler;
+		friend class white::coroutine::PoolThreadScheduler;
 
 		void schedule_impl(white::coroutine::ThreadScheduler::schedule_operation* operation) noexcept;
 

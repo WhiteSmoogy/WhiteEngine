@@ -319,7 +319,7 @@ namespace platform::Render {
 
 		void PushEvent(const char16_t* Name, platform::FColor Color)
 		{
-			InsertCommand([=](CommandListBase& CmdList) {
+			InsertCommand([=,Name= AllocString(Name)](CommandListBase& CmdList) {
 				CmdList.GetComputeContext().PushEvent(Name, Color);
 				});
 		}

@@ -177,5 +177,5 @@ std::shared_ptr<Render::Texture> platform::CombineLUTPass(Render::CommandList& C
 		RasterizeToVolumeTexture(CmdList, Bounds);
 	}
 
-	return white::share_raw(OutputTexture);
+	return shared_raw_robject(OutputTexture);
 }

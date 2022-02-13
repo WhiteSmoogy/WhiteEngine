@@ -85,6 +85,7 @@ class hazptr_tc {
   friend class hazptr_holder<Atom>;
   template <uint8_t, template <typename> class>
   friend class hazptr_local;
+  friend hazptr_holder<Atom> make_hazard_pointer<Atom>(hazptr_domain<Atom>&);
 
   FOLLY_ALWAYS_INLINE
   hazptr_tc_entry<Atom>& operator[](uint8_t i) noexcept {

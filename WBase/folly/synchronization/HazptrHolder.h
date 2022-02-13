@@ -53,6 +53,13 @@ template <template <typename> class Atom>
 class hazptr_holder {
   hazptr_rec<Atom>* hprec_;
 
+  friend hazptr_holder<Atom> make_hazard_pointer<Atom>(hazptr_domain<Atom>&);
+
+  /** Private constructor used by make_hazard_pointer and
+      make_hazard_pointer_array */
+  FOLLY_ALWAYS_INLINE explicit hazptr_holder(hazptr_rec<Atom>* hprec)
+      : hprec_(hprec) {}
+
  public:
   /** Constructor - automatically acquires a hazard pointer. */
   FOLLY_ALWAYS_INLINE explicit hazptr_holder(
@@ -124,11 +131,11 @@ class hazptr_holder {
     /* Filtering the protected pointer through function Func is useful
        for stealing bits of the pointer word */
     auto p = ptr;
-    reset(f(p));
+    reset_protection(f(p));
     /*** Full fence ***/ folly::asymmetricLightBarrier();
     ptr = src.load(std::memory_order_acquire);
     if (UNLIKELY(p != ptr)) {
-      reset();
+        reset_protection();
       return false;
     }
     return true;
@@ -136,12 +143,12 @@ class hazptr_holder {
 
   /** get_protected */
   template <typename T>
-  FOLLY_ALWAYS_INLINE T* get_protected(const Atom<T*>& src) noexcept {
-    return get_protected(src, [](T* t) { return t; });
+  FOLLY_ALWAYS_INLINE T* protect(const Atom<T*>& src) noexcept {
+    return protect(src, [](T* t) { return t; });
   }
 
   template <typename T, typename Func>
-  FOLLY_ALWAYS_INLINE T* get_protected(const Atom<T*>& src, Func f) noexcept {
+  FOLLY_ALWAYS_INLINE T* protect(const Atom<T*>& src, Func f) noexcept {
     T* ptr = src.load(std::memory_order_relaxed);
     while (!try_protect(ptr, src, f)) {
       /* Keep trying */;
@@ -151,13 +158,13 @@ class hazptr_holder {
 
   /** reset */
   template <typename T>
-  FOLLY_ALWAYS_INLINE void reset(const T* ptr) noexcept {
+  FOLLY_ALWAYS_INLINE void reset_protection(const T* ptr) noexcept {
     auto p = static_cast<hazptr_obj<Atom>*>(const_cast<T*>(ptr));
     DCHECK(hprec_); // UB if *this is empty
     hprec_->reset_hazptr(p);
   }
 
-  FOLLY_ALWAYS_INLINE void reset(std::nullptr_t = nullptr) noexcept {
+  FOLLY_ALWAYS_INLINE void reset_protection(std::nullptr_t = nullptr) noexcept {
     DCHECK(hprec_); // UB if *this is empty
     hprec_->reset_hazptr();
   }
@@ -180,6 +187,25 @@ class hazptr_holder {
     hprec_ = hprec;
   }
 }; // hazptr_holder
+
+/**
+ *  Free function make_hazard_pointer constructs nonempty holder
+ */
+template <template <typename> class Atom>
+FOLLY_ALWAYS_INLINE hazptr_holder<Atom> make_hazard_pointer(
+    hazptr_domain<Atom>& domain) {
+#if FOLLY_HAZPTR_THR_LOCAL
+    if (LIKELY(&domain == &default_hazptr_domain<Atom>())) {
+        auto hprec = hazptr_tc_tls<Atom>().try_get();
+        if (LIKELY(hprec != nullptr)) {
+            return hazptr_holder<Atom>(hprec);
+        }
+    }
+#endif
+    auto hprec = domain.hprec_acquire();
+    DCHECK(hprec);
+    return hazptr_holder<Atom>(hprec);
+}
 
 /**
  *  Free function swap of hazptr_holder-s.
@@ -285,7 +311,7 @@ class hazptr_array {
       count = cap - M;
     }
     for (uint8_t i = 0; i < M; ++i) {
-      h[i].reset();
+      h[i].reset_protection();
       tc[count + i].fill(h[i].hprec());
       new (&h[i]) hazptr_holder<Atom>(nullptr);
     }

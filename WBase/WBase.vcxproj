@@ -44,6 +44,7 @@
     <ClInclude Include="folly\concurrency\CacheLocality.h" />
     <ClInclude Include="folly\concurrency\ConcurrentHashMap.h" />
     <ClInclude Include="folly\concurrency\detail\ConcurrentHashMap-detail.h" />
+    <ClInclude Include="folly\concurrency\UnboundedQueue.h" />
     <ClInclude Include="folly\ConstexprMath.h" />
     <ClInclude Include="folly\container\detail\F14Mask.h" />
     <ClInclude Include="folly\container\HeterogeneousAccess-fwd.h" />
@@ -54,6 +55,7 @@
     <ClInclude Include="folly\detail\Futex-inl.h" />
     <ClInclude Include="folly\detail\Futex.h" />
     <ClInclude Include="folly\detail\Iterators.h" />
+    <ClInclude Include="folly\detail\MemoryIdler.h" />
     <ClInclude Include="folly\detail\Singleton.h" />
     <ClInclude Include="folly\detail\StaticSingletonManager.h" />
     <ClInclude Include="folly\detail\ThreadLocalDetail.h" />
@@ -104,8 +106,13 @@
     <ClInclude Include="folly\SharedMutex.h" />
     <ClInclude Include="folly\SingletonThreadLocal.h" />
     <ClInclude Include="folly\synchronization\AsymmetricMemoryBarrier.h" />
+    <ClInclude Include="folly\synchronization\AtomicStruct.h" />
+    <ClInclude Include="folly\synchronization\AtomicUtil-inl.h" />
+    <ClInclude Include="folly\synchronization\AtomicUtil.h" />
+    <ClInclude Include="folly\synchronization\detail\AtomicUtils.h" />
     <ClInclude Include="folly\synchronization\detail\HazptrUtils.h" />
     <ClInclude Include="folly\synchronization\detail\Sleeper.h" />
+    <ClInclude Include="folly\synchronization\detail\Spin.h" />
     <ClInclude Include="folly\synchronization\Hazptr-fwd.h" />
     <ClInclude Include="folly\synchronization\Hazptr.h" />
     <ClInclude Include="folly\synchronization\HazptrDomain.h" />
@@ -117,6 +124,8 @@
     <ClInclude Include="folly\synchronization\MicroSpinLock.h" />
     <ClInclude Include="folly\synchronization\ParkingLot.h" />
     <ClInclude Include="folly\synchronization\SanitizeThread.h" />
+    <ClInclude Include="folly\synchronization\SaturatingSemaphore.h" />
+    <ClInclude Include="folly\synchronization\WaitOptions.h" />
     <ClInclude Include="folly\system\ThreadId.h" />
     <ClInclude Include="folly\ThreadLocal.h" />
     <ClInclude Include="folly\Traits.h" />
@@ -132,6 +141,7 @@
     <ClInclude Include="iterator_op.hpp" />
     <ClInclude Include="cassert.h" />
     <ClInclude Include="iterator_trait.hpp" />
+    <ClInclude Include="UnboundedQueue.h" />
     <ClInclude Include="wcompiler.h" />
     <ClInclude Include="wdef.h" />
     <ClInclude Include="winttype_utility.hpp" />

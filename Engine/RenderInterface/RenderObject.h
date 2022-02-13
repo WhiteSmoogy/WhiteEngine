@@ -3,6 +3,7 @@
 #include <WBase/type_traits.hpp>
 #include <WBase/smart_ptr.hpp>
 #include <WBase/winttype.hpp>
+#include <WBase/UnboundedQueue.h>
 #include <atomic>
 #include <stack>
 
@@ -25,7 +26,7 @@ namespace platform::Render {
 			auto NewValue = --NumRefs;
 			if (NewValue == 0)
 			{
-				PendingDeletes.push(this);
+				PendingDeletes.enqueue(this);
 			}
 			return NewValue;
 		}
@@ -35,7 +36,7 @@ namespace platform::Render {
 	private:
 		std::atomic_uint32_t NumRefs = 1;
 
-		static std::stack<RObject*> PendingDeletes;
+		static white::USPSCQueue<RObject*,false> PendingDeletes;
 
 		//D3D12 API don't do internal reference counting
 		struct RObjectToDelete

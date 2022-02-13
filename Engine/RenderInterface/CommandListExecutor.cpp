@@ -12,8 +12,8 @@ namespace white::coroutine
 {
 	class RenderThreadScheduler::thread_state
 	{
-		std::atomic<schedule_operation*> queue_tail;
-		std::atomic< schedule_operation*> queue_head;
+		alignas(std::hardware_destructive_interference_size) std::atomic<schedule_operation*> queue_tail;
+		alignas(std::hardware_destructive_interference_size) std::atomic< schedule_operation*> queue_head;
 
 	public:
 		void push(schedule_operation* operation)

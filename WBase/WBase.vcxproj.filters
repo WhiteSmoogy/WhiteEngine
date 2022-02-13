@@ -379,6 +379,34 @@
     <ClInclude Include="folly\Expected.h">
       <Filter>folly</Filter>
     </ClInclude>
+    <ClInclude Include="folly\concurrency\UnboundedQueue.h">
+      <Filter>folly\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="UnboundedQueue.h" />
+    <ClInclude Include="folly\synchronization\WaitOptions.h">
+      <Filter>folly\synchronization</Filter>
+    </ClInclude>
+    <ClInclude Include="folly\synchronization\detail\Spin.h">
+      <Filter>folly\synchronization\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="folly\synchronization\SaturatingSemaphore.h">
+      <Filter>folly\synchronization</Filter>
+    </ClInclude>
+    <ClInclude Include="folly\detail\MemoryIdler.h">
+      <Filter>folly\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="folly\synchronization\AtomicStruct.h">
+      <Filter>folly\synchronization</Filter>
+    </ClInclude>
+    <ClInclude Include="folly\synchronization\detail\AtomicUtils.h">
+      <Filter>folly\synchronization\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="folly\synchronization\AtomicUtil-inl.h">
+      <Filter>folly\synchronization</Filter>
+    </ClInclude>
+    <ClInclude Include="folly\synchronization\AtomicUtil.h">
+      <Filter>folly\synchronization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="any.cpp" />

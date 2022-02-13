@@ -358,13 +358,13 @@ class alignas(64) BucketTable {
 
     auto idx = getIdx(bcount, h);
     auto prev = &buckets->buckets_[idx]();
-    auto node = hazcurr.get_protected(*prev);
+    auto node = hazcurr.protect(*prev);
     while (node) {
       if (KeyEqual()(k, node->getItem().first)) {
         res.setNode(node, buckets, bcount, idx);
         return true;
       }
-      node = haznext.get_protected(node->next_);
+      node = haznext.protect(node->next_);
       hazcurr.swap(haznext);
     }
     return false;
@@ -609,7 +609,7 @@ class alignas(64) BucketTable {
     while (true) {
       auto seqlock = seqlock_.load(std::memory_order_acquire);
       bcount = bucket_count_.load(std::memory_order_acquire);
-      buckets = hazptr.get_protected(buckets_);
+      buckets = hazptr.protect(buckets_);
       auto seqlock2 = seqlock_.load(std::memory_order_acquire);
       if (!(seqlock & 1) && (seqlock == seqlock2)) {
         break;
@@ -651,12 +651,12 @@ class alignas(64) BucketTable {
     auto prev = head;
     auto& hazbuckets = it.hazptrs_[0];
     auto& haznode = it.hazptrs_[1];
-    hazbuckets.reset(buckets);
+    hazbuckets.reset_protection(buckets);
     while (node) {
       // Is the key found?
       if (KeyEqual()(k, node->getItem().first)) {
         it.setNode(node, buckets, bcount, idx);
-        haznode.reset(node);
+        haznode.reset_protection(node);
         if (type == InsertType::MATCH) {
           if (!match(node->getItem().second)) {
             return false;
@@ -676,6 +676,7 @@ class alignas(64) BucketTable {
           }
           prev->store(cur, std::memory_order_release);
           it.setNode(cur, buckets, bcount, idx);
+          haznode.reset_protection(cur);
           g.unlock();
           // Release not under lock.
           node->release();
@@ -687,8 +688,8 @@ class alignas(64) BucketTable {
       node = node->next_.load(std::memory_order_relaxed);
     }
     if (type != InsertType::DOES_NOT_EXIST && type != InsertType::ANY) {
-      haznode.reset();
-      hazbuckets.reset();
+      haznode.reset_protection();
+      hazbuckets.reset_protection();
       return false;
     }
     // Node not found, check for rehash on ANY
@@ -703,7 +704,7 @@ class alignas(64) BucketTable {
       buckets = buckets_.load(std::memory_order_relaxed);
       DCHECK(buckets); // Use-after-destruction by user.
       bcount <<= 1;
-      hazbuckets.reset(buckets);
+      hazbuckets.reset_protection(buckets);
       idx = getIdx(bcount, h);
       head = &buckets->buckets_[idx]();
       headnode = head->load(std::memory_order_relaxed);
@@ -721,7 +722,7 @@ class alignas(64) BucketTable {
     cur->next_.store(headnode, std::memory_order_relaxed);
     head->store(cur, std::memory_order_release);
     it.setNode(cur, buckets, bcount, idx);
-    haznode.reset(cur);
+    haznode.reset_protection(cur);
     return true;
   }
   Mutex m_;

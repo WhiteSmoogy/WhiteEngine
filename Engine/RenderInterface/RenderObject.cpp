@@ -2,7 +2,7 @@
 
 using namespace platform::Render;
 
-std::stack<RObject*> RObject::PendingDeletes;
+white::USPSCQueue<RObject*,false> RObject::PendingDeletes;
 white::uint32 RObject::CurrentFrame = 0;
 std::vector<RObject::RObjectToDelete> RObject::DeferredDeletionQueue;
 
@@ -22,8 +22,7 @@ void RObject::FlushPendingDeletes()
 
 		while (!PendingDeletes.empty())
 		{
-			DeferredDeletionQueue.back().Objects.push_back(PendingDeletes.top());
-			PendingDeletes.pop();
+			DeferredDeletionQueue.back().Objects.push_back(PendingDeletes.dequeue());
 		}
 	}
 

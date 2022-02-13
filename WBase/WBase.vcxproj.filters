@@ -500,6 +500,12 @@
     <ClCompile Include="folly\synchronization\AsymmetricMemoryBarrier.cpp">
       <Filter>folly\synchronization</Filter>
     </ClCompile>
+    <ClCompile Include="folly\synchronization\WaitOptions.cpp">
+      <Filter>folly\synchronization</Filter>
+    </ClCompile>
+    <ClCompile Include="folly\detail\MemoryIdler.cpp">
+      <Filter>folly\detail</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="WBase.natvis">

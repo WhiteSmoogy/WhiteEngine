@@ -82,7 +82,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)Engine;$(SolutionDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)SDKs</IncludePath>
+    <IncludePath>$(SolutionDir)Engine;$(SolutionDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)SDKs;$(SolutionDir)WBase;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir);$(LibraryPath);$(SolutionDir)SDKs</LibraryPath>
     <UseMultiToolTask>true</UseMultiToolTask>
   </PropertyGroup>

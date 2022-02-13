@@ -161,6 +161,7 @@
     <ClCompile Include="folly\concurrency\CacheLocality.cpp" />
     <ClCompile Include="folly\Demangle.cpp" />
     <ClCompile Include="folly\detail\Futex.cpp" />
+    <ClCompile Include="folly\detail\MemoryIdler.cpp" />
     <ClCompile Include="folly\detail\StaticSingletonManager.cpp" />
     <ClCompile Include="folly\detail\ThreadLocalDetail.cpp" />
     <ClCompile Include="folly\detail\UniqueInstance.cpp" />
@@ -184,6 +185,7 @@
     <ClCompile Include="folly\synchronization\Hazptr.cpp" />
     <ClCompile Include="folly\synchronization\ParkingLot.cpp" />
     <ClCompile Include="folly\synchronization\SanitizeThread.cpp" />
+    <ClCompile Include="folly\synchronization\WaitOptions.cpp" />
     <ClCompile Include="folly\system\ThreadId.cpp" />
     <ClCompile Include="operators.hpp" />
     <ClInclude Include="optional.hpp" />

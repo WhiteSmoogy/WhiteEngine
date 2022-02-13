@@ -89,7 +89,7 @@ namespace white {
 		}
 
 		// TODO: Reduce overhead?
-#	define CONF_PATH (FetchWorkingRoot() + "lconf.lsl").c_str()
+#	define CONF_PATH (FetchWorkingRoot() + "wconf.wsl").c_str()
 #endif
 #if WFL_DS
 #	define DATA_DIRECTORY "/Data/"

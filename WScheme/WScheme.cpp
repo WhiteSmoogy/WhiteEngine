@@ -21,9 +21,9 @@ namespace std
 
 namespace scheme
 {
-#define LS_Impl_WSLA1_Enable_TCO true
-#define LS_Impl_WSLA1_Enable_TailRewriting true
-#define LS_Impl_WSLA1_Enable_Thunked true
+#define WS_Impl_WSLA1_Enable_TCO true
+#define WS_Impl_WSLA1_Enable_TailRewriting true
+#define WS_Impl_WSLA1_Enable_Thunked true
 
 
 	namespace v1
@@ -230,7 +230,7 @@ namespace scheme
 
 			using EnvironmentGuard = white::guard<EnvironmentSwitcher>;
 
-#if LS_Impl_WSLA1_Enable_Thunked
+#if WS_Impl_WSLA1_Enable_Thunked
 			inline /*[[nodiscard]]*/
 #if true
 				PDefH(ReductionStatus, RelayTail, ContextNode& ctx, Reducer& cur)
@@ -298,7 +298,7 @@ namespace scheme
 				return ReductionStatus::Retrying;
 			}
 
-#	if LS_Impl_WSLA1_Enable_TCO
+#	if WS_Impl_WSLA1_Enable_TCO
 			struct TCOAction final
 			{
 				lref<TermNode> Term;
@@ -439,7 +439,7 @@ namespace scheme
 			ReductionStatus
 				ReduceSubsequent(TermNode& term, ContextNode& ctx, Reducer&& next)
 			{
-#if LS_Impl_WSLA1_Enable_Thunked
+#if WS_Impl_WSLA1_Enable_Thunked
 				return RelayNext(ctx, std::bind(ReduceCheckedAsync, std::ref(term),
 					std::ref(ctx)), CombineActions(ctx, std::move(next), ctx.Switch()));
 #else
@@ -456,8 +456,8 @@ namespace scheme
 				return ReduceAgain(term, ctx);
 			}
 
-#if LS_Impl_WSLA1_Enable_Thunked
-#	if LS_Impl_WSLA1_Enable_TailRewriting
+#if WS_Impl_WSLA1_Enable_Thunked
+#	if WS_Impl_WSLA1_Enable_TailRewriting
 			ReductionStatus
 				ReduceSequenceOrderedAsync(TermNode& term, ContextNode& ctx, TNIter i)
 			{
@@ -667,7 +667,7 @@ namespace scheme
 				else
 					term.SetContent(closure);
 				// XXX: Term reused.
-#if LS_Impl_WSLA1_Enable_TCO
+#if WS_Impl_WSLA1_Enable_TCO
 
 				Reducer next(std::bind(ReduceCheckedAsync, std::ref(term), std::ref(ctx)));
 
@@ -699,7 +699,7 @@ namespace scheme
 #endif
 			}
 
-#if LS_Impl_WSLA1_Enable_TCO
+#if WS_Impl_WSLA1_Enable_TCO
 			bool
 				DeduplicateBindings(Environment& dst, const Environment& src)
 			{
@@ -717,7 +717,7 @@ namespace scheme
 					std::ref(ctx), move, std::ref(closure), !no_lift));
 
 				// TODO: Merge guard in TCO action.
-#if LS_Impl_WSLA1_Enable_TCO
+#if WS_Impl_WSLA1_Enable_TCO
 				const auto update_fused_act([&](TCOAction& fused_act) {
 					fused_act.EnvGuard = std::move(gd);
 				});
@@ -830,7 +830,7 @@ namespace scheme
 
 				update_fused_act(fused_act);
 				return RelayNext(ctx, std::move(next_action), std::move(fused_act));
-#elif LS_Impl_WSLA1_Enable_Thunked
+#elif WS_Impl_WSLA1_Enable_Thunked
 				// NOTE: Lambda is not used to avoid unspecified destruction order of
 				//	captured component and better performance (compared to the case of
 				//	%pair used to keep the order and %shared_ptr to hold the guard).
@@ -1038,8 +1038,8 @@ namespace scheme
 					_tParams&&... args)
 			{
 				static_assert(sizeof...(args) < 2, "Unsupported owner arguments found.");
-#if LS_Impl_WSLA1_Enable_Thunked
-#	if LS_Impl_WSLA1_Enable_TCO
+#if WS_Impl_WSLA1_Enable_Thunked
+#	if WS_Impl_WSLA1_Enable_TCO
 				const auto update_fused_act([&](TCOAction& fused_act) {
 					// XXX: Blocked. 'wforward' cause G++ 5.3 crash: internal compiler
 					//	error: Segmentation fault.
@@ -1186,9 +1186,9 @@ namespace scheme
 		ReductionStatus
 			ReduceAgain(TermNode& term, ContextNode& ctx)
 		{
-#if LS_Impl_WSLA1_Enable_Thunked
+#if WS_Impl_WSLA1_Enable_Thunked
 			auto reduce_again(std::bind(ReduceOnce, std::ref(term), std::ref(ctx)));
-#	if LS_Impl_WSLA1_Enable_TCO
+#	if WS_Impl_WSLA1_Enable_TCO
 			const auto update_fused_act([&](TCOAction& fused_act) {
 				fused_act.ReduceNestedAsync = true;
 			});
@@ -1219,7 +1219,7 @@ namespace scheme
 		ReductionStatus
 			Reduce(TermNode& term, ContextNode& ctx)
 		{
-#if LS_Impl_WSLA1_Enable_Thunked
+#if WS_Impl_WSLA1_Enable_Thunked
 			// TODO: Support other states?
 			white::swap_guard<Reducer> gd(true, ctx.Current);
 			white::swap_guard<bool> gd_skip(true, ctx.SkipToNextEvaluation);
@@ -1243,7 +1243,7 @@ namespace scheme
 		ReductionStatus
 			ReduceChecked(TermNode& term, ContextNode& ctx)
 		{
-#if LS_Impl_WSLA1_Enable_Thunked
+#if WS_Impl_WSLA1_Enable_Thunked
 			return ReduceCheckedAsync(term, ctx);
 #else
 			// NOTE: This does not support PTC.
@@ -1270,7 +1270,7 @@ namespace scheme
 			//	in routines which expect proper tail actions, given the guarnatee that
 			//	the precondition of %Reduce is not violated.
 			// XXX: The remained tail action would be dropped.
-#if LS_Impl_WSLA1_Enable_Thunked
+#if WS_Impl_WSLA1_Enable_Thunked
 			ReduceChildrenOrderedAsync(first, last, ctx);
 #else
 			std::for_each(first, last, white::bind1(ReduceCheckedSync, std::ref(ctx)));
@@ -1280,7 +1280,7 @@ namespace scheme
 		ReductionStatus
 			ReduceChildrenOrdered(TNIter first, TNIter last, ContextNode& ctx)
 		{
-#if LS_Impl_WSLA1_Enable_Thunked
+#if WS_Impl_WSLA1_Enable_Thunked
 			return ReduceChildrenOrderedAsync(first, last, ctx);
 #else
 			// NOTE: This does not support PTC.
@@ -1313,7 +1313,7 @@ namespace scheme
 				if (term.size() != 1)
 				{
 					// NOTE: List evaluation.
-#if LS_Impl_WSLA1_Enable_Thunked
+#if WS_Impl_WSLA1_Enable_Thunked
 					return DelimitActions(ctx.EvaluateList, term, ctx);
 #else
 					return ctx.EvaluateList(term, ctx);
@@ -1332,7 +1332,7 @@ namespace scheme
 
 			// NOTE: Empty list or special value token has no-op to do with.
 			// TODO: Handle special value token?
-#if LS_Impl_WSLA1_Enable_Thunked
+#if WS_Impl_WSLA1_Enable_Thunked
 			// NOTE: The reduction relies on proper handling of reduction status.
 			return tp != white::type_id<void>() && tp != white::type_id<ValueToken>()
 				? DelimitActions(ctx.EvaluateLeaf, term, ctx) : ReductionStatus::Clean;
@@ -1346,8 +1346,8 @@ namespace scheme
 		ReductionStatus
 			ReduceOrdered(TermNode& term, ContextNode& ctx)
 		{
-#if LS_Impl_WSLA1_Enable_Thunked
-#	if LS_Impl_WSLA1_Enable_TailRewriting
+#if WS_Impl_WSLA1_Enable_Thunked
+#	if WS_Impl_WSLA1_Enable_TailRewriting
 			if (!term.empty())
 				return ReduceSequenceOrderedAsync(term, ctx, term.begin());
 			term.Value = ValueToken::Unspecified;
@@ -1473,7 +1473,7 @@ namespace scheme
 			StrictContextHandler::operator()(TermNode& term, ContextNode& ctx) const
 		{
 			// NOTE: This implementes arguments evaluation in applicative order.
-#if LS_Impl_WSLA1_Enable_Thunked
+#if WS_Impl_WSLA1_Enable_Thunked
 			return RelayNext(ctx, [&] {
 				ReduceArguments(term, ctx);
 				return ReductionStatus::Retrying;
@@ -1601,9 +1601,9 @@ namespace scheme
 				auto& fm(Deref(term.begin()));
 
 				if (const auto p_handler = AccessPtr<ContextHandler>(fm))
-#if LS_Impl_WSLA1_Enable_Thunked
+#if WS_Impl_WSLA1_Enable_Thunked
 				{
-#	if LS_Impl_WSLA1_Enable_TCO
+#	if WS_Impl_WSLA1_Enable_TCO
 					return CombinerReturnThunk(*p_handler, term, ctx,
 						std::move(*p_handler));
 #	else

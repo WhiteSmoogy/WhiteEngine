@@ -262,7 +262,7 @@ namespace platform::Render {
 		void SetShaderParameter(THardwareShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue)
 		{
 			InsertCommand([=,UseValue=AllocBuffer(NumBytes,NewValue)](CommandListBase& CmdList) {
-				CmdList.GetContext().SetShaderParameter(Shader, BufferIndex, BaseIndex, NumBytes, NewValue);
+				CmdList.GetContext().SetShaderParameter(Shader, BufferIndex, BaseIndex, NumBytes, UseValue);
 				});
 		}
 

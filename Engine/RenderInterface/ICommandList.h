@@ -65,6 +65,13 @@ namespace platform::Render {
 			return MemManager.Alloc(AllocSize, Alignment);
 		}
 
+		void* AllocBuffer(uint32 NumBytes, const void* Buffer)
+		{
+			void* NewBuffer = Alloc(NumBytes, 16);
+			memcpy(NewBuffer, Buffer, NumBytes);
+			return NewBuffer;
+		}
+
 		template<typename CharT>
 		CharT* AllocString(const CharT* Name)
 		{
@@ -254,7 +261,7 @@ namespace platform::Render {
 		template<typename THardwareShader>
 		void SetShaderParameter(THardwareShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue)
 		{
-			InsertCommand([=](CommandListBase& CmdList) {
+			InsertCommand([=,UseValue=AllocBuffer(NumBytes,NewValue)](CommandListBase& CmdList) {
 				CmdList.GetContext().SetShaderParameter(Shader, BufferIndex, BaseIndex, NumBytes, NewValue);
 				});
 		}

@@ -17,8 +17,6 @@ bool ConstantBuffer::Version(ID3D12Resource*& BufferOut, bool bDiscardSharedCons
 		return false;
 	}
 
-	//SCOPE_CYCLE_COUNTER(STAT_D3D12GlobalConstantBufferUpdateTime);
-
 	if (bDiscardSharedConstants)
 	{
 		// If we're discarding shared constants, just use constants that have been updated since the last Commit.

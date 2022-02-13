@@ -28,10 +28,7 @@ struct ShaderParameterStructBinding
 
 			auto ShaderType = Member.GetShaderType();
 
-			const bool bIsVariableNativeType = (
-				ShaderType >= SPT_uint &&
-				ShaderType <= SPT_float4x4 
-				);
+			const bool bIsVariableNativeType = IsNumberType(ShaderType);
 
 			if (ShaderType == SPT_StructInclude)
 			{
@@ -59,10 +56,7 @@ struct ShaderParameterStructBinding
 				Bindings->Parameters.emplace_back(Parameter);
 			}
 
-			const bool bIsTextureType = (
-				ShaderType >= SPT_texture1D &&
-				ShaderType <= SPT_textureCUBEArray
-				);
+			const bool bIsTextureType = IsTextureReadType(ShaderType);
 
 			if (bIsTextureType)
 			{
@@ -82,9 +76,7 @@ struct ShaderParameterStructBinding
 				Bindings->Samplers.emplace_back(Parameter);
 			}
 
-			const bool bIsUAVType =
-				(ShaderType >= SPT_rwbuffer && ShaderType <= SPT_AppendStructuredBuffer) ||
-				ShaderType == SPT_rwbyteAddressBuffer;
+			const bool bIsUAVType = GetBaseType(ShaderType) == SBT_UAV;
 
 			if (bIsUAVType)
 			{

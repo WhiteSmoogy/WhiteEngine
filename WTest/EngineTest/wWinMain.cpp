@@ -503,8 +503,9 @@ private:
 		SCOPED_GPU_EVENT(CmdList, PostProcess);
 
 		//PostProcess
-		if (/*true ||*/ lut_dirty || !lut_texture)
+		if (lut_dirty || !lut_texture)
 		{
+			SCOPED_GPU_EVENT(CmdList, CombineLUTPass);
 			lut_texture = platform::CombineLUTPass(CmdList,lut_params);
 		}
 

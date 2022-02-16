@@ -60,6 +60,11 @@ FastConstantPageAllocator::ConstantAllocator* FastConstantPageAllocator::CreateN
 
 bool FastConstantPageAllocator::ConstantAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
 {
+	if (TotalSizeUsed == BlockSize)
+	{
+		return false;
+	}
+
 	if (!DelayCreated)
 	{
 		CreateBackingResource();
@@ -80,6 +85,9 @@ bool FastConstantPageAllocator::ConstantAllocator::TryAllocate(uint32 SizeInByte
 	uint32 Padding = 0;
 
 	const uint32 AlignedOffsetFromResourceBase = 0;
+
+	TotalSizeUsed += AllocSize;
+
 
 	ResourceLocation.SetType(ResourceLocation::FastAllocation);
 	ResourceLocation.SetSize(SizeInBytes);

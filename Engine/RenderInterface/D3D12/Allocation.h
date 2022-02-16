@@ -79,7 +79,7 @@ namespace platform_ex::Windows::D3D12
 		class ConstantAllocator :public ResourceAllocator{
 		public:
 			ConstantAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, uint32 InBlockSize)
-				:ResourceAllocator(InParentDevice,VisibleNodes),BlockSize(InBlockSize), BackingResource(nullptr), DelayCreated(false)
+				:ResourceAllocator(InParentDevice,VisibleNodes),BlockSize(InBlockSize), TotalSizeUsed(0),BackingResource(nullptr), DelayCreated(false)
 			{}
 
 			bool TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation);
@@ -87,6 +87,8 @@ namespace platform_ex::Windows::D3D12
 			void CreateBackingResource();
 
 			const uint32 BlockSize;
+
+			uint32 TotalSizeUsed;
 
 			ResourceHolder* BackingResource;
 

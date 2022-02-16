@@ -422,6 +422,9 @@
     <ClCompile Include="RenderInterface\CommandListExecutor.cpp">
       <Filter>RenderInterface</Filter>
     </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\Allocation.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">
@@ -1101,6 +1104,9 @@
     </ClInclude>
     <ClInclude Include="Runtime\Core\MemStack.h">
       <Filter>Runtime\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\D3D12\Allocation.h">
+      <Filter>RenderInterface\D3D12</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -6,16 +6,11 @@
 #include <WBase/memory.hpp>
 #include <algorithm>
 #include "GraphicsBuffer.hpp"
+#include "Allocation.h"
 
 namespace platform_ex::Windows::D3D12
 {
 	constexpr unsigned MAX_GLOBAL_CONSTANT_BUFFER_SIZE = 4096;
-
-	//TODO
-	class FastConstantAllocator
-	{
-
-	};
 
 	class ConstantBuffer : public DeviceChild
 	{

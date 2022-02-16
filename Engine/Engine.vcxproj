@@ -63,6 +63,7 @@
     <ClCompile Include="RenderInterface\CommandListExecutor.cpp" />
     <ClCompile Include="RenderInterface\CommonRenderResources.cpp" />
     <ClCompile Include="RenderInterface\D3D12\Adapter.d3d12.cpp" />
+    <ClCompile Include="RenderInterface\D3D12\Allocation.cpp" />
     <ClCompile Include="RenderInterface\D3D12\BuiltInRayTracingShaders.cpp" />
     <ClCompile Include="RenderInterface\D3D12\CommandContext.d3d12.cpp" />
     <ClCompile Include="RenderInterface\D3D12\CommandList.d3d12.cpp" />
@@ -221,6 +222,7 @@
     <ClInclude Include="RenderInterface\Color_T.hpp" />
     <ClInclude Include="RenderInterface\CommonRenderResources.h" />
     <ClInclude Include="RenderInterface\D3D12\Adapter.h" />
+    <ClInclude Include="RenderInterface\D3D12\Allocation.h" />
     <ClInclude Include="RenderInterface\D3D12\BuiltInRayTracingShaders.h" />
     <ClInclude Include="RenderInterface\D3D12\CommandContext.h" />
     <ClInclude Include="RenderInterface\D3D12\CommandListManager.h" />

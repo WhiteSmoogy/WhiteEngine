@@ -26,6 +26,7 @@ CommandContext::CommandContext(NodeDevice* InParent, SubAllocatedOnlineHeap::Sub
 	:
 	CommandContextBase(InParent->GetParentAdapter(), InParent->GetGPUMask(),InIsDefaultContext, InIsAsyncComputeContext),
 	DeviceChild(InParent),
+	ConstantsAllocator(InParent,InParent->GetGPUMask()),
 	VSConstantBuffer(InParent, ConstantsAllocator),
 	HSConstantBuffer(InParent, ConstantsAllocator),
 	DSConstantBuffer(InParent, ConstantsAllocator),

@@ -54,6 +54,11 @@ namespace platform_ex::Windows {
 			ResourceHolder();
 
 			ResourceHolder(const COMPtr<ID3D12Resource>& pResource, D3D12_RESOURCE_STATES in_state = D3D12_RESOURCE_STATE_COMMON);
+
+			ResourceHolder(const COMPtr<ID3D12Resource>& pResource, D3D12_RESOURCE_STATES in_state,const D3D12_RESOURCE_DESC& InDesc);
+
+
+			friend class Device;
 		protected:
 			D3D12_RESOURCE_STATES curr_state;
 

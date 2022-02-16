@@ -12,6 +12,7 @@
 #include "Fence.h"
 #include "RootSignature.h"
 #include "D3DCommandList.h"
+#include "Allocation.h"
 
 namespace platform::Render::Effect {
 	class Effect;
@@ -100,11 +101,25 @@ namespace platform_ex::Windows::D3D12 {
 			return Devices[Index];
 		}
 
+		UploadHeapAllocator& GetUploadHeapAllocator(uint32 GPUIndex);
+
 		void InitializeRayTracing();
 
 		ManualFence& GetFrameFence() { return *frame_fence; }
 
 		void EndFrame();
+
+		HRESULT CreateBuffer(const D3D12_HEAP_PROPERTIES& HeapProps,
+			GPUMaskType CreationNode,
+			D3D12_RESOURCE_STATES InitialState,
+			D3D12_RESOURCE_STATES InDefaultState,
+			uint64 HeapSize,
+			ResourceHolder** ppOutResource,
+			const char* Name,
+			D3D12_RESOURCE_FLAGS Flags);
+
+		HRESULT CreateCommittedResource(const D3D12_RESOURCE_DESC& InDesc, GPUMaskType CreationNode, const D3D12_HEAP_PROPERTIES& HeapProps, D3D12_RESOURCE_STATES InInitialState,
+			D3D12_RESOURCE_STATES InDefaultState, const D3D12_CLEAR_VALUE* ClearValue, ResourceHolder** ppOutResource, const char* Name);
 	public:
 		friend class Context;
 		friend class RayContext;
@@ -170,6 +185,7 @@ namespace platform_ex::Windows::D3D12 {
 		//@}
 
 		platform::Render::Caps d3d_caps;
+		bool bHeapNotZeroedSupported;
 
 		std::unique_ptr<platform::Render::Effect::CopyEffect> bilt_effect;
 		std::unique_ptr<InputLayout> postprocess_layout;
@@ -191,6 +207,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		D3D_ROOT_SIGNATURE_VERSION RootSignatureVersion;
 
+		UploadHeapAllocator* UploadHeapAllocator[1];
 		NodeDevice* Devices[1];
 
 		D3DPipelineStateCache PipelineStateCache;

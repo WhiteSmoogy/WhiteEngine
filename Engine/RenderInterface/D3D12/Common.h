@@ -100,6 +100,9 @@ namespace platform_ex::Windows::D3D12 {
 		}
 
 		const GPUMaskType GetGPUMask() const { return GPUMask; }
+
+		const GPUMaskType GetVisibilityMask() const { return VisibilityMask; }
+
 	protected:
 		GPUMaskType GPUMask;
 		// Which GPUs have direct access to this object

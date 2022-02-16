@@ -751,4 +751,45 @@ namespace platform_ex::Windows::D3D12 {
 
 		platform::Render::RObject::FlushPendingDeletes();
 	}
+
+	UploadHeapAllocator& D3D12::Device::GetUploadHeapAllocator(uint32 GPUIndex)
+	{
+		return *UploadHeapAllocator[GPUIndex];
+	}
+
+	HRESULT D3D12::Device::CreateBuffer(const D3D12_HEAP_PROPERTIES& HeapProps, GPUMaskType CreationNode, D3D12_RESOURCE_STATES InitialState, D3D12_RESOURCE_STATES InDefaultState, uint64 HeapSize, ResourceHolder** ppOutResource, const char* Name, D3D12_RESOURCE_FLAGS Flags)
+	{
+		if (!ppOutResource)
+		{
+			return E_POINTER;
+		}
+
+		const D3D12_RESOURCE_DESC BufDesc = CD3DX12_RESOURCE_DESC::Buffer(HeapSize, Flags);
+
+		return CreateCommittedResource(BufDesc, CreationNode, HeapProps, InitialState, InDefaultState, nullptr, ppOutResource, Name);
+	}
+
+	HRESULT platform_ex::Windows::D3D12::Device::CreateCommittedResource(const D3D12_RESOURCE_DESC& BufDesc, GPUMaskType CreationNode, const D3D12_HEAP_PROPERTIES& HeapProps, D3D12_RESOURCE_STATES InInitialState, D3D12_RESOURCE_STATES InDefaultState, const D3D12_CLEAR_VALUE* ClearValue, ResourceHolder** ppOutResource, const char* Name)
+	{
+		//CreateCommitResource
+		COMPtr<ID3D12Resource> pResource;
+		D3D12_HEAP_FLAGS HeapFlags = bHeapNotZeroedSupported ? D3D12_HEAP_FLAG_CREATE_NOT_ZEROED : D3D12_HEAP_FLAG_NONE;
+		if (BufDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS)
+		{
+			HeapFlags |= D3D12_HEAP_FLAG_SHARED;
+		}
+
+		const HRESULT hr = d3d_device->CreateCommittedResource(&HeapProps, HeapFlags, &BufDesc, InInitialState, nullptr, COMPtr_RefParam(pResource));
+
+		if (SUCCEEDED(CheckHResult(hr)))
+		{
+			// Set the output pointer
+			*ppOutResource = new ResourceHolder(pResource, InDefaultState, BufDesc);
+
+			// Set a default name (can override later).
+			(*ppOutResource)->SetName(Name);
+		}
+
+		return hr;
+	}
 }

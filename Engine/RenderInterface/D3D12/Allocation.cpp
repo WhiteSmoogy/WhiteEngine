@@ -66,7 +66,30 @@ bool FastConstantPageAllocator::ConstantAllocator::TryAllocate(uint32 SizeInByte
 		DelayCreated = true;
 	}
 
-	return false;
+	uint32 SizeToAllocate = SizeInBytes;
+	if (Alignment != 0 && BlockSize % Alignment != 0)
+	{
+		SizeToAllocate = SizeInBytes + Alignment;
+		wassume(false);
+	}
+
+	if (BlockSize < SizeToAllocate)
+		return false;
+
+	const uint32 AllocSize = BlockSize;
+	uint32 Padding = 0;
+
+	const uint32 AlignedOffsetFromResourceBase = 0;
+
+	ResourceLocation.SetType(ResourceLocation::FastAllocation);
+	ResourceLocation.SetSize(SizeInBytes);
+	ResourceLocation.SetOffsetFromBaseOfResource(AlignedOffsetFromResourceBase);
+	ResourceLocation.SetResource(BackingResource);
+	ResourceLocation.SetGPUVirtualAddress(BackingResource->GetGPUVirtualAddress() + AlignedOffsetFromResourceBase);
+
+	ResourceLocation.SetMappedBaseAddress((uint8*)BackingResource->GetResourceBaseAddress() + AlignedOffsetFromResourceBase);
+
+	return true;
 }
 
 void FastConstantPageAllocator::ConstantAllocator::CreateBackingResource()
@@ -76,6 +99,8 @@ void FastConstantPageAllocator::ConstantAllocator::CreateBackingResource()
 	const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD, GetGPUMask(), GetVisibilityMask());
 
 	Adapter->CreateBuffer(HeapProps, GetGPUMask(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_GENERIC_READ, BlockSize, &BackingResource, "FastConstantPageAllocator::ConstantAllocator", D3D12_RESOURCE_FLAG_NONE);
+
+	BackingResource->Map();
 }
 
 void* UploadHeapAllocator::AllocFastConstantAllocationPage(uint32 InSize, uint32 InAlignment, ResourceLocation& ResourceLocation)

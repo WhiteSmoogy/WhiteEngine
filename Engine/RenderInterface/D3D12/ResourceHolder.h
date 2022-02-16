@@ -25,6 +25,8 @@ namespace platform_ex::Windows {
 				return resource->GetGPUVirtualAddress();
 			}
 
+			void* GetResourceBaseAddress() const { wconstraint(ResourceBaseAddress); return ResourceBaseAddress; }
+
 			void SetName(const char* name);
 
 			D3D12_RESOURCE_DESC GetDesc() const {
@@ -50,6 +52,15 @@ namespace platform_ex::Windows {
 			{
 				curr_state = state;
 			}
+
+			inline void* Map(const D3D12_RANGE* ReadRange = nullptr)
+			{
+				wconstraint(resource);
+				wconstraint(ResourceBaseAddress == nullptr);
+				CheckHResult(resource->Map(0, ReadRange, &ResourceBaseAddress));
+
+				return ResourceBaseAddress;
+			}
 		protected:
 			ResourceHolder();
 
@@ -67,6 +78,8 @@ namespace platform_ex::Windows {
 			D3D12_RESOURCE_DESC desc;
 
 			bool bDepthStencil;
+
+			void* ResourceBaseAddress;
 		};
 
 		class FastClearResource

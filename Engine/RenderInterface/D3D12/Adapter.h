@@ -207,7 +207,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		D3D_ROOT_SIGNATURE_VERSION RootSignatureVersion;
 
-		UploadHeapAllocator* UploadHeapAllocator[1];
+		UploadHeapAllocator* UploadHeapAllocators[1];
 		NodeDevice* Devices[1];
 
 		D3DPipelineStateCache PipelineStateCache;

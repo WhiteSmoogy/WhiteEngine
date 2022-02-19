@@ -43,6 +43,11 @@ namespace platform_ex::Windows::D3D12 {
 
 	using GPUMaskType = white::uint32;
 
+	GPUMaskType AllGPU()
+	{
+		return 1;
+	}
+
 	enum class CommandQueueType
 	{
 		Default,

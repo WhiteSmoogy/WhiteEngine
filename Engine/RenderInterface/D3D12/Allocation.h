@@ -4,12 +4,15 @@
 
 namespace platform_ex::Windows::D3D12
 {
+	class ResourceAllocator;
+
 	class ResourceLocation :public DeviceChild,public white::noncopyable
 	{
 	public:
 		enum LocationType
 		{
 			Undefined,
+			SubAllocation,
 			FastAllocation,
 		};
 
@@ -22,12 +25,15 @@ namespace platform_ex::Windows::D3D12
 		inline void SetGPUVirtualAddress(D3D12_GPU_VIRTUAL_ADDRESS Value) { GPUVirtualAddress = Value; }
 		inline void SetOffsetFromBaseOfResource(uint64 Value) { OffsetFromBaseOfResource = Value; }
 		inline void SetSize(uint64 Value) { Size = Value; }
+		inline void SetAllocator(ResourceAllocator* Value) { Allocator = Value; }
 
 		inline ResourceHolder* GetResource() const { return UnderlyingResource; }
 		inline void* GetMappedBaseAddress() const { return MappedBaseAddress; }
 		inline D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const { return GPUVirtualAddress; }
 		inline uint64 GetOffsetFromBaseOfResource() const { return OffsetFromBaseOfResource; }
 		inline uint64 GetSize() const { return Size; }
+		inline ResourceAllocator* GetAllocator() const {return Allocator; }
+
 
 		void AsFastAllocation(ResourceHolder* Resource, uint32 BufferSize, D3D12_GPU_VIRTUAL_ADDRESS GPUBase, void* CPUBase, uint64 ResourceOffsetBase, uint64 Offset, bool bMultiFrame = false)
 		{
@@ -42,12 +48,19 @@ namespace platform_ex::Windows::D3D12
 			}
 			SetGPUVirtualAddress(GPUBase + Offset);
 		}
+
+		void Clear();
 	private:
 		void ClearResource();
 
 		LocationType Type;
 
 		ResourceHolder* UnderlyingResource;
+
+		union
+		{
+			ResourceAllocator* Allocator;
+		};
 
 		void* MappedBaseAddress;
 		D3D12_GPU_VIRTUAL_ADDRESS GPUVirtualAddress;
@@ -63,6 +76,8 @@ namespace platform_ex::Windows::D3D12
 		ResourceAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes)
 			:DeviceChild(InParentDevice),MultiNodeGPUObject(InParentDevice->GetGPUMask(),VisibleNodes)
 		{}
+
+		virtual void Deallocate(ResourceLocation& ResourceLocation);
 	};
 
 	class FastConstantPageAllocator :public ResourceAllocator
@@ -73,6 +88,8 @@ namespace platform_ex::Windows::D3D12
 		{}
 
 		bool TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation);
+
+		void CleanUpAllocations(uint64 InFrameLag);
 	private:
 		using ResourceAllocator::ResourceAllocator;
 
@@ -80,9 +97,16 @@ namespace platform_ex::Windows::D3D12
 		public:
 			ConstantAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, uint32 InBlockSize)
 				:ResourceAllocator(InParentDevice,VisibleNodes),BlockSize(InBlockSize), TotalSizeUsed(0),BackingResource(nullptr), DelayCreated(false)
+				, RetireFrameFence(-1)
 			{}
 
+			~ConstantAllocator();
+
 			bool TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation);
+
+			void Deallocate(ResourceLocation & ResourceLocation);
+
+			uint64 GetLastUsedFrameFence() const { return RetireFrameFence; }
 		private:
 			void CreateBackingResource();
 
@@ -91,6 +115,8 @@ namespace platform_ex::Windows::D3D12
 			uint32 TotalSizeUsed;
 
 			ResourceHolder* BackingResource;
+
+			uint64 RetireFrameFence;
 
 			bool DelayCreated;
 		};

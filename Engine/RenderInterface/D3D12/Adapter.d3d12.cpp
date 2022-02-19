@@ -390,6 +390,8 @@ namespace platform_ex::Windows::D3D12 {
 
 		Devices[0] = new NodeDevice(0, this);
 
+		UploadHeapAllocators[0] = new UploadHeapAllocator(this, Devices[0], "Upload Buffer Allocator");
+
 		PipelineStateCache.Init("", "", "");
 
 		bool bRayTracingSupported = false;
@@ -754,7 +756,7 @@ namespace platform_ex::Windows::D3D12 {
 
 	UploadHeapAllocator& D3D12::Device::GetUploadHeapAllocator(uint32 GPUIndex)
 	{
-		return *UploadHeapAllocator[GPUIndex];
+		return *UploadHeapAllocators[GPUIndex];
 	}
 
 	HRESULT D3D12::Device::CreateBuffer(const D3D12_HEAP_PROPERTIES& HeapProps, GPUMaskType CreationNode, D3D12_RESOURCE_STATES InitialState, D3D12_RESOURCE_STATES InDefaultState, uint64 HeapSize, ResourceHolder** ppOutResource, const char* Name, D3D12_RESOURCE_FLAGS Flags)
@@ -779,7 +781,7 @@ namespace platform_ex::Windows::D3D12 {
 			HeapFlags |= D3D12_HEAP_FLAG_SHARED;
 		}
 
-		const HRESULT hr = d3d_device->CreateCommittedResource(&HeapProps, HeapFlags, &BufDesc, InInitialState, nullptr, COMPtr_RefParam(pResource));
+		const HRESULT hr = d3d_device->CreateCommittedResource(&HeapProps, HeapFlags, &BufDesc, InInitialState, nullptr, COMPtr_RefParam(pResource, IID_ID3D12Resource));
 
 		if (SUCCEEDED(CheckHResult(hr)))
 		{

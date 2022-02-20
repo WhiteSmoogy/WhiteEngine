@@ -55,8 +55,8 @@ namespace platform::Render {
 		virtual void SetShaderResourceView(PixelHWShader* Shader, uint32 TextureIndex, ShaderResourceView* SRV) = 0;
 
 
-		virtual void SetShaderConstantBuffer(VertexHWShader* Shader, uint32 BaseIndex, GraphicsBuffer* Buffer) = 0;
-		virtual void SetShaderConstantBuffer(PixelHWShader* Shader,uint32 BaseIndex, GraphicsBuffer* Buffer) = 0;
+		virtual void SetShaderConstantBuffer(VertexHWShader* Shader, uint32 BaseIndex, ConstantBuffer* Buffer) = 0;
+		virtual void SetShaderConstantBuffer(PixelHWShader* Shader,uint32 BaseIndex, ConstantBuffer* Buffer) = 0;
 
 		virtual void SetShaderParameter(VertexHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue) = 0;
 		virtual void SetShaderParameter(PixelHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue) = 0;

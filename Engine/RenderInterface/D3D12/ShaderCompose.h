@@ -9,6 +9,7 @@
 #include "d3d12_dxgi.h"
 #include "View.h"
 #include "HardwareShader.h"
+#include "../ICommandList.h"
 #include <optional>
 
 
@@ -42,7 +43,7 @@ namespace platform_ex::Windows::D3D12 {
 
 			std::array<std::optional<ShaderInfo>, NumTypes> Infos;
 
-			std::array<std::vector<uint8>, NumTypes> CBuffIndices;
+			std::array<std::vector<std::pair<uint8,uint8>>, NumTypes> CBuffIndices;
 
 			//Todo Support
 			std::vector<D3D12_SO_DECLARATION_ENTRY> so_decl;
@@ -60,6 +61,9 @@ namespace platform_ex::Windows::D3D12 {
 
 		 void Bind() override;
 		 void UnBind() override;
+
+		 template<platform::Render::ShaderType type>
+		 void Bind(platform::Render::CommandList& CmdList);
 
 		 const platform::Render::ShaderBlob* GetShaderBlob(platform::Render::ShaderType shader_type) const;
 

@@ -12,14 +12,14 @@ namespace platform::Render
 	{
 		Texture* Textures[32] = {};
 		ShaderResourceView* SRVs[32] = {};
-		GraphicsBuffer* UniformBuffers[32] = {};
+		ConstantBuffer* UniformBuffers[32] = {};
 		TextureSampleDesc* Samplers[32] = {};
 		UnorderedAccessView* UAVs[8] = {};
 	};
 
 	struct RayTracingShaderBindingsWriter : RayTracingShaderBindings
 	{
-		std::shared_ptr<GraphicsBuffer> RootUniformBuffer;
+		std::shared_ptr<ConstantBuffer> RootUniformBuffer;
 
 		void SetTexture(uint16 BaseIndex, Texture* Value)
 		{
@@ -36,7 +36,7 @@ namespace platform::Render
 			UAVs[BaseIndex] = Value;
 		}
 
-		void SetGraphicsBuffer(uint16 BaseIndex, GraphicsBuffer* Value)
+		void SetGraphicsBuffer(uint16 BaseIndex, ConstantBuffer* Value)
 		{
 			UniformBuffers[BaseIndex] = Value;
 		}

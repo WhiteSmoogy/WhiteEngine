@@ -471,18 +471,18 @@ namespace platform_ex::Windows::D3D12 {
 		}
 
 		template <ShaderType ShaderFrequency>
-		void SetConstantsBuffer(uint32 SlotIndex, GraphicsBuffer* UniformBuffer)
+		void SetConstantsBuffer(uint32 SlotIndex, ConstantBuffer* UniformBuffer)
 		{
 			auto& CBVCache = PipelineState.Common.CBVCache;
 			D3D12_GPU_VIRTUAL_ADDRESS& CurrentGPUVirtualAddress = CBVCache.CurrentGPUVirtualAddress[ShaderFrequency][SlotIndex];
 
-			if (UniformBuffer && UniformBuffer->Resource()->GetGPUVirtualAddress())
+			if (UniformBuffer && UniformBuffer->Location.GetGPUVirtualAddress())
 			{
-				const auto& ResourceLocation = UniformBuffer->Resource();
+				const auto& ResourceLocation = UniformBuffer->Location;
 				// Only update the constant buffer if it has changed.
-				if (ResourceLocation->GetGPUVirtualAddress() != CurrentGPUVirtualAddress)
+				if (ResourceLocation.GetGPUVirtualAddress() != CurrentGPUVirtualAddress)
 				{
-					CurrentGPUVirtualAddress = ResourceLocation->GetGPUVirtualAddress();
+					CurrentGPUVirtualAddress = ResourceLocation.GetGPUVirtualAddress();
 					ConstantBufferCache::DirtySlot(CBVCache.DirtySlotMask[ShaderFrequency], SlotIndex);
 				}
 			}
@@ -497,7 +497,7 @@ namespace platform_ex::Windows::D3D12 {
 		}
 
 		template <ShaderType ShaderFrequency>
-		void SetConstantBuffer(ConstantBuffer& Buffer, bool bDiscardSharedConstants)
+		void SetConstantBuffer(FastConstantBuffer& Buffer, bool bDiscardSharedConstants)
 		{
 			ResourceLocation Location(GetParentDevice());
 			if (Buffer.Version(Location, bDiscardSharedConstants))

@@ -261,9 +261,39 @@ namespace platform_ex::Windows::D3D12 {
 		return buffer.release();
 	}
 
-	GraphicsBuffer * Device::CreateConstanBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*> init_data)
+	ConstantBuffer * Device::CreateConstanBuffer(platform::Render::Buffer::Usage usage, uint32 size_in_byte,const void* init_data)
 	{
-		return CreateBuffer(usage,access,size_in_byte,format,init_data);
+		wconstraint(size_in_byte > 0);
+		wconstraint(Align(size_in_byte,16) == size_in_byte);
+		auto buffer = new ConstantBuffer(GetNodeDevice(0), usage);
+
+		void* MappedData = nullptr;
+		if (usage == platform::Render::Buffer::Usage::MultiFrame) {
+			//TODO
+			wconstraint(false);
+		}
+		else {
+			auto& Allocator = GetTransientConstantBufferAllocator();
+
+			MappedData = Allocator.Allocate(size_in_byte, buffer->Location);
+		}
+		wconstraint(buffer->Location.GetOffsetFromBaseOfResource() % 16 == 0);
+		wconstraint(MappedData != nullptr);
+		if (init_data != nullptr)
+			std::memcpy(MappedData, init_data, size_in_byte);
+
+		return buffer;
+	}
+
+	FastConstantAllocator& platform_ex::Windows::D3D12::Device::GetTransientConstantBufferAllocator()
+	{
+		static class TransientConstantBufferAllocator : public FastConstantAllocator
+		{
+		public:
+			using FastConstantAllocator::FastConstantAllocator;
+		} Alloc(GetNodeDevice(0),AllGPU());
+
+		return Alloc;
 	}
 
 	GraphicsBuffer * Device::CreateVertexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*> init_data)

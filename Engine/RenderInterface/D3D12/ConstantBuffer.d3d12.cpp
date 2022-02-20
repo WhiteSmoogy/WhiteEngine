@@ -3,12 +3,12 @@
 #include "NodeDevice.h"
 using namespace  platform_ex::Windows::D3D12;
 
-ConstantBuffer::ConstantBuffer(NodeDevice* InParent, FastConstantAllocator& InAllocator)
+FastConstantBuffer::FastConstantBuffer(NodeDevice* InParent, FastConstantAllocator& InAllocator)
     :DeviceChild(InParent),CurrentUpdateSize(0),TotalUpdateSize(0),bIsDirty(false),Allocator(InAllocator)
 {
 }
 
-bool ConstantBuffer::Version(ResourceLocation& BufferOut, bool bDiscardSharedConstants)
+bool FastConstantBuffer::Version(ResourceLocation& BufferOut, bool bDiscardSharedConstants)
 {
 	// If nothing has changed there is no need to alloc a new buffer.
 	if (CurrentUpdateSize == 0)

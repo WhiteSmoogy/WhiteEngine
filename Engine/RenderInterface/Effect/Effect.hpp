@@ -93,6 +93,12 @@ namespace platform::Render::Effect {
 		GraphicsBuffer* GetGraphicsBuffer() const wnothrow;
 
 		friend class Effect;
+
+		template<typename UpdateFunc>
+		void Update(UpdateFunc&& update)
+		{
+			update(cpu_buffer.data(), cpu_buffer.size());
+		}
 	protected:
 
 		template <typename T>

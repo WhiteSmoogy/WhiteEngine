@@ -180,9 +180,9 @@ void CommandContext::SetShaderResourceView(platform::Render::PixelHWShader* Shad
 	StateCache.SetShaderResourceView<ShaderType::PixelShader>(static_cast<ShaderResourceView*>(SRV), TextureIndex);
 }
 
-void CommandContext::SetShaderConstantBuffer(platform::Render::VertexHWShader* Shader, uint32 BaseIndex, platform::Render::GraphicsBuffer* IBuffer)
+void CommandContext::SetShaderConstantBuffer(platform::Render::VertexHWShader* Shader, uint32 BaseIndex, platform::Render::ConstantBuffer* IBuffer)
 {
-	auto Buffer = static_cast<GraphicsBuffer*>(IBuffer);
+	auto Buffer = static_cast<ConstantBuffer*>(IBuffer);
 
 	StateCache.SetConstantsBuffer<ShaderType::VertexShader>(BaseIndex, Buffer);
 
@@ -190,9 +190,9 @@ void CommandContext::SetShaderConstantBuffer(platform::Render::VertexHWShader* S
 	DirtyConstantBuffers[ShaderType::VertexShader] |= (1 << BaseIndex);
 }
 
-void CommandContext::SetShaderConstantBuffer(platform::Render::PixelHWShader* Shader, uint32 BaseIndex, platform::Render::GraphicsBuffer* IBuffer)
+void CommandContext::SetShaderConstantBuffer(platform::Render::PixelHWShader* Shader, uint32 BaseIndex, platform::Render::ConstantBuffer* IBuffer)
 {
-	auto Buffer = static_cast<GraphicsBuffer*>(IBuffer);
+	auto Buffer = static_cast<ConstantBuffer*>(IBuffer);
 
 	StateCache.SetConstantsBuffer<ShaderType::PixelShader>(BaseIndex, Buffer);
 

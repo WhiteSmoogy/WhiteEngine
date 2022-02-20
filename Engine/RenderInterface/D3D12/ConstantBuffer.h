@@ -12,10 +12,10 @@ namespace platform_ex::Windows::D3D12
 {
 	constexpr unsigned MAX_GLOBAL_CONSTANT_BUFFER_SIZE = 4096;
 
-	class ConstantBuffer : public DeviceChild
+	class FastConstantBuffer : public DeviceChild
 	{
 	public:
-		ConstantBuffer(NodeDevice* InParent, FastConstantAllocator& Allocator);
+		FastConstantBuffer(NodeDevice* InParent, FastConstantAllocator& Allocator);
 
 		/**
 		* Updates a variable in the constant buffer.

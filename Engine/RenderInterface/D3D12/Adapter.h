@@ -54,7 +54,7 @@ namespace platform_ex::Windows::D3D12 {
 		//\brief D3D12 Buffer 创建时没有BIND_FLAG
 		GraphicsBuffer* CreateBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr);
 
-		GraphicsBuffer* CreateConstanBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
+		ConstantBuffer* CreateConstanBuffer(platform::Render::Buffer::Usage usage, uint32 size_in_byte,const void*  init_data) override;
 		GraphicsBuffer* CreateVertexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
 		GraphicsBuffer* CreateIndexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
 
@@ -108,6 +108,8 @@ namespace platform_ex::Windows::D3D12 {
 		ManualFence& GetFrameFence() { return *frame_fence; }
 
 		void EndFrame();
+
+		FastConstantAllocator& GetTransientConstantBufferAllocator();
 
 		HRESULT CreateBuffer(const D3D12_HEAP_PROPERTIES& HeapProps,
 			GPUMaskType CreationNode,

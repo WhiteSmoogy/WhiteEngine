@@ -101,7 +101,12 @@ namespace platform::Render {
 		};
 	}
 
-	GraphicsBuffer* CreateConstantBuffer(const void* Contents, Buffer::Usage Usage,const ShaderParametersMetadata& Layout);
+	class ConstantBuffer :public RObject {
+	public:
+		virtual void Update(white::uint32 size, void const* data) = 0;
+	};
+
+	ConstantBuffer* CreateConstantBuffer(const void* Contents, Buffer::Usage Usage,const ShaderParametersMetadata& Layout);
 
 	template<typename TBufferStruct>
 	requires requires{ TBufferStruct::TypeInfo::GetStructMetadata(); }
@@ -113,22 +118,22 @@ namespace platform::Render {
 			return GraphicsBufferRef<TBufferStruct>(CreateConstantBuffer(&Value, Usage, *TBufferStruct::TypeInfo::GetStructMetadata()));
 		}
 
-		operator std::shared_ptr<GraphicsBuffer>()
+		operator std::shared_ptr<ConstantBuffer>()
 		{
 			return buffer;
 		}
 
-		GraphicsBuffer* Get() const
+		ConstantBuffer* Get() const
 		{
 			return buffer.get();
 		}
 	private:
-		GraphicsBufferRef(GraphicsBuffer* InBuffer)
+		GraphicsBufferRef(ConstantBuffer* InBuffer)
 			:buffer(InBuffer,RObjectDeleter())
 		{
 		}
 
-		std::shared_ptr<GraphicsBuffer> buffer;
+		std::shared_ptr<ConstantBuffer> buffer;
 	};
 
 	template<typename TBufferStruct>

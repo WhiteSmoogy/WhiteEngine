@@ -306,15 +306,12 @@ namespace platform_ex::Windows::D3D12 {
 
 			compose.Bind();
 
-			auto SetShaderParamters = [&](ShaderType type,auto Shader)
+			auto SetShaderParamters = [&]<ShaderType type,typename T>(T Shader)
 			{
 				if (!Shader)
 					return;
 				int BufferIndex = 0;
-				for (auto& cbuffer : compose.CBuffs[type]) {
-					CmdList.SetShaderConstantBuffer(Shader, BufferIndex, cbuffer);
-					++BufferIndex;
-				}
+				compose.Bind<type>(CmdList);
 
 				int SRVIndex = 0;
 				for (auto& srv : compose.Srvs[type])
@@ -331,8 +328,8 @@ namespace platform_ex::Windows::D3D12 {
 				}
 			};
 			
-			SetShaderParamters(ShaderType::VertexShader, compose.GetVertexShader());
-			SetShaderParamters(ShaderType::PixelShader, compose.GetPixelShader());
+			SetShaderParamters.operator()<ShaderType::VertexShader>(compose.GetVertexShader());
+			SetShaderParamters.operator()<ShaderType::PixelShader > (compose.GetPixelShader());
 
 			compose.UnBind();
 		};

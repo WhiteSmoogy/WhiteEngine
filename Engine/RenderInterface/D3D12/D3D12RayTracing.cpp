@@ -507,6 +507,7 @@ struct FD3D12RayTracingGlobalResourceBinder
 
 using platform::Render::Texture;
 using platform::Render::GraphicsBuffer;
+using platform::Render::ConstantBuffer;
 using platform::Render::TextureSampleDesc;
 using platform::Render::ShaderResourceView;
 using platform::Render::UnorderedAccessView;
@@ -516,6 +517,7 @@ using D3D12UnorderedAccessView = Windows::D3D12::UnorderedAccessView;
 using D3D12Texture = Windows::D3D12::Texture;
 using D3D12ResourceHolder = Windows::D3D12::ResourceHolder;
 using D3D12GraphicsBuffer = Windows::D3D12::GraphicsBuffer;
+using D3D12ConstantBuffer = Windows::D3D12::ConstantBuffer;
 
 template <typename ResourceBinderType>
 static void SetRayTracingShaderResources(
@@ -523,7 +525,7 @@ static void SetRayTracingShaderResources(
 	const platform_ex::Windows::D3D12::RayTracingShader* Shader,
 	uint32 InNumTextures, Texture* const* Textures,
 	uint32 InNumSRVs, ShaderResourceView* const* SRVs,
-	uint32 InNumUniformBuffers, GraphicsBuffer* const* UniformBuffers,
+	uint32 InNumUniformBuffers, ConstantBuffer* const* UniformBuffers,
 	uint32 InNumSamplers, TextureSampleDesc* const* Samplers,
 	uint32 InNumUAVs, UnorderedAccessView* const* UAVs,
 	uint32 InLooseParameterDataSize, const void* InLooseParameterData,
@@ -571,8 +573,8 @@ static void SetRayTracingShaderResources(
 		auto Resource = UniformBuffers[CBVIndex];
 		if (Resource)
 		{
-			auto CBV = static_cast<D3D12GraphicsBuffer*>(Resource);
-			LocalCBVs[CBVIndex] = CBV->Resource()->GetGPUVirtualAddress();
+			auto CBV = static_cast<D3D12ConstantBuffer*>(Resource);
+			LocalCBVs[CBVIndex] = CBV->Location.GetGPUVirtualAddress();
 			BoundCBVMask |= 1ull << CBVIndex;
 		}
 	}

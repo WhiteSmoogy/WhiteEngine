@@ -385,4 +385,8 @@ namespace platform_ex::Windows::D3D12 {
 	{
 		resource->Unmap(0, nullptr);
 	}
+
+	void ConstantBuffer::Update(white::uint32 size, void const* data)
+	{
+	}
 }

@@ -63,8 +63,8 @@ namespace platform_ex::Windows::D3D12 {
 		void SetShaderResourceView(platform::Render::VertexHWShader* Shader, uint32 TextureIndex, platform::Render::ShaderResourceView* SRV) override;
 		void SetShaderResourceView(platform::Render::PixelHWShader* Shader, uint32 TextureIndex, platform::Render::ShaderResourceView* SRV) override;
 
-		void SetShaderConstantBuffer(platform::Render::VertexHWShader* Shader, uint32 BaseIndex, platform::Render::GraphicsBuffer* Buffer) override;
-		void SetShaderConstantBuffer(platform::Render::PixelHWShader* Shader, uint32 BaseIndex, platform::Render::GraphicsBuffer* Buffer) override;
+		void SetShaderConstantBuffer(platform::Render::VertexHWShader* Shader, uint32 BaseIndex, platform::Render::ConstantBuffer* Buffer) override;
+		void SetShaderConstantBuffer(platform::Render::PixelHWShader* Shader, uint32 BaseIndex, platform::Render::ConstantBuffer* Buffer) override;
 
 		void SetShaderParameter(platform::Render::VertexHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue) override;
 		void SetShaderParameter(platform::Render::PixelHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue) override;
@@ -134,15 +134,15 @@ namespace platform_ex::Windows::D3D12 {
 		}
 
 		/** Constant buffers for Set*ShaderParameter calls. */
-		ConstantBuffer VSConstantBuffer;
-		ConstantBuffer HSConstantBuffer;
-		ConstantBuffer DSConstantBuffer;
-		ConstantBuffer PSConstantBuffer;
-		ConstantBuffer GSConstantBuffer;
-		ConstantBuffer CSConstantBuffer;
+		FastConstantBuffer VSConstantBuffer;
+		FastConstantBuffer HSConstantBuffer;
+		FastConstantBuffer DSConstantBuffer;
+		FastConstantBuffer PSConstantBuffer;
+		FastConstantBuffer GSConstantBuffer;
+		FastConstantBuffer CSConstantBuffer;
 
 		/** Track the currently bound constant buffers. */
-		GraphicsBuffer* BoundConstantBuffers[ShaderType::NumStandardType][MAX_CBS];
+		ConstantBuffer* BoundConstantBuffers[ShaderType::NumStandardType][MAX_CBS];
 
 		/** Bit array to track which uniform buffers have changed since the last draw call. */
 		uint16 DirtyConstantBuffers[ShaderType::NumStandardType];

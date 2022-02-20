@@ -11,6 +11,7 @@
 #include "Convert.h"
 #include "RootSignature.h"
 #include "Runtime/Core/Compression.h"
+#include "../ICommandList.h"
 
 using namespace platform_ex::Windows;
 using platform::Render::ShaderType;
@@ -210,7 +211,7 @@ platform_ex::Windows::D3D12::ShaderCompose::ShaderCompose(std::unordered_map<pla
 			AllCBuffs.emplace_back(&ConstantBuffer);
 			CBuffs[index].emplace_back(ConstantBuffer.GetGraphicsBuffer());
 
-			sc_template->CBuffIndices[index].emplace_back(static_cast<uint8>(index));
+			sc_template->CBuffIndices[index].emplace_back(std::make_pair(static_cast<uint8>(AllCBuffs.size()-1),static_cast<uint8>(ConstantBufferInfo.bind_point)));
 		}
 
 		Samplers[index].resize(BlobInfo.ResourceCounts.NumSamplers);
@@ -265,10 +266,27 @@ void platform_ex::Windows::D3D12::ShaderCompose::Bind()
 			pb.func();
 		}
 	}
+}
 
-	//update cbuffer
-	for (auto i = 0; i != AllCBuffs.size(); ++i) {
-		AllCBuffs[i]->Update();
+template<>
+void platform_ex::Windows::D3D12::ShaderCompose::Bind<platform::Render::VertexShader>(platform::Render::CommandList& CmdList)
+{
+	for (auto& index : sc_template->CBuffIndices[platform::Render::VertexShader])
+	{
+		AllCBuffs[index.first]->Update([&](void* data,std::size_t size) {
+			CmdList.SetShaderParameter(sc_template->VertexShader, index.second, 0,static_cast<uint32>(size), data);
+		});
+	}
+}
+
+template<>
+void platform_ex::Windows::D3D12::ShaderCompose::Bind<platform::Render::PixelShader>(platform::Render::CommandList& CmdList)
+{
+	for (auto& index : sc_template->CBuffIndices[platform::Render::PixelShader])
+	{
+		AllCBuffs[index.first]->Update([&](void* data, std::size_t size) {
+			CmdList.SetShaderParameter(sc_template->PixelShader, index.second, 0, static_cast<uint32>(size), data);
+			});
 	}
 }
 

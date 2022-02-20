@@ -237,7 +237,7 @@ namespace platform::Render {
 		}
 
 		template<typename THardwareShader>
-		void SetShaderConstantBuffer(THardwareShader* Shader, uint32 BaseIndex, GraphicsBuffer* Buffer)
+		void SetShaderConstantBuffer(THardwareShader* Shader, uint32 BaseIndex, ConstantBuffer* Buffer)
 		{
 			InsertCommand([=](CommandListBase& CmdList) {
 				CmdList.GetContext().SetShaderConstantBuffer(Shader, BaseIndex, Buffer);

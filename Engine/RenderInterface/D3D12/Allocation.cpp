@@ -110,7 +110,7 @@ void FastConstantPageAllocator::ConstantAllocator::Deallocate(ResourceLocation& 
 
 FastConstantPageAllocator::ConstantAllocator* FastConstantPageAllocator::CreateNewAllocator(uint32 InMinSizeInBytes)
 {
-	uint32 AllocationSize = 1 << std::bit_ceil(InMinSizeInBytes);
+	uint32 AllocationSize = std::bit_ceil(InMinSizeInBytes);
 
 	return new ConstantAllocator(GetParentDevice(), GetVisibilityMask(),AllocationSize);
 }
@@ -174,19 +174,19 @@ UploadHeapAllocator::UploadHeapAllocator(D3D12Adapter* InParent, NodeDevice* InP
 	,FastConstantAllocator(InParentDevice,GetVisibilityMask())
 {
 }
-
 void* UploadHeapAllocator::AllocFastConstantAllocationPage(uint32 InSize, uint32 InAlignment, ResourceLocation& ResourceLocation)
 {
 	ResourceLocation.Clear();
 
-	wassume(FastConstantAllocator.TryAllocate(InSize, InAlignment, ResourceLocation));
+	bool ret = FastConstantAllocator.TryAllocate(InSize, InAlignment, ResourceLocation);
+	wassume(ret);
 
 	return ResourceLocation.GetMappedBaseAddress();
 }
 
 FastConstantAllocator::FastConstantAllocator(NodeDevice* Parent, GPUMaskType InGpuMask)
 	:DeviceChild(Parent),MultiNodeGPUObject(InGpuMask,InGpuMask)
-	,UnderlyingResource(Parent),Offset(0),PageSize(FastConstantAllocatorPageSize)
+	,UnderlyingResource(Parent),Offset(FastConstantAllocatorPageSize),PageSize(FastConstantAllocatorPageSize)
 {
 }
 

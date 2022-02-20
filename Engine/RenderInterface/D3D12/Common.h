@@ -43,7 +43,7 @@ namespace platform_ex::Windows::D3D12 {
 
 	using GPUMaskType = white::uint32;
 
-	GPUMaskType AllGPU()
+	inline GPUMaskType AllGPU()
 	{
 		return 1;
 	}

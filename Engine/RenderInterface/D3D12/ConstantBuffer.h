@@ -35,7 +35,7 @@ namespace platform_ex::Windows::D3D12
 
 		void Reset() { CurrentUpdateSize = 0; }
 
-		bool Version(ID3D12Resource*& BufferOut, bool bDiscardSharedConstants);
+		bool Version(ResourceLocation& BufferOut, bool bDiscardSharedConstants);
 	protected:
 		__declspec(align(16)) uint8 ShadowData[MAX_GLOBAL_CONSTANT_BUFFER_SIZE];
 
@@ -51,7 +51,6 @@ namespace platform_ex::Windows::D3D12
 		// Indicates that a constant has been updated but this one hasn't been flushed.
 		bool bIsDirty;
 	private:
-		//TODO use Allocator
-		std::unique_ptr<GraphicsBuffer> Buffer;
+		FastConstantAllocator& Allocator;
 	};
 }

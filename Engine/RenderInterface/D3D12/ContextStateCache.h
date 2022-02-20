@@ -499,7 +499,7 @@ namespace platform_ex::Windows::D3D12 {
 		template <ShaderType ShaderFrequency>
 		void SetConstantBuffer(ConstantBuffer& Buffer, bool bDiscardSharedConstants)
 		{
-			ID3D12Resource* Location = nullptr;
+			ResourceLocation Location(GetParentDevice());
 			if (Buffer.Version(Location, bDiscardSharedConstants))
 			{
 				// Note: Code assumes the slot index is always 0.
@@ -507,7 +507,7 @@ namespace platform_ex::Windows::D3D12 {
 
 				auto& CBVCache = PipelineState.Common.CBVCache;
 				D3D12_GPU_VIRTUAL_ADDRESS& CurrentGPUVirtualAddress = CBVCache.CurrentGPUVirtualAddress[ShaderFrequency][SlotIndex];
-				CurrentGPUVirtualAddress = Location->GetGPUVirtualAddress();
+				CurrentGPUVirtualAddress = Location.GetGPUVirtualAddress();
 				ConstantBufferCache::DirtySlot(CBVCache.DirtySlotMask[ShaderFrequency], SlotIndex);
 			}
 		}

@@ -730,7 +730,7 @@ namespace platform_ex::Windows::D3D12 {
 		}
 		RootSignatureVersion = D3D12RootSignatureCaps.HighestVersion;
 	}
-
+	 
 	void D3D12::Device::EndFrame()
 	{
 		//TODO:support CLSyncPoint move;

@@ -3,13 +3,12 @@
 #include "NodeDevice.h"
 using namespace  platform_ex::Windows::D3D12;
 
-ConstantBuffer::ConstantBuffer(NodeDevice* InParent, FastConstantAllocator& Allocator)
-    :DeviceChild(InParent)
+ConstantBuffer::ConstantBuffer(NodeDevice* InParent, FastConstantAllocator& InAllocator)
+    :DeviceChild(InParent),CurrentUpdateSize(0),TotalUpdateSize(0),bIsDirty(false),Allocator(InAllocator)
 {
-    Buffer.reset(InParent->GetParentAdapter()->CreateConstanBuffer(platform::Render::Buffer::Usage::Dynamic, 0, MAX_GLOBAL_CONSTANT_BUFFER_SIZE, EFormat::EF_Unknown));
 }
 
-bool ConstantBuffer::Version(ID3D12Resource*& BufferOut, bool bDiscardSharedConstants)
+bool ConstantBuffer::Version(ResourceLocation& BufferOut, bool bDiscardSharedConstants)
 {
 	// If nothing has changed there is no need to alloc a new buffer.
 	if (CurrentUpdateSize == 0)
@@ -28,11 +27,10 @@ bool ConstantBuffer::Version(ID3D12Resource*& BufferOut, bool bDiscardSharedCons
 		TotalUpdateSize = std::max(CurrentUpdateSize, TotalUpdateSize);
 	}
 
-	Buffer->UpdateSubresource(0, TotalUpdateSize, ShadowData);
+	void* Data = Allocator.Allocate(TotalUpdateSize, BufferOut);
+	std::memcpy(Data, ShadowData, TotalUpdateSize);
 
 	bIsDirty = false;
-
-	BufferOut = Buffer->Resource();
 
     return true;
 }

@@ -32,6 +32,11 @@ void ResourceLocation::Clear()
 {
 	ClearResource();
 
+	ClearMembers();
+}
+
+void ResourceLocation::ClearMembers()
+{
 	// Reset members
 	Type = Undefined;
 	UnderlyingResource = nullptr;
@@ -60,6 +65,17 @@ void ResourceLocation::ClearResource()
 	default:
 		break;
 	}
+}
+
+void ResourceLocation::TransferOwnership(ResourceLocation& Destination, ResourceLocation& Source)
+{
+	Destination.Clear();
+
+	std::memmove(&Destination, &Source, sizeof(ResourceLocation));
+
+	//Transfer Allocator
+
+	Source.ClearMembers();
 }
 
 void ResourceAllocator::Deallocate(ResourceLocation& ResourceLocation)

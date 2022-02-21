@@ -63,11 +63,13 @@ namespace platform_ex::Windows::D3D12 {
 
 		const UsageType Usage;
 
-		ConstantBuffer(NodeDevice* InParent, UsageType InUsage)
-			:DeviceChild(InParent),Location(InParent), Usage(InUsage)
+		const uint32 ConstantBufferSize;
+
+		ConstantBuffer(NodeDevice* InParent, UsageType InUsage,uint32 InConstantBufferSize)
+			:DeviceChild(InParent),Location(InParent),Usage(InUsage),ConstantBufferSize(InConstantBufferSize)
 		{}
 
-		void Update(white::uint32 size, void const* data) final;
+		void Update(platform::Render::CommandList& CmdList,white::uint32 size, void const* data) final;
 	};
 }
 

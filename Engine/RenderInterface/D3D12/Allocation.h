@@ -50,8 +50,11 @@ namespace platform_ex::Windows::D3D12
 		}
 
 		void Clear();
+
+		static void TransferOwnership(ResourceLocation& Destination, ResourceLocation& Source);
 	private:
 		void ClearResource();
+		void ClearMembers();
 
 		LocationType Type;
 

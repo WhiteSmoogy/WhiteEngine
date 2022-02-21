@@ -146,14 +146,7 @@ namespace platform::Render::Effect {
 		return Deref(state);
 	}
 
-	void ConstantBuffer::Update() {
-		if (dirty) {
-			gpu_buffer->UpdateSubresource(0, static_cast<white::uint32>(cpu_buffer.size()), cpu_buffer.data());
-			dirty = false;
-		}
-	}
-
-	GraphicsBuffer* ConstantBuffer::GetGraphicsBuffer() const wnothrow {
+	platform::Render::ConstantBuffer* ConstantBuffer::GetGraphicsBuffer() const wnothrow {
 		return gpu_buffer.get();
 		
 	}
@@ -266,7 +259,7 @@ namespace platform::Render::Effect {
 			auto OptionalCBInfo = pEffectAsset->GetInfo<ShaderInfo::ConstantBufferInfo>(cbuff.GetName());
 			if (OptionalCBInfo.has_value()) {
 				auto ConstantBufferInfo = OptionalCBInfo.value();
-				GraphicsBuffer* pGPUBuffer = Context::Instance().GetDevice().CreateConstanBuffer(platform::Render::Buffer::Usage::Dynamic, 0, ConstantBufferInfo.size, EFormat::EF_Unknown);
+				auto pGPUBuffer = GRenderIF->GetDevice().CreateConstanBuffer(platform::Render::Buffer::Usage::SingleFrame,  ConstantBufferInfo.size);
 
 				auto pConstantBuffer = std::make_shared<ConstantBuffer>(cbuff.GetName(), cbuff.GetNameHash());
 
@@ -391,7 +384,7 @@ namespace platform::Render::Effect {
 
 					return init + value;
 				});
-				GraphicsBuffer* pGPUBuffer = Context::Instance().GetDevice().CreateConstanBuffer(platform::Render::Buffer::Usage::Dynamic, 0, cbuff_size, EFormat::EF_Unknown);
+				auto pGPUBuffer = GRenderIF->GetDevice().CreateConstanBuffer(platform::Render::Buffer::Usage::SingleFrame,cbuff_size,nullptr);
 
 				auto pConstantBuffer = std::make_shared<ConstantBuffer>(cbuff.GetName(), cbuff.GetNameHash());
 

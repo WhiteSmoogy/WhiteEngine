@@ -205,13 +205,15 @@ platform_ex::Windows::D3D12::ShaderCompose::ShaderCompose(std::unordered_map<pla
 
 		sc_template->Infos[index] = BlobInfo;
 
+		uint32 expect_bind_point = 0;
 		for (auto& ConstantBufferInfo : BlobInfo.ConstantBufferInfos) {
 			auto cbindex = pEffect->ConstantBufferIndex(ConstantBufferInfo.name_hash);
 			auto& ConstantBuffer = pEffect->GetConstantBuffer(cbindex);
 			AllCBuffs.emplace_back(&ConstantBuffer);
-			CBuffs[index].emplace_back(ConstantBuffer.GetGraphicsBuffer());
 
 			sc_template->CBuffIndices[index].emplace_back(std::make_pair(static_cast<uint8>(AllCBuffs.size()-1),static_cast<uint8>(ConstantBufferInfo.bind_point)));
+			wconstraint(expect_bind_point == ConstantBufferInfo.bind_point);
+			++expect_bind_point;
 		}
 
 		Samplers[index].resize(BlobInfo.ResourceCounts.NumSamplers);
@@ -273,9 +275,11 @@ void platform_ex::Windows::D3D12::ShaderCompose::Bind<platform::Render::VertexSh
 {
 	for (auto& index : sc_template->CBuffIndices[platform::Render::VertexShader])
 	{
+		auto cb = AllCBuffs[index.first]->GetGraphicsBuffer();
 		AllCBuffs[index.first]->Update([&](void* data,std::size_t size) {
-			CmdList.SetShaderParameter(sc_template->VertexShader, index.second, 0,static_cast<uint32>(size), data);
+			cb->Update(CmdList, size, data);
 		});
+		CmdList.SetShaderConstantBuffer(sc_template->VertexShader, index.second, cb);
 	}
 }
 
@@ -284,9 +288,11 @@ void platform_ex::Windows::D3D12::ShaderCompose::Bind<platform::Render::PixelSha
 {
 	for (auto& index : sc_template->CBuffIndices[platform::Render::PixelShader])
 	{
+		auto cb = AllCBuffs[index.first]->GetGraphicsBuffer();
 		AllCBuffs[index.first]->Update([&](void* data, std::size_t size) {
-			CmdList.SetShaderParameter(sc_template->PixelShader, index.second, 0, static_cast<uint32>(size), data);
+			cb->Update(CmdList, size, data);
 			});
+		CmdList.SetShaderConstantBuffer(sc_template->PixelShader, index.second, cb);
 	}
 }
 
@@ -334,10 +340,8 @@ void platform_ex::Windows::D3D12::ShaderCompose::CreateRootSignature()
 
 	size_t num_sampler = 0;
 	for (auto i = 0; i != NumTypes; ++i) {
-		QBSS.RegisterCounts[i].NumCBs = static_cast<white::uint16>(CBuffs[i].size());
-		QBSS.RegisterCounts[i].NumSRVs = static_cast<white::uint16>(Srvs[i].size());
-		QBSS.RegisterCounts[i].NumUAVs = static_cast<white::uint16>(Uavs[i].size());
-		QBSS.RegisterCounts[i].NumSamplers = static_cast<white::uint16>(Samplers[i].size());
+		if(sc_template->Infos[i])
+			QBSS.RegisterCounts[i] = sc_template->Infos[i]->ResourceCounts;
 
 		num_sampler += QBSS.RegisterCounts[i].NumSamplers;
 	}

@@ -91,6 +91,12 @@ namespace platform::Render {
 			return Result;
 		}
 
+		template<typename TCmd>
+		void* AllocCommand()
+		{
+			return AllocCommand(sizeof(TCmd), alignof(TCmd));
+		}
+
 		void ExchangeCmdList(CommandListBase& CmdList)
 		{
 			std::byte storage[sizeof(CommandListBase)];

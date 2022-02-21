@@ -55,6 +55,8 @@ namespace platform::Render {
 		{
 		}
 	};
+
+	class ConstantBuffer;
 }
 
 
@@ -83,21 +85,22 @@ namespace platform::Render::Effect {
 	public:
 		using NameKey::NameKey;
 
-		void Update();
-
 		void Dirty(bool val)
 		{
 			dirty = val;
 		}
 
-		GraphicsBuffer* GetGraphicsBuffer() const wnothrow;
+		platform::Render::ConstantBuffer* GetGraphicsBuffer() const wnothrow;
 
 		friend class Effect;
 
 		template<typename UpdateFunc>
 		void Update(UpdateFunc&& update)
 		{
-			update(cpu_buffer.data(), cpu_buffer.size());
+			if (dirty) {
+				update(cpu_buffer.data(), cpu_buffer.size());
+				dirty = false;
+			}
 		}
 	protected:
 
@@ -126,7 +129,7 @@ namespace platform::Render::Effect {
 
 		friend class Variable;
 	private:
-		std::unique_ptr<GraphicsBuffer> gpu_buffer;
+		std::unique_ptr<platform::Render::ConstantBuffer> gpu_buffer;
 		std::vector<stdex::byte> cpu_buffer;
 		bool dirty;
 	};

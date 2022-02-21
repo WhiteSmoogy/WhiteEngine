@@ -265,7 +265,7 @@ namespace platform_ex::Windows::D3D12 {
 	{
 		wconstraint(size_in_byte > 0);
 		wconstraint(Align(size_in_byte,16) == size_in_byte);
-		auto buffer = new ConstantBuffer(GetNodeDevice(0), usage);
+		auto buffer = new ConstantBuffer(GetNodeDevice(0), usage, size_in_byte);
 
 		void* MappedData = nullptr;
 		if (usage == platform::Render::Buffer::Usage::MultiFrame) {

@@ -12,6 +12,8 @@
 #include "RenderObject.h"
 #include "ShaderParametersMetadata.h"
 namespace platform::Render {
+	class CommandList;
+
 	namespace Buffer {
 		enum  Usage
 		{
@@ -103,7 +105,7 @@ namespace platform::Render {
 
 	class ConstantBuffer :public RObject {
 	public:
-		virtual void Update(white::uint32 size, void const* data) = 0;
+		virtual void Update(platform::Render::CommandList& CmdList,white::uint32 size, void const* data) = 0;
 	};
 
 	ConstantBuffer* CreateConstantBuffer(const void* Contents, Buffer::Usage Usage,const ShaderParametersMetadata& Layout);

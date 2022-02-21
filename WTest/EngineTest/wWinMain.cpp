@@ -72,7 +72,7 @@ public:
 	static_assert(sizeof(DirectLight) == sizeof(wm::float4) + sizeof(wm::float4) + sizeof(wm::float4) + 4);
 
 	std::vector<DirectLight> lights;
-	std::shared_ptr<GraphicsBuffer> pLightConstatnBuffer;
+	std::shared_ptr<GraphicsBuffer> pLightConstantBuffer;
 
 	WhiteEngine::DirectionalLight sun_light;
 	we::SceneInfo scene;
@@ -207,7 +207,7 @@ private:
 			pEffect->GetParameter("light_count"sv) = static_cast<white::uint32>(lights.size());
 			pEffect->GetParameter("inv_sscreen"sv) = wm::float2(1 / 1280.f, 1 / 720.f);
 
-			pEffect->GetParameter("lights") = pLightConstatnBuffer;
+			pEffect->GetParameter("lights") = pLightConstantBuffer;
 
 			//mat
 			pEffect->GetParameter("alpha"sv) = 1.0f;
@@ -724,8 +724,7 @@ private:
 		sun_light.DynamicShadowCascades = 2;
 		sun_light.WholeSceneDynamicShadowRadius = modelRaidus;
 
-
-		pLightConstatnBuffer = white::share_raw(Device.CreateConstanBuffer(Buffer::Usage::Dynamic, EAccessHint::EA_GPURead | EAccessHint::EA_GPUStructured, sizeof(DirectLight)*lights.size(), static_cast<EFormat>(sizeof(DirectLight)),lights.data()));
+		pLightConstantBuffer = white::share_raw(Device.CreateVertexBuffer(Buffer::Usage::Dynamic, EAccessHint::EA_GPURead | EAccessHint::EA_GPUStructured, sizeof(DirectLight)*lights.size(), static_cast<EFormat>(sizeof(DirectLight)),lights.data()));
 
 		RayShadowMask = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EA_GPURead | EA_GPUWrite | EA_GPUUnordered, {}));
 		RayShadowMaskDenoiser = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_R32F,EA_GPURead | EA_GPUWrite | EA_GPUUnordered, {}));

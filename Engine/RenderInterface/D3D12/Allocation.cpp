@@ -104,6 +104,8 @@ void FastConstantPageAllocator::CleanUpAllocations(uint64 InFrameLag)
 
 	for (int32 i = static_cast<int32>(Allocators.size() - 1); i >= 0; i--)
 	{
+		if (!Allocators[i]->IsDeallocated())
+			continue;
 		if ((Allocators[i]->GetLastUsedFrameFence() + InFrameLag <= CompletedFence))
 		{
 			delete(Allocators[i]);

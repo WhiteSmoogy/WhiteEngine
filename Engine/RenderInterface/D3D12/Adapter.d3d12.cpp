@@ -21,7 +21,8 @@ using std::make_shared;
 namespace platform_ex::Windows::D3D12 {
 	Device::Device(DXGI::Adapter & InAdapter)
 		:adapter(InAdapter),
-		PipelineStateCache(this)
+		PipelineStateCache(this),
+		bHeapNotZeroedSupported(false)
 	{
 		std::vector<D3D_FEATURE_LEVEL> feature_levels = {
 			D3D_FEATURE_LEVEL_12_2 ,
@@ -759,6 +760,12 @@ namespace platform_ex::Windows::D3D12 {
 			D3D12RootSignatureCaps.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 		}
 		RootSignatureVersion = D3D12RootSignatureCaps.HighestVersion;
+
+		D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features = {};
+		if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features, sizeof(Features))))
+		{
+			bHeapNotZeroedSupported = true;
+		}
 	}
 	 
 	void D3D12::Device::EndFrame()
@@ -780,6 +787,9 @@ namespace platform_ex::Windows::D3D12 {
 
 			ReclaimPool.pop();
 		}
+
+		uint64 FrameLag = 2;
+		GetUploadHeapAllocator(0).CleanUpAllocations(FrameLag);
 
 		platform::Render::RObject::FlushPendingDeletes();
 	}

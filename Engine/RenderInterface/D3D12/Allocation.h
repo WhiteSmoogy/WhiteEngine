@@ -110,6 +110,8 @@ namespace platform_ex::Windows::D3D12
 			void Deallocate(ResourceLocation & ResourceLocation);
 
 			uint64 GetLastUsedFrameFence() const { return RetireFrameFence; }
+
+			bool IsDeallocated() const { return RetireFrameFence != -1; }
 		private:
 			void CreateBackingResource();
 

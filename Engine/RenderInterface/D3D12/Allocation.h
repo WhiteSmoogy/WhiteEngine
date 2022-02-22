@@ -129,6 +129,8 @@ namespace platform_ex::Windows::D3D12
 		ConstantAllocator* CreateNewAllocator(uint32 InMinSizeInBytes);
 
 		std::vector<ConstantAllocator*> Allocators;
+
+		std::mutex CS;
 	};
 
 	// This is designed for allocation of scratch memory such as temporary staging buffers

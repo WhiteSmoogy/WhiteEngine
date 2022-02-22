@@ -224,12 +224,33 @@ void Display::UpdateFramewBufferView()
 	}
 }
 
+class D3D12SignalFrameFence : platform::Render::CommandBase {
+public:
+	CommandQueueType QueueType;
+	ManualFence* const Fence;
+	const uint64 Value;
+
+	D3D12SignalFrameFence(CommandQueueType InQueueType, ManualFence* InFence, uint64 InValue)
+		:QueueType(InQueueType), Fence(InFence), Value(InValue)
+	{
+	}
+
+	void ExecuteAndDestruct(platform::Render::CommandListBase& CmdList, platform::Render::CommandListContext& Context)
+	{
+		Fence->Signal(QueueType, Value);
+
+		this->~D3D12SignalFrameFence();
+	}
+};
+
 void Context::AdvanceFrameFence()
 {
 	auto FrameFence = &device->GetFrameFence();
 	const uint64 PreviousFence = FrameFence->IncrementCurrentFence();
 
-	FrameFence->Signal(CommandQueueType::Default, PreviousFence);
+	auto& CmdList = platform::Render::CommandListExecutor::GetImmediateCommandList();
+
+	new (CmdList.AllocCommand<D3D12SignalFrameFence>()) D3D12SignalFrameFence(CommandQueueType::Default, FrameFence, PreviousFence);
 }
 
 void Context::AdvanceDisplayBuffer()

@@ -12,6 +12,7 @@
 #include "ConstantBuffer.h"
 #include "Convert.h"
 #include "DescriptorCache.h"
+#include <spdlog/spdlog.h>
 
 // Device Context State
 // improve draw thread performance by removing redundant device context calls.
@@ -478,11 +479,12 @@ namespace platform_ex::Windows::D3D12 {
 
 			if (UniformBuffer && UniformBuffer->Location.GetGPUVirtualAddress())
 			{
-				const auto& ResourceLocation = UniformBuffer->Location;
+				const auto& Location = UniformBuffer->Location;
+
 				// Only update the constant buffer if it has changed.
-				if (ResourceLocation.GetGPUVirtualAddress() != CurrentGPUVirtualAddress)
+				if (Location.GetGPUVirtualAddress() != CurrentGPUVirtualAddress)
 				{
-					CurrentGPUVirtualAddress = ResourceLocation.GetGPUVirtualAddress();
+					CurrentGPUVirtualAddress = Location.GetGPUVirtualAddress();
 					ConstantBufferCache::DirtySlot(CBVCache.DirtySlotMask[ShaderFrequency], SlotIndex);
 				}
 			}

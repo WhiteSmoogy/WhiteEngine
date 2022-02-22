@@ -1,5 +1,6 @@
 #include "Allocation.h"
 #include "Context.h"
+#include <spdlog/spdlog.h>
 using namespace platform_ex::Windows::D3D12;
 
 int32 FastConstantAllocatorPageSize = 64 * 1024;
@@ -85,6 +86,7 @@ void ResourceAllocator::Deallocate(ResourceLocation& ResourceLocation)
 
 bool FastConstantPageAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
 {
+	std::unique_lock Lock{ CS };
 	for (auto& allocator : Allocators)
 	{
 		if(allocator->TryAllocate(SizeInBytes,Alignment,ResourceLocation))

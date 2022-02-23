@@ -1045,6 +1045,22 @@ namespace platform_ex::Windows::D3D12 {
 	}
 }
 
+namespace platform_ex::Windows::D3D12
+{
+	inline bool IsGPUOnly(D3D12_HEAP_TYPE HeapType, const D3D12_HEAP_PROPERTIES* pCustomHeapProperties = nullptr)
+	{
+		wconstraint(HeapType == D3D12_HEAP_TYPE_CUSTOM ? pCustomHeapProperties != nullptr : true);
+		return HeapType == D3D12_HEAP_TYPE_DEFAULT ||
+			(HeapType == D3D12_HEAP_TYPE_CUSTOM &&
+				(pCustomHeapProperties->CPUPageProperty == D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE));
+	}
+
+	inline bool IsCPUAccessible(D3D12_HEAP_TYPE HeapType, const D3D12_HEAP_PROPERTIES* pCustomHeapProperties = nullptr)
+	{
+		return !IsGPUOnly(HeapType, pCustomHeapProperties);
+	}
+}
+
 //const def
 namespace platform_ex::Windows::D3D12 {
 	// DX12 doesn't support higher MSAA count

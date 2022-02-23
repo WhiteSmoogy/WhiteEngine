@@ -133,6 +133,114 @@ namespace platform_ex::Windows::D3D12
 		std::mutex CS;
 	};
 
+	struct AllocatorConfig
+	{
+		D3D12_HEAP_TYPE HeapType = D3D12_HEAP_TYPE_UPLOAD;
+		D3D12_HEAP_FLAGS HeapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
+		D3D12_RESOURCE_FLAGS ResourceFlags = D3D12_RESOURCE_FLAG_NONE;
+		D3D12_RESOURCE_STATES InitialResourceState = D3D12_RESOURCE_STATE_GENERIC_READ;
+	};
+
+	enum class AllocationStrategy
+	{
+		// This strategy uses Placed Resources to sub-allocate a buffer out of an underlying ID3D12Heap.
+	// The benefit of this is that each buffer can have it's own resource state and can be treated
+	// as any other buffer. The downside of this strategy is the API limitation which enforces
+	// the minimum buffer size to 64k leading to large internal fragmentation in the allocator
+		kPlacedResource,
+		// The alternative is to manually sub-allocate out of a single large buffer which allows block
+		// allocation granularity down to 1 byte. However, this strategy is only really valid for buffers which
+		// will be treated as read-only after their creation (i.e. most Index and Vertex buffers). This 
+		// is because the underlying resource can only have one state at a time.
+		kManualSubAllocation
+	};
+
+	class ResourceConfigAllocator :public ResourceAllocator
+	{
+	public:
+		ResourceConfigAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
+			const AllocatorConfig& InConfig,
+			const std::string& Name,
+			uint32 InMaxAllocationSize);
+
+		const AllocatorConfig& GetInitConfig() const { return InitConfig; }
+		const uint32 GetMaximumAllocationSizeForPooling() const { return MaximumAllocationSizeForPooling; }
+	protected:
+		const AllocatorConfig InitConfig;
+		const std::string DebugName;
+		bool Initialized;
+
+		// Any allocation larger than this just gets straight up allocated (i.e. not pooled).
+		// These large allocations should be infrequent so the CPU overhead should be minimal
+		const uint32 MaximumAllocationSizeForPooling;
+
+		std::mutex CS;
+	};
+
+	class BuddyAllocator :public ResourceConfigAllocator
+	{
+	public:
+		BuddyAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
+			const AllocatorConfig& InConfig,
+			const std::string& Name,
+			AllocationStrategy InStrategy,
+			uint32 InMaxAllocationSize,
+			uint32 InMaxBlockSize,
+			uint32 InMinBlockSize);
+
+		void Initialize();
+
+	protected:
+		const uint32 MaxBlockSize;
+		const uint32 MinBlockSize;
+		const AllocationStrategy Strategy;
+
+		ResourceHolder* BackingResource;
+	private:
+		uint64 LastUsedFrameFence;
+
+		int32 MaxOrder;
+
+		struct FreeBlock
+		{
+			FreeBlock* Next;
+		};
+
+		FreeBlock** FreeBlockArray;
+
+		inline uint32 SizeToUnitSize(uint32 size) const
+		{
+			return (size + (MinBlockSize - 1)) / MinBlockSize;
+		}
+
+		inline uint32 UnitSizeToOrder(uint32 size) const
+		{
+			unsigned long Result;
+			_BitScanReverse(&Result, size + size - 1); // ceil(log2(size))
+			return Result;
+		}
+
+		uint32 OrderToUnitSize(uint32 order) const { return ((uint32)1) << order; }
+
+		uint32 AllocateBlock(uint32 order);
+
+		void Allocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation);
+	};
+
+	class MultiBuddyAllocator :public ResourceConfigAllocator
+	{
+	public:
+		MultiBuddyAllocator(
+			NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
+			const AllocatorConfig& InConfig,
+			const std::string& Name,
+			AllocationStrategy InStrategy,
+			uint32 InMaxAllocationSize,
+			uint32 InDefaultPoolSize,
+			uint32 InMinBlockSize
+		);
+	};
+
 	// This is designed for allocation of scratch memory such as temporary staging buffers
 	// or shadow buffers for dynamic resources.
 	class UploadHeapAllocator : public AdapterChild, public DeviceChild, public MultiNodeGPUObject
@@ -144,9 +252,13 @@ namespace platform_ex::Windows::D3D12
 
 		void* AllocFastConstantAllocationPage(uint32 InSize, uint32 InAlignment,ResourceLocation& ResourceLocation);
 
+		void* AllocUploadResouce(uint32 InSize, uint32 InAlignment, ResourceLocation& ResourceLocation);
+
 		void CleanUpAllocations(uint64 InFrameLag);
 
 	private:
+		MultiBuddyAllocator SmallBlockAllocator;
+
 		// Seperate allocator used for the fast constant allocator pages which get always freed within the same frame by default
 		// (different allocator to avoid fragmentation with the other pools - always the same size allocations)
 		FastConstantPageAllocator FastConstantAllocator;

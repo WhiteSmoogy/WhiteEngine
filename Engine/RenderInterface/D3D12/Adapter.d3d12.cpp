@@ -270,7 +270,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		void* MappedData = nullptr;
 		if (usage == platform::Render::Buffer::Usage::MultiFrame) {
-			//TODO
+			auto& Allocator = GetUploadHeapAllocator(0);
 			wconstraint(false);
 		}
 		else {

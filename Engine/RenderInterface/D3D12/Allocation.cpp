@@ -4,6 +4,9 @@
 using namespace platform_ex::Windows::D3D12;
 
 int32 FastConstantAllocatorPageSize = 64 * 1024;
+int32 UploadHeapSmallBlockMaxAllocationSize = 64 * 1024;
+int32 UploadHeapSmallBlockPoolSize = 4 * 1024 * 1024;
+
 
 ResourceLocation::ResourceLocation(NodeDevice* Parent)
 	:DeviceChild(Parent),
@@ -189,8 +192,164 @@ void FastConstantPageAllocator::ConstantAllocator::CreateBackingResource()
 	BackingResource->Map();
 }
 
+ResourceConfigAllocator::ResourceConfigAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, const AllocatorConfig& InConfig, const std::string& Name, uint32 InMaxAllocationSize)
+	:ResourceAllocator(InParentDevice,VisibleNodes),
+	InitConfig(InConfig),
+	DebugName(Name),
+	Initialized(false),
+	MaximumAllocationSizeForPooling(InMaxAllocationSize)
+{
+}
+
+BuddyAllocator::BuddyAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
+	const AllocatorConfig& InConfig, const std::string& Name, AllocationStrategy InStrategy, 
+	uint32 InMaxAllocationSize, uint32 InMaxBlockSize, uint32 InMinBlockSize)
+	:ResourceConfigAllocator(InParentDevice,VisibleNodes,InConfig,Name,InMaxAllocationSize)
+	,MaxBlockSize(InMaxBlockSize)
+	,MinBlockSize(InMinBlockSize)
+	,Strategy(InStrategy)
+	,BackingResource(nullptr)
+	, LastUsedFrameFence(0)
+	, FreeBlockArray(nullptr)
+{
+	WAssert((MaxBlockSize / MinBlockSize) * MinBlockSize == MaxBlockSize," Evenly dividable");
+
+	WAssert(0 == ((MaxBlockSize / MinBlockSize) & ((MaxBlockSize / MinBlockSize) - 1))," Power of two"); 
+
+
+	MaxOrder = UnitSizeToOrder(SizeToUnitSize(MaxBlockSize));
+
+	if (IsCPUAccessible(InitConfig.HeapType))
+	{
+		WAssert(InMaxAllocationSize < InMaxBlockSize,"allocator reserved memory");
+		WAssert(sizeof(void*) * MaxOrder < MaxBlockSize, "allocator reserved memory too small");
+	}
+}
+
+void BuddyAllocator::Initialize()
+{
+	auto Adapter = GetParentDevice()->GetParentAdapter();
+
+	if (Strategy == AllocationStrategy::kPlacedResource) {
+		//TODO
+		wassume(false);
+	}
+	else {
+		const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InitConfig.HeapType, GetGPUMask(), GetVisibilityMask());
+
+		CheckHResult(Adapter->CreateBuffer(HeapProps, GetGPUMask(),
+			InitConfig.InitialResourceState, InitConfig.InitialResourceState, MaxBlockSize, &BackingResource, "BuddyAllocator Underlying Buffer", InitConfig.ResourceFlags));
+
+		if (IsCPUAccessible(InitConfig.HeapType)) {
+			BackingResource->Map();
+
+			void* pStart = BackingResource->GetResourceBaseAddress();
+			FreeBlockArray = reinterpret_cast<FreeBlock**>(pStart);
+			//‘§œ»«–∑÷Buddy
+			for (int i = 0; i < MaxOrder; ++i)
+			{
+				FreeBlockArray[i] = reinterpret_cast<FreeBlock*>((byte*)pStart + MinBlockSize*(1<<i));
+				FreeBlockArray[i]->Next = nullptr;
+			}
+		}
+	}
+}
+
+uint32 BuddyAllocator::AllocateBlock(uint32 order)
+{
+	uint32 offset = 0;
+	if (order >= MaxOrder)
+	{
+		WAssert(false, "Can't allocate a block that large  ");
+	}
+
+	if (FreeBlockArray[order] == nullptr)
+	{
+		uint32 left = AllocateBlock(order + 1);
+
+		uint32 size = OrderToUnitSize(order);
+
+		uint32 right = left + size;
+
+		byte* pStart = reinterpret_cast<byte*>(FreeBlockArray);
+		FreeBlock* pRight = reinterpret_cast<FreeBlock*>(pStart + right * MinBlockSize);
+		FreeBlockArray[order] = pRight;
+
+		offset = left;
+	}
+	else
+	{
+		byte* pStart =reinterpret_cast<byte*>(FreeBlockArray);
+		byte* pEnd = reinterpret_cast<byte*>(FreeBlockArray[order]);
+
+		offset = (pEnd - pStart) / MinBlockSize;
+		wconstraint(offset * MinBlockSize == pEnd - pStart);
+
+		FreeBlockArray[order] = FreeBlockArray[order]->Next;
+	}
+	return offset;
+}
+
+void BuddyAllocator::Allocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
+{
+	std::unique_lock Lock{ CS };
+
+	if (Initialized == false)
+	{
+		Initialize();
+		Initialized = true;
+	}
+
+	uint32 SizeToAllocate = SizeInBytes;
+
+	// If the alignment doesn't match the block size
+	if (Alignment != 0 && MinBlockSize % Alignment != 0)
+	{
+		SizeToAllocate = SizeInBytes + Alignment;
+	}
+
+	// Work out what size block is needed and allocate one
+	const uint32 UnitSize = SizeToUnitSize(SizeToAllocate);
+	const uint32 Order = UnitSizeToOrder(UnitSize);
+	const uint32 Offset = AllocateBlock(Order); // This is the offset in MinBlockSize units
+
+	const uint32 AllocSize = uint32(OrderToUnitSize(Order) * MinBlockSize);
+	const uint32 AllocationBlockOffset = uint32(Offset * MinBlockSize);
+	uint32 Padding = 0;
+
+	if (Alignment != 0 && AllocationBlockOffset % Alignment != 0)
+	{
+		uint32 AlignedBlockOffset = AlignArbitrary(AllocationBlockOffset, Alignment);
+		Padding = AlignedBlockOffset - AllocationBlockOffset;
+
+		wconstraint((Padding + SizeInBytes) <= AllocSize);
+	}
+
+	const uint32 AlignedOffsetFromResourceBase = AllocationBlockOffset + Padding;
+	wconstraint((AlignedOffsetFromResourceBase % Alignment) == 0);
+
+
+	ResourceLocation.SetType(ResourceLocation::SubAllocation);
+	ResourceLocation.SetAllocator(this);
+	ResourceLocation.SetSize(SizeInBytes);
+
+	if (Strategy == AllocationStrategy::kManualSubAllocation)
+	{
+		ResourceLocation.SetOffsetFromBaseOfResource(AlignedOffsetFromResourceBase);
+		ResourceLocation.SetResource(BackingResource);
+		ResourceLocation.SetGPUVirtualAddress(BackingResource->GetGPUVirtualAddress() + AlignedOffsetFromResourceBase);
+
+		if (IsCPUAccessible(InitConfig.HeapType))
+		{
+			ResourceLocation.SetMappedBaseAddress((uint8*)BackingResource->GetResourceBaseAddress() + AlignedOffsetFromResourceBase);
+		}
+	}
+}
+
 UploadHeapAllocator::UploadHeapAllocator(D3D12Adapter* InParent, NodeDevice* InParentDevice, const std::string& InName)
 	:AdapterChild(InParent), DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), AllGPU())
+	,SmallBlockAllocator(InParentDevice, GetVisibilityMask(), {},InName,AllocationStrategy::kManualSubAllocation, 
+		UploadHeapSmallBlockMaxAllocationSize, UploadHeapSmallBlockPoolSize,256)
 	,FastConstantAllocator(InParentDevice,GetVisibilityMask())
 {
 }
@@ -202,6 +361,14 @@ void* UploadHeapAllocator::AllocFastConstantAllocationPage(uint32 InSize, uint32
 	wassume(ret);
 
 	return ResourceLocation.GetMappedBaseAddress();
+}
+
+void* UploadHeapAllocator::AllocUploadResouce(uint32 InSize, uint32 InAlignment, ResourceLocation& ResourceLocation)
+{
+	wassume(InSize > 0);
+
+
+	return nullptr;
 }
 
 FastConstantAllocator::FastConstantAllocator(NodeDevice* Parent, GPUMaskType InGpuMask)

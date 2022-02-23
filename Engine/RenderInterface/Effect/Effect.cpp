@@ -259,7 +259,7 @@ namespace platform::Render::Effect {
 			auto OptionalCBInfo = pEffectAsset->GetInfo<ShaderInfo::ConstantBufferInfo>(cbuff.GetName());
 			if (OptionalCBInfo.has_value()) {
 				auto ConstantBufferInfo = OptionalCBInfo.value();
-				auto pGPUBuffer = GRenderIF->GetDevice().CreateConstanBuffer(platform::Render::Buffer::Usage::MultiFrame,  ConstantBufferInfo.size);
+				auto pGPUBuffer = GRenderIF->GetDevice().CreateConstanBuffer(platform::Render::Buffer::MultiFrame,  ConstantBufferInfo.size);
 
 				auto pConstantBuffer = std::make_shared<ConstantBuffer>(cbuff.GetName(), cbuff.GetNameHash());
 

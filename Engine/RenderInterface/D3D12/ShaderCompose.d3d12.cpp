@@ -277,7 +277,7 @@ void platform_ex::Windows::D3D12::ShaderCompose::Bind<platform::Render::VertexSh
 	{
 		auto cb = AllCBuffs[index.first]->GetGraphicsBuffer();
 		AllCBuffs[index.first]->Update([&](void* data,std::size_t size) {
-			cb->Update(CmdList, size, data);
+			cb->Update(CmdList,static_cast<uint32>(size), data);
 		});
 		CmdList.SetShaderConstantBuffer(sc_template->VertexShader, index.second, cb);
 	}
@@ -290,7 +290,7 @@ void platform_ex::Windows::D3D12::ShaderCompose::Bind<platform::Render::PixelSha
 	{
 		auto cb = AllCBuffs[index.first]->GetGraphicsBuffer();
 		AllCBuffs[index.first]->Update([&](void* data, std::size_t size) {
-			cb->Update(CmdList, size, data);
+			cb->Update(CmdList, static_cast<uint32>(size), data);
 			});
 		CmdList.SetShaderConstantBuffer(sc_template->PixelShader, index.second, cb);
 	}

@@ -211,6 +211,7 @@ BuddyAllocator::BuddyAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNo
 	,BackingResource(nullptr)
 	, LastUsedFrameFence(0)
 	, FreeBlockArray(nullptr)
+	, TotalSizeUsed(0)
 {
 	WAssert((MaxBlockSize / MinBlockSize) * MinBlockSize == MaxBlockSize," Evenly dividable");
 
@@ -246,11 +247,13 @@ void BuddyAllocator::Initialize()
 			void* pStart = BackingResource->GetResourceBaseAddress();
 			FreeBlockArray = reinterpret_cast<FreeBlock**>(pStart);
 			//‘§œ»«–∑÷Buddy
-			for (int i = 0; i < MaxOrder; ++i)
+			for (uint32 i = 0; i < MaxOrder; ++i)
 			{
 				FreeBlockArray[i] = reinterpret_cast<FreeBlock*>((byte*)pStart + MinBlockSize*(1<<i));
 				FreeBlockArray[i]->Next = nullptr;
 			}
+
+			TotalSizeUsed = MinBlockSize;
 		}
 	}
 }
@@ -282,7 +285,7 @@ uint32 BuddyAllocator::AllocateBlock(uint32 order)
 		byte* pStart =reinterpret_cast<byte*>(FreeBlockArray);
 		byte* pEnd = reinterpret_cast<byte*>(FreeBlockArray[order]);
 
-		offset = (pEnd - pStart) / MinBlockSize;
+		offset = static_cast<uint32>(pEnd - pStart) / MinBlockSize;
 		wconstraint(offset * MinBlockSize == pEnd - pStart);
 
 		FreeBlockArray[order] = FreeBlockArray[order]->Next;
@@ -293,12 +296,6 @@ uint32 BuddyAllocator::AllocateBlock(uint32 order)
 void BuddyAllocator::Allocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
 {
 	std::unique_lock Lock{ CS };
-
-	if (Initialized == false)
-	{
-		Initialize();
-		Initialized = true;
-	}
 
 	uint32 SizeToAllocate = SizeInBytes;
 
@@ -316,6 +313,8 @@ void BuddyAllocator::Allocate(uint32 SizeInBytes, uint32 Alignment, ResourceLoca
 	const uint32 AllocSize = uint32(OrderToUnitSize(Order) * MinBlockSize);
 	const uint32 AllocationBlockOffset = uint32(Offset * MinBlockSize);
 	uint32 Padding = 0;
+
+	TotalSizeUsed += AllocSize;
 
 	if (Alignment != 0 && AllocationBlockOffset % Alignment != 0)
 	{
@@ -346,6 +345,101 @@ void BuddyAllocator::Allocate(uint32 SizeInBytes, uint32 Alignment, ResourceLoca
 	}
 }
 
+bool BuddyAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
+{
+	std::unique_lock Lock{ CS };
+
+	if (Initialized == false)
+	{
+		Initialize();
+		Initialized = true;
+	}
+
+	if (CanAllocate(SizeInBytes, Alignment))
+	{
+		Allocate(SizeInBytes, Alignment, ResourceLocation);
+		return true;
+	}
+	return false;
+}
+
+void BuddyAllocator::Deallocate(ResourceLocation& ResourceLocation)
+{
+	WAssert(false, "TODO");
+}
+
+bool BuddyAllocator::CanAllocate(uint32 size, uint32 alignment)
+{
+	if (TotalSizeUsed == MaxBlockSize)
+		return false;
+
+	uint32 sizeToAllocate = size;
+	// If the alignment doesn't match the block size
+	if (alignment != 0 && MinBlockSize % alignment != 0)
+	{
+		sizeToAllocate = size + alignment;
+	}
+
+	uint32 blockSize = MaxBlockSize /2;
+
+	for (int32 i = MaxOrder - 1; i >= 0; i--)
+	{
+		if (FreeBlockArray[i] != nullptr && blockSize >= sizeToAllocate)
+			return true;
+
+		blockSize /= 2;
+
+		if (blockSize < sizeToAllocate) return false;
+	}
+
+	return false;
+}
+
+MultiBuddyAllocator::MultiBuddyAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, const AllocatorConfig& InConfig, const std::string& Name, AllocationStrategy InStrategy, uint32 InMaxAllocationSize, uint32 InDefaultPoolSize, uint32 InMinBlockSize)
+	:ResourceConfigAllocator(InParentDevice, VisibleNodes, InConfig, Name, InMaxAllocationSize)
+	, DefaultPoolSize(InDefaultPoolSize)
+	, MinBlockSize(InMinBlockSize)
+	, Strategy(InStrategy)
+{
+	wconstraint(std::bit_ceil(MaximumAllocationSizeForPooling) < DefaultPoolSize);
+}
+
+bool platform_ex::Windows::D3D12::MultiBuddyAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
+{
+	std::unique_lock Lock{ CS };
+
+	for (size_t i = 0; i < Allocators.size(); i++)
+	{
+		if (Allocators[i]->TryAllocate(SizeInBytes, Alignment, ResourceLocation))
+		{
+			return true;
+		}
+	}
+
+	auto Allocator = Allocators.emplace_back(CreateNewAllocator(SizeInBytes));
+	return Allocator->TryAllocate(SizeInBytes, Alignment, ResourceLocation);
+}
+
+BuddyAllocator* MultiBuddyAllocator::CreateNewAllocator(uint32 InMinSizeInBytes)
+{
+	wconstraint(InMinSizeInBytes <= MaximumAllocationSizeForPooling);
+	uint32 AllocationSize = (InMinSizeInBytes > DefaultPoolSize) ?std::bit_ceil(InMinSizeInBytes) : DefaultPoolSize;
+
+	return new BuddyAllocator(GetParentDevice(),
+		GetVisibilityMask(),
+		InitConfig,
+		DebugName,
+		Strategy,
+		MaximumAllocationSizeForPooling,
+		AllocationSize,
+		MinBlockSize);
+}
+
+void MultiBuddyAllocator::Deallocate(ResourceLocation& ResourceLocation)
+{
+	WAssert(false, "The sub-allocators should handle the deallocation");
+}
+
 UploadHeapAllocator::UploadHeapAllocator(D3D12Adapter* InParent, NodeDevice* InParentDevice, const std::string& InName)
 	:AdapterChild(InParent), DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), AllGPU())
 	,SmallBlockAllocator(InParentDevice, GetVisibilityMask(), {},InName,AllocationStrategy::kManualSubAllocation, 
@@ -363,12 +457,26 @@ void* UploadHeapAllocator::AllocFastConstantAllocationPage(uint32 InSize, uint32
 	return ResourceLocation.GetMappedBaseAddress();
 }
 
-void* UploadHeapAllocator::AllocUploadResouce(uint32 InSize, uint32 InAlignment, ResourceLocation& ResourceLocation)
+void* UploadHeapAllocator::AllocUploadResource(uint32 InSize, uint32 InAlignment, ResourceLocation& ResourceLocation)
 {
 	wassume(InSize > 0);
 
+	//Clean up the release queue of resources which are currently not used by the GPU anymore
 
-	return nullptr;
+	ResourceLocation.Clear();
+
+	// Fit in small block allocator?
+	if (InSize <= SmallBlockAllocator.GetMaximumAllocationSizeForPooling())
+	{
+		bool ret = SmallBlockAllocator.TryAllocate(InSize, InAlignment, ResourceLocation);
+		wconstraint(ret);
+	}
+	else
+	{
+		//TODO
+	}
+
+	return ResourceLocation.GetMappedBaseAddress();
 }
 
 FastConstantAllocator::FastConstantAllocator(NodeDevice* Parent, GPUMaskType InGpuMask)

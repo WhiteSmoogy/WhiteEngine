@@ -9,7 +9,6 @@
 #include "../IGraphicsBuffer.hpp"
 #include "ResourceHolder.h"
 #include "WFramework/Win32/WCLib/COM.h"
-#include "Allocation.h"
 
 namespace platform_ex::Windows::D3D12 {
 
@@ -52,24 +51,6 @@ namespace platform_ex::Windows::D3D12 {
 		white::uint32 counter_offset;
 
 		platform::Render::EFormat format;
-	};
-
-	class ConstantBuffer:public platform::Render::ConstantBuffer,public DeviceChild
-	{
-	public:
-		using UsageType = platform::Render::Buffer::Usage;
-
-		ResourceLocation Location;
-
-		const UsageType Usage;
-
-		const uint32 ConstantBufferSize;
-
-		ConstantBuffer(NodeDevice* InParent, UsageType InUsage,uint32 InConstantBufferSize)
-			:DeviceChild(InParent),Location(InParent),Usage(InUsage),ConstantBufferSize(InConstantBufferSize)
-		{}
-
-		void Update(platform::Render::CommandList& CmdList,white::uint32 size, void const* data) final;
 	};
 }
 

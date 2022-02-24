@@ -12,7 +12,7 @@
 #include "Fence.h"
 #include "RootSignature.h"
 #include "D3DCommandList.h"
-#include "Allocation.h"
+#include "ConstantBuffer.h"
 
 namespace platform::Render::Effect {
 	class Effect;
@@ -54,7 +54,7 @@ namespace platform_ex::Windows::D3D12 {
 		//\brief D3D12 Buffer 创建时没有BIND_FLAG
 		GraphicsBuffer* CreateBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr);
 
-		ConstantBuffer* CreateConstanBuffer(platform::Render::Buffer::Usage usage, uint32 size_in_byte,const void*  init_data) override;
+		ConstantBuffer* CreateConstantBuffer(platform::Render::Buffer::Usage usage, uint32 size_in_byte,const void*  init_data) override;
 		GraphicsBuffer* CreateVertexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
 		GraphicsBuffer* CreateIndexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
 

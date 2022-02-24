@@ -262,7 +262,7 @@ namespace platform_ex::Windows::D3D12 {
 		return buffer.release();
 	}
 
-	ConstantBuffer * Device::CreateConstanBuffer(platform::Render::Buffer::Usage usage, uint32 size_in_byte,const void* init_data)
+	ConstantBuffer * Device::CreateConstantBuffer(platform::Render::Buffer::Usage usage, uint32 size_in_byte,const void* init_data)
 	{
 		wconstraint(size_in_byte > 0);
 		wconstraint(Align(size_in_byte,16) == size_in_byte);
@@ -271,7 +271,8 @@ namespace platform_ex::Windows::D3D12 {
 		void* MappedData = nullptr;
 		if (usage == platform::Render::Buffer::Usage::MultiFrame) {
 			auto& Allocator = GetUploadHeapAllocator(0);
-			wconstraint(false);
+
+			MappedData = Allocator.AllocUploadResource(size_in_byte, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT, buffer->Location);
 		}
 		else {
 			auto& Allocator = GetTransientConstantBufferAllocator();

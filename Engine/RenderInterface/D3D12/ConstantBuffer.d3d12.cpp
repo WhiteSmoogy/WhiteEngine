@@ -34,3 +34,44 @@ bool FastConstantBuffer::Version(ResourceLocation& BufferOut, bool bDiscardShare
 
     return true;
 }
+
+void ConstantBuffer::Update(platform::Render::CommandList& cmdlist, white::uint32 size, void const* data)
+{
+	ResourceLocation UpdateLocation(GetParentDevice());
+
+	void* MappedData = nullptr;
+	if (Usage == platform::Render::Buffer::MultiFrame) {
+		auto& Allocator = GetParentDevice()->GetParentAdapter()->GetUploadHeapAllocator(GetParentDevice()->GetGPUIndex());
+		MappedData = Allocator.AllocUploadResource(ConstantBufferSize, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT, UpdateLocation);
+	}
+	else
+	{
+		auto& Allocator = GetParentDevice()->GetParentAdapter()->GetTransientConstantBufferAllocator();
+		MappedData = Allocator.Allocate(ConstantBufferSize, UpdateLocation);
+	}
+
+	wconstraint(MappedData != nullptr);
+	std::memcpy(MappedData, data, ConstantBufferSize);
+
+	class D3D12UpdateConstantBuffer : platform::Render::CommandBase {
+	public:
+		ConstantBuffer* Buffer;
+		ResourceLocation UpdatedLocation;
+
+		D3D12UpdateConstantBuffer(ConstantBuffer* InBuffer, ResourceLocation& InUpdatedLocation)
+			:Buffer(InBuffer), UpdatedLocation(InUpdatedLocation.GetParentDevice())
+		{
+			ResourceLocation::TransferOwnership(UpdatedLocation, InUpdatedLocation);
+		}
+
+		void ExecuteAndDestruct(platform::Render::CommandListBase& CmdList, platform::Render::CommandListContext& Context)
+		{
+			ResourceLocation::TransferOwnership(Buffer->Location, UpdatedLocation);
+
+			this->~D3D12UpdateConstantBuffer();
+		}
+	};
+
+	new (cmdlist.AllocCommand<D3D12UpdateConstantBuffer>()) D3D12UpdateConstantBuffer(this, UpdateLocation);
+}
+

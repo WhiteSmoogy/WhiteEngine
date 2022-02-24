@@ -174,7 +174,7 @@ namespace platform_ex::Windows::D3D12
 		// These large allocations should be infrequent so the CPU overhead should be minimal
 		const uint32 MaximumAllocationSizeForPooling;
 
-		std::mutex CS;
+		std::recursive_mutex CS;
 	};
 
 	class BuddyAllocator :public ResourceConfigAllocator
@@ -190,6 +190,9 @@ namespace platform_ex::Windows::D3D12
 
 		void Initialize();
 
+		bool TryAllocate(uint32 SizeInBytes, uint32 Alignment,ResourceLocation& ResourceLocation);
+
+		void Deallocate(ResourceLocation& ResourceLocation) final;
 	protected:
 		const uint32 MaxBlockSize;
 		const uint32 MinBlockSize;
@@ -199,7 +202,9 @@ namespace platform_ex::Windows::D3D12
 	private:
 		uint64 LastUsedFrameFence;
 
-		int32 MaxOrder;
+		uint32 MaxOrder;
+
+		uint32 TotalSizeUsed;
 
 		struct FreeBlock
 		{
@@ -224,6 +229,8 @@ namespace platform_ex::Windows::D3D12
 
 		uint32 AllocateBlock(uint32 order);
 
+		bool CanAllocate(uint32 size, uint32 aligment);
+
 		void Allocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation);
 	};
 
@@ -239,6 +246,19 @@ namespace platform_ex::Windows::D3D12
 			uint32 InDefaultPoolSize,
 			uint32 InMinBlockSize
 		);
+
+		bool TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation);
+
+		void Deallocate(ResourceLocation& ResourceLocation) final;
+	protected:
+
+		BuddyAllocator* CreateNewAllocator(uint32 InMinSizeInBytes);
+
+		const AllocationStrategy Strategy;
+		const uint32 MinBlockSize;
+		const uint32 DefaultPoolSize;
+
+		std::vector<BuddyAllocator*> Allocators;
 	};
 
 	// This is designed for allocation of scratch memory such as temporary staging buffers
@@ -252,7 +272,7 @@ namespace platform_ex::Windows::D3D12
 
 		void* AllocFastConstantAllocationPage(uint32 InSize, uint32 InAlignment,ResourceLocation& ResourceLocation);
 
-		void* AllocUploadResouce(uint32 InSize, uint32 InAlignment, ResourceLocation& ResourceLocation);
+		void* AllocUploadResource(uint32 InSize, uint32 InAlignment, ResourceLocation& ResourceLocation);
 
 		void CleanUpAllocations(uint64 InFrameLag);
 

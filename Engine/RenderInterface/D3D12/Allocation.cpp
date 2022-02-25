@@ -258,6 +258,13 @@ void BuddyAllocator::Initialize()
 	}
 }
 
+void BuddyAllocator::ReleaseAllResources()
+{
+	CHECK(DeferredDeletionQueue.empty());
+	
+	delete BackingResource;
+}
+
 uint32 BuddyAllocator::AllocateBlock(uint32 order)
 {
 	uint32 offset = 0;
@@ -343,6 +350,9 @@ void BuddyAllocator::Allocate(uint32 SizeInBytes, uint32 Alignment, ResourceLoca
 			ResourceLocation.SetMappedBaseAddress((uint8*)BackingResource->GetResourceBaseAddress() + AlignedOffsetFromResourceBase);
 		}
 	}
+
+	ResourceLocation.GetBuddyAllocatorPrivateData().Offset = Offset;
+	ResourceLocation.GetBuddyAllocatorPrivateData().Order = Order;
 }
 
 bool BuddyAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
@@ -365,8 +375,112 @@ bool BuddyAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceL
 
 void BuddyAllocator::Deallocate(ResourceLocation& ResourceLocation)
 {
-	WAssert(false, "TODO");
+	wconstraint(IsOwner(ResourceLocation));
+
+	auto adpter = GetParentDevice()->GetParentAdapter();
+	auto& fence = adpter->GetFrameFence();
+
+	auto& PrivateData = ResourceLocation.GetBuddyAllocatorPrivateData();
+
+
+	RetiredBlock Block{};
+	Block.FrameFence = fence.GetCurrentFence();
+	Block.Data = PrivateData;
+
+	{
+		std::unique_lock Lock{ CS };
+		DeferredDeletionQueue.emplace_back(Block);
+	}
+
+	LastUsedFrameFence = std::max(LastUsedFrameFence, Block.FrameFence);
 }
+
+void BuddyAllocator::CleanUpAllocations()
+{
+	std::unique_lock Lock{ CS };
+
+	auto adpter = GetParentDevice()->GetParentAdapter();
+	auto& fence = adpter->GetFrameFence();
+
+	uint32 PopCount = 0;
+	for (size_t i = 0; i < DeferredDeletionQueue.size(); i++)
+	{
+		RetiredBlock& Block = DeferredDeletionQueue[i];
+
+		if (fence.IsFenceComplete(Block.FrameFence))
+		{
+			DeallocateInternal(Block);
+			PopCount = i + 1;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	if (PopCount)
+	{
+		// clear out all of the released blocks, don't allow the array to shrink
+		DeferredDeletionQueue.erase(DeferredDeletionQueue.begin(), DeferredDeletionQueue.begin()+PopCount);
+	}
+}
+
+void BuddyAllocator::DeallocateInternal(RetiredBlock& Block)
+{
+	DeallocateBlock(Block.Data.Offset, Block.Data.Order);
+
+	const uint32 Size = uint32(OrderToUnitSize(Block.Data.Order) * MinBlockSize);
+
+	TotalSizeUsed -= Size;
+}
+
+void BuddyAllocator::DeallocateBlock(uint32 offset, uint32 order)
+{
+	// See if the buddy block is free  
+	uint32 size = OrderToUnitSize(order);
+
+	uint32 buddy = GetBuddyOffset(offset, size);
+
+	//find in list
+	FreeBlock* it = nullptr;
+	auto pSearch = FreeBlockArray[order];
+	FreeBlock* pPrev = nullptr;
+	while (pSearch != nullptr)
+	{
+		byte* pStart = reinterpret_cast<byte*>(FreeBlockArray);
+		byte* pEnd = reinterpret_cast<byte*>(pSearch);
+		if ((pEnd - pStart) == offset * MinBlockSize)
+		{
+			it = pSearch;
+			break;
+		}
+		pPrev = pSearch;
+		pSearch = pSearch->Next;
+	}
+
+	if (it != nullptr)
+	{
+		// Deallocate merged blocks
+		DeallocateBlock(std::min(offset, buddy), order + 1);
+
+		if (pPrev == nullptr)
+		{
+			FreeBlockArray[order] = FreeBlockArray[order]->Next;
+		}
+		else {
+
+			pPrev->Next = it->Next;
+		}
+	}
+	else {
+		byte* pStart = reinterpret_cast<byte*>(FreeBlockArray);
+		FreeBlock* pRight = reinterpret_cast<FreeBlock*>(pStart + offset * MinBlockSize);
+
+		pRight->Next = FreeBlockArray[order];
+		FreeBlockArray[order] = pRight;
+	}
+}
+
 
 bool BuddyAllocator::CanAllocate(uint32 size, uint32 alignment)
 {
@@ -440,6 +554,30 @@ void MultiBuddyAllocator::Deallocate(ResourceLocation& ResourceLocation)
 	WAssert(false, "The sub-allocators should handle the deallocation");
 }
 
+void MultiBuddyAllocator::CleanUpAllocations(uint64 InFrameLag)
+{
+	std::unique_lock Lock{ CS };
+
+	for (auto*& Allocator : Allocators)
+	{
+		Allocator->CleanUpAllocations();
+	}
+
+	// Trim empty allocators if not used in last n frames
+	auto Adapter = GetParentDevice()->GetParentAdapter();
+	auto& FrameFence = Adapter->GetFrameFence();
+	const uint64 CompletedFence = FrameFence.UpdateLastCompletedFence();
+
+	for (int32 i =static_cast<int32>(Allocators.size() - 1); i >= 0; i--)
+	{
+		if (Allocators[i]->IsEmpty() && (Allocators[i]->GetLastUsedFrameFence() + InFrameLag <= CompletedFence))
+		{
+			delete(Allocators[i]);
+			Allocators.erase(Allocators.begin()+i);
+		}
+	}
+}
+
 UploadHeapAllocator::UploadHeapAllocator(D3D12Adapter* InParent, NodeDevice* InParentDevice, const std::string& InName)
 	:AdapterChild(InParent), DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), AllGPU())
 	,SmallBlockAllocator(InParentDevice, GetVisibilityMask(), {},InName,AllocationStrategy::kManualSubAllocation, 
@@ -491,6 +629,7 @@ void UploadHeapAllocator::Destroy()
 
 void UploadHeapAllocator::CleanUpAllocations(uint64 InFrameLag)
 {
+	SmallBlockAllocator.CleanUpAllocations(InFrameLag);
 	FastConstantAllocator.CleanUpAllocations(InFrameLag);
 }
 

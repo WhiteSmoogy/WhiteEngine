@@ -6,6 +6,12 @@ namespace platform_ex::Windows::D3D12
 {
 	class ResourceAllocator;
 
+	struct BuddyAllocatorPrivateData
+	{
+		uint32 Offset;
+		uint32 Order;
+	};
+
 	class ResourceLocation :public DeviceChild,public white::noncopyable
 	{
 	public:
@@ -33,6 +39,8 @@ namespace platform_ex::Windows::D3D12
 		inline uint64 GetOffsetFromBaseOfResource() const { return OffsetFromBaseOfResource; }
 		inline uint64 GetSize() const { return Size; }
 		inline ResourceAllocator* GetAllocator() const {return Allocator; }
+
+		inline BuddyAllocatorPrivateData& GetBuddyAllocatorPrivateData() { return AllocatorData.BuddyPrivateData; }
 
 
 		void AsFastAllocation(ResourceHolder* Resource, uint32 BufferSize, D3D12_GPU_VIRTUAL_ADDRESS GPUBase, void* CPUBase, uint64 ResourceOffsetBase, uint64 Offset, bool bMultiFrame = false)
@@ -64,6 +72,11 @@ namespace platform_ex::Windows::D3D12
 		{
 			ResourceAllocator* Allocator;
 		};
+
+		union PrivateAllocatorData
+		{
+			BuddyAllocatorPrivateData BuddyPrivateData;
+		} AllocatorData;
 
 		void* MappedBaseAddress;
 		D3D12_GPU_VIRTUAL_ADDRESS GPUVirtualAddress;
@@ -193,6 +206,24 @@ namespace platform_ex::Windows::D3D12
 		bool TryAllocate(uint32 SizeInBytes, uint32 Alignment,ResourceLocation& ResourceLocation);
 
 		void Deallocate(ResourceLocation& ResourceLocation) final;
+
+		inline bool IsOwner(ResourceLocation& ResourceLocation)
+		{
+			return ResourceLocation.GetAllocator() == (ResourceAllocator*)this;
+		}
+
+		void CleanUpAllocations();
+
+		inline uint64 GetLastUsedFrameFence() const { return LastUsedFrameFence; }
+
+
+		bool IsEmpty() const { return TotalSizeUsed == MinBlockSize; }
+
+		~BuddyAllocator()
+		{
+			ReleaseAllResources();
+		}
+		void ReleaseAllResources();
 	protected:
 		const uint32 MaxBlockSize;
 		const uint32 MinBlockSize;
@@ -200,6 +231,15 @@ namespace platform_ex::Windows::D3D12
 
 		ResourceHolder* BackingResource;
 	private:
+		struct RetiredBlock
+		{
+			uint64 FrameFence;
+
+			BuddyAllocatorPrivateData Data;
+		};
+
+		std::vector<RetiredBlock> DeferredDeletionQueue;
+
 		uint64 LastUsedFrameFence;
 
 		uint32 MaxOrder;
@@ -227,11 +267,19 @@ namespace platform_ex::Windows::D3D12
 
 		uint32 OrderToUnitSize(uint32 order) const { return ((uint32)1) << order; }
 
+		inline uint32 GetBuddyOffset(const uint32& offset, const uint32& size)
+		{
+			return offset ^ size;
+		}
+
 		uint32 AllocateBlock(uint32 order);
 
 		bool CanAllocate(uint32 size, uint32 aligment);
 
 		void Allocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation);
+
+		void DeallocateInternal(RetiredBlock& Block);
+		void DeallocateBlock(uint32 Offset, uint32 Order);
 	};
 
 	class MultiBuddyAllocator :public ResourceConfigAllocator
@@ -250,6 +298,8 @@ namespace platform_ex::Windows::D3D12
 		bool TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation);
 
 		void Deallocate(ResourceLocation& ResourceLocation) final;
+
+		void CleanUpAllocations(uint64 InFrameLag);
 	protected:
 
 		BuddyAllocator* CreateNewAllocator(uint32 InMinSizeInBytes);

@@ -26,6 +26,7 @@ namespace platform_ex::Windows::D3D12 {
 	using namespace platform::Render::IFormat;
 	using platform::Render::SampleDesc;
 	using platform::Render::ElementInitData;
+	namespace Buffer = platform::Render::Buffer;
 
 	// Represents a set of linked D3D12 device nodes (LDA i.e 1 or more identical GPUs). In most cases there will be only 1 node, however if the system supports
 	// SLI/Crossfire and the app enables it an Adapter will have 2 or more nodes. This class will own anything that can be shared
@@ -52,11 +53,11 @@ namespace platform_ex::Windows::D3D12 {
 		ShaderCompose* CreateShaderCompose(std::unordered_map<platform::Render::ShaderType, const asset::ShaderBlobAsset*> pShaderBlob, platform::Render::Effect::Effect* pEffect) override;
 
 		//\brief D3D12 Buffer 创建时没有BIND_FLAG
-		GraphicsBuffer* CreateBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr);
+		GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr);
 
-		ConstantBuffer* CreateConstantBuffer(platform::Render::Buffer::Usage usage, uint32 size_in_byte,const void*  init_data) override;
-		GraphicsBuffer* CreateVertexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
-		GraphicsBuffer* CreateIndexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
+		ConstantBuffer* CreateConstantBuffer(Buffer::Usage usage, uint32 size_in_byte,const void*  init_data) override;
+		GraphicsBuffer* CreateVertexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
+		GraphicsBuffer* CreateIndexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
 
 		platform::Render::HardwareShader* CreateShader(const white::span<const uint8>& Code,platform::Render::ShaderType Type);
 

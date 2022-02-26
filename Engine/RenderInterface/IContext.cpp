@@ -53,9 +53,9 @@ namespace platform::Render {
 	{
 		auto& Device = GRenderIF->GetDevice();
 
-		Usage = Buffer::Usage::Static;
+		Usage =static_cast<Buffer::Usage>(Usage | Buffer::Usage::Static);
 
-		return Device.CreateConstanBuffer(Usage,Layout.GetSize(),Contents);
+		return Device.CreateConstantBuffer(Usage,Layout.GetSize(),Contents);
 	}
 
 	GraphicsBuffer* CreateVertexBuffer(white::span<const std::byte> Contents, Buffer::Usage Usage, uint32 Access)

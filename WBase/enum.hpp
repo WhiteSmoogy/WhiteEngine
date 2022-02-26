@@ -105,6 +105,13 @@ namespace white {
 	{
 		return (underlying(Flags) & underlying(Contains)) != 0;
 	}
+
+	template<typename Enum>
+		requires std::is_enum_v<Enum>
+	constexpr Enum enum_and(Enum A, Enum B)
+	{
+		return static_cast<Enum>(underlying(A) & underlying(B));
+	}
 	
 }
 #endif

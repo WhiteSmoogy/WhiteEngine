@@ -1,6 +1,7 @@
 #include <WBase/smart_ptr.hpp>
 #include <WFramework/WCLib/Debug.h>
 #include <WFramework/WCLib/Logger.h>
+#include <WBase/enum.hpp>
 
 #include "../Effect/CopyEffect.h"
 #include "spdlog/spdlog.h"
@@ -254,7 +255,7 @@ namespace platform_ex::Windows::D3D12 {
 	}
 
 
-	GraphicsBuffer *Device::CreateBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*> init_data)
+	GraphicsBuffer *Device::CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*> init_data)
 	{
 		auto buffer = std::make_unique<GraphicsBuffer>(usage, access, size_in_byte, format);
 		if (init_data.has_value())
@@ -262,14 +263,15 @@ namespace platform_ex::Windows::D3D12 {
 		return buffer.release();
 	}
 
-	ConstantBuffer * Device::CreateConstantBuffer(platform::Render::Buffer::Usage usage, uint32 size_in_byte,const void* init_data)
+	ConstantBuffer * Device::CreateConstantBuffer(Buffer::Usage usage, uint32 size_in_byte,const void* init_data)
 	{
 		wconstraint(size_in_byte > 0);
 		wconstraint(Align(size_in_byte,16) == size_in_byte);
+		usage = white::enum_and(usage ,Buffer::Usage::LifeTimeMask);
 		auto buffer = new ConstantBuffer(GetNodeDevice(0), usage, size_in_byte);
 
 		void* MappedData = nullptr;
-		if (usage == platform::Render::Buffer::Usage::MultiFrame) {
+		if (usage == Buffer::Usage::MultiFrame) {
 			auto& Allocator = GetUploadHeapAllocator(0);
 
 			MappedData = Allocator.AllocUploadResource(size_in_byte, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT, buffer->Location);

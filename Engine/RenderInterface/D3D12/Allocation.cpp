@@ -283,6 +283,7 @@ uint32 BuddyAllocator::AllocateBlock(uint32 order)
 
 		byte* pStart = reinterpret_cast<byte*>(FreeBlockArray);
 		FreeBlock* pRight = reinterpret_cast<FreeBlock*>(pStart + right * MinBlockSize);
+		pRight->Next = nullptr;
 		FreeBlockArray[order] = pRight;
 
 		offset = left;

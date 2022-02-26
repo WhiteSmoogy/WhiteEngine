@@ -22,9 +22,11 @@ namespace platform::Render {
 
 			AccelerationStructure = 0x8000,
 
-			SingleDraw = 0x8001,
-			SingleFrame = 0x8002,
-			MultiFrame = 0x8003,
+			SingleDraw = 0x8100,
+			SingleFrame = 0x8200,
+			MultiFrame = 0x8300,
+
+			LifeTimeMask = 0x8F00,
 		};
 
 		enum Access {

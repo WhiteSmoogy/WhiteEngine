@@ -1,6 +1,7 @@
 #include "TextureX.h"
 #include "DDSX.h"
-
+#undef FindResource
+#include "Runtime/Core/ResourcesHolder.h"
 #include "CompressionBC.hpp"
 #include "CompressionETC.hpp"
 
@@ -12,6 +13,8 @@
 #include <WFramework/WCLib/Debug.h>
 #include <WBase/smart_ptr.hpp>
 #include <fstream>
+#include <shared_mutex>
+
 
 namespace platform {
 	using namespace Render::IFormat;
@@ -330,10 +333,10 @@ namespace platform {
 		auto& device = Render::Context::Instance().GetDevice();
 		switch (pAsset->GetTextureType()) {
 		case TextureType::T_1D:
-			return white::share_raw(device.CreateTexture(pAsset->GetWidth(), pAsset->GetMipmapSize(), pAsset->GetArraySize(),
+			return shared_raw_robject(device.CreateTexture(pAsset->GetWidth(), pAsset->GetMipmapSize(), pAsset->GetArraySize(),
 				pAsset->GetFormat(), access, { 1,0 }, pAsset->GetElementInitDatas().data()));
 		case TextureType::T_2D:
-			return white::share_raw(device.CreateTexture(pAsset->GetWidth(), pAsset->GetHeight(), pAsset->GetMipmapSize(), pAsset->GetArraySize(),
+			return shared_raw_robject(device.CreateTexture(pAsset->GetWidth(), pAsset->GetHeight(), pAsset->GetMipmapSize(), pAsset->GetArraySize(),
 				pAsset->GetFormat(), access, { 1,0 }, pAsset->GetElementInitDatas().data()));
 		case TextureType::T_3D:
 		{
@@ -346,7 +349,7 @@ namespace platform {
 			Initializer.Format = pAsset->GetFormat();
 			Initializer.Access = access;
 
-			return white::share_raw(device.CreateTexture(Initializer,pAsset->GetElementInitDatas().data()));
+			return shared_raw_robject(device.CreateTexture(Initializer,pAsset->GetElementInitDatas().data()));
 		}
 		case TextureType::T_Cube:
 			return white::share_raw(device.CreateTextureCube(pAsset->GetWidth(), pAsset->GetMipmapSize(), pAsset->GetArraySize(),
@@ -354,11 +357,47 @@ namespace platform {
 		}
 
 		WAssert(false, "Out of TextureType");
-		return {};
+		return {nullptr,platform::Render::RObjectDeleter() };
 	}
 
+	class TextureHolder{
+	public:
+		Render::TexturePtr FindResource(const std::string& key)
+		{
+			std::shared_lock lock{ CS };
+			auto itr = loaded_texs.find(key);
+
+			Render::TexturePtr ret{};
+			if (itr != loaded_texs.end()) {
+				ret = itr->second.lock();
+
+				if (ret == nullptr)
+					loaded_texs.erase(itr);
+			}
+
+			return ret;
+		}
+
+		void EmplaceResource(const std::string& name, Render::TexturePtr resouce)
+		{
+			std::unique_lock lock{ CS };
+			loaded_texs.emplace(name, resouce);
+		}
+
+	private:
+		std::shared_mutex CS;;
+		std::unordered_map<std::string, std::weak_ptr<Texture>> loaded_texs;
+	} TextureHolder;
+
 	Render::TexturePtr X::LoadTexture(X::path const& texpath, uint32 access) {
-		return LoadDDSTexture(texpath, access);
+		//normalize
+		auto key = texpath.string();
+		if (auto ret = TextureHolder.FindResource(key))
+			return ret;
+		auto ret = LoadDDSTexture(texpath, access);
+		if(ret)
+			TextureHolder.EmplaceResource(key, ret);
+		return ret;
 	}
 
 

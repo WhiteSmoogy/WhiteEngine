@@ -389,8 +389,16 @@ namespace white::threading {
 		unsigned int max_scheduler;
 	};
 
+	unsigned int GetSchedulerCount()
+	{
+		//CommandListThread,RenderThread,MainThread,IOThread,AudioThread
+		auto concurrency_numer = static_cast<int>(std::thread::hardware_concurrency()) - 3;
+
+		return static_cast<unsigned int>(std::max<int>(concurrency_numer, 4));
+	}
+
 	TaskScheduler::TaskScheduler()
-		:scheduler_impl(new Scheduler(4))
+		:scheduler_impl(new Scheduler(GetSchedulerCount()))
 	{
 		task_scheduler = this;
 	}

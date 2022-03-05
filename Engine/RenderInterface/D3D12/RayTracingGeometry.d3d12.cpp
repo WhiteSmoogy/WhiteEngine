@@ -131,7 +131,7 @@ void D12::RayTracingGeometry::BuildAccelerationStructure(CommandContext& Command
 	CreateAccelerationStructureBuffers(AccelerationStructureBuffer,ScratchBuffer, Adapter, PrebuildInfo, PrebuildDescInputs.Type);
 
 	//scratch buffers should be created in UAV state from the start
-	TransitionResource(CommandContext.CommandListHandle, ScratchBuffer.get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 0);
+	TransitionResource(CommandContext.CommandListHandle, ScratchBuffer->Resource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 0);
 	//BuildRaytracingAccelerationStructure auto change resource state to UAV(is document?)
 	CommandContext.CommandListHandle.FlushResourceBarriers();
 
@@ -146,7 +146,7 @@ void D12::RayTracingGeometry::BuildAccelerationStructure(CommandContext& Command
 	auto RayTracingCommandList = CommandContext.CommandListHandle.RayTracingCommandList();
 	RayTracingCommandList->BuildRaytracingAccelerationStructure(&BuildDesc, 0, nullptr);
 
-	Context::Instance().ResidencyResource(*ScratchBuffer->Resource());
+	Context::Instance().ResidencyResource(ScratchBuffer->D3DResource());
 	// We don't need to keep a scratch buffer after initial build if acceleration structure is static.
 	if (!(BuildFlags & D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE))
 	{
@@ -162,8 +162,8 @@ void D12::CreateAccelerationStructureBuffers(shared_ptr<GraphicsBuffer>& Acceler
 	wconstraint(PrebuildInfo.ResultDataMaxSizeInBytes <= std::numeric_limits<uint32>::max());
 
 	AccelerationStructureBuffer =white::share_raw(Creator->CreateVertexBuffer(
-		Usage::AccelerationStructure,
-		EAccessHint::EA_GPUUnordered,
+		Usage::Static,
+		EAccessHint::EA_GPUUnordered|EAccessHint::EA_AccelerationStructure,
 		static_cast<uint32>(PrebuildInfo.ResultDataMaxSizeInBytes),
 		EF_Unknown
 	));

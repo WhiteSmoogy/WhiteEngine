@@ -7,8 +7,8 @@
 
 #include "../IFormat.hpp"
 #include "../IGraphicsBuffer.hpp"
-#include "ResourceHolder.h"
 #include "WFramework/Win32/WCLib/COM.h"
+#include "Allocation.h"
 
 namespace platform_ex::Windows::D3D12 {
 
@@ -16,16 +16,13 @@ namespace platform_ex::Windows::D3D12 {
 	class UnorderedAccessView;
 	class RenderTargetView;
 
-	class GraphicsBuffer : public platform::Render::GraphicsBuffer,public ResourceHolder {
+	class GraphicsBuffer : public platform::Render::GraphicsBuffer,public DeviceChild,public ResourceLocationTrait{
 	public:
-		GraphicsBuffer(platform::Render::Buffer::Usage usage, uint32_t access_hint,
+		GraphicsBuffer(NodeDevice* Parent, platform::Render::Buffer::Usage usage, uint32_t access_hint,
 			uint32_t size_in_byte,platform::Render::EFormat fmt);
 		~GraphicsBuffer() override;
 
 		void CopyToBuffer(platform::Render::GraphicsBuffer& rhs) override;
-
-		void HWResourceCreate(void const * init_data) override;
-		void HWResourceDelete() override;
 
 		void UpdateSubresource(white::uint32 offset, white::uint32 size, void const * data) override;
 
@@ -51,6 +48,9 @@ namespace platform_ex::Windows::D3D12 {
 		white::uint32 counter_offset;
 
 		platform::Render::EFormat format;
+
+		uint32 Alignment = 0;
+		uint32 Stride = 0;
 	};
 }
 

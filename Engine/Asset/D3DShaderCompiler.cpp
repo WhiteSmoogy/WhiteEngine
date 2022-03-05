@@ -970,7 +970,7 @@ namespace asset::X::Shader
 
 		bool use_dxbc = !use_dxc;
 
-		WFL_DEBUG_DECL_TIMER(Commpile, sfmt("CompileAndReflect %s- Entry:%s ", input.SourceName.data(), input.EntryPoint.data()));
+		LOG_TRACE("CompileAndReflect {}- Entry:{} ", input.SourceName, input.EntryPoint);
 
 		if (use_dxbc)
 		{

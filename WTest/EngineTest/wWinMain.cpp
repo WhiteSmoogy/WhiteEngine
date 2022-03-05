@@ -657,7 +657,7 @@ private:
 	}
 
 	void OnCreate() override {
-		WFL_DEBUG_DECL_TIMER(creater_timer,__FUNCTION__);
+		LOG_TRACE(__FUNCTION__);
 
 		auto swap_chain = ::Create(GetNativeHandle());
 

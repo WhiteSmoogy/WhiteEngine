@@ -6,25 +6,26 @@
 #ifndef WFrameWork_Helper_ShellHelper_h
 #define WFrameWork_Helper_ShellHelper_h 1
 
-#include <WFramework/Core/WShell.h>
-#include <WFramework/WCLib/Debug.h>
-#include <WFramework/Core/WClock.h>
-#include <WFramework/Adaptor/WAdaptor.h>
-
+#include <spdlog/spdlog.h>
+#include <spdlog/stopwatch.h>
 namespace white {
-#ifndef NDEBUG
-	class WF_API DebugTimer {
-	protected:
-		string event_info;
-		Timers::HighResolutionClock::time_point base_tick;
+	class SpdlogTrace
+	{
 	public:
-		DebugTimer(string_view = "");
-		~DebugTimer();
+		SpdlogTrace(std::string&& name)
+			:post_name(std::move(name))
+		{}
+
+		~SpdlogTrace()
+		{
+			spdlog::info("{}: {} seconds", post_name, sw);
+		}
+	private:
+		std::string post_name;
+		spdlog::stopwatch sw;
 	};
-#	define WFL_DEBUG_DECL_TIMER(_name, ...) white::DebugTimer _name(__VA_ARGS__);
-#else
-#	define WFL_DEBUG_DECL_TIMER(...)
-#endif
+
+#define LOG_TRACE(...) white::SpdlogTrace WPP_Join(trace_,__LINE__){std::format(__VA_ARGS__)}
 }
 
 #endif

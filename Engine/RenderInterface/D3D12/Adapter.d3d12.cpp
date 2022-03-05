@@ -254,15 +254,6 @@ namespace platform_ex::Windows::D3D12 {
 		return std::make_unique<UnorderedAccessView>(Devices[0],CreateUAVDesc(*InTexture, 0, InTexture->GetArraySize(), 0),static_cast<Texture2D&>(*InTexture)).release();
 	}
 
-
-	GraphicsBuffer *Device::CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*> init_data)
-	{
-		auto buffer = std::make_unique<GraphicsBuffer>(usage, access, size_in_byte, format);
-		if (init_data.has_value())
-			buffer->HWResourceCreate(init_data.value());
-		return buffer.release();
-	}
-
 	ConstantBuffer * Device::CreateConstantBuffer(Buffer::Usage usage, uint32 size_in_byte,const void* init_data)
 	{
 		wconstraint(size_in_byte > 0);
@@ -304,7 +295,6 @@ namespace platform_ex::Windows::D3D12 {
 	{
 		auto vb = CreateBuffer(usage, access, size_in_byte, format, init_data);
 
-		vb->SetName(white::sfmt("VertexBuffer [size=%d]", size_in_byte).c_str());
 		return vb;
 	}
 

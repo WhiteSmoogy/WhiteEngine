@@ -346,4 +346,29 @@ namespace platform_ex::Windows::D3D12
 		uint32 Offset;
 		uint32 PageSize;
 	};
+
+	struct ResourceLocationTrait
+	{
+		ResourceLocationTrait(NodeDevice* Parent)
+			:Location(Parent)
+		{}
+
+		ResourceHolder* Resource() const { return Location.GetResource(); }
+
+		ID3D12Resource* D3DResource() const {
+			return Resource()->Resource();
+		}
+
+		void SetName(const char* name)
+		{
+			Resource()->SetName(name);
+		}
+
+		D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
+		{
+			return Resource()->GetGPUVirtualAddress();
+		}
+
+		ResourceLocation Location;
+	};
 }

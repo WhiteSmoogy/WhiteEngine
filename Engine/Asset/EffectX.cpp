@@ -546,7 +546,7 @@ namespace platform {
 #endif
 
 
-					WFL_DEBUG_DECL_TIMER(ComposePassShader, sfmt("CompilerReflectStrip Type:%s ", first.c_str()));
+					LOG_TRACE("ComposePassShader CompilerReflectStrip Type:{} ", first);
 					ShaderCompilerInput input;
 					input.Type = compile_type;
 					input.EntryPoint = compile_entry_point;

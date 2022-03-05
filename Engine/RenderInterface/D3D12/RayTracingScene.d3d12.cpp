@@ -41,7 +41,7 @@ void RayTracingScene::BuildAccelerationStructure(CommandContext& CommandContext)
 	CreateAccelerationStructureBuffers(AccelerationStructureBuffer, ScratchBuffer, Adapter, PrebuildInfo, PrebuildDescInputs.Type);
 
 	//scratch buffers should be created in UAV state from the start
-	TransitionResource(CommandContext.CommandListHandle, ScratchBuffer.get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 0);
+	TransitionResource(CommandContext.CommandListHandle, ScratchBuffer->Resource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 0);
 
 	AccelerationStructureView = white::make_observer(AccelerationStructureBuffer->RetriveShaderResourceView());
 
@@ -101,14 +101,14 @@ void RayTracingScene::BuildAccelerationStructure(CommandContext& CommandContext)
 		}
 
 		InstanceBuffer->SetName("Acceleration structure [Instance] Fill");
-		Context::Instance().ResidencyResource(*InstanceBuffer->Resource());
+		Context::Instance().ResidencyResource(InstanceBuffer->D3DResource());
 	}
 
 	const bool IsUpdateMode = false;
 
-	Context::Instance().ResidencyResource(*ScratchBuffer->Resource());
+	Context::Instance().ResidencyResource(ScratchBuffer->D3DResource());
 	//AccelerationStructureBuffer build per frame
-	Context::Instance().ResidencyResource(*AccelerationStructureBuffer->Resource());
+	Context::Instance().ResidencyResource(AccelerationStructureBuffer->D3DResource());
 
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC BuildDesc = {};
 	BuildDesc.Inputs = PrebuildDescInputs;

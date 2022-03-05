@@ -116,7 +116,7 @@ private:
 
 			auto pInfo = std::make_unique<ShaderInfo>(input.Type);
 
-			WFL_DEBUG_DECL_TIMER(Commpile, sfmt("CompileAndReflect Type:%s ", input.EntryPoint.data()));
+			LOG_TRACE("CompileAndReflect Type:{} ", input.EntryPoint);
 			auto blob =asset::X::Shader::CompileAndReflect(input,
 #ifndef NDEBUG
 				D3DFlags::D3DCOMPILE_DEBUG

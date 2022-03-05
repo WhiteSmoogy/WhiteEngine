@@ -123,6 +123,17 @@ namespace platform_ex::Windows::D3D12 {
 
 		HRESULT CreateCommittedResource(const D3D12_RESOURCE_DESC& InDesc, GPUMaskType CreationNode, const D3D12_HEAP_PROPERTIES& HeapProps, D3D12_RESOURCE_STATES InInitialState,
 			D3D12_RESOURCE_STATES InDefaultState, const D3D12_CLEAR_VALUE* ClearValue, ResourceHolder** ppOutResource, const char* Name);
+
+		void AllocateBuffer(NodeDevice* Device,
+			const D3D12_RESOURCE_DESC& InDesc,
+			uint32 Size,
+			uint32 InUsage,
+			D3D12_RESOURCE_STATES InCreateState,
+			void const* CreateInfo,
+			uint32 Alignment,
+			GraphicsBuffer* Buffer,
+			ResourceLocation& ResourceLocation,
+			ResourceAllocator* ResourceAllocator);
 	public:
 		friend class Context;
 		friend class RayContext;

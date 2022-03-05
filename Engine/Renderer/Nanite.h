@@ -4,7 +4,7 @@
 #include "Runtime/Core/Serialization/BulkData.h"
 #include "Runtime/Core/Serialization/Archive.h"
 #include "spdlog/spdlog.h"
-#include "spdlog/stopwatch.h"
+#include <WFramework/Helper/ShellHelper.h>
 #define USE_STRIP_INDICES	1	// must match define in NaniteDataDecode.h
 
 namespace Nanite
@@ -300,26 +300,6 @@ namespace Nanite
 	{
 		int32 PositionPrecision = std::numeric_limits<int32>::min();
 	};
-
-	namespace detail
-	{
-		class Trace
-		{
-		public:
-			Trace(const char* name)
-				:post_name(name)
-			{}
-
-			~Trace()
-			{
-				spdlog::info("Nanite {}: {} seconds", post_name, sw);
-			}
-		private:
-			std::string post_name;
-			spdlog::stopwatch sw;
-		};
-	}
-
 }
 
-#define NANITE_TRACE(x) Nanite::detail::Trace WPP_Join(trace_,__LINE__){#x}
+#define NANITE_TRACE(x) LOG_TRACE("Nanite "#x)

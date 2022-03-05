@@ -96,7 +96,7 @@ namespace {
 			}
 			if (buffer) {
 				auto pBuffer = static_cast<D3D12::GraphicsBuffer*>(buffer.get());
-				*psrvsrc = std::make_tuple(pBuffer, 0, 1);
+				*psrvsrc = std::make_tuple(pBuffer->Resource(), 0, 1);
 				*ppsrv = pBuffer->RetriveShaderResourceView();
 			}
 			else {
@@ -154,7 +154,7 @@ namespace {
 			param->Value(buffer);
 			if (buffer) {
 				auto pBuffer = static_cast<D3D12::GraphicsBuffer*>(buffer.get());
-				puavsrc->first = pBuffer;
+				puavsrc->first = pBuffer->Resource();
 				puavsrc->second = pBuffer->UploadResource();
 
 				*ppuav = pBuffer->RetriveUnorderedAccessView();

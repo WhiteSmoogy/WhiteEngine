@@ -357,7 +357,7 @@ namespace platform::Render::Shader
 
 	white::coroutine::Task<void> CompileBuiltInShader(BuiltInShaderMeta* meta,int32 PermutationId,AsyncArchive& archive,std::vector<std::string>& dependents)
 	{
-		WFL_DEBUG_DECL_TIMER(Commpile, std::format("CompileBuiltInShader {} Entry:{} Permutation={} ", meta->GetSourceFileName(), meta->GetEntryPoint(), PermutationId));
+		LOG_TRACE("CompileBuiltInShader {} Entry:{} Permutation={} ", meta->GetSourceFileName(), meta->GetEntryPoint(), PermutationId);
 
 		//shader build system
 		asset::X::Shader::ShaderCompilerInput input;

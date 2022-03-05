@@ -20,8 +20,6 @@ namespace platform::Render {
 			Static = 0x0001,
 			Dynamic = 0x0002,
 
-			AccelerationStructure = 0x8000,
-
 			SingleDraw = 0x8100,
 			SingleFrame = 0x8200,
 			MultiFrame = 0x8300,
@@ -52,9 +50,6 @@ namespace platform::Render {
 
 
 			virtual void CopyToBuffer(GraphicsBuffer& rhs) = 0;
-
-		virtual void HWResourceCreate(void const * init_data) = 0;
-		virtual void HWResourceDelete() = 0;
 
 		virtual void UpdateSubresource(white::uint32 offset, white::uint32 size, void const * data) = 0;
 	protected:

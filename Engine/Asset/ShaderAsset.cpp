@@ -532,11 +532,11 @@ public:
 		PreCreate();
 
 		{
-			WFL_DEBUG_DECL_TIMER(Commpile, sfmt("LoadNode %s", Path().string().c_str()));
+			LOG_TRACE("LoadNode {}", Path().string());
 			co_await LoadNodeAsync(Environment->Scheduler->GetIOScheduler());
 		}
 		{
-			WFL_DEBUG_DECL_TIMER(Commpile, sfmt("ParseNode %s", Path().string().c_str()));
+			LOG_TRACE("ParseNode {}", Path().string());
 			co_await ParseNodeAsync(Environment->Scheduler->GetIOScheduler());
 		}
 

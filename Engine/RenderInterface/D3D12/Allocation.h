@@ -100,55 +100,6 @@ namespace platform_ex::Windows::D3D12
 		virtual void Deallocate(ResourceLocation& ResourceLocation);
 	};
 
-	class FastConstantPageAllocator :public ResourceAllocator
-	{
-	public:
-		FastConstantPageAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes)
-			:ResourceAllocator(InParentDevice, VisibleNodes)
-		{}
-
-		bool TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation);
-
-		void CleanUpAllocations(uint64 InFrameLag);
-	private:
-		using ResourceAllocator::ResourceAllocator;
-
-		class ConstantAllocator :public ResourceAllocator{
-		public:
-			ConstantAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, uint32 InBlockSize)
-				:ResourceAllocator(InParentDevice,VisibleNodes),BlockSize(InBlockSize), TotalSizeUsed(0),BackingResource(nullptr), DelayCreated(false)
-				, RetireFrameFence(-1)
-			{}
-
-			~ConstantAllocator();
-
-			bool TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation);
-
-			void Deallocate(ResourceLocation & ResourceLocation);
-
-			uint64 GetLastUsedFrameFence() const { return RetireFrameFence; }
-
-			bool IsDeallocated() const { return RetireFrameFence != -1; }
-		private:
-			void CreateBackingResource();
-
-			const uint32 BlockSize;
-
-			uint32 TotalSizeUsed;
-
-			ResourceHolder* BackingResource;
-
-			uint64 RetireFrameFence;
-
-			bool DelayCreated;
-		};
-
-		ConstantAllocator* CreateNewAllocator(uint32 InMinSizeInBytes);
-
-		std::vector<ConstantAllocator*> Allocators;
-
-		std::mutex CS;
-	};
 
 	struct AllocatorConfig
 	{
@@ -286,7 +237,11 @@ namespace platform_ex::Windows::D3D12
 		void DeallocateBlock(uint32 Offset, uint32 Order);
 	};
 
-	class MultiBuddyAllocator :public ResourceConfigAllocator
+	template<bool Constant,bool Upload>
+	class MultiBuddyAllocator;
+
+	template<>
+	class MultiBuddyAllocator<false,true> :public ResourceConfigAllocator
 	{
 	public:
 		MultiBuddyAllocator(
@@ -315,6 +270,58 @@ namespace platform_ex::Windows::D3D12
 		std::vector<BuddyAllocator*> Allocators;
 	};
 
+	template<>
+	class MultiBuddyAllocator<true,true> :public ResourceAllocator
+	{
+	public:
+		MultiBuddyAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes)
+			:ResourceAllocator(InParentDevice, VisibleNodes)
+		{}
+
+		bool TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation);
+
+		void CleanUpAllocations(uint64 InFrameLag);
+	private:
+		using ResourceAllocator::ResourceAllocator;
+
+		class ConstantAllocator :public ResourceAllocator {
+		public:
+			ConstantAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, uint32 InBlockSize)
+				:ResourceAllocator(InParentDevice, VisibleNodes), BlockSize(InBlockSize), TotalSizeUsed(0), BackingResource(nullptr), DelayCreated(false)
+				, RetireFrameFence(-1)
+			{}
+
+			~ConstantAllocator();
+
+			bool TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation);
+
+			void Deallocate(ResourceLocation& ResourceLocation);
+
+			uint64 GetLastUsedFrameFence() const { return RetireFrameFence; }
+
+			bool IsDeallocated() const { return RetireFrameFence != -1; }
+		private:
+			void CreateBackingResource();
+
+			const uint32 BlockSize;
+
+			uint32 TotalSizeUsed;
+
+			ResourceHolder* BackingResource;
+
+			uint64 RetireFrameFence;
+
+			bool DelayCreated;
+		};
+
+		ConstantAllocator* CreateNewAllocator(uint32 InMinSizeInBytes);
+
+		std::vector<ConstantAllocator*> Allocators;
+
+		std::mutex CS;
+	};
+
+
 	// This is designed for allocation of scratch memory such as temporary staging buffers
 	// or shadow buffers for dynamic resources.
 	class UploadHeapAllocator : public AdapterChild, public DeviceChild, public MultiNodeGPUObject
@@ -331,11 +338,11 @@ namespace platform_ex::Windows::D3D12
 		void CleanUpAllocations(uint64 InFrameLag);
 
 	private:
-		MultiBuddyAllocator SmallBlockAllocator;
+		MultiBuddyAllocator<false,true> SmallBlockAllocator;
 
 		// Seperate allocator used for the fast constant allocator pages which get always freed within the same frame by default
 		// (different allocator to avoid fragmentation with the other pools - always the same size allocations)
-		FastConstantPageAllocator FastConstantAllocator;
+		MultiBuddyAllocator<true, true> FastConstantAllocator;
 	};
 
 	class FastConstantAllocator :public DeviceChild,public MultiNodeGPUObject

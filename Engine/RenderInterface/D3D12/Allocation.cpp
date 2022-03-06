@@ -86,8 +86,8 @@ void ResourceAllocator::Deallocate(ResourceLocation& ResourceLocation)
 {
 }
 
-
-bool FastConstantPageAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
+using MultiBuddyConstantUploadAllocator = MultiBuddyAllocator<true, true>;
+bool MultiBuddyConstantUploadAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
 {
 	std::unique_lock Lock{ CS };
 	for (auto& allocator : Allocators)
@@ -100,7 +100,7 @@ bool FastConstantPageAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment
 	return Allocators.back()->TryAllocate(SizeInBytes, Alignment, ResourceLocation);
 }
 
-void FastConstantPageAllocator::CleanUpAllocations(uint64 InFrameLag)
+void MultiBuddyConstantUploadAllocator::CleanUpAllocations(uint64 InFrameLag)
 {
 	// Trim empty allocators if not used in last n frames
 	auto Adapter = GetParentDevice()->GetParentAdapter();
@@ -119,26 +119,26 @@ void FastConstantPageAllocator::CleanUpAllocations(uint64 InFrameLag)
 	}
 }
 
-FastConstantPageAllocator::ConstantAllocator::~ConstantAllocator()
+MultiBuddyConstantUploadAllocator::ConstantAllocator::~ConstantAllocator()
 {
 	delete BackingResource;
 }
 
-void FastConstantPageAllocator::ConstantAllocator::Deallocate(ResourceLocation& ResourceLocation)
+void MultiBuddyConstantUploadAllocator::ConstantAllocator::Deallocate(ResourceLocation& ResourceLocation)
 {
 	auto& FrameFence = GetParentDevice()->GetParentAdapter()->GetFrameFence();
 
 	RetireFrameFence = FrameFence.GetCurrentFence();
 }
 
-FastConstantPageAllocator::ConstantAllocator* FastConstantPageAllocator::CreateNewAllocator(uint32 InMinSizeInBytes)
+MultiBuddyConstantUploadAllocator::ConstantAllocator* MultiBuddyConstantUploadAllocator::CreateNewAllocator(uint32 InMinSizeInBytes)
 {
 	uint32 AllocationSize = std::bit_ceil(InMinSizeInBytes);
 
 	return new ConstantAllocator(GetParentDevice(), GetVisibilityMask(),AllocationSize);
 }
 
-bool FastConstantPageAllocator::ConstantAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
+bool MultiBuddyConstantUploadAllocator::ConstantAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
 {
 	if (TotalSizeUsed == BlockSize)
 	{
@@ -181,7 +181,7 @@ bool FastConstantPageAllocator::ConstantAllocator::TryAllocate(uint32 SizeInByte
 	return true;
 }
 
-void FastConstantPageAllocator::ConstantAllocator::CreateBackingResource()
+void MultiBuddyConstantUploadAllocator::ConstantAllocator::CreateBackingResource()
 {
 	auto Adapter = GetParentDevice()->GetParentAdapter();
 
@@ -411,7 +411,7 @@ void BuddyAllocator::CleanUpAllocations()
 		if (fence.IsFenceComplete(Block.FrameFence))
 		{
 			DeallocateInternal(Block);
-			PopCount = i + 1;
+			PopCount =static_cast<uint32>(i + 1);
 		}
 		else
 		{
@@ -510,7 +510,8 @@ bool BuddyAllocator::CanAllocate(uint32 size, uint32 alignment)
 	return false;
 }
 
-MultiBuddyAllocator::MultiBuddyAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, const AllocatorConfig& InConfig, const std::string& Name, AllocationStrategy InStrategy, uint32 InMaxAllocationSize, uint32 InDefaultPoolSize, uint32 InMinBlockSize)
+using MultiBuddyUploadAllocator = MultiBuddyAllocator<false, true>;
+MultiBuddyUploadAllocator::MultiBuddyAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, const AllocatorConfig& InConfig, const std::string& Name, AllocationStrategy InStrategy, uint32 InMaxAllocationSize, uint32 InDefaultPoolSize, uint32 InMinBlockSize)
 	:ResourceConfigAllocator(InParentDevice, VisibleNodes, InConfig, Name, InMaxAllocationSize)
 	, DefaultPoolSize(InDefaultPoolSize)
 	, MinBlockSize(InMinBlockSize)
@@ -519,7 +520,7 @@ MultiBuddyAllocator::MultiBuddyAllocator(NodeDevice* InParentDevice, GPUMaskType
 	wconstraint(std::bit_ceil(MaximumAllocationSizeForPooling) < DefaultPoolSize);
 }
 
-bool platform_ex::Windows::D3D12::MultiBuddyAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
+bool MultiBuddyUploadAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
 {
 	std::unique_lock Lock{ CS };
 
@@ -535,7 +536,7 @@ bool platform_ex::Windows::D3D12::MultiBuddyAllocator::TryAllocate(uint32 SizeIn
 	return Allocator->TryAllocate(SizeInBytes, Alignment, ResourceLocation);
 }
 
-BuddyAllocator* MultiBuddyAllocator::CreateNewAllocator(uint32 InMinSizeInBytes)
+BuddyAllocator* MultiBuddyUploadAllocator::CreateNewAllocator(uint32 InMinSizeInBytes)
 {
 	wconstraint(InMinSizeInBytes <= MaximumAllocationSizeForPooling);
 	uint32 AllocationSize = (InMinSizeInBytes > DefaultPoolSize) ?std::bit_ceil(InMinSizeInBytes) : DefaultPoolSize;
@@ -550,12 +551,12 @@ BuddyAllocator* MultiBuddyAllocator::CreateNewAllocator(uint32 InMinSizeInBytes)
 		MinBlockSize);
 }
 
-void MultiBuddyAllocator::Deallocate(ResourceLocation& ResourceLocation)
+void MultiBuddyUploadAllocator::Deallocate(ResourceLocation& ResourceLocation)
 {
 	WAssert(false, "The sub-allocators should handle the deallocation");
 }
 
-void MultiBuddyAllocator::CleanUpAllocations(uint64 InFrameLag)
+void MultiBuddyUploadAllocator::CleanUpAllocations(uint64 InFrameLag)
 {
 	std::unique_lock Lock{ CS };
 

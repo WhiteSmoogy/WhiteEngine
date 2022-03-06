@@ -635,7 +635,7 @@ void UploadHeapAllocator::CleanUpAllocations(uint64 InFrameLag)
 	FastConstantAllocator.CleanUpAllocations(InFrameLag);
 }
 
-void* platform_ex::Windows::D3D12::FastConstantAllocator::Allocate(uint32 Bytes, ResourceLocation& OutLocation)
+void* FastConstantAllocator::Allocate(uint32 Bytes, ResourceLocation& OutLocation)
 {
 	wassume(Bytes <= PageSize);
 

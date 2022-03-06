@@ -221,7 +221,7 @@ namespace platform_ex::Windows::D3D12 {
 			BufferOut->Alignment = Alignment;
 			BufferOut->Stride = Stride;
 
-			AllocateBuffer(GetNodeDevice(0), Desc, Size, usage, InitialState, *init_data, Alignment, BufferOut, BufferOut->Location, Allocator);
+			AllocateBuffer(GetNodeDevice(0), Desc, Size, usage, access, InitialState, *init_data, Alignment, BufferOut, BufferOut->Location, Allocator);
 		}
 		else
 		{
@@ -231,7 +231,7 @@ namespace platform_ex::Windows::D3D12 {
 			BufferOut->Alignment = Alignment;
 			BufferOut->Stride = Stride;
 
-			AllocateBuffer(GetNodeDevice(0), Desc, Size, usage, CreateState, *init_data, Alignment, BufferOut, BufferOut->Location, Allocator);
+			AllocateBuffer(GetNodeDevice(0), Desc, Size, usage,access, CreateState, *init_data, Alignment, BufferOut, BufferOut->Location, Allocator);
 
 			if (*init_data == nullptr)
 			{
@@ -278,7 +278,9 @@ namespace platform_ex::Windows::D3D12 {
 		return BufferOut;
 	}
 
-	void Device::AllocateBuffer(NodeDevice* Device, const D3D12_RESOURCE_DESC& InDesc, uint32 Size, uint32 InUsage, D3D12_RESOURCE_STATES InCreateState, void const* CreateInfo, uint32 Alignment, GraphicsBuffer* Buffer, ResourceLocation& ResourceLocation, ResourceAllocator* ResourceAllocator)
+	void Device::AllocateBuffer(NodeDevice* Device, const D3D12_RESOURCE_DESC& InDesc, 
+		uint32 Size, uint32 InUsage, uint32 InAccess,
+		D3D12_RESOURCE_STATES InCreateState, void const* CreateInfo, uint32 Alignment, GraphicsBuffer* Buffer, ResourceLocation& ResourceLocation, ResourceAllocator* ResourceAllocator)
 	{
 		const bool bIsDynamic = (InUsage & Buffer::Usage::Dynamic) ? true : false;
 
@@ -303,7 +305,7 @@ namespace platform_ex::Windows::D3D12 {
 			}
 			else
 			{
-				Device->GetDefaultBufferAllocator().AllocDefaultResource(D3D12_HEAP_TYPE_DEFAULT, InDesc,InUsage, InCreateState, ResourceLocation, Alignment);
+				Device->GetDefaultBufferAllocator().AllocDefaultResource(D3D12_HEAP_TYPE_DEFAULT, InDesc, InAccess, InCreateState, ResourceLocation, Alignment);
 			}
 		}
 	}

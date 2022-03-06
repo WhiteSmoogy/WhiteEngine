@@ -82,6 +82,10 @@ namespace platform_ex::Windows::D3D12
 		std::shared_ptr<SamplerState> CreateSampler(const D3D12_SAMPLER_DESC& Desc);
 
 		inline GlobalOnlineHeap& GetGlobalSamplerHeap() { return GlobalSamplerHeap; }
+
+		FastAllocator& GetDefaultFastAllocator() {
+			return DefaultFastAllocator;
+		}
 	private:
 		void SetupAfterDeviceCreation();
 	protected:
@@ -105,6 +109,8 @@ namespace platform_ex::Windows::D3D12
 
 		GlobalOnlineHeap GlobalSamplerHeap;
 		GlobalOnlineHeap GlobalViewHeap;
+
+		FastAllocator DefaultFastAllocator;
 
 		RayTracingDescriptorHeapCache* RayTracingDescriptorHeapCache = nullptr;
 		void DestroyRayTracingDescriptorCache();

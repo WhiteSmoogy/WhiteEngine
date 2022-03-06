@@ -128,6 +128,7 @@ namespace platform_ex::Windows::D3D12 {
 			const D3D12_RESOURCE_DESC& InDesc,
 			uint32 Size,
 			uint32 InUsage,
+			uint32 InAccess,
 			D3D12_RESOURCE_STATES InCreateState,
 			void const* CreateInfo,
 			uint32 Alignment,

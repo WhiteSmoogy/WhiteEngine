@@ -1047,6 +1047,14 @@ namespace platform_ex::Windows::D3D12 {
 
 namespace platform_ex::Windows::D3D12
 {
+	inline bool IsCPUWritable(D3D12_HEAP_TYPE HeapType, const D3D12_HEAP_PROPERTIES* pCustomHeapProperties = nullptr)
+	{
+		wconstraint(HeapType == D3D12_HEAP_TYPE_CUSTOM ? pCustomHeapProperties != nullptr : true);
+		return HeapType == D3D12_HEAP_TYPE_UPLOAD ||
+			(HeapType == D3D12_HEAP_TYPE_CUSTOM &&
+				(pCustomHeapProperties->CPUPageProperty == D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE || pCustomHeapProperties->CPUPageProperty == D3D12_CPU_PAGE_PROPERTY_WRITE_BACK));
+	}
+
 	inline bool IsGPUOnly(D3D12_HEAP_TYPE HeapType, const D3D12_HEAP_PROPERTIES* pCustomHeapProperties = nullptr)
 	{
 		wconstraint(HeapType == D3D12_HEAP_TYPE_CUSTOM ? pCustomHeapProperties != nullptr : true);

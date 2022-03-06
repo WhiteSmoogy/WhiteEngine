@@ -1,9 +1,13 @@
 #pragma once
 
-#include "NodeDevice.h"
+#include "ResourceHolder.h"
+#include <shared_mutex>
 
 namespace platform_ex::Windows::D3D12
 {
+	class NodeDevice;
+
+	constexpr uint32 d3d_buffer_alignment = 64 * 1024;
 	class ResourceAllocator;
 
 	struct BuddyAllocatorPrivateData
@@ -20,6 +24,7 @@ namespace platform_ex::Windows::D3D12
 			Undefined,
 			SubAllocation,
 			FastAllocation,
+			StandAlone,
 		};
 
 		ResourceLocation(NodeDevice* Parent);
@@ -57,6 +62,24 @@ namespace platform_ex::Windows::D3D12
 			SetGPUVirtualAddress(GPUBase + Offset);
 		}
 
+		void AsStandAlone(ResourceHolder* Resource, uint64 InSize, bool bInIsTransient = false)
+		{
+			Resource->AddRef();
+
+			SetType(StandAlone);
+			SetResource(Resource);
+			SetSize(InSize);
+
+			if (IsCPUAccessible(Resource->GetHeapType()))
+			{
+				D3D12_RANGE range = { 0, IsCPUWritable(Resource->GetHeapType()) ? 0 : InSize };
+				SetMappedBaseAddress(Resource->Map(&range));
+			}
+			SetGPUVirtualAddress(Resource->GetGPUVirtualAddress());
+			//SetTransient(bInIsTransient);
+		}
+
+
 		void Clear();
 
 		static void TransferOwnership(ResourceLocation& Destination, ResourceLocation& Source);
@@ -93,9 +116,7 @@ namespace platform_ex::Windows::D3D12
 	class ResourceAllocator :public DeviceChild, public MultiNodeGPUObject
 	{
 	public:
-		ResourceAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes)
-			:DeviceChild(InParentDevice),MultiNodeGPUObject(InParentDevice->GetGPUMask(),VisibleNodes)
-		{}
+		ResourceAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes);
 
 		virtual void Deallocate(ResourceLocation& ResourceLocation);
 	};
@@ -329,8 +350,6 @@ namespace platform_ex::Windows::D3D12
 	public:
 		UploadHeapAllocator(D3D12Adapter* InParent, NodeDevice* InParentDevice, const std::string& InName);
 
-		void Destroy();
-
 		void* AllocFastConstantAllocationPage(uint32 InSize, uint32 InAlignment,ResourceLocation& ResourceLocation);
 
 		void* AllocUploadResource(uint32 InSize, uint32 InAlignment, ResourceLocation& ResourceLocation);
@@ -359,6 +378,12 @@ namespace platform_ex::Windows::D3D12
 			, FastAllocData(nullptr)
 			, FrameFence(0) {};
 
+		~FastAllocatorPage()
+		{
+			if (FastAllocBuffer)
+				FastAllocBuffer->Release();
+		}
+
 		void Reset()
 		{
 			NextFastAllocOffset = 0;
@@ -368,7 +393,7 @@ namespace platform_ex::Windows::D3D12
 		void UpdateFence();
 
 		const uint32 PageSize;
-		std::shared_ptr<ResourceHolder> FastAllocBuffer;
+		ResourceHolder* FastAllocBuffer;
 		uint32 NextFastAllocOffset;
 		void* FastAllocData;
 		uint64 FrameFence;
@@ -388,7 +413,7 @@ namespace platform_ex::Windows::D3D12
 		inline uint32 GetPageSize() const { return PageSize; }
 
 		inline D3D12_HEAP_TYPE GetHeapType() const { return HeapProperties.Type; }
-		inline bool IsCPUWritable() const { return ::IsCPUWritable(GetHeapType(), &HeapProperties); }
+		inline bool IsCPUWritable() const { return platform_ex::Windows::D3D12::IsCPUWritable(GetHeapType(), &HeapProperties); }
 
 		void Destroy();
 
@@ -406,7 +431,7 @@ namespace platform_ex::Windows::D3D12
 		FastAllocator(NodeDevice* Parent, GPUMaskType InGpuMask, D3D12_HEAP_TYPE InHeapType, uint32 PageSize);
 		FastAllocator(NodeDevice* Parent, GPUMaskType InGpuMask, const D3D12_HEAP_PROPERTIES& InHeapProperties, uint32 PageSize);
 
-		void* Allocate(uint32 Size, uint32 Alignment, class FD3D12ResourceLocation* ResourceLocation);
+		void* Allocate(uint32 Size, uint32 Alignment, class ResourceLocation* ResourceLocation);
 		void Destroy();
 
 		void CleanupPages(uint64 FrameLag);

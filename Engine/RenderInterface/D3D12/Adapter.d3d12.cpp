@@ -734,7 +734,7 @@ namespace platform_ex::Windows::D3D12 {
 				math::float2(+1,-1),
 			};
 
-			postprocess_layout->BindVertexStream(share_raw(CreateBuffer(Buffer::Usage::Static, EAccessHint::EA_GPURead | EAccessHint::EA_Immutable, sizeof(postprocess_pos), EFormat::EF_Unknown, postprocess_pos)), { Vertex::Element{ Vertex::Position,0,EFormat::EF_GR32F } });
+			postprocess_layout->BindVertexStream(share_raw(CreateVertexBuffer(Buffer::Usage::Static, EAccessHint::EA_GPURead | EAccessHint::EA_Immutable, sizeof(postprocess_pos), EFormat::EF_Unknown, postprocess_pos)), { Vertex::Element{ Vertex::Position,0,EFormat::EF_GR32F } });
 		}
 		return platform::Deref(postprocess_layout);
 	}
@@ -792,6 +792,13 @@ namespace platform_ex::Windows::D3D12 {
 		return *UploadHeapAllocators[GPUIndex];
 	}
 
+	HRESULT D3D12::Device::CreateBuffer(D3D12_HEAP_TYPE HeapType, GPUMaskType CreationNode, GPUMaskType VisibleNodes, uint64 HeapSize, ResourceHolder** ppOutResource, const char* Name, D3D12_RESOURCE_FLAGS Flags)
+	{
+		const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(HeapType, CreationNode, VisibleNodes);
+		const D3D12_RESOURCE_STATES InitialState = DetermineInitialResourceState(HeapProps.Type, &HeapProps);
+		return CreateBuffer(HeapProps, CreationNode, InitialState, InitialState, HeapSize, ppOutResource, Name, Flags);
+	}
+
 	HRESULT D3D12::Device::CreateBuffer(const D3D12_HEAP_PROPERTIES& HeapProps, GPUMaskType CreationNode, D3D12_RESOURCE_STATES InitialState, D3D12_RESOURCE_STATES InDefaultState, uint64 HeapSize, ResourceHolder** ppOutResource, const char* Name, D3D12_RESOURCE_FLAGS Flags)
 	{
 		if (!ppOutResource)
@@ -819,7 +826,7 @@ namespace platform_ex::Windows::D3D12 {
 		if (SUCCEEDED(CheckHResult(hr)))
 		{
 			// Set the output pointer
-			*ppOutResource = new ResourceHolder(pResource, InDefaultState, BufDesc);
+			*ppOutResource = new ResourceHolder(pResource, InDefaultState, BufDesc, HeapProps.Type);
 
 			// Set a default name (can override later).
 			(*ppOutResource)->SetName(Name);

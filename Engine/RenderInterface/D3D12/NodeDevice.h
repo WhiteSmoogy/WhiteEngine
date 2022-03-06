@@ -5,6 +5,7 @@
 #include "d3d12_dxgi.h"
 #include "View.h"
 #include "DescriptorCache.h"
+#include "Allocation.h"
 
 #include <vector>
 #include <unordered_map>

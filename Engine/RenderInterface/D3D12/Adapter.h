@@ -31,7 +31,7 @@ namespace platform_ex::Windows::D3D12 {
 	// Represents a set of linked D3D12 device nodes (LDA i.e 1 or more identical GPUs). In most cases there will be only 1 node, however if the system supports
 	// SLI/Crossfire and the app enables it an Adapter will have 2 or more nodes. This class will own anything that can be shared
 	// across LDA including: System Pool Memory,.Pipeline State Objects, Root Signatures etc.
-	class Device final : platform::Render::Device {
+	class Device final :public platform::Render::Device {
 	public:
 		Device(DXGI::Adapter& InAdapter);
 
@@ -112,6 +112,14 @@ namespace platform_ex::Windows::D3D12 {
 
 		FastConstantAllocator& GetTransientConstantBufferAllocator();
 
+		HRESULT CreateBuffer(D3D12_HEAP_TYPE HeapType,
+			GPUMaskType CreationNode,
+			GPUMaskType VisibleNodes,
+			uint64 HeapSize,
+			ResourceHolder** ppOutResource,
+			const char* Name,
+			D3D12_RESOURCE_FLAGS Flags = D3D12_RESOURCE_FLAG_NONE);
+
 		HRESULT CreateBuffer(const D3D12_HEAP_PROPERTIES& HeapProps,
 			GPUMaskType CreationNode,
 			D3D12_RESOURCE_STATES InitialState,
@@ -119,7 +127,7 @@ namespace platform_ex::Windows::D3D12 {
 			uint64 HeapSize,
 			ResourceHolder** ppOutResource,
 			const char* Name,
-			D3D12_RESOURCE_FLAGS Flags);
+			D3D12_RESOURCE_FLAGS Flags = D3D12_RESOURCE_FLAG_NONE);
 
 		HRESULT CreateCommittedResource(const D3D12_RESOURCE_DESC& InDesc, GPUMaskType CreationNode, const D3D12_HEAP_PROPERTIES& HeapProps, D3D12_RESOURCE_STATES InInitialState,
 			D3D12_RESOURCE_STATES InDefaultState, const D3D12_CLEAR_VALUE* ClearValue, ResourceHolder** ppOutResource, const char* Name);

@@ -1,4 +1,4 @@
-#include "Allocation.h"
+#include "NodeDevice.h"
 #include "Context.h"
 #include <spdlog/spdlog.h>
 using namespace platform_ex::Windows::D3D12;
@@ -6,6 +6,8 @@ using namespace platform_ex::Windows::D3D12;
 int32 FastConstantAllocatorPageSize = 64 * 1024;
 int32 UploadHeapSmallBlockMaxAllocationSize = 64 * 1024;
 int32 UploadHeapSmallBlockPoolSize = 4 * 1024 * 1024;
+int32 FastAllocatorMinPagesToRetain = 5;
+
 
 
 ResourceLocation::ResourceLocation(NodeDevice* Parent)
@@ -66,6 +68,9 @@ void ResourceLocation::ClearResource()
 	}
 	case FastAllocation:
 		break;
+	case StandAlone:
+		UnderlyingResource->Release();
+		break;
 	default:
 		break;
 	}
@@ -81,6 +86,10 @@ void ResourceLocation::TransferOwnership(ResourceLocation& Destination, Resource
 
 	Source.ClearMembers();
 }
+
+ResourceAllocator::ResourceAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes)
+:DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), VisibleNodes)
+{}
 
 void ResourceAllocator::Deallocate(ResourceLocation& ResourceLocation)
 {
@@ -625,14 +634,211 @@ FastConstantAllocator::FastConstantAllocator(NodeDevice* Parent, GPUMaskType InG
 {
 }
 
-void UploadHeapAllocator::Destroy()
-{
-}
-
 void UploadHeapAllocator::CleanUpAllocations(uint64 InFrameLag)
 {
 	SmallBlockAllocator.CleanUpAllocations(InFrameLag);
 	FastConstantAllocator.CleanUpAllocations(InFrameLag);
+}
+
+//-----------------------------------------------------------------------------
+//	Fast Allocation
+//-----------------------------------------------------------------------------
+
+FastAllocator::FastAllocator(NodeDevice* Parent, GPUMaskType VisibiltyMask, D3D12_HEAP_TYPE InHeapType, uint32 PageSize)
+	: DeviceChild(Parent), MultiNodeGPUObject(Parent->GetGPUMask(), VisibiltyMask)
+	, PagePool(Parent, VisibiltyMask, InHeapType, PageSize)
+	, CurrentAllocatorPage(nullptr)
+{}
+
+FastAllocator::FastAllocator(NodeDevice* Parent, GPUMaskType VisibiltyMask, const D3D12_HEAP_PROPERTIES& InHeapProperties, uint32 PageSize)
+	: DeviceChild(Parent), MultiNodeGPUObject(Parent->GetGPUMask(), VisibiltyMask)
+	, PagePool(Parent, VisibiltyMask, InHeapProperties, PageSize)
+	, CurrentAllocatorPage(nullptr)
+{}
+
+void* FastAllocator::Allocate(uint32 Size, uint32 Alignment, class ResourceLocation* ResourceLocation)
+{
+	// Check to make sure our assumption that we don't need a ResourceLocation->Clear() here is valid.
+	WAssert(!ResourceLocation->IsValid(), "The supplied resource location already has a valid resource. You should Clear() it first or it may leak.");
+
+	if (Size > PagePool.GetPageSize())
+	{
+		auto Adapter = GetParentDevice()->GetParentAdapter();
+
+		//Allocations are 64k aligned
+		if (Alignment)
+		{
+			Alignment = (d3d_buffer_alignment % Alignment) == 0 ? 0 : Alignment;
+		}
+
+		ResourceHolder* Resource = nullptr;
+
+		static std::atomic<int64> ID = 0;
+		const int64 UniqueID = ++ID;
+
+		CheckHResult(Adapter->CreateBuffer(PagePool.GetHeapType(), GetGPUMask(), GetVisibilityMask(), Size + Alignment, &Resource,std::format("Stand Alone Fast Allocation {}", UniqueID).c_str()));
+		ResourceLocation->AsStandAlone(Resource, Size + Alignment);
+
+		return PagePool.IsCPUWritable() ? Resource->GetResourceBaseAddress() : nullptr;
+	}
+	else
+	{
+		std::unique_lock Lock{ CS };
+
+		const uint32 Offset = (CurrentAllocatorPage) ? CurrentAllocatorPage->NextFastAllocOffset : 0;
+		uint32 CurrentOffset = AlignArbitrary(Offset, Alignment);
+
+		// See if there is room in the current pool
+		if (CurrentAllocatorPage == nullptr || PagePool.GetPageSize() < CurrentOffset + Size)
+		{
+			if (CurrentAllocatorPage)
+			{
+				PagePool.ReturnFastAllocatorPage(CurrentAllocatorPage);
+			}
+			CurrentAllocatorPage = PagePool.RequestFastAllocatorPage();
+
+			CurrentOffset = AlignArbitrary(CurrentAllocatorPage->NextFastAllocOffset, Alignment);
+		}
+
+		wconstraint(PagePool.GetPageSize() - Size >= CurrentOffset);
+
+		// Create a FD3D12ResourceLocation representing a sub-section of the pool resource
+		ResourceLocation->AsFastAllocation(CurrentAllocatorPage->FastAllocBuffer,
+			Size,
+			CurrentAllocatorPage->FastAllocBuffer->GetGPUVirtualAddress(),
+			CurrentAllocatorPage->FastAllocData,
+			0,
+			CurrentOffset);
+
+		CurrentAllocatorPage->NextFastAllocOffset = CurrentOffset + Size;
+		CurrentAllocatorPage->UpdateFence();
+
+		wconstraint(ResourceLocation->GetMappedBaseAddress());
+		return ResourceLocation->GetMappedBaseAddress();
+	}
+}
+
+void FastAllocator::CleanupPages(uint64 FrameLag)
+{
+	std::unique_lock Lock{ CS };
+	PagePool.CleanupPages(FrameLag);
+}
+
+void FastAllocator::Destroy()
+{
+	std::unique_lock Lock{ CS };
+	if (CurrentAllocatorPage)
+	{
+		PagePool.ReturnFastAllocatorPage(CurrentAllocatorPage);
+		CurrentAllocatorPage = nullptr;
+	}
+
+	PagePool.Destroy();
+}
+
+FastAllocatorPagePool::FastAllocatorPagePool(NodeDevice* Parent, GPUMaskType VisibiltyMask, D3D12_HEAP_TYPE InHeapType, uint32 Size)
+	: DeviceChild(Parent), MultiNodeGPUObject(Parent->GetGPUMask(), VisibiltyMask)
+	, PageSize(Size)
+	, HeapProperties(CD3DX12_HEAP_PROPERTIES(InHeapType, Parent->GetGPUMask(), VisibiltyMask))
+{};
+
+FastAllocatorPagePool::FastAllocatorPagePool(NodeDevice* Parent, GPUMaskType VisibiltyMask, const D3D12_HEAP_PROPERTIES& InHeapProperties, uint32 Size)
+	: DeviceChild(Parent), MultiNodeGPUObject(Parent->GetGPUMask(), VisibiltyMask)
+	, PageSize(Size)
+	, HeapProperties(InHeapProperties)
+{};
+
+FastAllocatorPage* FastAllocatorPagePool::RequestFastAllocatorPage()
+{
+	auto Device = GetParentDevice();
+	auto Adapter = Device->GetParentAdapter();
+	auto& Fence = Adapter->GetFrameFence();
+
+	const uint64 CompletedFence = Fence.UpdateLastCompletedFence();
+
+	for (int32 Index = 0; Index < static_cast<int32>(Pool.size()); Index++)
+	{
+		FastAllocatorPage* Page = Pool[Index];
+
+		//If the GPU is done with it and no-one has a lock on it
+		if (Page->FastAllocBuffer->GetRefCount() == 1 &&
+			Page->FrameFence <= CompletedFence)
+		{
+			Page->Reset();
+			Pool.erase(Pool.begin()+Index);
+			return Page;
+		}
+	}
+
+	FastAllocatorPage* Page = new FastAllocatorPage(PageSize);
+
+	const D3D12_RESOURCE_STATES InitialState = DetermineInitialResourceState(HeapProperties.Type, &HeapProperties);
+	CheckHResult(Adapter->CreateBuffer(HeapProperties, GetGPUMask(), InitialState, InitialState, PageSize, &Page->FastAllocBuffer, "Fast Allocator Page"));
+
+	Page->FastAllocData = Page->FastAllocBuffer->Map();
+
+	return Page;
+}
+
+void FastAllocatorPage::UpdateFence()
+{
+	// Fence value must be updated every time the page is used to service an allocation.
+	// Max() is required as fast allocator may be used from Render or RHI thread,
+	// which have different fence values. See Fence::GetCurrentFence() implementation.
+	auto Adapter =static_cast<D3D12Adapter*>(&GRenderIF->GetDevice());
+	FrameFence = std::max(FrameFence, Adapter->GetFrameFence().GetCurrentFence());
+}
+
+void FastAllocatorPagePool::ReturnFastAllocatorPage(FastAllocatorPage* Page)
+{
+	// Extend the lifetime of these resources when in AFR as other nodes might be relying on this
+	Page->UpdateFence();
+	Pool.emplace_back(Page);
+}
+
+void FastAllocatorPagePool::CleanupPages(uint64 FrameLag)
+{
+	if (Pool.size() <= FastAllocatorMinPagesToRetain)
+	{
+		return;
+	}
+
+	auto Adapter = GetParentDevice()->GetParentAdapter();
+	auto& Fence = Adapter->GetFrameFence();
+
+	const uint64 CompletedFence = Fence.UpdateLastCompletedFence();
+
+	// Pages get returned to end of list, so we'll look for pages to delete, starting from the LRU
+	for (int32 Index = 0; Index < static_cast<int32>(Pool.size()); Index++)
+	{
+		FastAllocatorPage* Page = Pool[Index];
+
+		//If the GPU is done with it and no-one has a lock on it
+		if (Page->FastAllocBuffer->GetRefCount() == 1 &&
+			Page->FrameFence + FrameLag <= CompletedFence)
+		{
+			Pool.erase(Pool.begin() + Index);
+			delete(Page);
+
+			// Only release at most one page per frame			
+			return;
+		}
+	}
+}
+
+void FastAllocatorPagePool::Destroy()
+{
+	for (std::size_t i = 0; i < Pool.size(); i++)
+	{
+		//check(Pool[i]->FastAllocBuffer->GetRefCount() == 1);
+		{
+			FastAllocatorPage* Page = Pool[i];
+			delete(Page);
+			Page = nullptr;
+		}
+	}
+
+	Pool.clear();
 }
 
 void* FastConstantAllocator::Allocate(uint32 Bytes, ResourceLocation& OutLocation)

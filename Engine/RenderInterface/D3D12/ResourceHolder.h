@@ -11,7 +11,33 @@
 
 namespace platform_ex::Windows {
 	namespace D3D12 {
-		class ResourceHolder {
+		class RefCountBase
+		{
+		private:
+			unsigned long Uses = 1;
+		public:
+			unsigned long AddRef()
+			{
+				return _InterlockedIncrement(reinterpret_cast<volatile long*>(&Uses));
+			}
+
+			unsigned long Release()
+			{
+				uint32 NewValue = _InterlockedDecrement(reinterpret_cast<volatile long*>(&Uses));
+
+				if (NewValue == 0)
+					delete this;
+
+				return NewValue;
+			}
+
+			uint32 GetRefCount() const
+			{
+				return Uses;
+			}
+		};
+
+		class ResourceHolder :public RefCountBase{
 		public:
 			virtual ~ResourceHolder();
 
@@ -48,6 +74,11 @@ namespace platform_ex::Windows {
 				return curr_state;
 			}
 
+			D3D12_HEAP_TYPE GetHeapType() const
+			{
+				return heap_type;
+			}
+
 			void SetResourceState(D3D12_RESOURCE_STATES state)
 			{
 				curr_state = state;
@@ -66,12 +97,14 @@ namespace platform_ex::Windows {
 
 			ResourceHolder(const COMPtr<ID3D12Resource>& pResource, D3D12_RESOURCE_STATES in_state = D3D12_RESOURCE_STATE_COMMON);
 
-			ResourceHolder(const COMPtr<ID3D12Resource>& pResource, D3D12_RESOURCE_STATES in_state,const D3D12_RESOURCE_DESC& InDesc);
+			ResourceHolder(const COMPtr<ID3D12Resource>& pResource, D3D12_RESOURCE_STATES in_state,const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType = D3D12_HEAP_TYPE_DEFAULT);
 
 
 			friend class Device;
 		protected:
 			D3D12_RESOURCE_STATES curr_state;
+
+			D3D12_HEAP_TYPE heap_type;
 
 			COMPtr<ID3D12Resource> resource;
 

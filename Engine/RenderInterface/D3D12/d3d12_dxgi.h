@@ -1067,6 +1067,19 @@ namespace platform_ex::Windows::D3D12
 	{
 		return !IsGPUOnly(HeapType, pCustomHeapProperties);
 	}
+
+	inline D3D12_RESOURCE_STATES DetermineInitialResourceState(D3D12_HEAP_TYPE HeapType, const D3D12_HEAP_PROPERTIES* pCustomHeapProperties = nullptr)
+	{
+		if (HeapType == D3D12_HEAP_TYPE_DEFAULT || IsCPUWritable(HeapType, pCustomHeapProperties))
+		{
+			return D3D12_RESOURCE_STATE_GENERIC_READ;
+		}
+		else
+		{
+			wconstraint(HeapType == D3D12_HEAP_TYPE_READBACK);
+			return D3D12_RESOURCE_STATE_COPY_DEST;
+		}
+	}
 }
 
 //const def

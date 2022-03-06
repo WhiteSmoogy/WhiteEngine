@@ -36,8 +36,8 @@ namespace platform_ex::Windows {
 		{
 		}
 
-		ResourceHolder::ResourceHolder(const COMPtr<ID3D12Resource>& pResource, D3D12_RESOURCE_STATES in_state, const D3D12_RESOURCE_DESC& InDesc)
-			: curr_state(in_state), resource(pResource),desc(InDesc)
+		ResourceHolder::ResourceHolder(const COMPtr<ID3D12Resource>& pResource, D3D12_RESOURCE_STATES in_state, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType)
+			: curr_state(in_state), resource(pResource),desc(InDesc),heap_type(InHeapType)
 		{
 			bDepthStencil = (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0;
 		}

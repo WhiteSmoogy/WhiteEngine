@@ -15,6 +15,9 @@ using namespace platform_ex::Windows::D3D12;
 
 constexpr auto MaxSimultaneousRenderTargets = platform::Render::MaxSimultaneousRenderTargets;
 
+int32 MaxInitialResourceCopiesPerCommandList = 10000;
+
+
 CommandContextBase::CommandContextBase(D3D12Adapter* InParent, GPUMaskType InGPUMask, bool InIsDefaultContext, bool InIsAsyncComputeContext)
 	:AdapterChild(InParent)
 	,bIsDefaultContext(InIsDefaultContext)
@@ -283,6 +286,7 @@ void CommandContext::OpenCommandList()
 
 	numDraws = 0;
 	numBarriers = 0;
+	numInitialResourceCopies = 0;
 }
 
 void CommandContext::CloseCommandList()
@@ -322,6 +326,14 @@ CommandListHandle CommandContext::FlushCommands(bool WaitForCompletion)
 	}
 
 	return CommandListHandle;
+}
+
+void CommandContext::ConditionalFlushCommandList()
+{
+	if (MaxInitialResourceCopiesPerCommandList > 0 && numInitialResourceCopies > (uint32)MaxInitialResourceCopiesPerCommandList)
+	{
+		FlushCommands();
+	}
 }
 
 void CommandContext::BeginFrame()

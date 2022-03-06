@@ -53,7 +53,7 @@ namespace platform_ex::Windows::D3D12 {
 		ShaderCompose* CreateShaderCompose(std::unordered_map<platform::Render::ShaderType, const asset::ShaderBlobAsset*> pShaderBlob, platform::Render::Effect::Effect* pEffect) override;
 
 		//\brief D3D12 Buffer 创建时没有BIND_FLAG
-		GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr);
+		GraphicsBuffer* CreateBuffer(platform::Render::CommandList* Cmdlist,Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr);
 
 		ConstantBuffer* CreateConstantBuffer(Buffer::Usage usage, uint32 size_in_byte,const void*  init_data) override;
 		GraphicsBuffer* CreateVertexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;

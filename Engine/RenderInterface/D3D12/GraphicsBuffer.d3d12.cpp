@@ -3,9 +3,10 @@
 #include "Convert.h"
 #include "View.h"
 #include "../ICommandList.h"
+#include "System/SystemEnvironment.h"
 
 namespace platform_ex::Windows::D3D12 {
-	GraphicsBuffer::GraphicsBuffer(NodeDevice* Parent,Buffer::Usage usage,
+	GraphicsBuffer::GraphicsBuffer(NodeDevice* Parent, Buffer::Usage usage,
 		uint32_t access_hint, uint32_t size_in_byte,
 		platform::Render::EFormat fmt)
 		:platform::Render::GraphicsBuffer(usage, access_hint, size_in_byte)
@@ -17,7 +18,7 @@ namespace platform_ex::Windows::D3D12 {
 	GraphicsBuffer::~GraphicsBuffer() {
 	}
 
-	void GraphicsBuffer::CopyToBuffer(platform::Render::GraphicsBuffer & rhs_)
+	void GraphicsBuffer::CopyToBuffer(platform::Render::GraphicsBuffer& rhs_)
 	{
 		auto& rhs = static_cast<GraphicsBuffer&>(rhs_);
 
@@ -120,7 +121,7 @@ namespace platform_ex::Windows::D3D12 {
 		{
 			return D3D12_RESOURCE_STATE_GENERIC_READ;
 		}
-		else if (access == EA_GPUUnordered )
+		else if (access == EA_GPUUnordered)
 		{
 			wconstraint(InHeapType == D3D12_HEAP_TYPE_DEFAULT);
 			return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -136,43 +137,144 @@ namespace platform_ex::Windows::D3D12 {
 		}
 	}
 
-	GraphicsBuffer* Device::CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*> init_data)
+	struct D3D12CommandInitializeBuffer final : platform::Render::CommandBase
+	{
+		GraphicsBuffer* Buffer;
+		ResourceLocation SrcResourceLoc;
+		uint32 Size;
+		D3D12_RESOURCE_STATES DestinationState;
+
+		D3D12CommandInitializeBuffer(GraphicsBuffer* InBuffer, ResourceLocation& InSrcResourceLoc, uint32 InSize, D3D12_RESOURCE_STATES InDestinationState)
+			: Buffer(InBuffer)
+			, SrcResourceLoc(InSrcResourceLoc.GetParentDevice())
+			, Size(InSize)
+			, DestinationState(InDestinationState)
+		{
+			ResourceLocation::TransferOwnership(SrcResourceLoc, InSrcResourceLoc);
+		}
+
+		void ExecuteAndDestruct(platform::Render::CommandListBase& CmdList, platform::Render::CommandListContext& Context)
+		{
+			ExecuteNoCmdList();
+			this->~D3D12CommandInitializeBuffer();
+		}
+
+		void ExecuteNoCmdList()
+		{
+			auto CurrentBuffer = Buffer;
+			ResourceHolder* Destination = Buffer->Location.GetResource();
+			auto Device = Buffer->Location.GetParentDevice();
+
+			auto& CommandContext = Device->GetDefaultCommandContext();
+			auto& hCommandList = CommandContext.CommandListHandle;
+			// Copy from the temporary upload heap to the default resource
+			{
+				++CommandContext.numInitialResourceCopies;
+
+				hCommandList.FlushResourceBarriers();
+				hCommandList->CopyBufferRegion(
+					Destination->Resource(),
+					CurrentBuffer->Location.GetOffsetFromBaseOfResource(),
+					SrcResourceLoc.GetResource()->Resource(),
+					SrcResourceLoc.GetOffsetFromBaseOfResource(), Size);
+
+				// Update the resource state after the copy has been done (will take care of updating the residency as well)
+				if (DestinationState != D3D12_RESOURCE_STATE_COPY_DEST)
+				{
+					hCommandList.AddTransitionBarrier(Destination, D3D12_RESOURCE_STATE_COPY_DEST, DestinationState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				}
+
+				CommandContext.ConditionalFlushCommandList();
+			}
+
+			// Buffer is now written and ready, so unlock the block (locked after creation and can be defragmented if needed)
+			CurrentBuffer->Location.UnlockPoolData();
+		}
+	};
+
+
+	GraphicsBuffer* Device::CreateBuffer(platform::Render::CommandList* Cmdlist, Buffer::Usage usage, white::uint32 access, uint32 Size, EFormat format, std::optional<void const*> init_data)
 	{
 		auto device = GetNodeDevice(0);
 
 		//WithoutNativeResource
-		if(!init_data)
-			return new GraphicsBuffer(device,usage, access, size_in_byte, format);
+		if (!init_data)
+			return new GraphicsBuffer(device, usage, access, Size, format);
 
 		uint32 Stride = 0;
 		ResourceAllocator* Allocator = nullptr;
 
-		auto [Desc, Alignment] = GetResourceDescAndAlignment(size_in_byte, Stride, access);
+		auto [Desc, Alignment] = GetResourceDescAndAlignment(Size, Stride, access);
 
 		//CommonCreateBuffer
 		const bool bIsDynamic = (usage & Buffer::Usage::Dynamic) ? true : false;
 
 		//remove EA_CPUWrite/EA_CPURead?
 		D3D12_HEAP_TYPE HeapType = bIsDynamic ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_DEFAULT;
-		
+
 		const D3D12_RESOURCE_STATES InitialState = GetDefaultInitialResourceState(HeapType, access);
 
 		GraphicsBuffer* BufferOut = nullptr;
 		if (bIsDynamic)
 		{
-			BufferOut = new GraphicsBuffer(device,usage, access, size_in_byte, format);
-
+			BufferOut = new GraphicsBuffer(device, usage, access, Size, format);
 			BufferOut->Alignment = Alignment;
 			BufferOut->Stride = Stride;
 
-			AllocateBuffer(GetNodeDevice(0), Desc, size_in_byte, usage, InitialState, *init_data, Alignment, BufferOut, BufferOut->Location, Allocator);
-
-			return BufferOut;
+			AllocateBuffer(GetNodeDevice(0), Desc, Size, usage, InitialState, *init_data, Alignment, BufferOut, BufferOut->Location, Allocator);
 		}
-		else 
+		else
 		{
+			const D3D12_RESOURCE_STATES CreateState = *init_data != nullptr ? D3D12_RESOURCE_STATE_COPY_DEST : InitialState;
+
+			BufferOut = new GraphicsBuffer(device, usage, access, Size, format);
+			BufferOut->Alignment = Alignment;
+			BufferOut->Stride = Stride;
+
+			AllocateBuffer(GetNodeDevice(0), Desc, Size, usage, CreateState, *init_data, Alignment, BufferOut, BufferOut->Location, Allocator);
+
+			if (*init_data == nullptr)
+			{
+				BufferOut->Location.UnlockPoolData();
+			}
 		}
-		
+
+		if (*init_data != nullptr)
+		{
+			if (!bIsDynamic && BufferOut->Location.IsValid())
+			{
+				const bool bOnAsyncThread = !Environment->Scheduler->is_render_schedule();
+
+				ResourceLocation SrcResourceLoc(BufferOut->GetParentDevice());
+				void* pData;
+				if (bOnAsyncThread)
+				{
+					const uint32 GPUIdx = SrcResourceLoc.GetParentDevice()->GetGPUIndex();
+					pData = GetUploadHeapAllocator(GPUIdx).AllocUploadResource(Size, 4u, SrcResourceLoc);
+				}
+				else
+				{
+					pData = SrcResourceLoc.GetParentDevice()->GetDefaultFastAllocator().Allocate(Size, 4UL, &SrcResourceLoc);
+				}
+				wconstraint(pData);
+				std::memcpy(pData, *init_data, Size);
+
+				if (bOnAsyncThread)
+				{
+					throw white::unimplemented();
+				}
+				else if (!Cmdlist)
+				{
+					D3D12CommandInitializeBuffer Command(BufferOut, SrcResourceLoc, Size, InitialState);
+					Command.ExecuteNoCmdList();
+				}
+				else
+				{
+					throw white::unimplemented();
+				}
+			}
+		}
+
 		return BufferOut;
 	}
 
@@ -182,15 +284,35 @@ namespace platform_ex::Windows::D3D12 {
 
 		if (bIsDynamic)
 		{
+			wconstraint(ResourceAllocator == nullptr);
+			wconstraint(InCreateState == D3D12_RESOURCE_STATE_GENERIC_READ);
+			void* pData = GetUploadHeapAllocator(Device->GetGPUIndex()).AllocUploadResource(Size, Alignment, ResourceLocation);
+			wconstraint(ResourceLocation.GetSize() == Size);
 
+			if (CreateInfo)
+			{
+				// Handle initial data
+				std::memcpy(pData, CreateInfo, Size);
+			}
+		}
+		else
+		{
+			if (ResourceAllocator)
+			{
+				throw white::unimplemented();
+			}
+			else
+			{
+				Device->GetDefaultBufferAllocator().AllocDefaultResource(D3D12_HEAP_TYPE_DEFAULT, InDesc,InUsage, InCreateState, ResourceLocation, Alignment);
+			}
 		}
 	}
 
-	void GraphicsBuffer::UpdateSubresource(white::uint32 offset, white::uint32 size, void const * data)
+	void GraphicsBuffer::UpdateSubresource(white::uint32 offset, white::uint32 size, void const* data)
 	{
 	}
-	
-	ID3D12Resource * GraphicsBuffer::UploadResource() const
+
+	ID3D12Resource* GraphicsBuffer::UploadResource() const
 	{
 		return buffer_counter_upload.Get();
 	}
@@ -210,17 +332,17 @@ namespace platform_ex::Windows::D3D12 {
 		desc.Buffer.FirstElement = 0;
 		desc.Buffer.NumElements = std::min<UINT>(width * height, GetSize() / NumFormatBytes(pf));
 
-		return rtv_maps->emplace(key, std::make_unique<RenderTargetView>(GetDefaultNodeDevice(),desc,*Resource())).first->second.get();
+		return rtv_maps->emplace(key, std::make_unique<RenderTargetView>(GetDefaultNodeDevice(), desc, *Resource())).first->second.get();
 	}
-	ShaderResourceView * GraphicsBuffer::RetriveShaderResourceView()
+	ShaderResourceView* GraphicsBuffer::RetriveShaderResourceView()
 	{
 		return srv.get();
 	}
-	UnorderedAccessView * GraphicsBuffer::RetriveUnorderedAccessView()
+	UnorderedAccessView* GraphicsBuffer::RetriveUnorderedAccessView()
 	{
 		return uav.get();
 	}
-	void * GraphicsBuffer::Map(platform::Render::Buffer::Access ba)
+	void* GraphicsBuffer::Map(platform::Render::Buffer::Access ba)
 	{
 		return nullptr;
 	}

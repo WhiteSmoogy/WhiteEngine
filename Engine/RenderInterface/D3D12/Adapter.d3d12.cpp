@@ -293,7 +293,7 @@ namespace platform_ex::Windows::D3D12 {
 
 	GraphicsBuffer * Device::CreateVertexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*> init_data)
 	{
-		auto vb = CreateBuffer(usage, access, size_in_byte, format, init_data);
+		auto vb = CreateBuffer(nullptr,usage, access, size_in_byte, format, init_data);
 
 		return vb;
 	}
@@ -301,7 +301,7 @@ namespace platform_ex::Windows::D3D12 {
 	GraphicsBuffer * Device::CreateIndexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*> init_data)
 	{
 		wconstraint(format == platform::Render::EFormat::EF_R16UI || format == platform::Render::EFormat::EF_R32UI);
-		return CreateBuffer(usage, access, size_in_byte, format, init_data);
+		return CreateBuffer(nullptr, usage, access, size_in_byte, format, init_data);
 	}
 
 	platform::Render::HardwareShader* Device::CreateShader(const white::span<const uint8>& Code, platform::Render::ShaderType Type)

@@ -60,6 +60,10 @@ namespace platform_ex::Windows::D3D12
 		void Clear();
 
 		static void TransferOwnership(ResourceLocation& Destination, ResourceLocation& Source);
+
+		const inline bool IsValid() const {
+			return Type != Undefined;
+		}
 	private:
 		void ClearResource();
 		void ClearMembers();
@@ -366,7 +370,11 @@ namespace platform_ex::Windows::D3D12
 
 		D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
 		{
-			return Resource()->GetGPUVirtualAddress();
+			return Location.GetGPUVirtualAddress();
+		}
+
+		const inline bool IsValid() const { 
+			return Location.IsValid();
 		}
 
 		ResourceLocation Location;

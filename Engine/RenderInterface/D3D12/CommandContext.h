@@ -91,6 +91,8 @@ namespace platform_ex::Windows::D3D12 {
 
 		CommandListHandle FlushCommands(bool WaitForCompletion = false);
 
+		void ConditionalFlushCommandList();
+
 		void BeginFrame();
 
 		void EndFrame();
@@ -127,10 +129,11 @@ namespace platform_ex::Windows::D3D12 {
 
 		uint32 numDraws;
 		uint32 numBarriers;
+		uint32 numInitialResourceCopies;
 
 		bool HasDoneWork() const
 		{
-			return (numDraws+ numBarriers) > 0;
+			return (numDraws+ numBarriers + numInitialResourceCopies) > 0;
 		}
 
 		/** Constant buffers for Set*ShaderParameter calls. */

@@ -2,6 +2,7 @@
 #include "Context.h"
 #include "Convert.h"
 #include "View.h"
+#include "NodeDevice.h"
 #include "../ICommandList.h"
 #include "System/SystemEnvironment.h"
 

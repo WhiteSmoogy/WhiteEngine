@@ -87,6 +87,10 @@ namespace platform_ex::Windows::D3D12
 		FastAllocator& GetDefaultFastAllocator() {
 			return DefaultFastAllocator;
 		}
+
+		BufferAllocator& GetDefaultBufferAllocator() {
+			return DefaultBufferAllocator;
+		}
 	private:
 		void SetupAfterDeviceCreation();
 	protected:
@@ -112,6 +116,7 @@ namespace platform_ex::Windows::D3D12
 		GlobalOnlineHeap GlobalViewHeap;
 
 		FastAllocator DefaultFastAllocator;
+		BufferAllocator DefaultBufferAllocator;
 
 		RayTracingDescriptorHeapCache* RayTracingDescriptorHeapCache = nullptr;
 		void DestroyRayTracingDescriptorCache();

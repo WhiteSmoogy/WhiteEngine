@@ -291,9 +291,24 @@ namespace platform_ex::Windows::D3D12 {
 		return Alloc;
 	}
 
+	ResourceCreateInfo FillResourceCreateInfo(std::optional<void const*> init_data,const char* DebugName)
+	{
+		ResourceCreateInfo CreateInfo;
+
+		CreateInfo.WithoutNativeResource = !init_data.has_value();
+		if (!CreateInfo.WithoutNativeResource)
+			CreateInfo.ResouceData = *init_data;
+
+		CreateInfo.DebugName = DebugName;
+
+		return CreateInfo;
+	}
+
 	GraphicsBuffer * Device::CreateVertexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*> init_data)
 	{
-		auto vb = CreateBuffer(nullptr,usage, access, size_in_byte, format, init_data);
+		auto CreateInfo = FillResourceCreateInfo(init_data, "VertexBuffer");
+
+		auto vb = CreateBuffer(nullptr,usage, access, size_in_byte, format, CreateInfo);
 
 		return vb;
 	}
@@ -301,7 +316,9 @@ namespace platform_ex::Windows::D3D12 {
 	GraphicsBuffer * Device::CreateIndexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*> init_data)
 	{
 		wconstraint(format == platform::Render::EFormat::EF_R16UI || format == platform::Render::EFormat::EF_R32UI);
-		return CreateBuffer(nullptr, usage, access, size_in_byte, format, init_data);
+		auto CreateInfo = FillResourceCreateInfo(init_data, "IndexBuffer");
+
+		return CreateBuffer(nullptr, usage, access, size_in_byte, format, CreateInfo);
 	}
 
 	platform::Render::HardwareShader* Device::CreateShader(const white::span<const uint8>& Code, platform::Render::ShaderType Type)
@@ -811,7 +828,7 @@ namespace platform_ex::Windows::D3D12 {
 		return CreateCommittedResource(BufDesc, CreationNode, HeapProps, InitialState, InDefaultState, nullptr, ppOutResource, Name);
 	}
 
-	HRESULT platform_ex::Windows::D3D12::Device::CreateCommittedResource(const D3D12_RESOURCE_DESC& BufDesc, GPUMaskType CreationNode, const D3D12_HEAP_PROPERTIES& HeapProps, D3D12_RESOURCE_STATES InInitialState, D3D12_RESOURCE_STATES InDefaultState, const D3D12_CLEAR_VALUE* ClearValue, ResourceHolder** ppOutResource, const char* Name)
+	HRESULT D3D12::Device::CreateCommittedResource(const D3D12_RESOURCE_DESC& BufDesc, GPUMaskType CreationNode, const D3D12_HEAP_PROPERTIES& HeapProps, D3D12_RESOURCE_STATES InInitialState, D3D12_RESOURCE_STATES InDefaultState, const D3D12_CLEAR_VALUE* ClearValue, ResourceHolder** ppOutResource, const char* Name)
 	{
 		//CreateCommitResource
 		COMPtr<ID3D12Resource> pResource;
@@ -827,6 +844,38 @@ namespace platform_ex::Windows::D3D12 {
 		{
 			// Set the output pointer
 			*ppOutResource = new ResourceHolder(pResource, InDefaultState, BufDesc, HeapProps.Type);
+
+			// Set a default name (can override later).
+			(*ppOutResource)->SetName(Name);
+		}
+
+		return hr;
+	}
+
+	HRESULT D3D12::Device::CreatePlacedResource(const D3D12_RESOURCE_DESC& InDesc, HeapHolder* BackingHeap, uint64 HeapOffset, D3D12_RESOURCE_STATES InInitialState, ResourceStateMode InResourceStateMode, D3D12_RESOURCE_STATES InDefaultState, const D3D12_CLEAR_VALUE* ClearValue, ResourceHolder** ppOutResource, const char* Name)
+	{
+		if (!ppOutResource)
+		{
+			return E_POINTER;
+		}
+
+		ID3D12Heap* Heap = BackingHeap->GetHeap();
+
+		COMPtr<ID3D12Resource> pResource;
+		const HRESULT hr = d3d_device->CreatePlacedResource(Heap, HeapOffset, &InDesc, InInitialState, ClearValue, COMPtr_RefParam(pResource, IID_ID3D12Resource));
+
+		if (SUCCEEDED(CheckHResult(hr)))
+		{
+			auto Device = BackingHeap->GetParentDevice();
+			const D3D12_HEAP_DESC HeapDesc = Heap->GetDesc();
+
+			// Set the output pointer
+			*ppOutResource = new ResourceHolder(
+				pResource,
+				InInitialState,
+				InDesc,
+				BackingHeap,
+				HeapDesc.Properties.Type);
 
 			// Set a default name (can override later).
 			(*ppOutResource)->SetName(Name);

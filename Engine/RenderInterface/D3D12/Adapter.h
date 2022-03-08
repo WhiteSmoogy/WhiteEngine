@@ -28,6 +28,15 @@ namespace platform_ex::Windows::D3D12 {
 	using platform::Render::ElementInitData;
 	namespace Buffer = platform::Render::Buffer;
 
+	struct ResourceCreateInfo
+	{
+		bool WithoutNativeResource = true;
+		const char* DebugName = "unknown";
+		const void* ResouceData = nullptr;
+	};
+
+	class IResouceAllocator;
+
 	// Represents a set of linked D3D12 device nodes (LDA i.e 1 or more identical GPUs). In most cases there will be only 1 node, however if the system supports
 	// SLI/Crossfire and the app enables it an Adapter will have 2 or more nodes. This class will own anything that can be shared
 	// across LDA including: System Pool Memory,.Pipeline State Objects, Root Signatures etc.
@@ -53,7 +62,7 @@ namespace platform_ex::Windows::D3D12 {
 		ShaderCompose* CreateShaderCompose(std::unordered_map<platform::Render::ShaderType, const asset::ShaderBlobAsset*> pShaderBlob, platform::Render::Effect::Effect* pEffect) override;
 
 		//\brief D3D12 Buffer 创建时没有BIND_FLAG
-		GraphicsBuffer* CreateBuffer(platform::Render::CommandList* Cmdlist,Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr);
+		GraphicsBuffer* CreateBuffer(platform::Render::CommandList* Cmdlist,Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, ResourceCreateInfo& CreateInfo);
 
 		ConstantBuffer* CreateConstantBuffer(Buffer::Usage usage, uint32 size_in_byte,const void*  init_data) override;
 		GraphicsBuffer* CreateVertexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
@@ -129,20 +138,23 @@ namespace platform_ex::Windows::D3D12 {
 			const char* Name,
 			D3D12_RESOURCE_FLAGS Flags = D3D12_RESOURCE_FLAG_NONE);
 
-		HRESULT CreateCommittedResource(const D3D12_RESOURCE_DESC& InDesc, GPUMaskType CreationNode, const D3D12_HEAP_PROPERTIES& HeapProps, D3D12_RESOURCE_STATES InInitialState,
-			D3D12_RESOURCE_STATES InDefaultState, const D3D12_CLEAR_VALUE* ClearValue, ResourceHolder** ppOutResource, const char* Name);
-
 		void AllocateBuffer(NodeDevice* Device,
 			const D3D12_RESOURCE_DESC& InDesc,
 			uint32 Size,
 			uint32 InUsage,
 			uint32 InAccess,
 			D3D12_RESOURCE_STATES InCreateState,
-			void const* CreateInfo,
+			ResourceCreateInfo& CreateInfo,
 			uint32 Alignment,
 			GraphicsBuffer* Buffer,
 			ResourceLocation& ResourceLocation,
-			ResourceAllocator* ResourceAllocator);
+			IResouceAllocator* ResourceAllocator);
+
+		HRESULT CreateCommittedResource(const D3D12_RESOURCE_DESC& InDesc, GPUMaskType CreationNode, const D3D12_HEAP_PROPERTIES& HeapProps, D3D12_RESOURCE_STATES InInitialState,
+			D3D12_RESOURCE_STATES InDefaultState, const D3D12_CLEAR_VALUE* ClearValue, ResourceHolder** ppOutResource, const char* Name);
+
+		HRESULT CreatePlacedResource(const D3D12_RESOURCE_DESC& InDesc, HeapHolder* BackingHeap, uint64 HeapOffset, D3D12_RESOURCE_STATES InInitialState, ResourceStateMode InResourceStateMode,
+			D3D12_RESOURCE_STATES InDefaultState, const D3D12_CLEAR_VALUE* ClearValue, ResourceHolder** ppOutResource, const char* Name);
 	public:
 		friend class Context;
 		friend class RayContext;

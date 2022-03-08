@@ -7,101 +7,253 @@ int32 FastConstantAllocatorPageSize = 64 * 1024;
 int32 UploadHeapSmallBlockMaxAllocationSize = 64 * 1024;
 int32 UploadHeapSmallBlockPoolSize = 4 * 1024 * 1024;
 int32 FastAllocatorMinPagesToRetain = 5;
+int32 PoolAllocatorBufferPoolSize = 32 * 1024 * 1024;
+int32 PoolAllocatorBufferMaxAllocationSize = 16 * 1024 * 1024;
+
+constexpr uint32 READBACK_BUFFER_POOL_DEFAULT_POOL_SIZE = 4 * 1024 * 1024;
+constexpr uint32 MIN_PLACED_RESOURCE_SIZE = 64 * 1024;
+constexpr uint32 READBACK_BUFFER_POOL_MAX_ALLOC_SIZE = (64 * 1024);
 
 
-
-ResourceLocation::ResourceLocation(NodeDevice* Parent)
-	:DeviceChild(Parent),
-	Type(Undefined),
-	UnderlyingResource(nullptr),
-	MappedBaseAddress(nullptr),
-	GPUVirtualAddress(0),
-	OffsetFromBaseOfResource(0),
-	Size(0),
-	Allocator(nullptr)
+AllocatorConfig IPoolAllocator::GetResourceAllocatorInitConfig(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_FLAGS InResourceFlags, uint32 InBufferAccess)
 {
-}
+	AllocatorConfig InitConfig;
+	InitConfig.HeapType = InHeapType;
+	InitConfig.ResourceFlags = InResourceFlags;
 
-ResourceLocation::~ResourceLocation()
-{
-	ClearResource();
-}
-
-void ResourceLocation::SetResource(ResourceHolder* Value)
-{
-	UnderlyingResource = Value;
-
-	GPUVirtualAddress = UnderlyingResource->GetGPUVirtualAddress();
-}
-
-void ResourceLocation::Clear()
-{
-	ClearResource();
-
-	ClearMembers();
-}
-
-void ResourceLocation::ClearMembers()
-{
-	// Reset members
-	Type = Undefined;
-	UnderlyingResource = nullptr;
-	MappedBaseAddress = nullptr;
-	GPUVirtualAddress = 0;
-	Size = 0;
-	OffsetFromBaseOfResource = 0;
-
-	Allocator = nullptr;
-}
-
-void ResourceLocation::ClearResource()
-{
-	switch (Type)
+	// Setup initial resource state depending on the requested buffer flags
+	if (white::has_anyflags(InBufferAccess, EA_AccelerationStructure))
 	{
-	case Undefined:
-		break;
-	case SubAllocation:
+		// should only have this flag and no other flags
+		wconstraint(InBufferAccess == EA_AccelerationStructure);
+		InitConfig.InitialResourceState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
+	}
+	else
+		if (InitConfig.HeapType == D3D12_HEAP_TYPE_READBACK)
+		{
+			InitConfig.InitialResourceState = D3D12_RESOURCE_STATE_COPY_DEST;
+		}
+		else if (white::has_anyflags(InBufferAccess, EA_GPUUnordered))
+		{
+			wconstraint(InResourceFlags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+			InitConfig.InitialResourceState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+		}
+		else
+		{
+			InitConfig.InitialResourceState = D3D12_RESOURCE_STATE_GENERIC_READ;
+		}
+
+	InitConfig.HeapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
+	if (white::has_anyflags(InBufferAccess, EA_DrawIndirect))
 	{
-		wassume(Allocator != nullptr);
-		Allocator->Deallocate(*this);
-		break;
+		wconstraint(InResourceFlags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+		InitConfig.HeapFlags |= D3D12_HEAP_FLAG_NONE;
 	}
-	case FastAllocation:
-		break;
-	case StandAlone:
-		UnderlyingResource->Release();
-		break;
-	default:
-		break;
+
+	return InitConfig;
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
+PoolAllocator<Order,Defrag>::PoolAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, 
+	const AllocatorConfig& InConfig, const std::string& InName, AllocationStrategy InAllocationStrategy, 
+	uint64 InDefaultPoolSize, uint32 InPoolAlignment, uint32 InMaxAllocationSize)
+	:DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), VisibleNodes),
+	DefaultPoolSize(InDefaultPoolSize), PoolAlignment(InPoolAlignment), MaxAllocationSize(InMaxAllocationSize),
+	InitConfig(InConfig),Name(InName),Strategy(InAllocationStrategy)
+{
+
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
+PoolAllocator<Order, Defrag>::~PoolAllocator()
+{
+	for (auto& Pool : Pools)
+		delete Pool;
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
+bool PoolAllocator<Order, Defrag>::SupportsAllocation(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_FLAGS InResourceFlags, uint32 InBufferAccess, ResourceStateMode InResourceStateMode) const
+{
+	auto InInitConfig = GetResourceAllocatorInitConfig(InHeapType, InResourceFlags, InBufferAccess);
+	auto InAllocationStrategy = GetResourceAllocationStrategy(InResourceFlags, InResourceStateMode);
+	return (InitConfig == InInitConfig && Strategy == InAllocationStrategy);
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
+void PoolAllocator<Order, Defrag>::AllocDefaultResource(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& InDesc, uint32 InBufferAccess, ResourceStateMode InResourceStateMode, D3D12_RESOURCE_STATES InCreateState, uint32 InAlignment, ResourceLocation& ResourceLocation, const char* InName)
+{
+#ifndef NDEBUG
+	// Validate the create state
+	if (InHeapType == D3D12_HEAP_TYPE_READBACK)
+	{
+		wconstraint(InCreateState == D3D12_RESOURCE_STATE_COPY_DEST);
+	}
+	else if (InHeapType == D3D12_HEAP_TYPE_UPLOAD)
+	{
+		wconstraint(InCreateState == D3D12_RESOURCE_STATE_GENERIC_READ);
+	}
+	else if (InBufferAccess == EAccessHint::EA_GPUUnordered && InResourceStateMode == ResourceStateMode::Single)
+	{
+		wconstraint(InCreateState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	}
+	else if (InBufferAccess & EAccessHint::EA_AccelerationStructure)
+	{
+		// RayTracing acceleration structures must be created in a particular state and may never transition out of it.
+		wconstraint(InResourceStateMode == ResourceStateMode::Single);
+		wconstraint(InCreateState == D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
+	}
+#endif
+
+	if (white::has_anyflags(InBufferAccess, EAccessHint::EA_DrawIndirect))
+		(void)0;//Force indirect args to stand alone allocations instead of pooled
+
+	AllocateResource(GetParentDevice()->GetGPUIndex(), InHeapType, InDesc, InDesc.Width, InAlignment, InResourceStateMode, InCreateState, nullptr, InName, ResourceLocation);
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
+void PoolAllocator<Order, Defrag>::AllocateResource(uint32 GPUIndex, D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& InDesc, uint64 InSize, uint32 InAllocationAlignment, ResourceStateMode InResourceStateMode, D3D12_RESOURCE_STATES InCreateState, const D3D12_CLEAR_VALUE* InClearValue, const char* InName, ResourceLocation& ResourceLocation)
+{
+	// If the resource location owns a block, this will deallocate it.
+	ResourceLocation.Clear();
+	if (InSize == 0)
+	{
+		return;
+	}
+
+	auto Device = GetParentDevice();
+	auto Adapter = Device->GetParentAdapter();
+
+	wconstraint(GPUIndex == Device->GetGPUIndex());
+
+	const bool PoolResource = InSize <= MaxAllocationSize;
+	if (PoolResource)
+	{
+		const bool bPlacedResource = (Strategy == AllocationStrategy::kPlacedResource);
+
+		uint32 AllocationAlignment = InAllocationAlignment;
+
+		// Ensure we're allocating from the correct pool
+		if (bPlacedResource)
+		{
+			// Writeable resources get separate ID3D12Resource* with their own resource state by using placed resources. Just make sure it's UAV, other flags are free to differ.
+			wconstraint(InDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER || (InDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0 || InHeapType == D3D12_HEAP_TYPE_READBACK);
+
+			// If it's a placed resource then base offset will always be 0 from the actual d3d resource so ignore the allocation alignment - no extra offset required
+			// for creating the views!
+			wconstraint(InAllocationAlignment <= PoolAlignment);
+			AllocationAlignment = PoolAlignment;
+		}
+		else
+		{
+			// Read-only resources get suballocated from big resources, thus share ID3D12Resource* and resource state with other resources. Ensure it's suballocated from a resource with identical flags.
+			wconstraint(InDesc.Flags == InitConfig.ResourceFlags);
+		}
+
+		auto& AllocationData = ResourceLocation.GetPoolAllocatorPrivateData();
+
+		// Find the correct allocation resource type
+		if (InDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+		{
+			bool ret = TryAllocateInternal<MemoryPool::PoolResouceTypes::Buffers>(static_cast<uint32>(InSize), AllocationAlignment, AllocationData);
+			wassume(ret);
+		}
+		else if (white::has_anyflags(InDesc.Flags, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL))
+		{
+		}
+		else
+		{
+		}
+
+		// Setup the resource location
+		ResourceLocation.SetType(ResourceLocation::LocationType::SubAllocation);
+		ResourceLocation.SetPoolAllocator(this);
+		ResourceLocation.SetSize(InSize);
+
+		AllocationData.SetOwner(&ResourceLocation);
+
+		if (Strategy == AllocationStrategy::kManualSubAllocation)
+		{
+			auto BackingResource = GetBackingResource(ResourceLocation);
+
+			ResourceLocation.SetOffsetFromBaseOfResource(AllocationData.GetOffset());
+			ResourceLocation.SetResource(BackingResource);
+			ResourceLocation.SetGPUVirtualAddress(BackingResource->GetGPUVirtualAddress() + AllocationData.GetOffset());
+
+			if (IsCPUAccessible(InitConfig.HeapType))
+			{
+				ResourceLocation.SetMappedBaseAddress((uint8*)BackingResource->GetResourceBaseAddress() + AllocationData.GetOffset());
+			}
+		}
+		else
+		{
+			wconstraint(ResourceLocation.GetResource() == nullptr);
+
+			auto NewResource = CreatePlacedResource(AllocationData, InDesc, InCreateState, InResourceStateMode, InClearValue, InName);
+			ResourceLocation.SetResource(NewResource);
+		}
+	}
+	else 
+	{
+		// Allocate Standalone - move to owner of resource because this allocator should only manage pooled allocations (needed for now to do the same as FD3D12DefaultBufferPool)
+		ResourceHolder* NewResource = nullptr;
+		const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InHeapType, GetGPUMask(), GetVisibilityMask());
+		D3D12_RESOURCE_DESC Desc = InDesc;
+		Desc.Alignment = 0;
+		Adapter->CreateCommittedResource(Desc, GetGPUMask(), HeapProps, InCreateState, InCreateState, InClearValue, &NewResource, InName);
+
+		ResourceLocation.AsStandAlone(NewResource, InSize);
 	}
 }
 
-void ResourceLocation::TransferOwnership(ResourceLocation& Destination, ResourceLocation& Source)
+template<MemoryPool::FreeListOrder Order, bool Defrag>
+ResourceHolder* platform_ex::Windows::D3D12::PoolAllocator<Order, Defrag>::CreatePlacedResource(const PoolAllocatorPrivateData& InAllocationData, const D3D12_RESOURCE_DESC& InDesc, D3D12_RESOURCE_STATES InCreateState, ResourceStateMode InResourceStateMode, const D3D12_CLEAR_VALUE* InClearValue, const char* InName)
 {
-	Destination.Clear();
+	auto Adapter = GetParentDevice()->GetParentAdapter();
+	auto HeapAndOffset = GetBackingHeapAndAllocationOffsetInBytes(InAllocationData);
 
-	std::memmove(&Destination, &Source, sizeof(ResourceLocation));
-
-	//Transfer Allocator
-
-	Source.ClearMembers();
+	ResourceHolder* NewResource = nullptr;
+	Adapter->CreatePlacedResource(InDesc, HeapAndOffset.Heap, HeapAndOffset.Offset, InCreateState, InResourceStateMode, InCreateState, InClearValue, &NewResource, InName);
+	return NewResource;
 }
 
-ResourceAllocator::ResourceAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes)
-:DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), VisibleNodes)
-{}
-
-void ResourceAllocator::Deallocate(ResourceLocation& ResourceLocation)
+template<MemoryPool::FreeListOrder Order, bool Defrag>
+HeapAndOffset platform_ex::Windows::D3D12::PoolAllocator<Order, Defrag>::GetBackingHeapAndAllocationOffsetInBytes(const PoolAllocatorPrivateData& InAllocationData) const
 {
+	return HeapAndOffset{
+		.Heap = Pools[InAllocationData.GetPoolIndex()]->GetBackingHeap(),
+		.Offset = uint64(AlignDown(InAllocationData.GetOffset(),PoolAlignment))
+	};
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
+template<MemoryPool::PoolResouceTypes InAllocationResourceType>
+bool PoolAllocator<Order, Defrag>::TryAllocateInternal(uint32 InSizeInBytes, uint32 InAllocationAlignment, PoolAllocatorPrivateData& AllocationData)
+{
+	return false;
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
+ResourceHolder* PoolAllocator<Order, Defrag>::GetBackingResource(ResourceLocation& InResouceLocation) const
+{
+	wconstraint(IsOwner(InResouceLocation));
+	
+	auto& AllocationData = InResouceLocation.GetPoolAllocatorPrivateData();
+
+	return Pools[AllocationData.GetPoolIndex()]->GetBackingResource(InResouceLocation);
 }
 
 using MultiBuddyConstantUploadAllocator = MultiBuddyAllocator<true, true>;
+
+MultiBuddyConstantUploadAllocator::MultiBuddyAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes)
+	:DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), VisibleNodes)
+{}
+
 bool MultiBuddyConstantUploadAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
 {
 	std::unique_lock Lock{ CS };
 	for (auto& allocator : Allocators)
 	{
-		if(allocator->TryAllocate(SizeInBytes,Alignment,ResourceLocation))
+		if (allocator->TryAllocate(SizeInBytes, Alignment, ResourceLocation))
 			return true;
 	}
 
@@ -123,10 +275,15 @@ void MultiBuddyConstantUploadAllocator::CleanUpAllocations(uint64 InFrameLag)
 		if ((Allocators[i]->GetLastUsedFrameFence() + InFrameLag <= CompletedFence))
 		{
 			delete(Allocators[i]);
-			Allocators.erase(Allocators.begin()+i);
+			Allocators.erase(Allocators.begin() + i);
 		}
 	}
 }
+
+MultiBuddyConstantUploadAllocator::ConstantAllocator::ConstantAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, uint32 InBlockSize)
+	:DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), VisibleNodes), BlockSize(InBlockSize), TotalSizeUsed(0), BackingResource(nullptr), DelayCreated(false)
+	, RetireFrameFence(-1)
+{}
 
 MultiBuddyConstantUploadAllocator::ConstantAllocator::~ConstantAllocator()
 {
@@ -144,7 +301,7 @@ MultiBuddyConstantUploadAllocator::ConstantAllocator* MultiBuddyConstantUploadAl
 {
 	uint32 AllocationSize = std::bit_ceil(InMinSizeInBytes);
 
-	return new ConstantAllocator(GetParentDevice(), GetVisibilityMask(),AllocationSize);
+	return new ConstantAllocator(GetParentDevice(),GetVisibilityMask(), AllocationSize);
 }
 
 bool MultiBuddyConstantUploadAllocator::ConstantAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
@@ -179,7 +336,7 @@ bool MultiBuddyConstantUploadAllocator::ConstantAllocator::TryAllocate(uint32 Si
 
 
 	ResourceLocation.SetType(ResourceLocation::SubAllocation);
-	ResourceLocation.SetAllocator(this);
+	ResourceLocation.SetSubDeAllocator(this);
 	ResourceLocation.SetSize(SizeInBytes);
 	ResourceLocation.SetOffsetFromBaseOfResource(AlignedOffsetFromResourceBase);
 	ResourceLocation.SetResource(BackingResource);
@@ -202,7 +359,7 @@ void MultiBuddyConstantUploadAllocator::ConstantAllocator::CreateBackingResource
 }
 
 ResourceConfigAllocator::ResourceConfigAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, const AllocatorConfig& InConfig, const std::string& Name, uint32 InMaxAllocationSize)
-	:ResourceAllocator(InParentDevice,VisibleNodes),
+	:DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), VisibleNodes),
 	InitConfig(InConfig),
 	DebugName(Name),
 	Initialized(false),
@@ -210,33 +367,33 @@ ResourceConfigAllocator::ResourceConfigAllocator(NodeDevice* InParentDevice, GPU
 {
 }
 
-BuddyAllocator::BuddyAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
-	const AllocatorConfig& InConfig, const std::string& Name, AllocationStrategy InStrategy, 
+BuddyUploadAllocator::BuddyUploadAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
+	const AllocatorConfig& InConfig, const std::string& Name, AllocationStrategy InStrategy,
 	uint32 InMaxAllocationSize, uint32 InMaxBlockSize, uint32 InMinBlockSize)
-	:ResourceConfigAllocator(InParentDevice,VisibleNodes,InConfig,Name,InMaxAllocationSize)
-	,MaxBlockSize(InMaxBlockSize)
-	,MinBlockSize(InMinBlockSize)
-	,Strategy(InStrategy)
-	,BackingResource(nullptr)
+	:ResourceConfigAllocator(InParentDevice, VisibleNodes, InConfig, Name, InMaxAllocationSize)
+	, MaxBlockSize(InMaxBlockSize)
+	, MinBlockSize(InMinBlockSize)
+	, Strategy(InStrategy)
+	, BackingResource(nullptr)
 	, LastUsedFrameFence(0)
 	, FreeBlockArray(nullptr)
 	, TotalSizeUsed(0)
 {
-	WAssert((MaxBlockSize / MinBlockSize) * MinBlockSize == MaxBlockSize," Evenly dividable");
+	WAssert((MaxBlockSize / MinBlockSize) * MinBlockSize == MaxBlockSize, " Evenly dividable");
 
-	WAssert(0 == ((MaxBlockSize / MinBlockSize) & ((MaxBlockSize / MinBlockSize) - 1))," Power of two"); 
+	WAssert(0 == ((MaxBlockSize / MinBlockSize) & ((MaxBlockSize / MinBlockSize) - 1)), " Power of two");
 
 
 	MaxOrder = UnitSizeToOrder(SizeToUnitSize(MaxBlockSize));
 
 	if (IsCPUAccessible(InitConfig.HeapType))
 	{
-		WAssert(InMaxAllocationSize < InMaxBlockSize,"allocator reserved memory");
+		WAssert(InMaxAllocationSize < InMaxBlockSize, "allocator reserved memory");
 		WAssert(sizeof(void*) * MaxOrder < MaxBlockSize, "allocator reserved memory too small");
 	}
 }
 
-void BuddyAllocator::Initialize()
+void BuddyUploadAllocator::Initialize()
 {
 	auto Adapter = GetParentDevice()->GetParentAdapter();
 
@@ -258,7 +415,7 @@ void BuddyAllocator::Initialize()
 			//‘§œ»«–∑÷Buddy
 			for (uint32 i = 0; i < MaxOrder; ++i)
 			{
-				FreeBlockArray[i] = reinterpret_cast<FreeBlock*>((byte*)pStart + MinBlockSize*(1<<i));
+				FreeBlockArray[i] = reinterpret_cast<FreeBlock*>((byte*)pStart + MinBlockSize * (1 << i));
 				FreeBlockArray[i]->Next = nullptr;
 			}
 
@@ -267,14 +424,14 @@ void BuddyAllocator::Initialize()
 	}
 }
 
-void BuddyAllocator::ReleaseAllResources()
+void BuddyUploadAllocator::ReleaseAllResources()
 {
 	CHECK(DeferredDeletionQueue.empty());
-	
+
 	delete BackingResource;
 }
 
-uint32 BuddyAllocator::AllocateBlock(uint32 order)
+uint32 BuddyUploadAllocator::AllocateBlock(uint32 order)
 {
 	uint32 offset = 0;
 	if (order >= MaxOrder)
@@ -299,7 +456,7 @@ uint32 BuddyAllocator::AllocateBlock(uint32 order)
 	}
 	else
 	{
-		byte* pStart =reinterpret_cast<byte*>(FreeBlockArray);
+		byte* pStart = reinterpret_cast<byte*>(FreeBlockArray);
 		byte* pEnd = reinterpret_cast<byte*>(FreeBlockArray[order]);
 
 		offset = static_cast<uint32>(pEnd - pStart) / MinBlockSize;
@@ -310,7 +467,7 @@ uint32 BuddyAllocator::AllocateBlock(uint32 order)
 	return offset;
 }
 
-void BuddyAllocator::Allocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
+void BuddyUploadAllocator::Allocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
 {
 	std::unique_lock Lock{ CS };
 
@@ -346,7 +503,7 @@ void BuddyAllocator::Allocate(uint32 SizeInBytes, uint32 Alignment, ResourceLoca
 
 
 	ResourceLocation.SetType(ResourceLocation::SubAllocation);
-	ResourceLocation.SetAllocator(this);
+	ResourceLocation.SetSubDeAllocator(this);
 	ResourceLocation.SetSize(SizeInBytes);
 
 	if (Strategy == AllocationStrategy::kManualSubAllocation)
@@ -365,7 +522,7 @@ void BuddyAllocator::Allocate(uint32 SizeInBytes, uint32 Alignment, ResourceLoca
 	ResourceLocation.GetBuddyAllocatorPrivateData().Order = Order;
 }
 
-bool BuddyAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
+bool BuddyUploadAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
 {
 	std::unique_lock Lock{ CS };
 
@@ -383,7 +540,7 @@ bool BuddyAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceL
 	return false;
 }
 
-void BuddyAllocator::Deallocate(ResourceLocation& ResourceLocation)
+void BuddyUploadAllocator::Deallocate(ResourceLocation& ResourceLocation)
 {
 	wconstraint(IsOwner(ResourceLocation));
 
@@ -405,7 +562,7 @@ void BuddyAllocator::Deallocate(ResourceLocation& ResourceLocation)
 	LastUsedFrameFence = std::max(LastUsedFrameFence, Block.FrameFence);
 }
 
-void BuddyAllocator::CleanUpAllocations()
+void BuddyUploadAllocator::CleanUpAllocations()
 {
 	std::unique_lock Lock{ CS };
 
@@ -420,7 +577,7 @@ void BuddyAllocator::CleanUpAllocations()
 		if (fence.IsFenceComplete(Block.FrameFence))
 		{
 			DeallocateInternal(Block);
-			PopCount =static_cast<uint32>(i + 1);
+			PopCount = static_cast<uint32>(i + 1);
 		}
 		else
 		{
@@ -431,11 +588,11 @@ void BuddyAllocator::CleanUpAllocations()
 	if (PopCount)
 	{
 		// clear out all of the released blocks, don't allow the array to shrink
-		DeferredDeletionQueue.erase(DeferredDeletionQueue.begin(), DeferredDeletionQueue.begin()+PopCount);
+		DeferredDeletionQueue.erase(DeferredDeletionQueue.begin(), DeferredDeletionQueue.begin() + PopCount);
 	}
 }
 
-void BuddyAllocator::DeallocateInternal(RetiredBlock& Block)
+void BuddyUploadAllocator::DeallocateInternal(RetiredBlock& Block)
 {
 	DeallocateBlock(Block.Data.Offset, Block.Data.Order);
 
@@ -444,7 +601,7 @@ void BuddyAllocator::DeallocateInternal(RetiredBlock& Block)
 	TotalSizeUsed -= Size;
 }
 
-void BuddyAllocator::DeallocateBlock(uint32 offset, uint32 order)
+void BuddyUploadAllocator::DeallocateBlock(uint32 offset, uint32 order)
 {
 	// See if the buddy block is free  
 	uint32 size = OrderToUnitSize(order);
@@ -492,7 +649,7 @@ void BuddyAllocator::DeallocateBlock(uint32 offset, uint32 order)
 }
 
 
-bool BuddyAllocator::CanAllocate(uint32 size, uint32 alignment)
+bool BuddyUploadAllocator::CanAllocate(uint32 size, uint32 alignment)
 {
 	if (TotalSizeUsed == MaxBlockSize)
 		return false;
@@ -504,7 +661,7 @@ bool BuddyAllocator::CanAllocate(uint32 size, uint32 alignment)
 		sizeToAllocate = size + alignment;
 	}
 
-	uint32 blockSize = MaxBlockSize /2;
+	uint32 blockSize = MaxBlockSize / 2;
 
 	for (int32 i = MaxOrder - 1; i >= 0; i--)
 	{
@@ -545,12 +702,12 @@ bool MultiBuddyUploadAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment
 	return Allocator->TryAllocate(SizeInBytes, Alignment, ResourceLocation);
 }
 
-BuddyAllocator* MultiBuddyUploadAllocator::CreateNewAllocator(uint32 InMinSizeInBytes)
+BuddyUploadAllocator* MultiBuddyUploadAllocator::CreateNewAllocator(uint32 InMinSizeInBytes)
 {
 	wconstraint(InMinSizeInBytes <= MaximumAllocationSizeForPooling);
-	uint32 AllocationSize = (InMinSizeInBytes > DefaultPoolSize) ?std::bit_ceil(InMinSizeInBytes) : DefaultPoolSize;
+	uint32 AllocationSize = (InMinSizeInBytes > DefaultPoolSize) ? std::bit_ceil(InMinSizeInBytes) : DefaultPoolSize;
 
-	return new BuddyAllocator(GetParentDevice(),
+	return new BuddyUploadAllocator(GetParentDevice(),
 		GetVisibilityMask(),
 		InitConfig,
 		DebugName,
@@ -579,21 +736,21 @@ void MultiBuddyUploadAllocator::CleanUpAllocations(uint64 InFrameLag)
 	auto& FrameFence = Adapter->GetFrameFence();
 	const uint64 CompletedFence = FrameFence.UpdateLastCompletedFence();
 
-	for (int32 i =static_cast<int32>(Allocators.size() - 1); i >= 0; i--)
+	for (int32 i = static_cast<int32>(Allocators.size() - 1); i >= 0; i--)
 	{
 		if (Allocators[i]->IsEmpty() && (Allocators[i]->GetLastUsedFrameFence() + InFrameLag <= CompletedFence))
 		{
 			delete(Allocators[i]);
-			Allocators.erase(Allocators.begin()+i);
+			Allocators.erase(Allocators.begin() + i);
 		}
 	}
 }
 
 UploadHeapAllocator::UploadHeapAllocator(D3D12Adapter* InParent, NodeDevice* InParentDevice, const std::string& InName)
 	:AdapterChild(InParent), DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), AllGPU())
-	,SmallBlockAllocator(InParentDevice, GetVisibilityMask(), {},InName,AllocationStrategy::kManualSubAllocation, 
-		UploadHeapSmallBlockMaxAllocationSize, UploadHeapSmallBlockPoolSize,256)
-	,FastConstantAllocator(InParentDevice,GetVisibilityMask())
+	, SmallBlockAllocator(InParentDevice, GetVisibilityMask(), {}, InName, AllocationStrategy::kManualSubAllocation,
+		UploadHeapSmallBlockMaxAllocationSize, UploadHeapSmallBlockPoolSize, 256)
+	, FastConstantAllocator(InParentDevice, GetVisibilityMask())
 {
 }
 void* UploadHeapAllocator::AllocFastConstantAllocationPage(uint32 InSize, uint32 InAlignment, ResourceLocation& ResourceLocation)
@@ -629,8 +786,8 @@ void* UploadHeapAllocator::AllocUploadResource(uint32 InSize, uint32 InAlignment
 }
 
 FastConstantAllocator::FastConstantAllocator(NodeDevice* Parent, GPUMaskType InGpuMask)
-	:DeviceChild(Parent),MultiNodeGPUObject(InGpuMask,InGpuMask)
-	,UnderlyingResource(Parent),Offset(FastConstantAllocatorPageSize),PageSize(FastConstantAllocatorPageSize)
+	:DeviceChild(Parent), MultiNodeGPUObject(InGpuMask, InGpuMask)
+	, UnderlyingResource(Parent), Offset(FastConstantAllocatorPageSize), PageSize(FastConstantAllocatorPageSize)
 {
 }
 
@@ -639,6 +796,90 @@ void UploadHeapAllocator::CleanUpAllocations(uint64 InFrameLag)
 	SmallBlockAllocator.CleanUpAllocations(InFrameLag);
 	FastConstantAllocator.CleanUpAllocations(InFrameLag);
 }
+
+template<ResourceStateMode mode>
+void BufferAllocator::AllocDefaultResource(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& InResourceDesc, uint32 InBuffAccess, D3D12_RESOURCE_STATES InCreateState, ResourceLocation& ResourceLocation, uint32 Alignment, const char* Name)
+{
+	D3D12_RESOURCE_DESC ResourceDesc = InResourceDesc;
+	ResourceDesc.Flags = ResourceDesc.Flags & (~D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE);
+
+	// Do we already have a default pool which support this allocation?
+	BufferPool* BufferPool = nullptr;
+	for (auto Pool : DefaultBufferPools)
+	{
+		if (Pool->SupportsAllocation(InHeapType, ResourceDesc.Flags, InBuffAccess, mode))
+		{
+			BufferPool = Pool;
+			break;
+		}
+	}
+
+	// No pool yet, then create one
+	if (BufferPool == nullptr)
+	{
+		BufferPool = CreateBufferPool(InHeapType, ResourceDesc.Flags, InBuffAccess, mode);
+	}
+
+	// Perform actual allocation
+	BufferPool->AllocDefaultResource(InHeapType, ResourceDesc, InBuffAccess, mode, InCreateState, Alignment, Name, ResourceLocation);
+}
+
+template<ResourceStateMode mode>
+D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState(D3D12_HEAP_TYPE InHeapType, uint32 InBufferAccess)
+{
+	// Validate the create state
+	if (InHeapType == D3D12_HEAP_TYPE_READBACK)
+	{
+		return D3D12_RESOURCE_STATE_COPY_DEST;
+	}
+	else if (InHeapType == D3D12_HEAP_TYPE_UPLOAD)
+	{
+		return D3D12_RESOURCE_STATE_GENERIC_READ;
+	}
+	else if (InBufferAccess == EA_GPUUnordered && mode == ResourceStateMode::Single)
+	{
+		wconstraint(InHeapType == D3D12_HEAP_TYPE_DEFAULT);
+		return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	}
+	else if (InBufferAccess & EA_AccelerationStructure)
+	{
+		wconstraint(InHeapType == D3D12_HEAP_TYPE_DEFAULT);
+		return D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
+	}
+	else
+	{
+		return D3D12_RESOURCE_STATE_GENERIC_READ;
+	}
+}
+
+template D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState<ResourceStateMode::Default>(D3D12_HEAP_TYPE InHeapType, uint32 InBufferAccess);
+
+BufferPool* BufferAllocator::CreateBufferPool(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_FLAGS InResourceFlags, uint32 InBufferAccess, ResourceStateMode InResourceStateMode)
+{
+	auto Device = GetParentDevice();
+	auto Config = BufferPool::GetResourceAllocatorInitConfig(InHeapType, InResourceFlags,static_cast<EAccessHint>(InBufferAccess));
+
+	const std::string Name("D3D12 Pool Allocator");
+	auto AllocationStrategy = IPoolAllocator::GetResourceAllocationStrategy(InResourceFlags, InResourceStateMode);
+	uint64 PoolSize = InHeapType == D3D12_HEAP_TYPE_READBACK ? READBACK_BUFFER_POOL_DEFAULT_POOL_SIZE : PoolAllocatorBufferPoolSize;
+	uint32 PoolAlignment = (AllocationStrategy == AllocationStrategy::kPlacedResource) ? MIN_PLACED_RESOURCE_SIZE : 256;
+	uint64 MaxAllocationSize = InHeapType == D3D12_HEAP_TYPE_READBACK ? READBACK_BUFFER_POOL_MAX_ALLOC_SIZE : PoolAllocatorBufferMaxAllocationSize;
+
+	// Disable defrag if not Default memory
+	bool bDefragEnabled = (Config.HeapType == D3D12_HEAP_TYPE_DEFAULT);
+
+	BufferPool* NewPool = nullptr;
+
+	if(bDefragEnabled)
+		NewPool = new PoolAllocator<MemoryPool::FreeListOrder::SortByOffset,true>(Device, GetVisibilityMask(), Config, Name, AllocationStrategy, PoolSize, PoolAlignment,static_cast<uint32>(MaxAllocationSize));
+	else
+		NewPool = new PoolAllocator<MemoryPool::FreeListOrder::SortByOffset, false>(Device, GetVisibilityMask(), Config, Name, AllocationStrategy, PoolSize, PoolAlignment, static_cast<uint32>(MaxAllocationSize));
+
+	DefaultBufferPools.emplace_back(NewPool);
+
+	return NewPool;
+}
+
 
 //-----------------------------------------------------------------------------
 //	Fast Allocation
@@ -676,7 +917,7 @@ void* FastAllocator::Allocate(uint32 Size, uint32 Alignment, class ResourceLocat
 		static std::atomic<int64> ID = 0;
 		const int64 UniqueID = ++ID;
 
-		CheckHResult(Adapter->CreateBuffer(PagePool.GetHeapType(), GetGPUMask(), GetVisibilityMask(), Size + Alignment, &Resource,std::format("Stand Alone Fast Allocation {}", UniqueID).c_str()));
+		CheckHResult(Adapter->CreateBuffer(PagePool.GetHeapType(), GetGPUMask(), GetVisibilityMask(), Size + Alignment, &Resource, std::format("Stand Alone Fast Allocation {}", UniqueID).c_str()));
 		ResourceLocation->AsStandAlone(Resource, Size + Alignment);
 
 		return PagePool.IsCPUWritable() ? Resource->GetResourceBaseAddress() : nullptr;
@@ -765,7 +1006,7 @@ FastAllocatorPage* FastAllocatorPagePool::RequestFastAllocatorPage()
 			Page->FrameFence <= CompletedFence)
 		{
 			Page->Reset();
-			Pool.erase(Pool.begin()+Index);
+			Pool.erase(Pool.begin() + Index);
 			return Page;
 		}
 	}
@@ -785,7 +1026,7 @@ void FastAllocatorPage::UpdateFence()
 	// Fence value must be updated every time the page is used to service an allocation.
 	// Max() is required as fast allocator may be used from Render or RHI thread,
 	// which have different fence values. See Fence::GetCurrentFence() implementation.
-	auto Adapter =static_cast<D3D12Adapter*>(&GRenderIF->GetDevice());
+	auto Adapter = static_cast<D3D12Adapter*>(&GRenderIF->GetDevice());
 	FrameFence = std::max(FrameFence, Adapter->GetFrameFence().GetCurrentFence());
 }
 

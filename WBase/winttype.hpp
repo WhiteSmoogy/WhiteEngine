@@ -170,6 +170,12 @@ namespace white
 		return (T)(((uint64)Val + Alignment - 1) & ~(Alignment - 1));
 	}
 
+	template <typename T>
+	inline constexpr T AlignDown(T Val, uint64 Alignment)
+	{
+		return (T)(((uint64)Val) & ~(Alignment - 1));
+	}
+
 	/**
 	 * Aligns a value to the nearest higher multiple of 'Alignment'.
 	 *

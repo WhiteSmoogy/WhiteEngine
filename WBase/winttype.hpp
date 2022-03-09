@@ -165,12 +165,14 @@ namespace white
 	* @return The value aligned up to the specified alignment.
 	*/
 	template <typename T>
+	requires std::is_integral_v<T> || std::is_pointer_v<T>
 	inline constexpr T Align(T Val, uint64 Alignment)
 	{
 		return (T)(((uint64)Val + Alignment - 1) & ~(Alignment - 1));
 	}
 
 	template <typename T>
+		requires std::is_integral_v<T> || std::is_pointer_v<T>
 	inline constexpr T AlignDown(T Val, uint64 Alignment)
 	{
 		return (T)(((uint64)Val) & ~(Alignment - 1));
@@ -189,6 +191,13 @@ namespace white
 	inline constexpr T AlignArbitrary(T Val, uint64 Alignment)
 	{
 		return (T)((((uint64)Val + Alignment - 1) / Alignment) * Alignment);
+	}
+
+	template <typename T>
+		requires std::is_integral_v<T> || std::is_pointer_v<T>
+	inline constexpr T IsAligned(T Val, uint64 Alignment)
+	{
+		return !((uint64)Val & (Alignment - 1));
 	}
 }
 

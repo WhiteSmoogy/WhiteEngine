@@ -39,4 +39,13 @@ namespace white
 
 		return INDEX_NONE;
 	}
+
+	template<typename T, typename Allocator>
+	inline T pop(std::vector<T, Allocator>& vec)
+	{
+		wconstraint(!vec.empty());
+		auto last = vec.back();
+		vec.resize(vec.size()-1);
+		return last;
+	}
 }

@@ -1,6 +1,8 @@
 #include "NodeDevice.h"
 #include "Context.h"
+#include "Runtime/Core/Container/vector.hpp"
 #include <spdlog/spdlog.h>
+#include <ranges>
 using namespace platform_ex::Windows::D3D12;
 
 int32 FastConstantAllocatorPageSize = 64 * 1024;
@@ -14,6 +16,214 @@ constexpr uint32 READBACK_BUFFER_POOL_DEFAULT_POOL_SIZE = 4 * 1024 * 1024;
 constexpr uint32 MIN_PLACED_RESOURCE_SIZE = 64 * 1024;
 constexpr uint32 READBACK_BUFFER_POOL_MAX_ALLOC_SIZE = (64 * 1024);
 
+MemoryPool::MemoryPool(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, 
+	const AllocatorConfig& InConfig, const std::string& InName, AllocationStrategy InAllocationStrategy,
+	uint16 InPoolIndex, uint64 InPoolSize, uint32 InPoolAlignment, 
+	PoolResouceTypes InAllocationResourceType, FreeListOrder InFreeListOrder)
+	:DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), VisibleNodes)
+	,PoolIndex(InPoolIndex),PoolSize(InPoolSize),PoolAlignment(InPoolAlignment),SupportResouceTypes(InAllocationResourceType),ListOrder(InFreeListOrder),
+	InitConfig(InConfig), Name(InName), Strategy(InAllocationStrategy), LastUsedFrameFence(0)
+{
+	//create device object
+	if (PoolSize == 0)
+	{
+		return;
+	}
+
+	auto Device = GetParentDevice();
+	auto Adapter = Device->GetParentAdapter();
+
+	if (Strategy == AllocationStrategy::kPlacedResource)
+	{
+		// Alignment should be either 4K or 64K for places resources
+		wconstraint(PoolAlignment == D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT || PoolAlignment == D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
+
+		D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InitConfig.HeapType);
+		HeapProps.CreationNodeMask = GetGPUMask();
+		HeapProps.VisibleNodeMask = GetVisibilityMask();
+
+		D3D12_HEAP_DESC Desc = {};
+		Desc.SizeInBytes = PoolSize;
+		Desc.Properties = HeapProps;
+		Desc.Alignment = 0;
+		Desc.Flags = InitConfig.HeapFlags;
+		if (Adapter->IsHeapNotZeroedSupported())
+		{
+			Desc.Flags |= D3D12_HEAP_FLAG_CREATE_NOT_ZEROED;
+		}
+
+		ID3D12Heap* Heap = nullptr;
+		{
+			CheckHResult(Adapter->GetDevice()->CreateHeap(&Desc, IID_PPV_ARGS(&Heap)));
+		}
+		D3D::Debug(Heap, "LinkListAllocator Backing Heap");
+
+		BackingHeap = new HeapHolder(GetParentDevice(), GetVisibilityMask());
+		BackingHeap->SetHeap(Heap);
+
+		// Only track resources that cannot be accessed on the CPU.
+		if (IsGPUOnly(InitConfig.HeapType))
+		{
+		}
+	}
+	else
+	{
+		{
+			const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InitConfig.HeapType, GetGPUMask(), GetVisibilityMask());
+			CheckHResult(Adapter->CreateBuffer(HeapProps, GetGPUMask(), InitConfig.InitialResourceState, InitConfig.InitialResourceState, PoolSize, BackingResource.ReleaseAndGetAddress(), "Resource Allocator Underlying Buffer", InitConfig.ResourceFlags));
+		}
+
+		if (IsCPUAccessible(InitConfig.HeapType))
+		{
+			BackingResource->Map();
+		}
+	}
+
+	FreeSize = PoolSize;
+	for (auto i : std::ranges::iota_view(0, 32)) {
+		auto AllocationData = new PoolAllocatorPrivateData();
+		AllocationData->Reset();
+		AllocationDataPool.emplace_back(AllocationData);
+	}
+
+	// Setup the special start and free block
+	HeadBlock.InitAsHead(PoolIndex);
+	PoolAllocatorPrivateData* FreeBlock = GetNewAllocationData();
+	FreeBlock->InitAsFree(PoolIndex,static_cast<uint32>(PoolSize), PoolAlignment, 0);
+	HeadBlock.AddAfter(FreeBlock);
+	FreeBlocks.emplace_back(FreeBlock);
+}
+
+bool MemoryPool::TryAllocate(uint32 InSizeInBytes, uint32 InAllocationAlignment, PoolResouceTypes InAllocationResourceType, PoolAllocatorPrivateData& AllocationData)
+{
+	wconstraint(IsResourceTypeSupported(InAllocationResourceType));
+
+	int32 FreeBlockIndex = FindFreeBlock(InSizeInBytes, InAllocationAlignment);
+	if (FreeBlockIndex != white::INDEX_NONE)
+	{
+		uint32 AlignedSize = PoolAllocatorPrivateData::GetAlignedSize(InSizeInBytes, PoolAlignment, InAllocationAlignment);
+
+		PoolAllocatorPrivateData* FreeBlock = FreeBlocks[FreeBlockIndex];
+		wconstraint(FreeBlock->GetSize() >= AlignedSize);
+
+		// Remove from the free blocks because size will change and need sorted insert again then
+		FreeBlocks.erase(FreeBlocks.begin()+FreeBlockIndex);
+
+		// update private allocator data of new and free block
+		AllocationData.InitAsAllocated(InSizeInBytes, InAllocationAlignment, FreeBlock);
+		wconstraint((AllocationData.GetOffset() % InAllocationAlignment) == 0);
+
+		// Update working stats
+		wconstraint(FreeSize >= AlignedSize);
+		FreeSize -= AlignedSize;
+
+		// Free block is empty then release otherwise sorted reinsert 
+		if (FreeBlock->GetSize() == 0)
+		{
+			FreeBlock->RemoveFromLinkedList();
+			ReleaseAllocationData(FreeBlock);
+		}
+		else
+		{
+			AddToFreeBlocks(FreeBlock);
+		}
+
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+int32 MemoryPool::FindFreeBlock(uint32 InSizeInBytes, uint32 InAllocationAlignment)
+{
+	uint32 AlignedSize = PoolAllocatorPrivateData::GetAlignedSize(InSizeInBytes, PoolAlignment, InAllocationAlignment);
+
+	// Early out if total free size doesn't fit
+	if (FreeSize < AlignedSize)
+	{
+		return white::INDEX_NONE;
+	}
+
+
+	auto itr = std::lower_bound(FreeBlocks.begin(), FreeBlocks.end(), nullptr, [=](PoolAllocatorPrivateData* l, PoolAllocatorPrivateData* r) {
+		return l->GetSize() < AlignedSize;
+		});
+
+	if(itr == FreeBlocks.end())
+		return white::INDEX_NONE;
+
+	return static_cast<int32>(std::distance(FreeBlocks.begin(), itr));
+}
+
+void MemoryPool::RemoveFromFreeBlocks(PoolAllocatorPrivateData* InFreeBlock)
+{
+	for (auto itr = FreeBlocks.begin(); itr != FreeBlocks.end(); ++itr)
+	{
+		if (*itr == InFreeBlock)
+		{
+			itr = FreeBlocks.erase(itr);
+			return;
+		}
+	}
+}
+
+PoolAllocatorPrivateData* MemoryPool::AddToFreeBlocks(PoolAllocatorPrivateData* InFreeBlock)
+{
+	wconstraint(InFreeBlock->IsFree());
+	wconstraint(IsAligned(InFreeBlock->GetSize(), PoolAlignment));
+	wconstraint(IsAligned(InFreeBlock->GetOffset(), PoolAlignment));
+
+	auto FreeBlock = InFreeBlock;
+
+	// Coalesce with previous?
+	if (FreeBlock->GetPrev()->IsFree() && !FreeBlock->GetPrev()->IsLocked())
+	{
+		auto PrevFree = FreeBlock->GetPrev();
+		PrevFree->Merge(FreeBlock);
+		RemoveFromFreeBlocks(PrevFree);
+		ReleaseAllocationData(FreeBlock);
+
+		FreeBlock = PrevFree;
+	}
+
+	// Coalesce with next?
+	if (FreeBlock->GetNext()->IsFree() && !FreeBlock->GetNext()->IsLocked())
+	{
+		auto NextFree = FreeBlock->GetNext();
+		FreeBlock->Merge(NextFree);
+		RemoveFromFreeBlocks(NextFree);
+		ReleaseAllocationData(NextFree);
+	}
+
+	auto pos = std::lower_bound(FreeBlocks.begin(), FreeBlocks.end(), FreeBlock, 
+		ListOrder == FreeListOrder::SortBySize ? 
+		[](PoolAllocatorPrivateData* l, PoolAllocatorPrivateData* r) {
+		return l->GetSize() < r->GetSize();
+		} : 
+		[](PoolAllocatorPrivateData* l, PoolAllocatorPrivateData* r) {
+			return l->GetOffset() < r->GetOffset();
+		});
+
+	FreeBlocks.insert(pos, FreeBlock);
+
+	return FreeBlock;
+}
+
+PoolAllocatorPrivateData* MemoryPool::GetNewAllocationData()
+{
+	return AllocationDataPool.empty() ? new PoolAllocatorPrivateData() : white::pop(AllocationDataPool);
+}
+
+void MemoryPool::ReleaseAllocationData(PoolAllocatorPrivateData* InData)
+{
+	InData->Reset();
+	if (AllocationDataPool.size() >= 32)
+		delete InData;
+	else
+		AllocationDataPool.push_back(InData);
+}
 
 AllocatorConfig IPoolAllocator::GetResourceAllocatorInitConfig(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_FLAGS InResourceFlags, uint32 InBufferAccess)
 {
@@ -54,14 +264,13 @@ AllocatorConfig IPoolAllocator::GetResourceAllocatorInitConfig(D3D12_HEAP_TYPE I
 }
 
 template<MemoryPool::FreeListOrder Order, bool Defrag>
-PoolAllocator<Order,Defrag>::PoolAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, 
-	const AllocatorConfig& InConfig, const std::string& InName, AllocationStrategy InAllocationStrategy, 
+PoolAllocator<Order, Defrag>::PoolAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
+	const AllocatorConfig& InConfig, const std::string& InName, AllocationStrategy InAllocationStrategy,
 	uint64 InDefaultPoolSize, uint32 InPoolAlignment, uint32 InMaxAllocationSize)
 	:DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), VisibleNodes),
 	DefaultPoolSize(InDefaultPoolSize), PoolAlignment(InPoolAlignment), MaxAllocationSize(InMaxAllocationSize),
-	InitConfig(InConfig),Name(InName),Strategy(InAllocationStrategy)
+	InitConfig(InConfig), Name(InName), Strategy(InAllocationStrategy)
 {
-
 }
 
 template<MemoryPool::FreeListOrder Order, bool Defrag>
@@ -192,7 +401,7 @@ void PoolAllocator<Order, Defrag>::AllocateResource(uint32 GPUIndex, D3D12_HEAP_
 			ResourceLocation.SetResource(NewResource);
 		}
 	}
-	else 
+	else
 	{
 		// Allocate Standalone - move to owner of resource because this allocator should only manage pooled allocations (needed for now to do the same as FD3D12DefaultBufferPool)
 		ResourceHolder* NewResource = nullptr;
@@ -206,7 +415,7 @@ void PoolAllocator<Order, Defrag>::AllocateResource(uint32 GPUIndex, D3D12_HEAP_
 }
 
 template<MemoryPool::FreeListOrder Order, bool Defrag>
-ResourceHolder* platform_ex::Windows::D3D12::PoolAllocator<Order, Defrag>::CreatePlacedResource(const PoolAllocatorPrivateData& InAllocationData, const D3D12_RESOURCE_DESC& InDesc, D3D12_RESOURCE_STATES InCreateState, ResourceStateMode InResourceStateMode, const D3D12_CLEAR_VALUE* InClearValue, const char* InName)
+ResourceHolder* PoolAllocator<Order, Defrag>::CreatePlacedResource(const PoolAllocatorPrivateData& InAllocationData, const D3D12_RESOURCE_DESC& InDesc, D3D12_RESOURCE_STATES InCreateState, ResourceStateMode InResourceStateMode, const D3D12_CLEAR_VALUE* InClearValue, const char* InName)
 {
 	auto Adapter = GetParentDevice()->GetParentAdapter();
 	auto HeapAndOffset = GetBackingHeapAndAllocationOffsetInBytes(InAllocationData);
@@ -217,7 +426,7 @@ ResourceHolder* platform_ex::Windows::D3D12::PoolAllocator<Order, Defrag>::Creat
 }
 
 template<MemoryPool::FreeListOrder Order, bool Defrag>
-HeapAndOffset platform_ex::Windows::D3D12::PoolAllocator<Order, Defrag>::GetBackingHeapAndAllocationOffsetInBytes(const PoolAllocatorPrivateData& InAllocationData) const
+HeapAndOffset PoolAllocator<Order, Defrag>::GetBackingHeapAndAllocationOffsetInBytes(const PoolAllocatorPrivateData& InAllocationData) const
 {
 	return HeapAndOffset{
 		.Heap = Pools[InAllocationData.GetPoolIndex()]->GetBackingHeap(),
@@ -229,17 +438,77 @@ template<MemoryPool::FreeListOrder Order, bool Defrag>
 template<MemoryPool::PoolResouceTypes InAllocationResourceType>
 bool PoolAllocator<Order, Defrag>::TryAllocateInternal(uint32 InSizeInBytes, uint32 InAllocationAlignment, PoolAllocatorPrivateData& AllocationData)
 {
+	std::unique_lock Lock{ CS };
+
+	wconstraint(PoolAllocationOrder.size() == Pools.size());
+	for (int32 PoolIndex : PoolAllocationOrder)
+	{
+		auto Pool = Pools[PoolIndex];
+		if (Pool != nullptr && Pool->IsResourceTypeSupported(InAllocationResourceType) && !Pool->IsFull() && Pool->TryAllocate(InSizeInBytes, InAllocationAlignment, InAllocationResourceType, AllocationData))
+		{
+			return true;
+		}
+	}
+
+	// Find a free pool index
+	int16 NewPoolIndex = -1;
+	for (int32 PoolIndex = 0; PoolIndex <static_cast<int32>(Pools.size()); PoolIndex++)
+	{
+		if (Pools[PoolIndex] == nullptr)
+		{
+			NewPoolIndex = PoolIndex;
+			break;
+		}
+	}
+
+	if (NewPoolIndex >= 0)
+	{
+		Pools[NewPoolIndex] = CreateNewPool(NewPoolIndex, InSizeInBytes, InAllocationResourceType);
+	}
+	else
+	{
+		NewPoolIndex =static_cast<int16>(Pools.size());
+		Pools.emplace_back(CreateNewPool(NewPoolIndex, InSizeInBytes, InAllocationResourceType));
+		PoolAllocationOrder.emplace_back(NewPoolIndex);
+	}
+
+	return Pools[NewPoolIndex]->TryAllocate(InSizeInBytes, InAllocationAlignment, InAllocationResourceType, AllocationData);
+
 	return false;
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
+MemoryPool* PoolAllocator<Order, Defrag>::CreateNewPool(int16 InPoolIndex, uint32 InMinimumAllocationSize, MemoryPool::PoolResouceTypes InAllocationResourceType)
+{
+	// Find out the pool size - use default, but if allocation doesn't fit then round up to next power of 2
+	// so it 'always' fits the pool allocator
+	auto PoolSize = DefaultPoolSize;
+	if (InMinimumAllocationSize > PoolSize)
+	{
+		wconstraint(InMinimumAllocationSize <= MaxAllocationSize);
+		PoolSize = std::min<uint64>(std::bit_ceil(InMinimumAllocationSize),MaxAllocationSize);
+	}
+
+	auto NewPool = new MemoryPool(GetParentDevice(), GetVisibilityMask(), InitConfig,
+		Name, Strategy, InPoolIndex, PoolSize, PoolAlignment, InAllocationResourceType, Order);
+
+	return NewPool;
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
+void PoolAllocator<Order, Defrag>::Deallocate(ResourceLocation& ResourceLocation)
+{
+
 }
 
 template<MemoryPool::FreeListOrder Order, bool Defrag>
 ResourceHolder* PoolAllocator<Order, Defrag>::GetBackingResource(ResourceLocation& InResouceLocation) const
 {
 	wconstraint(IsOwner(InResouceLocation));
-	
+
 	auto& AllocationData = InResouceLocation.GetPoolAllocatorPrivateData();
 
-	return Pools[AllocationData.GetPoolIndex()]->GetBackingResource(InResouceLocation);
+	return Pools[AllocationData.GetPoolIndex()]->GetBackingResource();
 }
 
 using MultiBuddyConstantUploadAllocator = MultiBuddyAllocator<true, true>;
@@ -301,7 +570,7 @@ MultiBuddyConstantUploadAllocator::ConstantAllocator* MultiBuddyConstantUploadAl
 {
 	uint32 AllocationSize = std::bit_ceil(InMinSizeInBytes);
 
-	return new ConstantAllocator(GetParentDevice(),GetVisibilityMask(), AllocationSize);
+	return new ConstantAllocator(GetParentDevice(), GetVisibilityMask(), AllocationSize);
 }
 
 bool MultiBuddyConstantUploadAllocator::ConstantAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
@@ -797,6 +1066,12 @@ void UploadHeapAllocator::CleanUpAllocations(uint64 InFrameLag)
 	FastConstantAllocator.CleanUpAllocations(InFrameLag);
 }
 
+BufferAllocator::BufferAllocator(NodeDevice* Parent, GPUMaskType VisibleNodes)
+	:DeviceChild(Parent),MultiNodeGPUObject(Parent->GetGPUMask(),VisibilityMask)
+{
+}
+
+
 template<ResourceStateMode mode>
 void BufferAllocator::AllocDefaultResource(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& InResourceDesc, uint32 InBuffAccess, D3D12_RESOURCE_STATES InCreateState, ResourceLocation& ResourceLocation, uint32 Alignment, const char* Name)
 {
@@ -821,7 +1096,7 @@ void BufferAllocator::AllocDefaultResource(D3D12_HEAP_TYPE InHeapType, const D3D
 	}
 
 	// Perform actual allocation
-	BufferPool->AllocDefaultResource(InHeapType, ResourceDesc, InBuffAccess, mode, InCreateState, Alignment, Name, ResourceLocation);
+	BufferPool->AllocDefaultResource(InHeapType, ResourceDesc, InBuffAccess, mode, InCreateState, Alignment, ResourceLocation,Name);
 }
 
 template<ResourceStateMode mode>
@@ -852,12 +1127,13 @@ D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState(D3D12_HEAP
 	}
 }
 
+template void BufferAllocator::AllocDefaultResource<ResourceStateMode::Default>(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& InResourceDesc, uint32 InBuffAccess, D3D12_RESOURCE_STATES InCreateState, ResourceLocation& ResourceLocation, uint32 Alignment, const char* Name);
 template D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState<ResourceStateMode::Default>(D3D12_HEAP_TYPE InHeapType, uint32 InBufferAccess);
 
 BufferPool* BufferAllocator::CreateBufferPool(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_FLAGS InResourceFlags, uint32 InBufferAccess, ResourceStateMode InResourceStateMode)
 {
 	auto Device = GetParentDevice();
-	auto Config = BufferPool::GetResourceAllocatorInitConfig(InHeapType, InResourceFlags,static_cast<EAccessHint>(InBufferAccess));
+	auto Config = BufferPool::GetResourceAllocatorInitConfig(InHeapType, InResourceFlags, static_cast<EAccessHint>(InBufferAccess));
 
 	const std::string Name("D3D12 Pool Allocator");
 	auto AllocationStrategy = IPoolAllocator::GetResourceAllocationStrategy(InResourceFlags, InResourceStateMode);
@@ -870,8 +1146,8 @@ BufferPool* BufferAllocator::CreateBufferPool(D3D12_HEAP_TYPE InHeapType, D3D12_
 
 	BufferPool* NewPool = nullptr;
 
-	if(bDefragEnabled)
-		NewPool = new PoolAllocator<MemoryPool::FreeListOrder::SortByOffset,true>(Device, GetVisibilityMask(), Config, Name, AllocationStrategy, PoolSize, PoolAlignment,static_cast<uint32>(MaxAllocationSize));
+	if (bDefragEnabled)
+		NewPool = new PoolAllocator<MemoryPool::FreeListOrder::SortByOffset, true>(Device, GetVisibilityMask(), Config, Name, AllocationStrategy, PoolSize, PoolAlignment, static_cast<uint32>(MaxAllocationSize));
 	else
 		NewPool = new PoolAllocator<MemoryPool::FreeListOrder::SortByOffset, false>(Device, GetVisibilityMask(), Config, Name, AllocationStrategy, PoolSize, PoolAlignment, static_cast<uint32>(MaxAllocationSize));
 

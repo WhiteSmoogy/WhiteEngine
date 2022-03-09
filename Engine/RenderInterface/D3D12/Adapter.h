@@ -35,7 +35,7 @@ namespace platform_ex::Windows::D3D12 {
 		const void* ResouceData = nullptr;
 	};
 
-	class IResouceAllocator;
+	class IResourceAllocator;
 
 	// Represents a set of linked D3D12 device nodes (LDA i.e 1 or more identical GPUs). In most cases there will be only 1 node, however if the system supports
 	// SLI/Crossfire and the app enables it an Adapter will have 2 or more nodes. This class will own anything that can be shared
@@ -58,6 +58,11 @@ namespace platform_ex::Windows::D3D12 {
 			EFormat format, uint32 access, SampleDesc sample_info, std::optional<ElementInitData const*>  init_data = nullptr) override;
 
 		platform::Render::Caps& GetCaps() override;
+
+		bool IsHeapNotZeroedSupported() const
+		{
+			return bHeapNotZeroedSupported;
+		}
 
 		ShaderCompose* CreateShaderCompose(std::unordered_map<platform::Render::ShaderType, const asset::ShaderBlobAsset*> pShaderBlob, platform::Render::Effect::Effect* pEffect) override;
 
@@ -148,7 +153,7 @@ namespace platform_ex::Windows::D3D12 {
 			uint32 Alignment,
 			GraphicsBuffer* Buffer,
 			ResourceLocation& ResourceLocation,
-			IResouceAllocator* ResourceAllocator);
+			IResourceAllocator* ResourceAllocator);
 
 		HRESULT CreateCommittedResource(const D3D12_RESOURCE_DESC& InDesc, GPUMaskType CreationNode, const D3D12_HEAP_PROPERTIES& HeapProps, D3D12_RESOURCE_STATES InInitialState,
 			D3D12_RESOURCE_STATES InDefaultState, const D3D12_CLEAR_VALUE* ClearValue, ResourceHolder** ppOutResource, const char* Name);

@@ -2,6 +2,7 @@
 
 #include "Common.h"
 #include "ResourceHolder.h"
+#include "../IFormat.hpp"
 #include <shared_mutex>
 
 namespace platform_ex::Windows::D3D12
@@ -11,7 +12,7 @@ namespace platform_ex::Windows::D3D12
 
 	constexpr uint32 d3d_buffer_alignment = 64 * 1024;
 
-	class MemoryPool
+	class MemoryPool :public DeviceChild, public MultiNodeGPUObject
 	{
 	public:
 		enum class FreeListOrder
@@ -25,15 +26,52 @@ namespace platform_ex::Windows::D3D12
 			Buffers = 0x1,
 		};
 
-		ResourceHolder* GetBackingResource(ResourceLocation& InResouceLocation) const
-		{
+		MemoryPool(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
+			const AllocatorConfig& InConfig,
+			const std::string& Name,
+			AllocationStrategy InAllocationStrategy,
+			uint16 InPoolIndex,
+			uint64 InPoolSize, uint32 InPoolAlignment,
+			PoolResouceTypes InAllocationResourceType, FreeListOrder InFreeListOrder);
 
-		}
 
-		HeapHolder* GetBackingHeap() const
-		{
+		ResourceHolder* GetBackingResource() const { return BackingResource.Get(); }
 
-		}
+		HeapHolder* GetBackingHeap() const { return BackingHeap.Get(); }
+
+		bool IsResourceTypeSupported(MemoryPool::PoolResouceTypes InAllocationResourceType) { return InAllocationResourceType == SupportResouceTypes; }
+
+		bool IsFull() { return FreeSize == 0; }
+
+		bool TryAllocate(uint32 InSizeInBytes, uint32 InAllocationAlignment, PoolResouceTypes InAllocationResourceType, PoolAllocatorPrivateData& AllocationData);
+	
+		int32 FindFreeBlock(uint32 InSizeInBytes, uint32 InAllocationAlignment);
+
+		PoolAllocatorPrivateData* AddToFreeBlocks(PoolAllocatorPrivateData* InFreeBlock);
+
+		PoolAllocatorPrivateData* GetNewAllocationData();
+		void ReleaseAllocationData(PoolAllocatorPrivateData* InData);
+
+		void RemoveFromFreeBlocks(PoolAllocatorPrivateData* InFreeBlock);
+	private:
+		int16 PoolIndex;
+		uint64 PoolSize;
+		uint32 PoolAlignment;
+		PoolResouceTypes SupportResouceTypes;
+		FreeListOrder ListOrder;
+		uint64 FreeSize;
+		std::vector<PoolAllocatorPrivateData*> FreeBlocks;
+		std::vector< PoolAllocatorPrivateData*> AllocationDataPool;
+
+		PoolAllocatorPrivateData HeadBlock;
+
+		const AllocatorConfig InitConfig;
+		const std::string Name;
+		AllocationStrategy Strategy;
+		uint64 LastUsedFrameFence;
+
+		COMPtr<HeapHolder> BackingHeap;
+		COMPtr<ResourceHolder> BackingResource;
 	};
 
 	struct HeapAndOffset
@@ -79,6 +117,10 @@ namespace platform_ex::Windows::D3D12
 			const char* InName);
 
 		HeapAndOffset GetBackingHeapAndAllocationOffsetInBytes(const PoolAllocatorPrivateData& InAllocationData) const;
+
+		MemoryPool* CreateNewPool(int16 InPoolIndex, uint32 InMinimumAllocationSize, MemoryPool::PoolResouceTypes InAllocationResourceType);
+
+		void Deallocate(ResourceLocation& ResourceLocation);
 	private:
 		const uint64 DefaultPoolSize;
 		const uint32 PoolAlignment;
@@ -86,9 +128,14 @@ namespace platform_ex::Windows::D3D12
 
 		std::vector<MemoryPool*> Pools;
 
+		std::vector<uint32> PoolAllocationOrder;
+
 		const AllocatorConfig InitConfig;
 		const std::string Name;
 		AllocationStrategy Strategy;
+
+		std::shared_mutex CS;
+
 	};
 
 	

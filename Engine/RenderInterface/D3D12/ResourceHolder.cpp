@@ -5,6 +5,46 @@ namespace platform_ex::Windows {
 		ImplDeDtor(ResourceHolder)
 		ImplDeDtor(HeapHolder)
 
+		void PoolAllocatorPrivateData::InitAsAllocated(uint32 InSize, uint32 InAlignment, PoolAllocatorPrivateData* InFree)
+		{
+			wconstraint(InFree->IsFree());
+
+			Reset();
+
+			Size = InSize;
+			Alignment = InAlignment;
+			SetAllocationType(EAllocationType::Allocated);
+			Offset = GetAlignedOffset(InFree->Offset, InFree->Alignment, InAlignment);
+			PoolIndex = InFree->PoolIndex;
+			Locked = 1;
+
+			uint32 AlignedSize = AlignArbitrary(InSize, InFree->Alignment);
+			InFree->Size -= AlignedSize;
+			InFree->Offset += AlignedSize;
+			InFree->AddBefore(this);
+		}
+
+		void PoolAllocatorPrivateData::InitAsHead(int16 InPoolIndex)
+		{
+			Reset();
+
+			SetAllocationType(EAllocationType::Head);
+			NextAllocation = this;
+			PreviousAllocation = this;
+			PoolIndex = InPoolIndex;
+		}
+
+		void PoolAllocatorPrivateData::InitAsFree(int16 InPoolIndex, uint32 InSize, uint32 InAlignment, uint32 InOffset)
+		{
+			Reset();
+
+			Size = InSize;
+			Alignment = InAlignment;
+			SetAllocationType(EAllocationType::Free);
+			Offset = InOffset;
+			PoolIndex = InPoolIndex;
+		}
+
 		bool ResourceHolder::UpdateResourceBarrier(D3D12_RESOURCE_BARRIER & barrier, D3D12_RESOURCE_STATES target_state)
 		{
 			if (curr_state == target_state)
@@ -105,8 +145,14 @@ namespace platform_ex::Windows {
 				break;
 			case SubAllocation:
 			{
-				wassume(GetSubDeAllocator() != nullptr);
-				GetSubDeAllocator()->Deallocate(*this);
+				switch (GetAllocatorType())
+				{
+				case AT_SubDe:
+					GetSubDeAllocator()->Deallocate(*this);
+					break;
+				case AT_Pool:
+					GetPoolAllocator()->Deallocate(*this);
+				}
 				break;
 			}
 			case FastAllocation:
@@ -128,6 +174,14 @@ namespace platform_ex::Windows {
 			//Transfer Allocator
 
 			Source.ClearMembers();
+		}
+
+		void ResourceLocation::UnlockPoolData()
+		{
+			if (GetAllocatorType() == AT_Pool)
+			{
+				GetPoolAllocatorPrivateData().UnLock();
+			}
 		}
 	}
 }

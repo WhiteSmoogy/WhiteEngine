@@ -7,6 +7,7 @@
 #define WE_RENDER_D3D12_Resource_h 1
 
 #include "Common.h"
+#include "d3d12_dxgi.h"
 #include <WBase/enum.hpp>
 
 namespace platform_ex::Windows {
@@ -54,8 +55,8 @@ namespace platform_ex::Windows {
 			~HeapHolder();
 
 
-			inline ID3D12Heap* GetHeap() { return Heap.Get(); }
-			inline void SetHeap(ID3D12Heap* HeapIn) { Heap.GetRef() = HeapIn; }
+			ID3D12Heap* GetHeap() const{ return Heap.Get(); }
+			void SetHeap(ID3D12Heap* HeapIn) { Heap.GetRef() = HeapIn; }
 		private:
 			COMPtr<ID3D12Heap> Heap;
 		};
@@ -115,6 +116,7 @@ namespace platform_ex::Windows {
 
 				return ResourceBaseAddress;
 			}
+
 		protected:
 			ResourceHolder();
 
@@ -181,17 +183,128 @@ namespace platform_ex::Windows {
 			uint32 GetOffset() const { return Offset; }
 
 			void SetOwner(ResourceLocation* InOwner) { Owner = InOwner; }
-		private:
-			int16 PoolIndex;
 
+			uint32 GetSize() const { return Size; }
+
+			void InitAsAllocated(uint32 InSize, uint32 InAlignment, PoolAllocatorPrivateData* FreeBlock);
+			void InitAsHead(int16 InPoolIndex);
+			void InitAsFree(int16 InPoolIndex, uint32 InSize, uint32 InAlignment, uint32 InOffset);
+			
+
+			void Reset()
+			{
+				Size = 0;
+				Alignment = 0;
+				SetAllocationType(EAllocationType::Unknown);
+				Offset = 0;
+				PoolIndex = -1;
+				Locked = false;
+
+				Owner = nullptr;
+				PreviousAllocation = NextAllocation = nullptr;
+			}
+
+			bool IsFree() const{ return Type == white::underlying(EAllocationType::Free); }
+
+			bool IsLocked() const { return (Locked == 1); }
+
+			void UnLock() { wconstraint(IsLocked()); Locked = 0; }
+
+			static uint32 GetAlignedSize(uint32 InSizeInBytes, uint32 InPoolAlignment, uint32 InAllocationAlignment)
+			{
+				wconstraint(InAllocationAlignment <= InPoolAlignment);
+
+				// Compute the size, taking the pool and allocation alignmend into account (conservative size)
+				uint32 Size = ((InPoolAlignment % InAllocationAlignment) != 0) ? InSizeInBytes + InAllocationAlignment : InSizeInBytes;
+				return AlignArbitrary(Size, InPoolAlignment);
+			}
+
+			static uint32 GetAlignedOffset(uint32 InOffset, uint32 InPoolAlignment, uint32 InAllocationAlignment)
+			{
+				uint32 AlignedOffset = InOffset;
+
+				// fix the offset with the requested alignment if needed
+				if ((InPoolAlignment % InAllocationAlignment) != 0)
+				{
+					uint32 AlignmentRest = AlignedOffset % InAllocationAlignment;
+					if (AlignmentRest > 0)
+					{
+						AlignedOffset += (InAllocationAlignment - AlignmentRest);
+					}
+				}
+
+				return AlignedOffset;
+			}
+
+			PoolAllocatorPrivateData* GetPrev() const{ return PreviousAllocation; }
+			PoolAllocatorPrivateData* GetNext() const { return NextAllocation; }
+
+			void Merge(PoolAllocatorPrivateData* InOther)
+			{
+				wconstraint(IsFree() && InOther->IsFree());
+				wconstraint((Offset + Size) == InOther->Offset);
+				wconstraint(PoolIndex == InOther->GetPoolIndex());
+
+				Size += InOther->Size;
+
+				InOther->RemoveFromLinkedList();
+				InOther->Reset();
+			}
+
+			void RemoveFromLinkedList()
+			{
+				wconstraint(IsFree());
+				PreviousAllocation->NextAllocation = NextAllocation;
+				NextAllocation->PreviousAllocation = PreviousAllocation;
+			}
+
+			void AddBefore(PoolAllocatorPrivateData* InOther)
+			{
+				PreviousAllocation->NextAllocation = InOther;
+				InOther->PreviousAllocation = PreviousAllocation;
+
+				PreviousAllocation = InOther;
+				InOther->NextAllocation = this;
+			}
+
+			void AddAfter(PoolAllocatorPrivateData* InOther)
+			{
+				NextAllocation->PreviousAllocation = InOther;
+				InOther->NextAllocation = NextAllocation;
+
+				NextAllocation = InOther;
+				InOther->PreviousAllocation = this;
+			}
+		private:
+			enum class EAllocationType : uint8
+			{
+				Unknown,
+				Free,
+				Allocated,
+				Head,
+			};
+
+			void SetAllocationType(EAllocationType type) { Type = white::underlying(type); }
+			EAllocationType GetAllocationType() const { return static_cast<EAllocationType>(Type); }
+
+			uint32 Size;
+			uint32 Alignment;
 			uint32 Offset;
+
+
+			uint32 PoolIndex:16;
+			uint32 Type : 4;
+			uint32 Locked:1;
+			uint32 Unused : 11;
+			PoolAllocatorPrivateData* PreviousAllocation;
+			PoolAllocatorPrivateData* NextAllocation;
 
 			ResourceLocation* Owner;
 		};
 
 		struct ISubDeAllocator
 		{
-			virtual void Deallocate(ResourceLocation& ResourceLocation);
+			virtual void Deallocate(ResourceLocation& ResourceLocation) = 0;
 		};
 
 		struct IPoolAllocator
@@ -215,6 +328,8 @@ namespace platform_ex::Windows {
 				// multi state resource need to placed because each allocation can be in a different state
 				return (ResourceStateMode == 0xFF) ? AllocationStrategy::kPlacedResource : AllocationStrategy::kManualSubAllocation;
 			}
+
+			virtual void Deallocate(ResourceLocation& ResourceLocation) = 0;
 		};
 
 		class ResourceLocation :public DeviceChild, public white::noncopyable
@@ -289,6 +404,9 @@ namespace platform_ex::Windows {
 			const inline bool IsValid() const {
 				return Type != Undefined;
 			}
+
+			void UnlockPoolData();
+
 		private:
 			void ClearResource();
 			void ClearMembers();
@@ -298,8 +416,8 @@ namespace platform_ex::Windows {
 			ResourceHolder* UnderlyingResource;
 
 			enum {
-				AT_SubDe = 1,
-				AT_Pool = 2,
+				AT_SubDe = 0b1,
+				AT_Pool = 0b11,
 				At_Unknown = 0,
 			};
 			union
@@ -336,6 +454,11 @@ namespace platform_ex::Windows {
 				{
 					PollAllocator = reinterpret_cast<_type*>(reinterpret_cast<uintptr_t>(Value) | AT_Pool);
 				}
+			}
+
+			int GetAllocatorType() const
+			{
+				return static_cast<int>(reinterpret_cast<uintptr_t>(DeAllocator) & 0x3);
 			}
 
 			union PrivateAllocatorData

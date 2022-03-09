@@ -176,7 +176,7 @@ namespace platform_ex::Windows::D3D12 {
 			return new GraphicsBuffer(device, usage, access, Size, format);
 
 		uint32 Stride = 0;
-		ResourceAllocator* Allocator = nullptr;
+		IResourceAllocator* Allocator = nullptr;
 
 		auto [Desc, Alignment] = GetResourceDescAndAlignment(Size, Stride, access);
 
@@ -195,7 +195,7 @@ namespace platform_ex::Windows::D3D12 {
 			BufferOut->Alignment = Alignment;
 			BufferOut->Stride = Stride;
 
-			AllocateBuffer(GetNodeDevice(0), Desc, Size, usage, access, InitialState,CreateInfo.ResouceData, Alignment, BufferOut, BufferOut->Location, Allocator);
+			AllocateBuffer(GetNodeDevice(0), Desc, Size, usage, access, InitialState,CreateInfo, Alignment, BufferOut, BufferOut->Location, Allocator);
 		}
 		else
 		{
@@ -205,7 +205,7 @@ namespace platform_ex::Windows::D3D12 {
 			BufferOut->Alignment = Alignment;
 			BufferOut->Stride = Stride;
 
-			AllocateBuffer(GetNodeDevice(0), Desc, Size, usage,access, CreateState, CreateInfo.ResouceData, Alignment, BufferOut, BufferOut->Location, Allocator);
+			AllocateBuffer(GetNodeDevice(0), Desc, Size, usage,access, CreateState, CreateInfo, Alignment, BufferOut, BufferOut->Location, Allocator);
 
 			if (CreateInfo.ResouceData == nullptr)
 			{
@@ -257,7 +257,7 @@ namespace platform_ex::Windows::D3D12 {
 		D3D12_RESOURCE_STATES InCreateState,
 		ResourceCreateInfo& CreateInfo,
 		uint32 Alignment, GraphicsBuffer* Buffer,
-		ResourceLocation& ResourceLocation, ResourceAllocator* ResourceAllocator)
+		ResourceLocation& ResourceLocation, IResourceAllocator* ResourceAllocator)
 	{
 		const bool bIsDynamic = (InUsage & Buffer::Usage::Dynamic) ? true : false;
 

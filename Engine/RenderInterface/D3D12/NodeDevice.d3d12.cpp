@@ -20,6 +20,7 @@ NodeDevice::NodeDevice(GPUMaskType InGPUMask, D3D12Adapter* InAdapter)
 	, GlobalViewHeap(this, InGPUMask)
 	//it's similar UploadHeapAllocator/FastConstantAllocator(64k pagesize)
 	, DefaultFastAllocator(this,AllGPU(), D3D12_HEAP_TYPE_UPLOAD, 1024 * 1024 * 4)
+	,DefaultBufferAllocator(this,AllGPU())
 {
 	CommandListManager = new D3D12CommandListManager(this, D3D12_COMMAND_LIST_TYPE_DIRECT, CommandQueueType::Default);
 	CopyCommandListManager = new D3D12CommandListManager(this, D3D12_COMMAND_LIST_TYPE_COPY, CommandQueueType::Copy);

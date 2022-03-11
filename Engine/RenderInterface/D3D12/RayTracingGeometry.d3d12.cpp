@@ -14,7 +14,7 @@ D12::RayTracingGeometry::RayTracingGeometry(const platform::Render::RayTracingGe
 {
 	this->IndexBuffer = static_cast<GraphicsBuffer*>(initializer.IndexBuffer);
 
-	white::uint32 IndexStride = this->IndexBuffer ? NumFormatBytes(this->IndexBuffer->GetFormat()) : 0;
+	white::uint32 IndexStride = this->IndexBuffer ? NumFormatBytes(Convert(this->IndexBuffer->GetFormat())) : 0;
 	this->IndexStride = IndexStride;
 	this->IndexOffsetInBytes = initializer.IndexBufferOffset;
 
@@ -161,27 +161,26 @@ void D12::CreateAccelerationStructureBuffers(shared_ptr<GraphicsBuffer>& Acceler
 {
 	wconstraint(PrebuildInfo.ResultDataMaxSizeInBytes <= std::numeric_limits<uint32>::max());
 
-	AccelerationStructureBuffer =white::share_raw(Creator->CreateVertexBuffer(
-		Usage::Static,
-		EAccessHint::EA_GPUUnordered|EAccessHint::EA_AccelerationStructure,
-		static_cast<uint32>(PrebuildInfo.ResultDataMaxSizeInBytes),
-		EF_Unknown
-	));
-
 	bool isTopLevel = Type == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
-	AccelerationStructureBuffer->SetName(isTopLevel? "Acceleration structure[Scene]": "Acceleration structure[Geometry]");
+	ResourceCreateInfo CreateInfo{
+		.WithoutNativeResource = false,
+		.DebugName = isTopLevel ? "Acceleration structure[Scene]" : "Acceleration structure[Geometry]",
+		.ResouceData = nullptr
+	};
 
-	auto ScratchBufferWidth = std::max(PrebuildInfo.UpdateScratchDataSizeInBytes, PrebuildInfo.ScratchDataSizeInBytes);
+	D3D12_RESOURCE_DESC AccelerationStructureBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
+		PrebuildInfo.ResultDataMaxSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-	wconstraint(ScratchBufferWidth <= std::numeric_limits<uint32>::max());
+	AccelerationStructureBuffer = white::share_raw(Creator->CreateBuffer<ResourceStateMode::Single>(
+		nullptr, AccelerationStructureBufferDesc,Usage::Static,EAccessHint::EA_AccelerationStructure,D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT,
+		0, AccelerationStructureBufferDesc.Width, CreateInfo, nullptr));
 
-	ScratchBuffer = white::share_raw(Creator->CreateVertexBuffer(
-		Usage::Static,
-		EAccessHint::EA_GPUUnordered | EAccessHint::EA_Raw,
-		static_cast<uint32>(ScratchBufferWidth),
-		EF_Unknown
-	));
+	D3D12_RESOURCE_DESC ScratchBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
+		std::max(PrebuildInfo.UpdateScratchDataSizeInBytes, PrebuildInfo.ScratchDataSizeInBytes), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-	ScratchBuffer->SetName(isTopLevel ?"Acceleration structure scratch[Scene]": "Acceleration structure scratch[Geometry]");
+	CreateInfo.DebugName = isTopLevel ? "Acceleration structure scratch[Scene]" : "Acceleration structure scratch[Geometry]";
+	ScratchBuffer = white::share_raw(Creator->CreateBuffer<ResourceStateMode::Single>(
+		nullptr, ScratchBufferDesc, Usage::Static, EAccessHint::EA_GPUUnordered | EAccessHint::EA_Raw,D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT,
+		0, ScratchBufferDesc.Width, CreateInfo, nullptr));
 }

@@ -30,6 +30,8 @@ namespace platform_ex::Windows::D3D12 {
 
 	struct ResourceCreateInfo
 	{
+		unsigned int GPUIndex = 0;
+
 		bool WithoutNativeResource = true;
 		const char* DebugName = "unknown";
 		const void* ResouceData = nullptr;
@@ -68,6 +70,12 @@ namespace platform_ex::Windows::D3D12 {
 
 		//\brief D3D12 Buffer 创建时没有BIND_FLAG
 		GraphicsBuffer* CreateBuffer(platform::Render::CommandList* Cmdlist,Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, ResourceCreateInfo& CreateInfo);
+
+		template<ResourceStateMode Mode>
+		GraphicsBuffer* CreateBuffer(platform::Render::CommandList* Cmdlist, const D3D12_RESOURCE_DESC& InDesc,
+			Buffer::Usage usage, white::uint32 access, 
+			uint32 Alignment,uint32 Stride, uint64 Size, ResourceCreateInfo& CreateInfo,
+			IResourceAllocator* ResourceAllocator);
 
 		ConstantBuffer* CreateConstantBuffer(Buffer::Usage usage, uint32 size_in_byte,const void*  init_data) override;
 		GraphicsBuffer* CreateVertexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
@@ -143,6 +151,7 @@ namespace platform_ex::Windows::D3D12 {
 			const char* Name,
 			D3D12_RESOURCE_FLAGS Flags = D3D12_RESOURCE_FLAG_NONE);
 
+		template<ResourceStateMode Mode>
 		void AllocateBuffer(NodeDevice* Device,
 			const D3D12_RESOURCE_DESC& InDesc,
 			uint32 Size,

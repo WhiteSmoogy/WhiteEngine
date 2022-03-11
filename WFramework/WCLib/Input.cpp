@@ -4,7 +4,6 @@
 namespace platform_ex {
 
 	void ClearKeyStates() {
-		throw white::unimplemented();
 	}
 }
 

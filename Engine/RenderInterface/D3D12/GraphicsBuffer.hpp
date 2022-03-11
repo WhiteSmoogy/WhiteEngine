@@ -19,7 +19,7 @@ namespace platform_ex::Windows::D3D12 {
 	class GraphicsBuffer : public platform::Render::GraphicsBuffer,public DeviceChild,public ResourceLocationTrait{
 	public:
 		GraphicsBuffer(NodeDevice* Parent, platform::Render::Buffer::Usage usage, uint32_t access_hint,
-			uint32_t size_in_byte,platform::Render::EFormat fmt);
+			uint32_t size_in_byte,DXGI_FORMAT InFormat);
 		~GraphicsBuffer() override;
 
 		void CopyToBuffer(platform::Render::GraphicsBuffer& rhs) override;
@@ -32,7 +32,7 @@ namespace platform_ex::Windows::D3D12 {
 		ShaderResourceView* RetriveShaderResourceView();
 		UnorderedAccessView* RetriveUnorderedAccessView();
 
-		platform::Render::EFormat GetFormat() const { return format; }
+		DXGI_FORMAT GetFormat() const { return format; }
 	private:
 		void* Map(platform::Render::Buffer::Access ba) override;
 		void Unmap() override;
@@ -44,10 +44,7 @@ namespace platform_ex::Windows::D3D12 {
 		std::unique_ptr<UnorderedAccessView> uav;
 		std::unique_ptr<std::unordered_map<std::size_t, std::unique_ptr<RenderTargetView>>> rtv_maps;
 
-		COMPtr<ID3D12Resource> buffer_counter_upload;
-		white::uint32 counter_offset;
-
-		platform::Render::EFormat format;
+		DXGI_FORMAT format;
 
 		uint32 Alignment = 0;
 		uint32 Stride = 0;

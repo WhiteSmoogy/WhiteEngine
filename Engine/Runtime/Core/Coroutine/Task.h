@@ -1,6 +1,7 @@
 #pragma once
 
 #include <WBase/wdef.h>
+#include <WBase/cassert.h>
 #include <coroutine>
 #include <type_traits>
 #include <optional>
@@ -101,6 +102,7 @@ namespace white::coroutine {
 
 			void unhandled_exception() {
 				exception = std::current_exception();
+				WAssert(false, "unhandled_exception");
 			}
 
 			void return_void() noexcept
@@ -128,6 +130,7 @@ namespace white::coroutine {
 			void unhandled_exception() noexcept
 			{
 				m_exception = std::current_exception();
+				WAssert(false, "unhandled_exception");
 			}
 
 			void return_value(T & value) noexcept

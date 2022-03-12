@@ -264,7 +264,6 @@ namespace platform_ex::Windows::D3D12 {
 				}
 				wconstraint(pData);
 				std::memcpy(pData, CreateInfo.ResouceData, Size);
-				spdlog::info("memcpy dst:{}", pData);
 
 				if (bOnAsyncThread)
 				{

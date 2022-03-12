@@ -58,7 +58,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		constexpr uint32 ToIndex() const
 		{
-			return std::countl_zero(GPUMask);
+			return std::countr_zero(GPUMask);
 		}
 
 		static constexpr GPUMaskType GPU0()

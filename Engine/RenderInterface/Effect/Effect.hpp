@@ -334,7 +334,7 @@ namespace platform::Render::Effect {
 
 		static EffectsHolder& Instance();
 	private:
-		std::pmr::vector<std::pair<std::weak_ptr<asset::EffectAsset>,std::shared_ptr<Effect>>> loaded_effects;
+		std::vector<std::pair<std::weak_ptr<asset::EffectAsset>,std::shared_ptr<Effect>>> loaded_effects;
 
 		std::shared_mutex CS;
 	};

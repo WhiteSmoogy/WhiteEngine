@@ -348,7 +348,8 @@ namespace platform_ex::Windows::D3D12
 
 	private:
 		MultiBuddyAllocator<false,true> SmallBlockAllocator;
-
+		// Pool allocator for all bigger allocations - less fast but less alignment waste
+		PoolAllocator<MemoryPool::FreeListOrder::SortByOffset,false>  BigBlockAllocator;
 		// Seperate allocator used for the fast constant allocator pages which get always freed within the same frame by default
 		// (different allocator to avoid fragmentation with the other pools - always the same size allocations)
 		MultiBuddyAllocator<true, true> FastConstantAllocator;

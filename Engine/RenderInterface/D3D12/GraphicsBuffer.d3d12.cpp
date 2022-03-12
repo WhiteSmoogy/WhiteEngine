@@ -172,22 +172,28 @@ namespace platform_ex::Windows::D3D12 {
 		}
 	};
 
-
-	GraphicsBuffer* Device::CreateBuffer(platform::Render::CommandList* Cmdlist, Buffer::Usage usage, white::uint32 access, uint32 Size, EFormat format, ResourceCreateInfo& CreateInfo)
+	GraphicsBuffer* Device::CreateBuffer(platform::Render::CommandList* Cmdlist, Buffer::Usage usage, white::uint32 access, uint32 Size, uint32 Stride, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo)
 	{
-		auto device = GetNodeDevice(CreateInfo.GPUIndex);
-
-		//WithoutNativeResource
-		if (CreateInfo.WithoutNativeResource)
-			return new GraphicsBuffer(device, usage, access, Size, Convert(format));
-
-		uint32 Stride = 0;
 		IResourceAllocator* Allocator = nullptr;
 
 		auto [Desc, Alignment] = GetResourceDescAndAlignment(Size, Stride, access);
-		Desc.Format = Convert(format);
+		Desc.Format = format;
 
-		return CreateBuffer<ResourceStateMode::Default>(Cmdlist, Desc, usage, access, Alignment,0, Size, CreateInfo, Allocator);
+		return CreateBuffer<ResourceStateMode::Default>(Cmdlist, Desc, usage, access, Alignment, Stride, Size, CreateInfo, Allocator);
+	}
+	
+	const char* GetDebugBufferName(Buffer::Usage usage, white::uint32 access)
+	{
+		if (white::has_anyflags(access, EAccessHint::EA_GPUStructured))
+			return "StructBuffer";
+		return "Buffer";
+	}
+
+	GraphicsBuffer* Device::CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 Size, uint32 Stride, std::optional<void const*> init_data)
+	{
+		auto CreateInfo = FillResourceCreateInfo(init_data, GetDebugBufferName(usage,access));
+
+		return CreateBuffer(nullptr, usage, access, Size,Stride ,DXGI_FORMAT_UNKNOWN, CreateInfo);
 	}
 
 	template<ResourceStateMode Mode>
@@ -200,6 +206,10 @@ namespace platform_ex::Windows::D3D12 {
 		auto Size = static_cast<uint32>(InSize);
 
 		auto device = GetNodeDevice(CreateInfo.GPUIndex);
+
+		//WithoutNativeResource
+		if (CreateInfo.WithoutNativeResource)
+			return new GraphicsBuffer(device, usage, access, Size, Desc.Format);
 
 		//CommonCreateBuffer
 		const bool bIsDynamic = (usage & Buffer::Usage::Dynamic) ? true : false;
@@ -256,16 +266,12 @@ namespace platform_ex::Windows::D3D12 {
 
 				if (bOnAsyncThread)
 				{
-					throw white::unimplemented();
-				}
-				else if (!Cmdlist)
-				{
-					D3D12CommandInitializeBuffer Command(BufferOut, SrcResourceLoc, Size, InitialState);
-					Command.ExecuteNoCmdList();
+					new (Cmdlist->AllocCommand<D3D12CommandInitializeBuffer>()) D3D12CommandInitializeBuffer(BufferOut, SrcResourceLoc, Size, InitialState);
 				}
 				else
 				{
-					throw white::unimplemented();
+					D3D12CommandInitializeBuffer Command(BufferOut, SrcResourceLoc, Size, InitialState);
+					Command.ExecuteNoCmdList();
 				}
 			}
 		}

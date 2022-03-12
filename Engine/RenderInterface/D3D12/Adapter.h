@@ -39,6 +39,8 @@ namespace platform_ex::Windows::D3D12 {
 
 	class IResourceAllocator;
 
+	ResourceCreateInfo FillResourceCreateInfo(std::optional<void const*> init_data, const char* DebugName);
+		
 	// Represents a set of linked D3D12 device nodes (LDA i.e 1 or more identical GPUs). In most cases there will be only 1 node, however if the system supports
 	// SLI/Crossfire and the app enables it an Adapter will have 2 or more nodes. This class will own anything that can be shared
 	// across LDA including: System Pool Memory,.Pipeline State Objects, Root Signatures etc.
@@ -69,7 +71,10 @@ namespace platform_ex::Windows::D3D12 {
 		ShaderCompose* CreateShaderCompose(std::unordered_map<platform::Render::ShaderType, const asset::ShaderBlobAsset*> pShaderBlob, platform::Render::Effect::Effect* pEffect) override;
 
 		//\brief D3D12 Buffer 创建时没有BIND_FLAG
-		GraphicsBuffer* CreateBuffer(platform::Render::CommandList* Cmdlist,Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, ResourceCreateInfo& CreateInfo);
+		GraphicsBuffer* CreateBuffer(platform::Render::CommandList* Cmdlist,Buffer::Usage usage, white::uint32 access,uint32 size, uint32 stride, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo);
+
+	 GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, uint32 stride, std::optional<void const*>  init_data) override;
+
 
 		template<ResourceStateMode Mode>
 		GraphicsBuffer* CreateBuffer(platform::Render::CommandList* Cmdlist, const D3D12_RESOURCE_DESC& InDesc,

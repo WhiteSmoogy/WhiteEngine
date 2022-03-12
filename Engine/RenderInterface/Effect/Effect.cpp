@@ -471,6 +471,8 @@ namespace platform::Render::Effect {
 		return {};
 	}
 	std::shared_ptr<Effect> EffectsHolder::FindResource(const std::string& name) {
+		std::shared_lock lock{ CS };
+
 		for(auto& pair : loaded_effects)
 		{
 			if (pair.second->GetName() == name)
@@ -488,6 +490,7 @@ namespace platform::Render::Effect {
 
 	void EffectsHolder::Connect(const std::shared_ptr<asset::EffectAsset>& asset, const std::shared_ptr<Effect>& effect)
 	{
+		std::unique_lock lock{ CS };
 		loaded_effects.emplace_back(asset, effect);
 	}
 

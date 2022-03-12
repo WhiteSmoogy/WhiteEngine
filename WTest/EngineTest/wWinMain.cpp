@@ -724,7 +724,7 @@ private:
 		sun_light.DynamicShadowCascades = 2;
 		sun_light.WholeSceneDynamicShadowRadius = modelRaidus;
 
-		pLightConstantBuffer = white::share_raw(Device.CreateVertexBuffer(Buffer::Usage::Dynamic, EAccessHint::EA_GPURead | EAccessHint::EA_GPUStructured, sizeof(DirectLight)*lights.size(), static_cast<EFormat>(sizeof(DirectLight)),lights.data()));
+		pLightConstantBuffer = white::share_raw(Device.CreateBuffer(Buffer::Usage::Dynamic, EAccessHint::EA_GPURead | EAccessHint::EA_GPUStructured, sizeof(DirectLight)*lights.size(), static_cast<EFormat>(sizeof(DirectLight)),lights.data()));
 
 		RayShadowMask = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EA_GPURead | EA_GPUWrite | EA_GPUUnordered, {}));
 		RayShadowMaskDenoiser = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_R32F,EA_GPURead | EA_GPUWrite | EA_GPUUnordered, {}));

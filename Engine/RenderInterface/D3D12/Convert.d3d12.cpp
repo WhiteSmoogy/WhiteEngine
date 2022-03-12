@@ -211,7 +211,10 @@ DXGI_FORMAT platform_ex::Windows::D3D12::Convert(platform::Render::EFormat forma
 	case EF_BC7_SRGB:
 		return DXGI_FORMAT_BC7_UNORM_SRGB;
 
+	case EF_Unknown:
+		return DXGI_FORMAT_UNKNOWN;
 	}
+
 	white::raise_exception(white::unsupported());
 }
 

@@ -8,6 +8,8 @@ using namespace platform_ex::Windows::D3D12;
 int32 FastConstantAllocatorPageSize = 64 * 1024;
 int32 UploadHeapSmallBlockMaxAllocationSize = 64 * 1024;
 int32 UploadHeapSmallBlockPoolSize = 4 * 1024 * 1024;
+int32 UploadHeapBigBlockHeapSize = 8*1024*1024;
+int32 UploadHeapBigBlockMaxAllocationSize = 64 * 1024 * 1024;
 int32 FastAllocatorMinPagesToRetain = 5;
 int32 PoolAllocatorBufferPoolSize = 32 * 1024 * 1024;
 int32 PoolAllocatorBufferMaxAllocationSize = 16 * 1024 * 1024;
@@ -1019,6 +1021,8 @@ UploadHeapAllocator::UploadHeapAllocator(D3D12Adapter* InParent, NodeDevice* InP
 	:AdapterChild(InParent), DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), AllGPU())
 	, SmallBlockAllocator(InParentDevice, GetVisibilityMask(), {}, InName, AllocationStrategy::kManualSubAllocation,
 		UploadHeapSmallBlockMaxAllocationSize, UploadHeapSmallBlockPoolSize, 256)
+	, BigBlockAllocator(InParentDevice, GetVisibilityMask(), {},InName,AllocationStrategy::kManualSubAllocation,
+		UploadHeapBigBlockHeapSize,256, UploadHeapBigBlockMaxAllocationSize)
 	, FastConstantAllocator(InParentDevice, GetVisibilityMask())
 {
 }
@@ -1048,7 +1052,10 @@ void* UploadHeapAllocator::AllocUploadResource(uint32 InSize, uint32 InAlignment
 	}
 	else
 	{
-		//TODO
+		// Forward to the big block allocator
+		const D3D12_RESOURCE_DESC ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(InSize, D3D12_RESOURCE_FLAG_NONE);
+		BigBlockAllocator.AllocateResource(GetParentDevice()->GetGPUIndex(), D3D12_HEAP_TYPE_UPLOAD, ResourceDesc, InSize, InAlignment, ResourceStateMode::Single, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, nullptr, ResourceLocation);
+		ResourceLocation.UnlockPoolData();
 	}
 
 	return ResourceLocation.GetMappedBaseAddress();
@@ -1063,6 +1070,7 @@ FastConstantAllocator::FastConstantAllocator(NodeDevice* Parent, GPUMaskType InG
 void UploadHeapAllocator::CleanUpAllocations(uint64 InFrameLag)
 {
 	SmallBlockAllocator.CleanUpAllocations(InFrameLag);
+	//BigBlockAllocator.CleanUpAllocations(InFrameLag);
 	FastConstantAllocator.CleanUpAllocations(InFrameLag);
 }
 

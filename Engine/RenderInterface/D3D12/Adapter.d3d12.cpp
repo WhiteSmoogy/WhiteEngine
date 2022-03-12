@@ -308,7 +308,7 @@ namespace platform_ex::Windows::D3D12 {
 	{
 		auto CreateInfo = FillResourceCreateInfo(init_data, "VertexBuffer");
 
-		auto vb = CreateBuffer(nullptr,usage, access, size_in_byte, format, CreateInfo);
+		auto vb = CreateBuffer(&platform::Render::CommandListExecutor::GetImmediateCommandList(), usage, access, size_in_byte, 0, Convert(format), CreateInfo);
 
 		return vb;
 	}
@@ -318,7 +318,7 @@ namespace platform_ex::Windows::D3D12 {
 		wconstraint(format == platform::Render::EFormat::EF_R16UI || format == platform::Render::EFormat::EF_R32UI);
 		auto CreateInfo = FillResourceCreateInfo(init_data, "IndexBuffer");
 
-		return CreateBuffer(nullptr, usage, access, size_in_byte, format, CreateInfo);
+		return CreateBuffer(&platform::Render::CommandListExecutor::GetImmediateCommandList(), usage, access, size_in_byte,NumFormatBytes(format), Convert(format), CreateInfo);
 	}
 
 	platform::Render::HardwareShader* Device::CreateShader(const white::span<const uint8>& Code, platform::Render::ShaderType Type)

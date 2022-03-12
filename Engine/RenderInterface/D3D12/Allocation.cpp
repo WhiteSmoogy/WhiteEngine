@@ -18,6 +18,15 @@ constexpr uint32 READBACK_BUFFER_POOL_DEFAULT_POOL_SIZE = 4 * 1024 * 1024;
 constexpr uint32 MIN_PLACED_RESOURCE_SIZE = 64 * 1024;
 constexpr uint32 READBACK_BUFFER_POOL_MAX_ALLOC_SIZE = (64 * 1024);
 
+const char* GetMemoryPoolDebugName(const AllocatorConfig& InConfig)
+{
+	if (white::has_anyflags(InConfig.InitialResourceState, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE))
+		return "Resource Allocator(MemoryPool) Underlying Buffer(ACCELERATION_STRUCTURE)";
+	else if(white::has_anyflags(InConfig.InitialResourceState, D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
+		return "Resource Allocator(MemoryPool) Underlying Buffer(UNORDERED_ACCESS)";
+	return "Resource Allocator(MemoryPool) Underlying Buffer";
+}
+
 MemoryPool::MemoryPool(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, 
 	const AllocatorConfig& InConfig, const std::string& InName, AllocationStrategy InAllocationStrategy,
 	uint16 InPoolIndex, uint64 InPoolSize, uint32 InPoolAlignment, 
@@ -72,7 +81,9 @@ MemoryPool::MemoryPool(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
 	{
 		{
 			const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InitConfig.HeapType, GetGPUMask().GetNative(), GetVisibilityMask().GetNative());
-			CheckHResult(Adapter->CreateBuffer(HeapProps, GetGPUMask(), InitConfig.InitialResourceState, InitConfig.InitialResourceState, PoolSize, BackingResource.ReleaseAndGetAddress(), "Resource Allocator Underlying Buffer", InitConfig.ResourceFlags));
+			CheckHResult(Adapter->CreateBuffer(HeapProps, GetGPUMask(), 
+				InitConfig.InitialResourceState, InitConfig.InitialResourceState, PoolSize, BackingResource.ReleaseAndGetAddress(), 
+				GetMemoryPoolDebugName(InitConfig), InitConfig.ResourceFlags));
 		}
 
 		if (IsCPUAccessible(InitConfig.HeapType))

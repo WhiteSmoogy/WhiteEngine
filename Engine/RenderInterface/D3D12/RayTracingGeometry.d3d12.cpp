@@ -82,7 +82,7 @@ void D12::RayTracingGeometry::BuildAccelerationStructure(CommandContext& Command
 		{
 			Desc.Triangles.IndexFormat = IndexStride == 4 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
 			Desc.Triangles.IndexCount = Segement.NumPrimitives * IndicesPerPrimitive;
-			Desc.Triangles.IndexBuffer = IndexBuffer->Resource()->GetGPUVirtualAddress() +
+			Desc.Triangles.IndexBuffer = IndexBuffer->GetGPUVirtualAddress() +
 				IndexOffsetInBytes +
 				IndexStride * Segement.FirstPrimitive * IndicesPerPrimitive;
 
@@ -97,7 +97,7 @@ void D12::RayTracingGeometry::BuildAccelerationStructure(CommandContext& Command
 			Desc.Triangles.VertexCount = Segement.VertexBuffer->GetSize() / Segement.VertexBufferStride;
 		}
 
-		Desc.Triangles.VertexBuffer.StartAddress = Segement.VertexBuffer->Resource()->GetGPUVirtualAddress() + Segement.VertexBufferOffset;
+		Desc.Triangles.VertexBuffer.StartAddress = Segement.VertexBuffer->GetGPUVirtualAddress() + Segement.VertexBufferOffset;
 		Desc.Triangles.VertexBuffer.StrideInBytes = Segement.VertexBufferStride;
 	}
 	else if (GeometryType == D3D12_RAYTRACING_GEOMETRY_TYPE_PROCEDURAL_PRIMITIVE_AABBS)
@@ -137,10 +137,10 @@ void D12::RayTracingGeometry::BuildAccelerationStructure(CommandContext& Command
 
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC BuildDesc = {};
 	BuildDesc.Inputs = PrebuildDescInputs;
-	BuildDesc.DestAccelerationStructureData = AccelerationStructureBuffer->Resource()->GetGPUVirtualAddress();
-	BuildDesc.ScratchAccelerationStructureData = ScratchBuffer->Resource()->GetGPUVirtualAddress();
+	BuildDesc.DestAccelerationStructureData = AccelerationStructureBuffer->GetGPUVirtualAddress();
+	BuildDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
 	BuildDesc.SourceAccelerationStructureData = isUpdate
-		? AccelerationStructureBuffer->Resource()->GetGPUVirtualAddress()
+		? AccelerationStructureBuffer->GetGPUVirtualAddress()
 		: D3D12_GPU_VIRTUAL_ADDRESS(0);
 
 	auto RayTracingCommandList = CommandContext.CommandListHandle.RayTracingCommandList();

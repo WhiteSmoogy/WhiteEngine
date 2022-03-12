@@ -853,8 +853,6 @@ namespace platform_ex::Windows::D3D12 {
 
 			// Set a default name (can override later).
 			(*ppOutResource)->SetName(Name);
-
-			spdlog::info("Resource:{} GPU VA:{}-{}",Name, pResource->GetGPUVirtualAddress(), pResource->GetGPUVirtualAddress() + BufDesc.Width);
 		}
 
 		return hr;

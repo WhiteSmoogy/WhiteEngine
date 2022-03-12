@@ -245,6 +245,8 @@ void CommandListExecutor::ExecuteInner(CommandListBase& CmdList)
 
 void CommandListExecutor::Execute(CommandListBase& CmdList)
 {
+	CmdList.bExecuting = true;
+
 	CommandListContext Context;
 	CommandListIterator Iter(CmdList);
 

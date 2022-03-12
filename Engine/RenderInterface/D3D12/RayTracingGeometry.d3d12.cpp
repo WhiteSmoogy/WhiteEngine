@@ -146,7 +146,6 @@ void D12::RayTracingGeometry::BuildAccelerationStructure(CommandContext& Command
 	auto RayTracingCommandList = CommandContext.CommandListHandle.RayTracingCommandList();
 	RayTracingCommandList->BuildRaytracingAccelerationStructure(&BuildDesc, 0, nullptr);
 
-	Context::Instance().ResidencyResource(ScratchBuffer->D3DResource());
 	// We don't need to keep a scratch buffer after initial build if acceleration structure is static.
 	if (!(BuildFlags & D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE))
 	{

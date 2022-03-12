@@ -13,6 +13,7 @@
 #include "ShaderParametersMetadata.h"
 namespace platform::Render {
 	class CommandList;
+	class CommandListImmediate;
 
 	namespace Buffer {
 		enum  Usage
@@ -56,8 +57,8 @@ namespace platform::Render {
 		GraphicsBuffer(Buffer::Usage usage, white::uint32 access, white::uint32 size_in_byte);
 
 	private:
-		virtual void* Map(Buffer::Access ba) = 0;
-		virtual void Unmap() = 0;
+		virtual void* Map(CommandListImmediate& CmdList,Buffer::Access ba) = 0;
+		virtual void Unmap(CommandListImmediate& CmdList) = 0;
 
 		friend class Buffer::Mapper;
 	protected:
@@ -73,14 +74,11 @@ namespace platform::Render {
 			friend class ::platform::Render::GraphicsBuffer;
 
 		public:
-			Mapper(GraphicsBuffer& InBuffer, Access ba)
-				: buffer(InBuffer)
-			{
-				data = buffer.Map(ba);
-			}
+			Mapper(GraphicsBuffer& InBuffer, Access ba);
+
 			~Mapper()
 			{
-				buffer.Unmap();
+				buffer.Unmap(CmdList);
 			}
 
 			template <typename T>
@@ -95,6 +93,8 @@ namespace platform::Render {
 			}
 
 		private:
+			CommandListImmediate& CmdList;
+
 			GraphicsBuffer& buffer;
 			void* data;
 		};

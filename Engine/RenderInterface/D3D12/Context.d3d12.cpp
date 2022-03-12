@@ -212,15 +212,6 @@ namespace platform_ex::Windows::D3D12 {
 		}
 	}
 
-	void Context::ResidencyResource(COMPtr<ID3D12Resource> resource)
-	{
-		device->ResidencyPool.SyncPoint = GetDefaultCommandContext()->CommandListHandle;
-
-		auto& resources = device->ResidencyPool.recycle_after_sync_residency_buffs;
-
-		resources.emplace_back(resource);
-	}
-
 	void Context::InnerResourceRecycle(InnerReourceType type, COMPtr<ID3D12Resource> resource, white::uint32 size)
 	{
 		if (resource) {

@@ -76,7 +76,6 @@ namespace platform_ex {
 					return InnerResourceRecycle(type,resource, size);
 				}
 
-				void ResidencyResource(COMPtr<ID3D12Resource> resource);
 			private:
 				void ContextEx(ID3D12Device* device, ID3D12CommandQueue* cmd_queue);
 

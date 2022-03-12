@@ -119,6 +119,8 @@ namespace platform::Render {
 			Context = CmdList.Context;
 			ComputeContext = CmdList.ComputeContext;
 		}
+
+		bool IsExecuting() { return bExecuting; }
 	protected:
 		CommandBase* Root;
 		CommandBase** CommandLink;
@@ -138,7 +140,11 @@ namespace platform::Render {
 			DepthRenderTarget CachedDepthStencilTarget;
 
 		} PSOContext;
+
+		bool bExecuting = false;
 	};
+
+#define CL_ALLOC_COMMAND(CmdList, ...) new ( (CmdList).AllocCommand(sizeof(__VA_ARGS__), alignof(__VA_ARGS__)) ) __VA_ARGS__
 
 	class ComputeCommandList : public CommandListBase
 	{

@@ -18,6 +18,8 @@ platform::Render::CommandListBase::CommandListBase()
 
 void platform::Render::CommandListBase::Reset()
 {
+	bExecuting = false;
+
 	MemManager.Flush();
 
 	Root = nullptr;

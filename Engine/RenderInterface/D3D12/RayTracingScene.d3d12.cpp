@@ -101,14 +101,9 @@ void RayTracingScene::BuildAccelerationStructure(CommandContext& CommandContext)
 		}
 
 		InstanceBuffer->SetName("Acceleration structure [Instance] Fill");
-		Context::Instance().ResidencyResource(InstanceBuffer->D3DResource());
 	}
 
 	const bool IsUpdateMode = false;
-
-	Context::Instance().ResidencyResource(ScratchBuffer->D3DResource());
-	//AccelerationStructureBuffer build per frame
-	Context::Instance().ResidencyResource(AccelerationStructureBuffer->D3DResource());
 
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC BuildDesc = {};
 	BuildDesc.Inputs = PrebuildDescInputs;

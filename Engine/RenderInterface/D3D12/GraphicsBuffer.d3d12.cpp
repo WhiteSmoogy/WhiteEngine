@@ -172,7 +172,7 @@ namespace platform_ex::Windows::D3D12 {
 		}
 	};
 
-	GraphicsBuffer* Device::CreateBuffer(platform::Render::CommandList* Cmdlist, Buffer::Usage usage, white::uint32 access, uint32 Size, uint32 Stride, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo)
+	GraphicsBuffer* Device::CreateBuffer(platform::Render::CommandListImmediate* Cmdlist, Buffer::Usage usage, white::uint32 access, uint32 Size, uint32 Stride, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo)
 	{
 		IResourceAllocator* Allocator = nullptr;
 
@@ -193,11 +193,11 @@ namespace platform_ex::Windows::D3D12 {
 	{
 		auto CreateInfo = FillResourceCreateInfo(init_data, GetDebugBufferName(usage,access));
 
-		return CreateBuffer(nullptr, usage, access, Size,Stride ,DXGI_FORMAT_UNKNOWN, CreateInfo);
+		return CreateBuffer(&platform::Render::CommandListExecutor::GetImmediateCommandList(), usage, access, Size, Stride, DXGI_FORMAT_UNKNOWN, CreateInfo);
 	}
 
 	template<ResourceStateMode Mode>
-	GraphicsBuffer* platform_ex::Windows::D3D12::Device::CreateBuffer(platform::Render::CommandList* Cmdlist, const D3D12_RESOURCE_DESC& Desc, 
+	GraphicsBuffer* platform_ex::Windows::D3D12::Device::CreateBuffer(platform::Render::CommandListImmediate* Cmdlist, const D3D12_RESOURCE_DESC& Desc, 
 		Buffer::Usage usage, white::uint32 access,
 		uint32 Alignment, uint32 Stride, uint64 InSize, ResourceCreateInfo& CreateInfo,
 		IResourceAllocator* Allocator)
@@ -280,7 +280,7 @@ namespace platform_ex::Windows::D3D12 {
 	}
 
 	template
-	GraphicsBuffer* platform_ex::Windows::D3D12::Device::CreateBuffer<ResourceStateMode::Single>(platform::Render::CommandList* Cmdlist, const D3D12_RESOURCE_DESC& Desc,
+	GraphicsBuffer* platform_ex::Windows::D3D12::Device::CreateBuffer<ResourceStateMode::Single>(platform::Render::CommandListImmediate* Cmdlist, const D3D12_RESOURCE_DESC& Desc,
 			Buffer::Usage usage, white::uint32 access,
 			uint32 Alignment, uint32 Stride, uint64 InSize, ResourceCreateInfo& CreateInfo,
 			IResourceAllocator* Allocator);
@@ -355,12 +355,92 @@ namespace platform_ex::Windows::D3D12 {
 	{
 		return uav.get();
 	}
-	void* GraphicsBuffer::Map(platform::Render::Buffer::Access ba)
+
+	struct D3D12CommandRenameUploadBuffer final : platform::Render::CommandBase
 	{
-		return nullptr;
+		GraphicsBuffer* Buffer;
+		ResourceLocation NewLocation;
+
+		D3D12CommandRenameUploadBuffer(GraphicsBuffer* InBuffer, NodeDevice* ParentDevice)
+			: Buffer(InBuffer)
+			, NewLocation(ParentDevice)
+		{
+		}
+
+		void ExecuteAndDestruct(platform::Render::CommandListBase& CmdList, platform::Render::CommandListContext& Context)
+		{
+			ExecuteNoCmdList();
+			this->~D3D12CommandRenameUploadBuffer();
+		}
+
+		void ExecuteNoCmdList()
+		{
+			ResourceLocation::TransferOwnership(Buffer->Location, NewLocation);
+			//recreate srv
+		}
+	};
+
+
+	void* GraphicsBuffer::Map(platform::Render::CommandListImmediate& CmdList,platform::Render::Buffer::Access ba)
+	{
+		uint32 BufferSize = size_in_byte;
+
+		uint32 Offset = 0;
+		uint32 Size = size_in_byte;
+
+		wconstraint(Size <= BufferSize);
+
+		auto Adapter = GetParentDevice()->GetParentAdapter();
+
+		const bool bIsDynamic = (usage & Buffer::Dynamic) ? true : false;
+
+		void* Data = nullptr;
+
+		if (bIsDynamic)
+		{
+			wconstraint(ba == Buffer::Write_Only || ba == Buffer::Write_No_Overwrite);
+
+			if (MapData.bHasNeverBeenMappeded)
+			{
+				Data = Location.GetMappedBaseAddress();
+			}
+			else
+			{
+				if (CmdList.IsExecuting() && ba == Buffer::Write_Only)
+				{
+					auto Command = CL_ALLOC_COMMAND(CmdList, D3D12CommandRenameUploadBuffer)(this, GetParentDevice());
+					Data = Adapter->GetUploadHeapAllocator(GetParentDevice()->GetGPUIndex()).AllocUploadResource(BufferSize,Alignment, Command->NewLocation);
+				}
+				else
+				{
+					D3D12CommandRenameUploadBuffer Command(this, GetParentDevice());
+					Data = Adapter->GetUploadHeapAllocator(GetParentDevice()->GetGPUIndex()).AllocUploadResource(BufferSize, Alignment, Command.NewLocation);
+
+					Command.ExecuteNoCmdList();
+				}
+			}
+		}
+		else
+		{
+			throw white::unimplemented();
+		}
+
+		MapData.bHasNeverBeenMappeded = false;
+
+		return Data;
 	}
-	void GraphicsBuffer::Unmap()
+	void GraphicsBuffer::Unmap(platform::Render::CommandListImmediate& CmdList)
 	{
+		const bool bIsDynamic = (usage & Buffer::Dynamic) ? true : false;
+
+		if (bIsDynamic)
+		{
+			// If the Buffer is dynamic, its upload heap memory can always stay mapped. Don't do anything.
+		}
+		else
+		{
+			throw white::unimplemented();
+		}
 	}
 
 }

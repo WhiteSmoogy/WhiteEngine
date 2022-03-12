@@ -16,6 +16,11 @@ namespace platform_ex::Windows::D3D12 {
 	class UnorderedAccessView;
 	class RenderTargetView;
 
+	struct MappedState
+	{
+		uint32 bHasNeverBeenMappeded : 1 = true;
+	};
+
 	class GraphicsBuffer : public platform::Render::GraphicsBuffer,public DeviceChild,public ResourceLocationTrait{
 	public:
 		GraphicsBuffer(NodeDevice* Parent, platform::Render::Buffer::Usage usage, uint32_t access_hint,
@@ -34,8 +39,8 @@ namespace platform_ex::Windows::D3D12 {
 
 		DXGI_FORMAT GetFormat() const { return format; }
 	private:
-		void* Map(platform::Render::Buffer::Access ba) override;
-		void Unmap() override;
+		void* Map(platform::Render::CommandListImmediate& CmdList,platform::Render::Buffer::Access ba) override;
+		void Unmap(platform::Render::CommandListImmediate& CmdList) override;
 
 		friend class Device;
 		friend class Context;
@@ -48,6 +53,8 @@ namespace platform_ex::Windows::D3D12 {
 
 		uint32 Alignment = 0;
 		uint32 Stride = 0;
+
+		MappedState MapData;
 	};
 }
 

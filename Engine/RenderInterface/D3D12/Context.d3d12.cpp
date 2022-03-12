@@ -162,65 +162,6 @@ namespace platform_ex::Windows::D3D12 {
 		}
 	}
 
-	COMPtr<ID3D12Resource> Context::InnerResourceAlloc(InnerReourceType type, white::uint32 size_in_byte)
-	{
-		auto is_upload = type == Upload;
-		auto& resources = is_upload ? device->upload_resources : device->readback_resources;
-		auto iter = resources.lower_bound(size_in_byte);
-		if (iter != resources.end() && (iter->first == size_in_byte))
-		{
-			auto ret = iter->second;
-			resources.erase(iter);
-			return ret;
-		}
-		else {
-			D3D12_RESOURCE_STATES init_state;
-			D3D12_HEAP_PROPERTIES heap_prop;
-			if (is_upload)
-			{
-				init_state = D3D12_RESOURCE_STATE_GENERIC_READ;
-				heap_prop.Type = D3D12_HEAP_TYPE_UPLOAD;
-			}
-			else
-			{
-				init_state = D3D12_RESOURCE_STATE_COPY_DEST;
-				heap_prop.Type = D3D12_HEAP_TYPE_READBACK;
-			}
-			heap_prop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-			heap_prop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-			heap_prop.CreationNodeMask = 0;
-			heap_prop.VisibleNodeMask = 0;
-
-			D3D12_RESOURCE_DESC res_desc;
-			res_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-			res_desc.Alignment = 0;
-			res_desc.Width = size_in_byte;
-			res_desc.Height = 1;
-			res_desc.DepthOrArraySize = 1;
-			res_desc.MipLevels = 1;
-			res_desc.Format = DXGI_FORMAT_UNKNOWN;
-			res_desc.SampleDesc.Count = 1;
-			res_desc.SampleDesc.Quality = 0;
-			res_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-			res_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-			COMPtr<ID3D12Resource> resource {};
-			CheckHResult(device->d3d_device->CreateCommittedResource(&heap_prop, D3D12_HEAP_FLAG_NONE,
-				&res_desc, init_state, nullptr,
-				COMPtr_RefParam(resource,IID_ID3D12Resource)));
-			return resource;
-		}
-	}
-
-	void Context::InnerResourceRecycle(InnerReourceType type, COMPtr<ID3D12Resource> resource, white::uint32 size)
-	{
-		if (resource) {
-			bool is_upload = type == Upload;
-			auto& resources =is_upload?device->ResidencyPool.recycle_after_sync_upload_buffs:device->ResidencyPool.recycle_after_sync_readback_buffs;
-			resources.emplace_back(resource, size);
-		}
-	}
-
 	Fence & Context::GetFence(Device::CommandType index)
 	{
 		return *(device->fences[index]);

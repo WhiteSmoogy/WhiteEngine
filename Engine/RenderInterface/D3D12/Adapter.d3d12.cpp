@@ -780,24 +780,6 @@ namespace platform_ex::Windows::D3D12 {
 	 
 	void D3D12::Device::EndFrame()
 	{
-		//TODO:support CLSyncPoint move;
-		ReclaimPool.push(ResidencyPool);
-		ResidencyPool.recycle_after_sync_residency_buffs.clear();
-		ResidencyPool.recycle_after_sync_upload_buffs.clear();
-		ResidencyPool.recycle_after_sync_upload_buffs.clear();
-
-		while (!ReclaimPool.empty() && ReclaimPool.front().SyncPoint.IsComplete())
-		{
-			auto& Residency = ReclaimPool.front();
-
-			for (auto const& item : Residency.recycle_after_sync_upload_buffs)
-				upload_resources.emplace(item.second, item.first);
-			for (auto const& item : Residency.recycle_after_sync_readback_buffs)
-				readback_resources.emplace(item.second, item.first);
-
-			ReclaimPool.pop();
-		}
-
 		uint64 FrameLag = 2;
 		GetUploadHeapAllocator(0).CleanUpAllocations(FrameLag);
 

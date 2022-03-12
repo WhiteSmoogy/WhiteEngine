@@ -79,9 +79,6 @@ namespace platform_ex {
 			private:
 				void ContextEx(ID3D12Device* device, ID3D12CommandQueue* cmd_queue);
 
-				COMPtr<ID3D12Resource> InnerResourceAlloc(InnerReourceType type, white::uint32 size);
-				void InnerResourceRecycle(InnerReourceType type, COMPtr<ID3D12Resource> resource, white::uint32 size);
-
 				Fence& GetFence(Device::CommandType);
 			private:
 				DXGI::AdapterList adapter_list;

@@ -103,6 +103,8 @@ void CommandContextStateCache::InternalSetIndexBuffer(ResourceHolder* IndexBuffe
 
 	CommandList->IASetIndexBuffer(&PipelineState.Graphics.IBCache.CurrentIndexBufferView);
 
+	auto NewView = PipelineState.Graphics.IBCache.CurrentIndexBufferView;
+
 	//ResourceBarrier
 }
 

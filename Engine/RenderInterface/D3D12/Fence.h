@@ -45,7 +45,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		void GpuWait(CommandQueueType InQueueType, uint64 FenceValue)
 		{
-			GpuWait(GetGPUMask(), InQueueType, FenceValue, GetGPUMask());
+			GpuWait(GetGPUMask().ToIndex(), InQueueType, FenceValue, GetGPUMask().ToIndex());
 		}
 
 		void WaitForFence(uint64 FenceValue);

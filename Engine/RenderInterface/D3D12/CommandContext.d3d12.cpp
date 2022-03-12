@@ -36,7 +36,7 @@ CommandContext::CommandContext(NodeDevice* InParent, SubAllocatedOnlineHeap::Sub
 	PSConstantBuffer(InParent, ConstantsAllocator),
 	GSConstantBuffer(InParent, ConstantsAllocator),
 	CSConstantBuffer(InParent, ConstantsAllocator),
-	StateCache(0),
+	StateCache(InParent->GetGPUMask()),
 	CommandAllocatorManager(InParent, InIsAsyncComputeContext ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT)
 {
 	StateCache.Init(InParent, this, nullptr, SubHeapDesc);

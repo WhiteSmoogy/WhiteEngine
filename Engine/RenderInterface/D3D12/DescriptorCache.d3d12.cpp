@@ -21,8 +21,8 @@ DescriptorCache::DescriptorCache(GPUMaskType Node)
 	, CurrentViewHeap(nullptr)
 	, CurrentSamplerHeap(nullptr)
 	, LocalViewHeap(nullptr)
-	, LocalSamplerHeap(nullptr, this,Node)
-	, SubAllocatedViewHeap(nullptr, this, Node)
+	, LocalSamplerHeap(nullptr, Node, this)
+	, SubAllocatedViewHeap(nullptr, Node, this)
 	, SamplerMap(271) // Prime numbers for better hashing
 	, bUsingGlobalSamplerHeap(false)
 	, NumLocalViewDescriptors(0)
@@ -656,7 +656,7 @@ bool DescriptorCache::SwitchToContextLocalViewHeap(CommandListHandle& CommandLis
 		WF_Trace(platform::Descriptions::Informative,"This should only happen in the Editor where it doesn't matter as much. If it happens in game you should increase the device global heap size!");
 
 		// Allocate the heap lazily
-		LocalViewHeap = new ThreadLocalOnlineHeap(GetParentDevice(), this,GPUIndex);
+		LocalViewHeap = new ThreadLocalOnlineHeap(GetParentDevice(),GetGPUMask(), this);
 		if (LocalViewHeap)
 		{
 			wconstraint(NumLocalViewDescriptors);
@@ -800,7 +800,7 @@ void ThreadLocalOnlineHeap::NotifyCurrentCommandList(CommandListHandle& CommandL
 
 
 
-OnlineHeap::OnlineHeap(NodeDevice* Device, bool CanLoopAround, DescriptorCache* _Parent, GPUMaskType Node)
+OnlineHeap::OnlineHeap(NodeDevice* Device, GPUMaskType Node, bool CanLoopAround, DescriptorCache* _Parent)
 	:DeviceChild(Device)
 	,SingleNodeGPUObject(Node)
 	, Parent(_Parent)

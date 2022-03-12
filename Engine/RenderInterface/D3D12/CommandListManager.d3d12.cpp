@@ -115,7 +115,7 @@ void CommandListManager::Create(const std::string_view& Name, uint32 NumCommandL
 	D3D12_COMMAND_QUEUE_DESC CommandQueueDesc = {};
 	CommandQueueDesc.Flags = (bFullGPUCrashDebugging)
 		? D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT : D3D12_COMMAND_QUEUE_FLAG_NONE;
-	CommandQueueDesc.NodeMask = GetGPUMask();
+	CommandQueueDesc.NodeMask = GetGPUMask().GetNative();
 	CommandQueueDesc.Priority = Priority;
 	CommandQueueDesc.Type = CommandListType;
 	CheckHResult(Adapter->GetDevice()->CreateCommandQueue(&CommandQueueDesc,IID_PPV_ARGS(D3DCommandQueue.ReleaseAndGetAddress())));

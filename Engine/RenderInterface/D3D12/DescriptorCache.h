@@ -182,7 +182,7 @@ namespace platform_ex::Windows::D3D12 {
 			Desc.Type = Type;
 			Desc.NumDescriptors = NumDescriptorsPerHeap;
 			Desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;// None as this heap is offline
-			Desc.NodeMask = Node;
+			Desc.NodeMask = Node.GetNative();
 
 			return Desc;
 		}
@@ -310,7 +310,7 @@ namespace platform_ex::Windows::D3D12 {
 	class OnlineHeap : public DeviceChild,public SingleNodeGPUObject
 	{
 	public:
-		OnlineHeap(NodeDevice* Device, bool CanLoopAround, DescriptorCache* _Parent = nullptr, GPUMaskType Node = 0);
+		OnlineHeap(NodeDevice* Device, GPUMaskType Node, bool CanLoopAround, DescriptorCache* _Parent = nullptr);
 		virtual ~OnlineHeap() { }
 
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCPUSlotHandle(uint32 Slot) const { return{ CPUBase.ptr + Slot * DescriptorSize }; }
@@ -376,8 +376,8 @@ namespace platform_ex::Windows::D3D12 {
 	class GlobalOnlineHeap : public OnlineHeap
 	{
 	public:
-		GlobalOnlineHeap(NodeDevice* Device, GPUMaskType Node =0)
-			: OnlineHeap(Device, false,nullptr,Node)
+		GlobalOnlineHeap(NodeDevice* Device, GPUMaskType Node)
+			: OnlineHeap(Device, Node, false,nullptr)
 			, bUniqueDescriptorTablesAreDirty(false)
 		{ }
 
@@ -425,8 +425,8 @@ namespace platform_ex::Windows::D3D12 {
 			uint32 Size;
 		};
 
-		SubAllocatedOnlineHeap(NodeDevice* Device, DescriptorCache* Parent, GPUMaskType Node = 0) :
-			OnlineHeap(Device, false, Parent,Node) {};
+		SubAllocatedOnlineHeap(NodeDevice* Device, GPUMaskType Node, DescriptorCache* Parent) :
+			OnlineHeap(Device, Node,false, Parent) {};
 
 		void Init(SubAllocationDesc _Desc);
 
@@ -449,8 +449,8 @@ namespace platform_ex::Windows::D3D12 {
 	class ThreadLocalOnlineHeap :public OnlineHeap
 	{
 	public:
-		ThreadLocalOnlineHeap(NodeDevice* Device, DescriptorCache* _Parent, GPUMaskType Node=0)
-			: OnlineHeap(Device, true, _Parent,Node)
+		ThreadLocalOnlineHeap(NodeDevice* Device, GPUMaskType Node, DescriptorCache* _Parent)
+			: OnlineHeap(Device, Node, true, _Parent)
 		{ }
 
 		bool RollOver();
@@ -511,7 +511,7 @@ namespace platform_ex::Windows::D3D12 {
 		OnlineHeap* GetCurrentViewHeap() { return CurrentViewHeap; }
 		OnlineHeap* GetCurrentSamplerHeap() { return CurrentSamplerHeap; }
 
-		DescriptorCache(GPUMaskType Node =0);
+		DescriptorCache(GPUMaskType Node);
 
 		~DescriptorCache()
 		{

@@ -198,7 +198,7 @@ RayTracingDescriptorHeapCache::Entry RayTracingDescriptorHeapCache::AllocateHeap
 	Desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	Desc.Type = Type;
 	Desc.NumDescriptors = NumDescriptors;
-	Desc.NodeMask = GetParentDevice()->GetGPUMask();
+	Desc.NodeMask = GetParentDevice()->GetGPUMask().GetNative();
 
 	ID3D12DescriptorHeap* D3D12Heap = nullptr;
 	CheckHResult(GetParentDevice()->GetDevice()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&D3D12Heap)));

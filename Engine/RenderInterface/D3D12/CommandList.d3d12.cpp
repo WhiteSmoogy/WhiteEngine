@@ -16,7 +16,7 @@ CommandListHandle::CommandListData::CommandListData(NodeDevice* ParentDevice, D3
 	,LastCompleteGeneration(0)
 	,IsClosed(false)
 {
-	CheckHResult(ParentDevice->GetDevice()->CreateCommandList(GetGPUMask(), CommandListType, CommandAllocator, nullptr, IID_PPV_ARGS(CommandList.ReleaseAndGetAddress())));
+	CheckHResult(ParentDevice->GetDevice()->CreateCommandList(GetGPUMask().GetNative(), CommandListType, CommandAllocator, nullptr, IID_PPV_ARGS(CommandList.ReleaseAndGetAddress())));
 
 	// Optionally obtain the ID3D12GraphicsCommandList1 & ID3D12GraphicsCommandList2 interface, we don't check the HRESULT.
 	CommandList->QueryInterface(IID_PPV_ARGS(CommandList1.ReleaseAndGetAddress()));

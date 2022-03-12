@@ -286,7 +286,7 @@ namespace platform_ex::Windows::D3D12 {
 		{
 		public:
 			using FastConstantAllocator::FastConstantAllocator;
-		} Alloc(GetNodeDevice(0),AllGPU());
+		} Alloc(GetNodeDevice(0),GPUMaskType::AllGPU());
 
 		return Alloc;
 	}
@@ -429,7 +429,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		FillCaps();
 
-		Devices[0] = new NodeDevice(0, this);
+		Devices[0] = new NodeDevice(GPUMaskType::FromIndex(0), this);
 
 		UploadHeapAllocators[0] = new UploadHeapAllocator(this, Devices[0], "Upload Buffer Allocator");
 
@@ -456,8 +456,32 @@ namespace platform_ex::Windows::D3D12 {
 
 		InitializeRayTracing();
 
-		frame_fence = new ManualFence(this, 0, "Adapter Frame Fence");
+		frame_fence = new ManualFence(this, GPUMaskType::AllGPU(), "Adapter Frame Fence");
 		frame_fence->CreateFence();
+
+#if  ENABLE_AFTER_MATH
+		if (GEnableNvidaiAfterMath)
+		{
+			uint32 Flags = GFSDK_Aftermath_FeatureFlags_Minimum;
+
+			Flags |= GFSDK_Aftermath_FeatureFlags_EnableMarkers;
+			Flags |= GFSDK_Aftermath_FeatureFlags_CallStackCapturing;
+			Flags |= GFSDK_Aftermath_FeatureFlags_EnableResourceTracking;
+			Flags |= GFSDK_Aftermath_FeatureFlags_Maximum;
+
+			GFSDK_Aftermath_Result Result = GFSDK_Aftermath_DX12_Initialize(GFSDK_Aftermath_Version_API, (GFSDK_Aftermath_FeatureFlags)Flags, d3d_device.Get());
+			if (Result == GFSDK_Aftermath_Result_Success)
+			{
+				spdlog::info("[Aftermath] Aftermath enabled and primed");
+			}
+			else
+			{
+				spdlog::warn("[Aftermath] Aftermath enabled but failed to initialize ({})", white::underlying(Result));
+				GEnableNvidaiAfterMath = 0;
+			}
+		}
+#endif //  ENABLE_AFTER_MATH
+
 
 		if (SUCCEEDED(d3d_device->QueryInterface(COMPtr_RefParam(d3d_debug_device, IID_ID3D12DebugDevice)))) {
 			WAssertNonnull(d3d_debug_device);
@@ -793,7 +817,7 @@ namespace platform_ex::Windows::D3D12 {
 
 	HRESULT D3D12::Device::CreateBuffer(D3D12_HEAP_TYPE HeapType, GPUMaskType CreationNode, GPUMaskType VisibleNodes, uint64 HeapSize, ResourceHolder** ppOutResource, const char* Name, D3D12_RESOURCE_FLAGS Flags)
 	{
-		const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(HeapType, CreationNode, VisibleNodes);
+		const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(HeapType, CreationNode.GetNative(), VisibleNodes.GetNative());
 		const D3D12_RESOURCE_STATES InitialState = DetermineInitialResourceState(HeapProps.Type, &HeapProps);
 		return CreateBuffer(HeapProps, CreationNode, InitialState, InitialState, HeapSize, ppOutResource, Name, Flags);
 	}
@@ -829,6 +853,8 @@ namespace platform_ex::Windows::D3D12 {
 
 			// Set a default name (can override later).
 			(*ppOutResource)->SetName(Name);
+
+			spdlog::info("Resource:{} GPU VA:{}-{}",Name, pResource->GetGPUVirtualAddress(), pResource->GetGPUVirtualAddress() + BufDesc.Width);
 		}
 
 		return hr;

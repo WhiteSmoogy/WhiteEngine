@@ -51,7 +51,7 @@ D3D12_COMPUTE_PIPELINE_STATE_DESC D3DComputePipelineStateDesc::ComputeDescV0() c
 }
 
 D3D12::D3DPipelineState::D3DPipelineState(D3D12Adapter* Parent)
-	:AdapterChild(Parent), MultiNodeGPUObject(0, 0)
+	:AdapterChild(Parent), MultiNodeGPUObject(GPUMaskType::AllGPU(), GPUMaskType::AllGPU())
 {
 }
 

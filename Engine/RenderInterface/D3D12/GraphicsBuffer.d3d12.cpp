@@ -136,8 +136,9 @@ namespace platform_ex::Windows::D3D12 {
 		void ExecuteNoCmdList()
 		{
 			auto CurrentBuffer = Buffer;
-			ResourceHolder* Destination = Buffer->Location.GetResource();
-			auto Device = Buffer->Location.GetParentDevice();
+
+			ResourceHolder* Destination = CurrentBuffer->Location.GetResource();
+			auto Device = CurrentBuffer->Location.GetParentDevice();
 
 			auto& CommandContext = Device->GetDefaultCommandContext();
 			auto& hCommandList = CommandContext.CommandListHandle;
@@ -263,6 +264,7 @@ namespace platform_ex::Windows::D3D12 {
 				}
 				wconstraint(pData);
 				std::memcpy(pData, CreateInfo.ResouceData, Size);
+				spdlog::info("memcpy dst:{}", pData);
 
 				if (bOnAsyncThread)
 				{

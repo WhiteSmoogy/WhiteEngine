@@ -41,12 +41,41 @@ namespace platform_ex::Windows::D3D12 {
 
 	using D3D12Adapter = Device;
 
-	using GPUMaskType = white::uint32;
-
-	inline GPUMaskType AllGPU()
+	struct GPUMaskType
 	{
-		return 1;
-	}
+	private:
+		uint32 GPUMask;
+
+		constexpr explicit GPUMaskType(uint32 InGPUMask)
+			:GPUMask(InGPUMask)
+		{
+		}
+	public:
+		constexpr GPUMaskType() :GPUMaskType(GPU0())
+		{}
+
+		static constexpr GPUMaskType FromIndex(uint32 GPUIndex) { return GPUMaskType(1 << GPUIndex); }
+
+		constexpr uint32 ToIndex() const
+		{
+			return std::countl_zero(GPUMask);
+		}
+
+		static constexpr GPUMaskType GPU0()
+		{
+			return GPUMaskType(1);
+		}
+
+		static constexpr GPUMaskType AllGPU()
+		{
+			constexpr auto NumExplicitGPUs = 1;
+			return GPUMaskType((1<< NumExplicitGPUs) -1);
+		}
+
+		constexpr uint32 GetNative() const { return GPUMask; }
+
+		constexpr bool operator==(const GPUMaskType&) const = default;
+	};
 
 	enum class CommandQueueType
 	{
@@ -91,12 +120,6 @@ namespace platform_ex::Windows::D3D12 {
 	class GPUObject
 	{
 	public:
-		GPUObject()
-			:GPUMask(0)
-			, VisibilityMask(0)
-		{
-		}
-
 		GPUObject(GPUMaskType InGPUMask, GPUMaskType InVisibiltyMask)
 			: GPUMask(InGPUMask)
 			, VisibilityMask(InVisibiltyMask)
@@ -117,9 +140,9 @@ namespace platform_ex::Windows::D3D12 {
 	class SingleNodeGPUObject :public GPUObject
 	{
 	public:
-		SingleNodeGPUObject(GPUMaskType GPUMask = 0)
+		SingleNodeGPUObject(GPUMaskType GPUMask)
 			:GPUObject(GPUMask,GPUMask)
-			,GPUIndex(GPUMask)
+			,GPUIndex(GPUMask.ToIndex())
 		{}
 
 		uint32 GetGPUIndex() const

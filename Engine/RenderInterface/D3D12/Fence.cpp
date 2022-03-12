@@ -52,7 +52,7 @@ void Fence::Destroy()
 
 void Fence::CreateFence()
 {
-	const uint32 GPUIndex = GetGPUMask();
+	const uint32 GPUIndex = GetGPUMask().ToIndex();
 
 	auto FenceCore = new D3D12::FenceCore(GetParentAdapter(), 0, GPUIndex);
 
@@ -97,7 +97,7 @@ uint64 Fence::UpdateLastCompletedFence()
 {
 	uint64 CompletedFence = MAXUINT64;
 
-	auto GPUIndex = GetGPUMask();
+	auto GPUIndex = GetGPUMask().ToIndex();
 	auto FenceCore = FenceCores[GPUIndex];
 	wconstraint(FenceCore);
 	auto completed_value = FenceCore->GetFence()->GetCompletedValue();
@@ -110,7 +110,7 @@ uint64 Fence::UpdateLastCompletedFence()
 
 void Fence::InternalSignal(CommandQueueType InQueueType, uint64 FenceToSignal)
 {
-	auto GPUIndex = GetGPUMask();
+	auto GPUIndex = GetGPUMask().ToIndex();
 
 	auto CommandQueue = GetParentAdapter()->GetNodeDevice(GPUIndex)->GetD3DCommandQueue(InQueueType);
 	wconstraint(CommandQueue);
@@ -124,7 +124,7 @@ void Fence::WaitForFence(uint64 FenceValue)
 {
 	if (!IsFenceComplete(FenceValue))
 	{
-		auto GPUIndex = GetGPUMask();
+		auto GPUIndex = GetGPUMask().ToIndex();
 		auto FenceCore = FenceCores[GPUIndex];
 
 		if (FenceValue > FenceCore->GetFence()->GetCompletedValue())

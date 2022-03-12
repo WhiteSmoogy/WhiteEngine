@@ -41,8 +41,8 @@ MemoryPool::MemoryPool(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
 		wconstraint(PoolAlignment == D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT || PoolAlignment == D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
 
 		D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InitConfig.HeapType);
-		HeapProps.CreationNodeMask = GetGPUMask();
-		HeapProps.VisibleNodeMask = GetVisibilityMask();
+		HeapProps.CreationNodeMask = GetGPUMask().GetNative();
+		HeapProps.VisibleNodeMask = GetVisibilityMask().GetNative();
 
 		D3D12_HEAP_DESC Desc = {};
 		Desc.SizeInBytes = PoolSize;
@@ -71,7 +71,7 @@ MemoryPool::MemoryPool(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
 	else
 	{
 		{
-			const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InitConfig.HeapType, GetGPUMask(), GetVisibilityMask());
+			const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InitConfig.HeapType, GetGPUMask().GetNative(), GetVisibilityMask().GetNative());
 			CheckHResult(Adapter->CreateBuffer(HeapProps, GetGPUMask(), InitConfig.InitialResourceState, InitConfig.InitialResourceState, PoolSize, BackingResource.ReleaseAndGetAddress(), "Resource Allocator Underlying Buffer", InitConfig.ResourceFlags));
 		}
 
@@ -407,7 +407,7 @@ void PoolAllocator<Order, Defrag>::AllocateResource(uint32 GPUIndex, D3D12_HEAP_
 	{
 		// Allocate Standalone - move to owner of resource because this allocator should only manage pooled allocations (needed for now to do the same as FD3D12DefaultBufferPool)
 		ResourceHolder* NewResource = nullptr;
-		const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InHeapType, GetGPUMask(), GetVisibilityMask());
+		const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InHeapType, GetGPUMask().GetNative(), GetVisibilityMask().GetNative());
 		D3D12_RESOURCE_DESC Desc = InDesc;
 		Desc.Alignment = 0;
 		Adapter->CreateCommittedResource(Desc, GetGPUMask(), HeapProps, InCreateState, InCreateState, InClearValue, &NewResource, InName);
@@ -622,7 +622,7 @@ void MultiBuddyConstantUploadAllocator::ConstantAllocator::CreateBackingResource
 {
 	auto Adapter = GetParentDevice()->GetParentAdapter();
 
-	const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD, GetGPUMask(), GetVisibilityMask());
+	const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD, GetGPUMask().GetNative(), GetVisibilityMask().GetNative());
 
 	Adapter->CreateBuffer(HeapProps, GetGPUMask(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_GENERIC_READ, BlockSize, &BackingResource, "FastConstantPageAllocator::ConstantAllocator", D3D12_RESOURCE_FLAG_NONE);
 
@@ -673,7 +673,7 @@ void BuddyUploadAllocator::Initialize()
 		wassume(false);
 	}
 	else {
-		const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InitConfig.HeapType, GetGPUMask(), GetVisibilityMask());
+		const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InitConfig.HeapType, GetGPUMask().GetNative(), GetVisibilityMask().GetNative());
 
 		CheckHResult(Adapter->CreateBuffer(HeapProps, GetGPUMask(),
 			InitConfig.InitialResourceState, InitConfig.InitialResourceState, MaxBlockSize, &BackingResource, "BuddyAllocator Underlying Buffer", InitConfig.ResourceFlags));
@@ -1018,7 +1018,7 @@ void MultiBuddyUploadAllocator::CleanUpAllocations(uint64 InFrameLag)
 }
 
 UploadHeapAllocator::UploadHeapAllocator(D3D12Adapter* InParent, NodeDevice* InParentDevice, const std::string& InName)
-	:AdapterChild(InParent), DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), AllGPU())
+	:AdapterChild(InParent), DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(),GPUMaskType::AllGPU())
 	, SmallBlockAllocator(InParentDevice, GetVisibilityMask(), {}, InName, AllocationStrategy::kManualSubAllocation,
 		UploadHeapSmallBlockMaxAllocationSize, UploadHeapSmallBlockPoolSize, 256)
 	, BigBlockAllocator(InParentDevice, GetVisibilityMask(), {},InName,AllocationStrategy::kManualSubAllocation,
@@ -1266,7 +1266,7 @@ void FastAllocator::Destroy()
 FastAllocatorPagePool::FastAllocatorPagePool(NodeDevice* Parent, GPUMaskType VisibiltyMask, D3D12_HEAP_TYPE InHeapType, uint32 Size)
 	: DeviceChild(Parent), MultiNodeGPUObject(Parent->GetGPUMask(), VisibiltyMask)
 	, PageSize(Size)
-	, HeapProperties(CD3DX12_HEAP_PROPERTIES(InHeapType, Parent->GetGPUMask(), VisibiltyMask))
+	, HeapProperties(CD3DX12_HEAP_PROPERTIES(InHeapType, Parent->GetGPUMask().GetNative(), VisibiltyMask.GetNative()))
 {};
 
 FastAllocatorPagePool::FastAllocatorPagePool(NodeDevice* Parent, GPUMaskType VisibiltyMask, const D3D12_HEAP_PROPERTIES& InHeapProperties, uint32 Size)

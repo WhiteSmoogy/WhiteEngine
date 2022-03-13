@@ -72,7 +72,7 @@ namespace platform_ex::Windows {
 			}
 
 			D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const {
-				return resource->GetGPUVirtualAddress();
+				return GPUVirtualAddress;
 			}
 
 			void* GetResourceBaseAddress() const { wconstraint(ResourceBaseAddress); return ResourceBaseAddress; }
@@ -127,6 +127,8 @@ namespace platform_ex::Windows {
 			ResourceHolder(const COMPtr<ID3D12Resource>& pResource, D3D12_RESOURCE_STATES in_state, const D3D12_RESOURCE_DESC& InDesc, HeapHolder* InHeap, D3D12_HEAP_TYPE InHeapType);
 
 			friend class Device;
+			friend struct BaseShaderResource;
+			friend class Texture;
 		protected:
 			D3D12_RESOURCE_STATES curr_state;
 
@@ -140,6 +142,7 @@ namespace platform_ex::Windows {
 			bool bDepthStencil;
 
 			void* ResourceBaseAddress;
+			D3D12_GPU_VIRTUAL_ADDRESS GPUVirtualAddress;
 		};
 
 		
@@ -473,6 +476,36 @@ namespace platform_ex::Windows {
 
 			// The size the application asked for
 			uint64 Size;
+		};
+
+		//track View to ResourceLocation
+		struct BaseShaderResource
+		{
+			BaseShaderResource(NodeDevice* Parent)
+				:Location(Parent)
+			{}
+
+			ResourceHolder* Resource() const { return Location.GetResource(); }
+
+			ID3D12Resource* D3DResource() const {
+				return Resource()->Resource();
+			}
+
+			void SetName(const char* name)
+			{
+				Resource()->SetName(name);
+			}
+
+			D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
+			{
+				return Location.GetGPUVirtualAddress();
+			}
+
+			const inline bool IsValid() const {
+				return Location.IsValid();
+			}
+
+			ResourceLocation Location;
 		};
 
 		class FastClearResource

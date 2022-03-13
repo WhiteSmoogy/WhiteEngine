@@ -451,7 +451,7 @@ void CommandContext::DrawIndexedPrimitive(platform::Render::GraphicsBuffer* IInd
 	auto IndexBuffer = static_cast<GraphicsBuffer*>(IIndexBuffer);
 
 	const DXGI_FORMAT Format = IndexBuffer->GetFormat();
-	StateCache.SetIndexBuffer(IndexBuffer->Resource(), Format, 0);
+	StateCache.SetIndexBuffer(IndexBuffer->Location, Format, 0);
 	StateCache.ApplyState<CPT_Graphics>();
 
 	CommandListHandle->DrawIndexedInstanced(IndexCount, NumInstances, StartIndex, BaseVertexIndex, FirstInstance);

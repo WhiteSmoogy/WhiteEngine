@@ -9,7 +9,7 @@ TextureCube::TextureCube(uint16 size_,
 	uint8 numMipMaps, uint8 array_size_, EFormat format_,
 	uint32 access_hint, SampleDesc sample_info)
 	:BTexture(numMipMaps, array_size_, format_, access_hint, sample_info),
-	Texture(format_),
+	Texture(GetDefaultNodeDevice(), format_),
 	size(size_)
 {
 	if (0 == mipmap_size) {
@@ -108,7 +108,7 @@ ShaderResourceView* TextureCube::RetriveShaderResourceView()
 {
 	if (!default_srv)
 	{
-		default_srv.reset(new ShaderResourceView(GetDefaultNodeDevice(), CreateSRVDesc(0, GetArraySize(), 0, GetNumMipMaps()), *this));
+		default_srv.reset(new ShaderResourceView(GetDefaultNodeDevice(), CreateSRVDesc(0, GetArraySize(), 0, GetNumMipMaps()),this));
 	}
 	return default_srv.get();
 }

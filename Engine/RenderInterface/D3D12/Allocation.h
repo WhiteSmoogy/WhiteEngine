@@ -44,7 +44,7 @@ namespace platform_ex::Windows::D3D12
 		bool IsFull() { return FreeSize == 0; }
 
 		bool TryAllocate(uint32 InSizeInBytes, uint32 InAllocationAlignment, PoolResouceTypes InAllocationResourceType, PoolAllocatorPrivateData& AllocationData);
-	
+
 		int32 FindFreeBlock(uint32 InSizeInBytes, uint32 InAllocationAlignment);
 
 		PoolAllocatorPrivateData* AddToFreeBlocks(PoolAllocatorPrivateData* InFreeBlock);
@@ -80,33 +80,33 @@ namespace platform_ex::Windows::D3D12
 		uint64 Offset;
 	};
 
-	
 
-	template<MemoryPool::FreeListOrder Order, bool Defrag=false>
-	class PoolAllocator :public DeviceChild, public MultiNodeGPUObject,public IPoolAllocator
+
+	template<MemoryPool::FreeListOrder Order, bool Defrag = false>
+	class PoolAllocator :public DeviceChild, public MultiNodeGPUObject, public IPoolAllocator
 	{
 	public:
 		PoolAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
 			const AllocatorConfig& InConfig,
 			const std::string& Name,
-			AllocationStrategy InAllocationStrategy, uint64 InDefaultPoolSize, uint32 InPoolAlignment,uint32 InMaxAllocationSize);
+			AllocationStrategy InAllocationStrategy, uint64 InDefaultPoolSize, uint32 InPoolAlignment, uint32 InMaxAllocationSize);
 
 		~PoolAllocator();
 
-		 bool  SupportsAllocation(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_FLAGS InResourceFlags, uint32 InBufferAccess, ResourceStateMode InResourceStateMode) const final;
+		bool  SupportsAllocation(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_FLAGS InResourceFlags, uint32 InBufferAccess, ResourceStateMode InResourceStateMode) const final;
 
-		 void AllocDefaultResource(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& InDesc, uint32 InBufferAccess, ResourceStateMode InResourceStateMode,
+		void AllocDefaultResource(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& InDesc, uint32 InBufferAccess, ResourceStateMode InResourceStateMode,
 			D3D12_RESOURCE_STATES InCreateState, uint32 InAlignment, ResourceLocation& ResourceLocation, const char* InName) final;
 
-		 void AllocateResource(uint32 GPUIndex, D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& InDesc, uint64 InSize, uint32 InAllocationAlignment, ResourceStateMode InResourceStateMode,
-			 D3D12_RESOURCE_STATES InCreateState, const D3D12_CLEAR_VALUE* InClearValue, const char* InName, ResourceLocation& ResourceLocation);
+		void AllocateResource(uint32 GPUIndex, D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& InDesc, uint64 InSize, uint32 InAllocationAlignment, ResourceStateMode InResourceStateMode,
+			D3D12_RESOURCE_STATES InCreateState, const D3D12_CLEAR_VALUE* InClearValue, const char* InName, ResourceLocation& ResourceLocation);
 
-		 template<MemoryPool::PoolResouceTypes InAllocationResourceType>
-		 bool TryAllocateInternal(uint32 InSizeInBytes, uint32 InAllocationAlignment, PoolAllocatorPrivateData& AllocationData);
+		template<MemoryPool::PoolResouceTypes InAllocationResourceType>
+		bool TryAllocateInternal(uint32 InSizeInBytes, uint32 InAllocationAlignment, PoolAllocatorPrivateData& AllocationData);
 
-		 ResourceHolder* GetBackingResource(ResourceLocation& InResouceLocation) const;
+		ResourceHolder* GetBackingResource(ResourceLocation& InResouceLocation) const;
 
-		bool IsOwner(ResourceLocation& ResourceLocation) const { return ResourceLocation.GetPoolAllocator() ==static_cast<const IPoolAllocator*>(this); }
+		bool IsOwner(ResourceLocation& ResourceLocation) const { return ResourceLocation.GetPoolAllocator() == static_cast<const IPoolAllocator*>(this); }
 
 		ResourceHolder* CreatePlacedResource(
 			const PoolAllocatorPrivateData& InAllocationData,
@@ -138,7 +138,7 @@ namespace platform_ex::Windows::D3D12
 
 	};
 
-	
+
 
 	class ResourceConfigAllocator :public DeviceChild, public MultiNodeGPUObject
 	{
@@ -162,7 +162,7 @@ namespace platform_ex::Windows::D3D12
 		std::recursive_mutex CS;
 	};
 
-	class BuddyUploadAllocator :public ResourceConfigAllocator,public ISubDeAllocator
+	class BuddyUploadAllocator :public ResourceConfigAllocator, public ISubDeAllocator
 	{
 	public:
 		BuddyUploadAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
@@ -175,7 +175,7 @@ namespace platform_ex::Windows::D3D12
 
 		void Initialize();
 
-		bool TryAllocate(uint32 SizeInBytes, uint32 Alignment,ResourceLocation& ResourceLocation);
+		bool TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation);
 
 		void Deallocate(ResourceLocation& ResourceLocation) final;
 
@@ -254,11 +254,11 @@ namespace platform_ex::Windows::D3D12
 		void DeallocateBlock(uint32 Offset, uint32 Order);
 	};
 
-	template<bool Constant,bool Upload>
+	template<bool Constant, bool Upload>
 	class MultiBuddyAllocator;
 
 	template<>
-	class MultiBuddyAllocator<false,true> :public ResourceConfigAllocator,public ISubDeAllocator
+	class MultiBuddyAllocator<false, true> :public ResourceConfigAllocator, public ISubDeAllocator
 	{
 	public:
 		MultiBuddyAllocator(
@@ -288,7 +288,7 @@ namespace platform_ex::Windows::D3D12
 	};
 
 	template<>
-	class MultiBuddyAllocator<true,true> :public DeviceChild, public MultiNodeGPUObject
+	class MultiBuddyAllocator<true, true> :public DeviceChild, public MultiNodeGPUObject
 	{
 	public:
 		MultiBuddyAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes);
@@ -298,7 +298,7 @@ namespace platform_ex::Windows::D3D12
 		void CleanUpAllocations(uint64 InFrameLag);
 	private:
 
-		class ConstantAllocator :public DeviceChild, public MultiNodeGPUObject,public ISubDeAllocator {
+		class ConstantAllocator :public DeviceChild, public MultiNodeGPUObject, public ISubDeAllocator {
 		public:
 			ConstantAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, uint32 InBlockSize);
 
@@ -340,16 +340,16 @@ namespace platform_ex::Windows::D3D12
 	public:
 		UploadHeapAllocator(D3D12Adapter* InParent, NodeDevice* InParentDevice, const std::string& InName);
 
-		void* AllocFastConstantAllocationPage(uint32 InSize, uint32 InAlignment,ResourceLocation& ResourceLocation);
+		void* AllocFastConstantAllocationPage(uint32 InSize, uint32 InAlignment, ResourceLocation& ResourceLocation);
 
 		void* AllocUploadResource(uint32 InSize, uint32 InAlignment, ResourceLocation& ResourceLocation);
 
 		void CleanUpAllocations(uint64 InFrameLag);
 
 	private:
-		MultiBuddyAllocator<false,true> SmallBlockAllocator;
+		MultiBuddyAllocator<false, true> SmallBlockAllocator;
 		// Pool allocator for all bigger allocations - less fast but less alignment waste
-		PoolAllocator<MemoryPool::FreeListOrder::SortByOffset,false>  BigBlockAllocator;
+		PoolAllocator<MemoryPool::FreeListOrder::SortByOffset, false>  BigBlockAllocator;
 		// Seperate allocator used for the fast constant allocator pages which get always freed within the same frame by default
 		// (different allocator to avoid fragmentation with the other pools - always the same size allocations)
 		MultiBuddyAllocator<true, true> FastConstantAllocator;
@@ -357,7 +357,7 @@ namespace platform_ex::Windows::D3D12
 
 	using BufferPool = IPoolAllocator;
 
-	class BufferAllocator:public DeviceChild, public MultiNodeGPUObject
+	class BufferAllocator :public DeviceChild, public MultiNodeGPUObject
 	{
 	public:
 		BufferAllocator(NodeDevice* Parent, GPUMaskType VisibleNodes);
@@ -457,7 +457,7 @@ namespace platform_ex::Windows::D3D12
 		std::shared_mutex CS;
 	};
 
-	class FastConstantAllocator :public DeviceChild,public MultiNodeGPUObject
+	class FastConstantAllocator :public DeviceChild, public MultiNodeGPUObject
 	{
 	public:
 		FastConstantAllocator(NodeDevice* Parent, GPUMaskType InGpuMask);
@@ -468,34 +468,5 @@ namespace platform_ex::Windows::D3D12
 
 		uint32 Offset;
 		uint32 PageSize;
-	};
-
-	struct ResourceLocationTrait
-	{
-		ResourceLocationTrait(NodeDevice* Parent)
-			:Location(Parent)
-		{}
-
-		ResourceHolder* Resource() const { return Location.GetResource(); }
-
-		ID3D12Resource* D3DResource() const {
-			return Resource()->Resource();
-		}
-
-		void SetName(const char* name)
-		{
-			Resource()->SetName(name);
-		}
-
-		D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
-		{
-			return Location.GetGPUVirtualAddress();
-		}
-
-		const inline bool IsValid() const { 
-			return Location.IsValid();
-		}
-
-		ResourceLocation Location;
 	};
 }

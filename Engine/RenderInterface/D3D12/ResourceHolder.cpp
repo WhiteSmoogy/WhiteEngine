@@ -68,7 +68,7 @@ namespace platform_ex::Windows {
 		}
 
 		ResourceHolder::ResourceHolder()
-			:curr_state(D3D12_RESOURCE_STATE_COMMON)
+			:curr_state(D3D12_RESOURCE_STATE_COMMON),GPUVirtualAddress(0)
 		{
 		}
 
@@ -78,14 +78,19 @@ namespace platform_ex::Windows {
 		}
 
 		ResourceHolder::ResourceHolder(const COMPtr<ID3D12Resource>& pResource, D3D12_RESOURCE_STATES in_state, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType)
-			: curr_state(in_state), resource(pResource),desc(InDesc),heap_type(InHeapType)
+			:ResourceHolder(pResource,in_state, InDesc,nullptr,InHeapType)
 		{
-			bDepthStencil = (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0;
 		}
 
 		ResourceHolder::ResourceHolder(const COMPtr<ID3D12Resource>& pResource, D3D12_RESOURCE_STATES in_state, const D3D12_RESOURCE_DESC& InDesc, HeapHolder* InHeap, D3D12_HEAP_TYPE InHeapType)
-			: curr_state(in_state), resource(pResource), desc(InDesc), heap_type(InHeapType),heap(InHeap)
+			: curr_state(in_state), resource(pResource), desc(InDesc), heap_type(InHeapType)
 		{
+			bDepthStencil = (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0;
+
+			if (resource && desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+			{
+				GPUVirtualAddress = pResource->GetGPUVirtualAddress();
+			}
 		}
 
 		HeapHolder::HeapHolder(NodeDevice* InParentDevice, GPUMaskType VisibleNodes)

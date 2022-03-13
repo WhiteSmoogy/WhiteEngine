@@ -8,7 +8,7 @@ using BTexture = platform::Render::Texture2D;
 Texture2D::Texture2D(uint16 width_, uint16 height_,
 	uint8 numMipMaps, uint8 array_size_,
 	EFormat format_, uint32 access_hint, platform::Render::SampleDesc sample_info)
-	:Texture(format_),
+	:Texture(GetDefaultNodeDevice(), format_),
 	BTexture(numMipMaps, array_size_, format_, access_hint, sample_info),
 	width(width_), height(height_)
 {
@@ -54,15 +54,15 @@ static white::uint32 ResloveEAccessHint(const D3D12_RESOURCE_DESC& desc) {
 }
 
 platform_ex::Windows::D3D12::Texture2D::Texture2D(const COMPtr<ID3D12Resource>& pResource)
-	:Texture(pResource),
+	:Texture(GetDefaultNodeDevice(), pResource),
 	BTexture(
-		static_cast<white::uint8>(desc.MipLevels),
-		static_cast<white::uint8>(desc.DepthOrArraySize), 
+		static_cast<white::uint8>(Location.GetResource()->GetDesc().MipLevels),
+		static_cast<white::uint8>(Location.GetResource()->GetDesc().DepthOrArraySize),
 		ConvertWrap(dxgi_format), 
-		ResloveEAccessHint(desc),
-		{desc.SampleDesc.Count,desc.SampleDesc.Quality}
+		ResloveEAccessHint(Location.GetResource()->GetDesc()),
+		{ Location.GetResource()->GetDesc().SampleDesc.Count,Location.GetResource()->GetDesc().SampleDesc.Quality}
 	),
-	width(static_cast<white::uint16>(desc.Width)), height(static_cast<white::uint16>(desc.Height))
+	width(static_cast<white::uint16>(Location.GetResource()->GetDesc().Width)), height(static_cast<white::uint16>(Location.GetResource()->GetDesc().Height))
 {
 }
 
@@ -178,7 +178,7 @@ ShaderResourceView* Texture2D::RetriveShaderResourceView()
 {
 	if (!default_srv)
 	{
-		default_srv.reset(new ShaderResourceView(GetDefaultNodeDevice(), CreateSRVDesc(0, GetArraySize(), 0, GetNumMipMaps()), *this));
+		default_srv.reset(new ShaderResourceView(Location.GetParentDevice(), CreateSRVDesc(0, GetArraySize(), 0, GetNumMipMaps()), this));
 	}
 	return default_srv.get();
 }

@@ -11,7 +11,7 @@ using BTexture = platform::Render::Texture1D;
 
 Texture1D::Texture1D(uint16 width_, uint8 numMipMaps, uint8 array_size_, EFormat format_, uint32 access_hint, platform::Render::SampleDesc sample_info)
 	:BTexture(numMipMaps, array_size_, format_, access_hint, sample_info),
-	Texture(format_),
+	Texture(GetDefaultNodeDevice(), format_),
 	width(width_)
 {
 	if (0 == mipmap_size) {
@@ -123,7 +123,7 @@ ShaderResourceView* Texture1D::RetriveShaderResourceView()
 {
 	if (!default_srv)
 	{
-		default_srv.reset(new ShaderResourceView(GetDefaultNodeDevice(),CreateSRVDesc(0, GetArraySize(),0,GetNumMipMaps()),*this));
+		default_srv.reset(new ShaderResourceView(GetDefaultNodeDevice(),CreateSRVDesc(0, GetArraySize(),0,GetNumMipMaps()),this));
 	}
 	return default_srv.get();
 }

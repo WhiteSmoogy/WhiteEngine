@@ -134,9 +134,9 @@ void D12::RayContext::RayTraceShadow(R::RayTracingScene* InScene, const platform
 	//todo:remove this
 	D3D12_RESOURCE_BARRIER barrier;
 	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	if (Resource->UpdateResourceBarrier(barrier, D3D12_RESOURCE_STATE_DEPTH_READ))
+	if (Resource->Resource()->UpdateResourceBarrier(barrier, D3D12_RESOURCE_STATE_DEPTH_READ))
 	{
-		command_context->CommandListHandle.AddTransitionBarrier(Resource,barrier.Transition.StateBefore, D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+		command_context->CommandListHandle.AddTransitionBarrier(Resource->Resource(),barrier.Transition.StateBefore, D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 	}
 
 	platform::Render::RayTracingShaderBindingsWriter Bindings;
@@ -153,7 +153,7 @@ void D12::RayContext::RayTraceShadow(R::RayTracingScene* InScene, const platform
 	ShaderTable.UploadToGPU(&Context::Instance().GetDevice());
 
 	D3D12_DISPATCH_RAYS_DESC DispatchDesc = ShaderTable.GetDispatchRaysDesc(0, 0, 0);
-	auto desc = Resource->GetDesc();
+	auto desc = Resource->Resource()->GetDesc();
 	DispatchDesc.Width =static_cast<UINT>(desc.Width);
 	DispatchDesc.Height = static_cast<UINT>(desc.Height);
 	DispatchDesc.Depth = 1;
@@ -161,9 +161,9 @@ void D12::RayContext::RayTraceShadow(R::RayTracingScene* InScene, const platform
 	DispatchRays(*command_context, Bindings, Pipeline, 0, nullptr, DispatchDesc);
 
 	//todo:remove this
-	if (Resource->UpdateResourceBarrier(barrier, D3D12_RESOURCE_STATE_DEPTH_WRITE))
+	if (Resource->Resource()->UpdateResourceBarrier(barrier, D3D12_RESOURCE_STATE_DEPTH_WRITE))
 	{
-		command_context->CommandListHandle.AddTransitionBarrier(Resource, barrier.Transition.StateBefore, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+		command_context->CommandListHandle.AddTransitionBarrier(Resource->Resource(), barrier.Transition.StateBefore, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 	}
 }
 

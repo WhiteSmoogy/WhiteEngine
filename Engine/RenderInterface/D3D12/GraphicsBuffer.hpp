@@ -21,7 +21,7 @@ namespace platform_ex::Windows::D3D12 {
 		uint32 bHasNeverBeenMappeded : 1 = true;
 	};
 
-	class GraphicsBuffer : public platform::Render::GraphicsBuffer,public DeviceChild,public ResourceLocationTrait{
+	class GraphicsBuffer : public platform::Render::GraphicsBuffer,public DeviceChild,public BaseShaderResource {
 	public:
 		GraphicsBuffer(NodeDevice* Parent, platform::Render::Buffer::Usage usage, uint32_t access_hint,
 			uint32_t size_in_byte,DXGI_FORMAT InFormat);

@@ -326,7 +326,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		D3D12DescriptorCache DescriptorCache;
 
-		void InternalSetIndexBuffer(ResourceHolder* IndexBufferLocation, DXGI_FORMAT Format, uint32 Offset);
+		void InternalSetIndexBuffer(ResourceHolder* Resource);
 
 		void InternalSetStreamSource(GraphicsBuffer* VertexBufferLocation, uint32 StreamIndex, uint32 Stride, uint32 Offset);
 
@@ -653,10 +653,10 @@ namespace platform_ex::Windows::D3D12 {
 
 	public:
 
-		void SetIndexBuffer(ResourceHolder* IndexBufferLocation, DXGI_FORMAT Format, uint32 Offset)
+		void SetIndexBuffer(ResourceLocation& IndexBufferLocation, DXGI_FORMAT Format, uint32 Offset)
 		{
-			D3D12_GPU_VIRTUAL_ADDRESS BufferLocation = IndexBufferLocation->GetGPUVirtualAddress() + Offset;
-			UINT SizeInBytes =static_cast<UINT>(IndexBufferLocation->GetDesc().Width - Offset);
+			D3D12_GPU_VIRTUAL_ADDRESS BufferLocation = IndexBufferLocation.GetGPUVirtualAddress() + Offset;
+			UINT SizeInBytes =static_cast<UINT>(IndexBufferLocation.GetSize() - Offset);
 
 			D3D12_INDEX_BUFFER_VIEW& CurrentView = PipelineState.Graphics.IBCache.CurrentIndexBufferView;
 
@@ -668,7 +668,7 @@ namespace platform_ex::Windows::D3D12 {
 				CurrentView.SizeInBytes = SizeInBytes;
 				CurrentView.Format = Format;
 
-				InternalSetIndexBuffer(IndexBufferLocation, Format, Offset);
+				InternalSetIndexBuffer(IndexBufferLocation.GetResource());
 			}
 		}
 

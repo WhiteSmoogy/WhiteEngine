@@ -37,32 +37,36 @@ static DXGI_FORMAT ClearValueWrap(DXGI_FORMAT format)
 	return format;
 }
 
-platform_ex::Windows::D3D12::Texture::Texture(EFormat format)
-	:dxgi_format(ConvertWrap(format))
+platform_ex::Windows::D3D12::Texture::Texture(NodeDevice* Parent,EFormat format)
+	:dxgi_format(ConvertWrap(format)),BaseShaderResource(Parent)
 {
 }
 
-platform_ex::Windows::D3D12::Texture::Texture(const COMPtr<ID3D12Resource>& pResource)
-	:ResourceHolder(pResource)
+platform_ex::Windows::D3D12::Texture::Texture(NodeDevice* Parent,const COMPtr<ID3D12Resource>& pResource)
+	:BaseShaderResource(Parent)
 {
-	dxgi_format = desc.Format;
+	auto pHolder = new ResourceHolder(pResource);
+
+	dxgi_format = pHolder->desc.Format;
+
+	Location.AsStandAlone(pHolder, pHolder->desc.Width);
 }
 
 std::string  platform_ex::Windows::D3D12::Texture::HWDescription() const
 {
-	return white::sfmt("[D3D12] Texture pResource=%p",resource.Get());
+	return std::format("[D3D12] Texture pResource={}", Location.GetGPUVirtualAddress());
 }
 
 void Texture::DeleteHWResource()
 {
-	resource = nullptr;
+	Location.Clear();
 	texture_upload_heaps = nullptr;
 	texture_readback_heaps = nullptr;
 }
 
 bool Texture::ReadyHWResource() const
 {
-	return bool(resource);
+	return Location.IsValid();
 }
 
 void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uint16 height, uint16 depth, uint8 array_size, ElementInitData const *  init_data)
@@ -70,6 +74,7 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 	auto & device = Context::Instance().GetDevice();
 	auto base_this = dynamic_cast<platform::Render::Texture*>(this);
 	wconstraint(base_this->GetSampleQuality() == 0);
+
 
 	D3D12_RESOURCE_DESC tex_desc;
 	tex_desc.Dimension = dim;
@@ -109,6 +114,7 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 	heap_prop.CreationNodeMask = 0;
 	heap_prop.VisibleNodeMask = 0;
 
+	D3D12_RESOURCE_STATES curr_state = D3D12_RESOURCE_STATE_COMMON;
 	D3D12_RESOURCE_STATES init_state = D3D12_RESOURCE_STATE_COMMON;
 	if (IsDepthFormat(base_this->GetFormat()) && (base_this->GetAccessMode() & EA_GPUWrite))
 	{
@@ -132,6 +138,7 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 		}
 	}
 
+	COMPtr<ID3D12Resource> resource;
 	CheckHResult(device->CreateCommittedResource(&heap_prop, D3D12_HEAP_FLAG_NONE,
 		&tex_desc, init_state, ClearValuePtr,
 		COMPtr_RefParam(resource, IID_ID3D12Resource)));
@@ -176,6 +183,7 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 		&buff_desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
 		COMPtr_RefParam(texture_readback_heaps, IID_ID3D12Resource)));
 
+	uint64 required_size = 0;
 	if (init_data != nullptr && init_data->data != nullptr) {
 		auto& context = Context::Instance();
 		auto & cmd_list = context.GetCommandList(Device::Command_Resource);
@@ -200,7 +208,6 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 		std::vector<uint64> row_sizes_in_bytes(num_subres);
 		std::vector<uint32> num_rows(num_subres);
 
-		uint64 required_size = 0;
 		device->GetCopyableFootprints(&tex_desc, 0, num_subres, 0, &layouts[0], &num_rows[0], &row_sizes_in_bytes[0], &required_size);
 
 		uint8* p;
@@ -253,8 +260,14 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 
 	}
 
-	desc = tex_desc;
 
+	auto pHolder = new ResourceHolder(resource,curr_state, tex_desc);
+
+	if (required_size == 0)
+	{
+		device->GetCopyableFootprints(&tex_desc, 0, num_subres, 0, nullptr, nullptr, nullptr, &required_size);
+	}
+	Location.AsStandAlone(pHolder, required_size);
 }
 
 void Texture::DoMap(EFormat format, uint32 subres, TextureMapAccess tma,
@@ -267,7 +280,7 @@ void Texture::DoMap(EFormat format, uint32 subres, TextureMapAccess tma,
 
 	last_tma = tma;
 
-	auto tex_desc = resource->GetDesc();
+	auto tex_desc = Location.GetResource()->GetDesc();
 	D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
 	uint32 num_rows;
 	uint64 row_sizes_in_bytes;
@@ -279,13 +292,13 @@ void Texture::DoMap(EFormat format, uint32 subres, TextureMapAccess tma,
 
 		TransitionBarrier barrier = {
 			{D3D12_RESOURCE_STATE_COMMON,D3D12_RESOURCE_STATE_COPY_SOURCE},
-			resource,
+			Location.GetResource()->resource,
 			subres
 		};
 		cmd_list->ResourceBarrier(1, barrier);
 
 		D3D12_TEXTURE_COPY_LOCATION src = {
-			resource.Get(),
+			Location.GetResource()->Resource(),
 			D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
 			subres
 		};
@@ -332,7 +345,7 @@ void Texture::DoUnmap(uint32 subres)
 	texture_upload_heaps->Unmap(0, nullptr);
 
 
-	auto tex_desc = resource->GetDesc();
+	auto tex_desc = Location.GetResource()->GetDesc();
 	D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
 	uint32 num_rows;
 	uint64 row_sizes_in_bytes;
@@ -344,7 +357,7 @@ void Texture::DoUnmap(uint32 subres)
 
 		TransitionBarrier barrier{
 			{D3D12_RESOURCE_STATE_COMMON,D3D12_RESOURCE_STATE_COPY_SOURCE},
-			resource,
+			Location.GetResource()->resource,
 			subres
 		};
 
@@ -357,7 +370,7 @@ void Texture::DoUnmap(uint32 subres)
 		};
 
 		D3D12_TEXTURE_COPY_LOCATION dst = {
-			resource.Get(),
+			Location.GetResource()->Resource(),
 			D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
 			subres
 		};
@@ -459,12 +472,12 @@ void platform_ex::Windows::D3D12::Texture::DoHWBuildMipSubLevels(uint8 array_siz
 		D3D12_RESOURCE_BARRIER barrier_before[2];
 		barrier_before[0].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier_before[0].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrier_before[0].Transition.pResource = resource.Get();
+		barrier_before[0].Transition.pResource = Location.GetResource()->Resource(),
 		barrier_before[0].Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
 		barrier_before[0].Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 		barrier_before[1].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier_before[1].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrier_before[1].Transition.pResource = resource.Get();
+		barrier_before[1].Transition.pResource = Location.GetResource()->Resource(),
 		barrier_before[1].Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
 		barrier_before[1].Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
@@ -488,10 +501,10 @@ void platform_ex::Windows::D3D12::Texture::DoHWBuildMipSubLevels(uint8 array_siz
 					barrier_before[1].Transition.Subresource = CalcSubresource(level, index*facecount + face, 0, mipmap_size, array_size);
 					cmd_list->ResourceBarrier(2, barrier_before);
 
-					RenderTargetView rtv(GetDefaultNodeDevice(), CreateRTVDesc(ITexture, index* facecount + face, 1, level), *this);
+					RenderTargetView rtv(Location.GetParentDevice(), CreateRTVDesc(ITexture, index* facecount + face, 1, level), this);
 					auto const rt_handle = rtv.GetView();
 
-					ShaderResourceView srv(GetDefaultNodeDevice(), CreateSRVDesc(ITexture, index* facecount + face, 1, level - 1, 1), *this);
+					ShaderResourceView srv(Location.GetParentDevice(), CreateSRVDesc(ITexture, index* facecount + face, 1, level - 1, 1), this);
 					auto const sr_handle = srv.GetView();
 					device->CopyDescriptorsSimple(1, cpu_cbv_srv_uav_handle, sr_handle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -537,8 +550,8 @@ void Texture::DoHWCopyToTexture(_type& src, _type & dst, ResourceStateTransition
 	barrier_target.Transition.StateBefore = dst_st.StateBefore;
 	barrier_src.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
 	barrier_target.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
-	barrier_src.Transition.pResource = src.Resource();
-	barrier_target.Transition.pResource = dst.Resource();
+	barrier_src.Transition.pResource = src.Resource()->Resource();
+	barrier_target.Transition.pResource = dst.Resource()->Resource();
 
 	D3D12_RESOURCE_BARRIER barriers[] = { barrier_src,barrier_target };
 	cmd_list->ResourceBarrier(2, barriers);
@@ -546,10 +559,10 @@ void Texture::DoHWCopyToTexture(_type& src, _type & dst, ResourceStateTransition
 	auto num_subres = src.GetArraySize() * src.GetNumMipMaps();
 	if ((src.GetSampleCount() > 1) && (1 == dst.GetSampleCount())) {
 		for (auto i = 0; i != num_subres; ++i)
-			cmd_list->ResolveSubresource(dst.Resource(), i, src.Resource(), i, src.GetDXGIFormat());
+			cmd_list->ResolveSubresource(dst.Resource()->Resource(), i, src.Resource()->Resource(), i, src.GetDXGIFormat());
 	}
 	else
-		cmd_list->CopyResource(dst.Resource(), src.Resource());
+		cmd_list->CopyResource(dst.Resource()->Resource(), src.Resource()->Resource());
 
 	barrier_src.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_SOURCE;
 	barrier_target.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
@@ -583,18 +596,18 @@ void Texture::DoHWCopyToSubTexture(_type & src, _type & target,
 	barrier_target.Transition.StateBefore = dst_st.StateBefore;
 	barrier_src.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
 	barrier_target.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
-	barrier_src.Transition.pResource = src.Resource();
-	barrier_target.Transition.pResource = target.Resource();
+	barrier_src.Transition.pResource = src.Resource()->Resource();
+	barrier_target.Transition.pResource = target.Resource()->Resource();
 
 	D3D12_RESOURCE_BARRIER barriers[] = { barrier_src,barrier_target };
 	cmd_list->ResourceBarrier(2, barriers);
 
 	D3D12_TEXTURE_COPY_LOCATION src_location = {
-		src.Resource(),
+		src.Resource()->Resource(),
 		D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
 		src_subres };
 	D3D12_TEXTURE_COPY_LOCATION dst_location = {
-		target.Resource(),
+		target.Resource()->Resource(),
 		D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
 		dst_subres };
 

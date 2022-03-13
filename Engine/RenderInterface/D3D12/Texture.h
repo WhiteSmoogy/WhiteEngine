@@ -25,10 +25,10 @@ namespace platform_ex::Windows::D3D12 {
 	class RenderTargetView;
 	class DepthStencilView;
 
-	class Texture :public ResourceHolder
+	class Texture :public BaseShaderResource
 	{
 	public:
-		explicit Texture(EFormat format);
+		explicit Texture(NodeDevice* Parent,EFormat format);
 
 		DXGI_FORMAT GetDXGIFormat() const {
 			return dxgi_format;
@@ -36,7 +36,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		virtual ShaderResourceView* RetriveShaderResourceView() = 0;
 	protected:
-		Texture(const COMPtr<ID3D12Resource>& pResource);
+		Texture(NodeDevice* Parent,const COMPtr<ID3D12Resource>& pResource);
 
 		std::string HWDescription() const;
 

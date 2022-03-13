@@ -97,7 +97,7 @@ void CommandContextStateCache::SetComputeShader(ComputeHWShader* Shader)
 	}
 }
 
-void CommandContextStateCache::InternalSetIndexBuffer(ResourceHolder* IndexBufferLocation, DXGI_FORMAT Format, uint32 Offset)
+void CommandContextStateCache::InternalSetIndexBuffer(ResourceHolder* Resource)
 {
 	auto& CommandList = CmdContext->CommandListHandle;
 

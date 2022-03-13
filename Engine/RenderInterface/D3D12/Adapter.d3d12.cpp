@@ -133,7 +133,7 @@ namespace platform_ex::Windows::D3D12 {
 			RTVDesc.Texture2D.MipSlice = 0;
 			RTVDesc.Texture2D.PlaneSlice = 0;
 
-			texture->SetRenderTargetViewIndex(new RenderTargetView(GetDefaultNodeDevice(), RTVDesc, *texture), RTVIndex);
+			texture->SetRenderTargetViewIndex(new RenderTargetView(GetDefaultNodeDevice(), RTVDesc, texture.get()), RTVIndex);
 		}
 
 		if ((access & platform::Render::EA_DSV) == platform::Render::EA_DSV)
@@ -150,7 +150,7 @@ namespace platform_ex::Windows::D3D12 {
 			{
 				DSVDesc.Flags = D3D12_DSV_FLAG_NONE;
 
-				texture->SetDepthStencilView(new DepthStencilView(GetDefaultNodeDevice(), DSVDesc, *texture, HasStencil), AccessType);
+				texture->SetDepthStencilView(new DepthStencilView(GetDefaultNodeDevice(), DSVDesc, texture.get(), HasStencil), AccessType);
 			}
 		}
 
@@ -178,7 +178,7 @@ namespace platform_ex::Windows::D3D12 {
 			RTVDesc.Texture3D.FirstWSlice = 0;
 			RTVDesc.Texture3D.WSize = Initializer.Depth;
 
-			texture->SetRenderTargetViewIndex(new RenderTargetView(GetDefaultNodeDevice(), RTVDesc, *texture),RTVIndex);
+			texture->SetRenderTargetViewIndex(new RenderTargetView(GetDefaultNodeDevice(), RTVDesc, texture.get()),RTVIndex);
 		}
 
 		return texture.release();
@@ -251,7 +251,7 @@ namespace platform_ex::Windows::D3D12 {
 
 	UnorderedAccessView* Device::CreateUnorderedAccessView(platform::Render::Texture2D* InTexture)
 	{
-		return std::make_unique<UnorderedAccessView>(Devices[0],CreateUAVDesc(*InTexture, 0, InTexture->GetArraySize(), 0),static_cast<Texture2D&>(*InTexture)).release();
+		return std::make_unique<UnorderedAccessView>(Devices[0],CreateUAVDesc(*InTexture, 0, InTexture->GetArraySize(), 0),static_cast<Texture2D*>(InTexture)).release();
 	}
 
 	ConstantBuffer * Device::CreateConstantBuffer(Buffer::Usage usage, uint32 size_in_byte,const void* init_data)

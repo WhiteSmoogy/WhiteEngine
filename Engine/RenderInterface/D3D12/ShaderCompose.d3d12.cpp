@@ -34,7 +34,7 @@ namespace {
 				auto& tex_subres = *pTexSubRes;
 
 				auto pTexture = D3D12::dynamic_cast_texture(tex_subres.tex.get());
-				*psrvsrc = std::make_tuple(static_cast<D3D12::ResourceHolder*>(pTexture),
+				*psrvsrc = std::make_tuple(pTexture->Resource(),
 					tex_subres.first_array_index * tex_subres.tex->GetNumMipMaps() + tex_subres.first_level,
 
 					tex_subres.num_items * tex_subres.num_levels);
@@ -57,7 +57,7 @@ namespace {
 				{
 					auto PrevDesc = psrv->GetDesc();
 
-					if (memcmp(&PrevDesc, &Desc, sizeof(Desc)) != 0 || pTexture != psrv->GetResourceLocation())
+					if (memcmp(&PrevDesc, &Desc, sizeof(Desc)) != 0 || pTexture->Resource() != psrv->GetResourceLocation())
 					{
 						bReset = true;
 					}
@@ -65,7 +65,7 @@ namespace {
 
 				if (bReset)
 				{
-					psrv.reset(new D3D12::ShaderResourceView(D3D12::GetDefaultNodeDevice(), Desc, *pTexture));
+					psrv.reset(new D3D12::ShaderResourceView(D3D12::GetDefaultNodeDevice(), Desc,pTexture));
 
 					*ppsrv = psrv.get();
 				}
@@ -120,14 +120,14 @@ namespace {
 			param->Value(tex_subres);
 			if (tex_subres.tex) {
 				auto pTexture = dynamic_cast<D3D12::Texture*>(tex_subres.tex.get());
-				puavsrc->first = pTexture;
+				puavsrc->first = pTexture->Resource();
 				puavsrc->second = nullptr;
 
 				auto Desc = D3D12::CreateUAVDesc(*tex_subres.tex, tex_subres.first_array_index, tex_subres.num_items,
 
 					tex_subres.first_level, tex_subres.num_levels);
 
-				puav.reset(new D3D12::UnorderedAccessView(D3D12::GetDefaultNodeDevice(), Desc, *pTexture));
+				puav.reset(new D3D12::UnorderedAccessView(D3D12::GetDefaultNodeDevice(), Desc, pTexture));
 
 				*ppuav = puav.get();
 			}

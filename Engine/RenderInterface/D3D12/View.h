@@ -23,7 +23,7 @@ namespace platform_ex::Windows::D3D12 {
 	{
 	public:
 		CSubresourceSubset() {}
-		
+
 		inline explicit CSubresourceSubset(const D3D12_SHADER_RESOURCE_VIEW_DESC& Desc, DXGI_FORMAT ResourceFormat) :
 			m_BeginArray(0),
 			m_EndArray(1),
@@ -657,7 +657,9 @@ namespace platform_ex::Windows::D3D12 {
 
 	protected:
 		ViewSubresourceSubsetFlags Flags;
-		ResourceHolder* ResourceLocation;
+		BaseShaderResource* ShaderResource;
+		ResourceLocation* Location;
+		ResourceHolder* Resource;
 		CViewSubresourceSubset ViewSubresourceSubset;
 		TDesc Desc;
 
@@ -671,10 +673,11 @@ namespace platform_ex::Windows::D3D12 {
 		}
 
 	private:
-		void Initialize(const TDesc& InDesc, ResourceHolder& InResourceLocation)
+		void Initialize(const TDesc& InDesc, BaseShaderResource* InBaseShaderResource, ResourceLocation& InLocation)
 		{
-			ResourceLocation = &InResourceLocation;
-			auto* Resource = ResourceLocation->Resource();
+			ShaderResource = InBaseShaderResource;
+			Location = &InLocation;
+			Resource = Location->GetResource();
 			wconstraint(Resource);
 
 			Desc = InDesc;
@@ -687,19 +690,19 @@ namespace platform_ex::Windows::D3D12 {
 		}
 
 	protected:
-		void CreateView(const TDesc& InDesc, ResourceHolder& InResourceLocation)
+		void CreateView(const TDesc& InDesc, BaseShaderResource* InBaseShaderResource, ResourceLocation& InResourceLocation)
 		{
-			Initialize(InDesc, InResourceLocation);
+			Initialize(InDesc, InBaseShaderResource, InResourceLocation);
 
-			ID3D12Resource* D3DResource = ResourceLocation->Resource();
+			ID3D12Resource* D3DResource = Location->GetResource()->Resource();
 			Descriptor.CreateView(Desc, D3DResource);
 		}
 
-		void CreateViewWithCounter(const TDesc& InDesc, ResourceHolder& InResourceLocation, ID3D12Resource* InCounterResource)
+		void CreateViewWithCounter(const TDesc& InDesc, BaseShaderResource* InBaseShaderResource, ResourceLocation &InResourceLocation, ID3D12Resource* InCounterResource)
 		{
-			Initialize(InDesc, InResourceLocation);
+			Initialize(InDesc, InBaseShaderResource, InResourceLocation);
 
-			ID3D12Resource* D3DResource = ResourceLocation->Resource();
+			ID3D12Resource* D3DResource = Location->GetResource()->Resource();
 			ID3D12Resource* D3DCounterResource = InCounterResource ? InCounterResource : nullptr;
 			Descriptor.CreateViewWithCounter(Desc, D3DResource, D3DCounterResource);
 		}
@@ -709,8 +712,8 @@ namespace platform_ex::Windows::D3D12 {
 		inline const TDesc& GetDesc()					const { return Desc; }
 		inline CD3DX12_CPU_DESCRIPTOR_HANDLE	GetView()					const { return Descriptor.GetHandle(); }
 		inline uint32							GetDescriptorHeapIndex()	const { return Descriptor.GetIndex(); }
-		inline ID3D12Resource* GetResource()				const { return ResourceLocation->Resource(); }
-		inline ResourceHolder* GetResourceLocation()		const { return ResourceLocation; }
+		inline ID3D12Resource* GetResource()				const { return Resource->Resource(); }
+		inline ResourceHolder* GetResourceLocation()		const { return Resource; }
 		const CViewSubresourceSubset& GetViewSubresourceSubset()	const {
 			return ViewSubresourceSubset;
 		}
@@ -723,10 +726,10 @@ namespace platform_ex::Windows::D3D12 {
 	class RenderTargetView : public TView<D3D12_RENDER_TARGET_VIEW_DESC>
 	{
 	public:
-		RenderTargetView(NodeDevice* InParent, const D3D12_RENDER_TARGET_VIEW_DESC& InRTVDesc, ResourceHolder& InResourceLocation)
+		RenderTargetView(NodeDevice* InParent, const D3D12_RENDER_TARGET_VIEW_DESC& InRTVDesc, BaseShaderResource* InResource)
 			: TView(InParent, ViewSubresourceSubsetFlags_None)
 		{
-			CreateView(InRTVDesc, InResourceLocation);
+			CreateView(InRTVDesc, InResource, InResource->Location);
 		}
 	};
 
@@ -738,14 +741,14 @@ namespace platform_ex::Windows::D3D12 {
 		CViewSubresourceSubset DepthOnlyViewSubresourceSubset;
 		CViewSubresourceSubset StencilOnlyViewSubresourceSubset;
 	public:
-		DepthStencilView(NodeDevice* InParent, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDSVDesc, ResourceHolder& InResourceLocation, bool InHasStencil)
+		DepthStencilView(NodeDevice* InParent, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDSVDesc, BaseShaderResource* InResource, bool InHasStencil)
 			: TView(InParent, ViewSubresourceSubsetFlags_DepthAndStencilDsv)
 			, bHasDepth(true)				// Assume all DSVs have depth bits in their format
 			, bHasStencil(InHasStencil)		// Only some DSVs have stencil bits in their format
 		{
-			CreateView(InDSVDesc, InResourceLocation);
+			CreateView(InDSVDesc, InResource, InResource->Location);
 
-			auto desc = InResourceLocation.GetDesc();
+			auto desc = Resource->GetDesc();
 
 			// Create individual subresource subsets for each plane
 			if (bHasDepth)
@@ -796,29 +799,42 @@ namespace platform_ex::Windows::D3D12 {
 		uint32 Stride;
 
 	public:
+		ShaderResourceView(NodeDevice* InParent)
+			:TView(InParent, ViewSubresourceSubsetFlags_None)
+		{}
+
 		// Used for all other SRV resource types. Initialization is immediate on the calling thread.
 		// Should not be used for dynamic resources which can be renamed.
-		ShaderResourceView(NodeDevice* InParent,const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc, ResourceHolder& InResourceLocation, uint32 InStride = -1, bool InSkipFastClearFinalize = false)
+		ShaderResourceView(NodeDevice* InParent, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc, BaseShaderResource* InResource, uint32 InStride = -1, bool InSkipFastClearFinalize = false)
 			:TView(InParent, ViewSubresourceSubsetFlags_None)
 		{
-			Initialize(InDesc, InResourceLocation, InStride, InSkipFastClearFinalize);
+			Initialize(InDesc, InResource, InResource->Location, InStride, InSkipFastClearFinalize);
 		}
 
 		~ShaderResourceView()
 		{
 		}
 
-		void Initialize(const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc, ResourceHolder& InResourceLocation, uint32 InStride, bool InSkipFastClearFinalize = false)
+		void Initialize(const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc, BaseShaderResource* InResource, ResourceLocation& InResourceLocation, uint32 InStride, bool InSkipFastClearFinalize = false)
 		{
 			Stride = InStride;
-			bContainsDepthPlane = InResourceLocation.IsDepthStencilResource() && GetPlaneSliceFromViewFormat(InResourceLocation.GetDesc().Format, InDesc.Format) == 0;
-			bContainsStencilPlane = InResourceLocation.IsDepthStencilResource() && GetPlaneSliceFromViewFormat(InResourceLocation.GetDesc().Format, InDesc.Format) == 1;
+
+			if (InResourceLocation.GetResource())
+			{
+				bContainsDepthPlane = InResourceLocation.GetResource()->IsDepthStencilResource() && GetPlaneSliceFromViewFormat(InResourceLocation.GetResource()->GetDesc().Format, InDesc.Format) == 0;
+				bContainsStencilPlane = InResourceLocation.GetResource()->IsDepthStencilResource() && GetPlaneSliceFromViewFormat(InResourceLocation.GetResource()->GetDesc().Format, InDesc.Format) == 1;
+			}
 			bSkipFastClearFinalize = InSkipFastClearFinalize;
 
-			CreateView(InDesc, InResourceLocation);
+			CreateView(InDesc, InResource, InResourceLocation);
 		}
 
-		void Initialize(NodeDevice* InParent, D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc, ResourceHolder& InResourceLocation, uint32 InStride, bool InSkipFastClearFinalize = false)
+		void Initialize(D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc, BaseShaderResource* InBaseShaderResource, uint32 InStride, bool InSkipFastClearFinalize = false)
+		{
+			Initialize(InDesc, InBaseShaderResource, InBaseShaderResource->Location, InStride, InSkipFastClearFinalize);
+		}
+
+		void Initialize(NodeDevice* InParent, D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc, BaseShaderResource* InResource, uint32 InStride, bool InSkipFastClearFinalize = false)
 		{
 			if (!this->GetParentDevice())
 			{
@@ -827,28 +843,29 @@ namespace platform_ex::Windows::D3D12 {
 				this->SetParentDevice(InParent);
 			}
 			wconstraint(GetParentDevice() == InParent);
-			Initialize(InDesc, InResourceLocation, InStride, InSkipFastClearFinalize);
+			Initialize(InDesc, InResource, InResource->Location, InStride, InSkipFastClearFinalize);
 		}
 
-		void Rename(ResourceHolder& InResourceLocation)
+		void Rename(BaseShaderResource* InResource)
 		{
+			wconstraint(&InResource->Location == Location);
 			// Update the first element index, then reinitialize the SRV
 			if (Desc.ViewDimension == D3D12_SRV_DIMENSION_BUFFER)
 			{
-				Desc.Buffer.FirstElement = InResourceLocation.GetOffsetFromBaseOfResource() / Stride;
+				Desc.Buffer.FirstElement = Location->GetOffsetFromBaseOfResource() / Stride;
 			}
 
-			Initialize(Desc, InResourceLocation, Stride);
+			Initialize(Desc, InResource, Stride);
 		}
 
 		void Rename(float ResourceMinLODClamp)
 		{
-			wconstraint(ResourceLocation);
+			wconstraint(Location);
 			wconstraint(Desc.ViewDimension == D3D12_SRV_DIMENSION_TEXTURE2D);
 
 			// Update the LODClamp, the reinitialize the SRV
 			Desc.Texture2D.ResourceMinLODClamp = ResourceMinLODClamp;
-			CreateView(Desc, *ResourceLocation);
+			CreateView(Desc, ShaderResource,*Location);
 		}
 
 		FORCEINLINE bool IsDepthStencilResource()	const { return bContainsDepthPlane || bContainsStencilPlane; }
@@ -863,12 +880,12 @@ namespace platform_ex::Windows::D3D12 {
 		COMPtr<ID3D12Resource> CounterResource;
 		bool CounterResourceInitialized;
 
-		UnorderedAccessView(NodeDevice* InParent,const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc, ResourceHolder& InResourceLocation, ID3D12Resource* InCounterResource = nullptr)
+		UnorderedAccessView(NodeDevice* InParent, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc, BaseShaderResource* InResource, ID3D12Resource* InCounterResource = nullptr)
 			: TView(InParent, ViewSubresourceSubsetFlags_None)
 			, CounterResource(InCounterResource)
 			, CounterResourceInitialized(false)
 		{
-			CreateViewWithCounter(InDesc, InResourceLocation, InCounterResource);
+			CreateViewWithCounter(InDesc, InResource, InResource->Location, InCounterResource);
 		}
 
 		~UnorderedAccessView()

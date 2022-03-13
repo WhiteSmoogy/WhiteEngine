@@ -9,7 +9,7 @@ Texture3D::Texture3D(uint16 width_, uint16 height_, uint16 depth_,
 	uint8 numMipMaps, uint8 array_size_, 
 	EFormat format_, uint32 access_hint,uint32 NumSamples) 
 :BTexture(numMipMaps, array_size_, format_, access_hint, SampleDesc(NumSamples,0)),
-Texture(format_),
+Texture(GetDefaultNodeDevice(), format_),
 width(width_), height(height_),depth(depth_)
 {
 	if (0 == mipmap_size) {
@@ -107,7 +107,7 @@ ShaderResourceView* Texture3D::RetriveShaderResourceView()
 {
 	if (!default_srv)
 	{
-		default_srv.reset(new ShaderResourceView(GetDefaultNodeDevice(), CreateSRVDesc(0, GetArraySize(), 0, GetNumMipMaps()), *this));
+		default_srv.reset(new ShaderResourceView(GetDefaultNodeDevice(), CreateSRVDesc(0, GetArraySize(), 0, GetNumMipMaps()), this));
 	}
 	return default_srv.get();
 }

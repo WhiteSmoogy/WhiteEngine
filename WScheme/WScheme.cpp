@@ -1395,7 +1395,7 @@ namespace scheme
 				using white::pvoid;
 				auto& depth(AccessChild<size_t>(ctx.GetBindingsRef(), name));
 
-				TraceDe(Informative, "Depth = %zu, context = %p, semantics = %p.",
+				TraceDe(Debug, "Depth = %zu, context = %p, semantics = %p.",
 					depth, pvoid(&ctx), pvoid(&term));
 				++depth;
 				return white::unique_guard([&]() wnothrow{

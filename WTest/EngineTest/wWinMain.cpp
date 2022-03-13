@@ -241,7 +241,7 @@ private:
 			}
 		}
 
-		//OnDrawLights(CmdList,viewmatrix,projmatrix);
+		OnDrawLights(CmdList,viewmatrix,projmatrix);
 
 		if(RayShadowMaskDenoiser)
 			pEffect->GetParameter("rayshadow_tex") = TextureSubresource(RayShadowMaskDenoiser, 0, RayShadowMask->GetArraySize(), 0, RayShadowMaskDenoiser->GetNumMipMaps());
@@ -259,13 +259,13 @@ private:
 			for (auto& entity : pEntities->GetRenderables())
 			{
 				entity.GetMaterial().UpdateParams(reinterpret_cast<const platform::Renderable*>(&entity));
-				//Context::Instance().Render(CmdList, *pEffect, pEffect->GetTechniqueByIndex(0), entity.GetMesh().GetInputLayout());
+				Context::Instance().Render(CmdList, *pEffect, pEffect->GetTechniqueByIndex(0), entity.GetMesh().GetInputLayout());
 			}
 		}
 
-		//OnPostProcess(CmdList,screen_tex);
+		OnPostProcess(CmdList,screen_tex);
 		//OnDrawGizmos(depth_tex, CmdList);
-		//OnDrawUI(CmdList);
+		OnDrawUI(CmdList);
 
 		CmdList.EndFrame();
 		
@@ -938,7 +938,7 @@ void SetupLog()
 			spdlog::info(str);
 			break;
 		case platform::Descriptions::Debug:
-			spdlog::debug(str);
+			spdlog::trace(str);
 			break;
 		}
 		}

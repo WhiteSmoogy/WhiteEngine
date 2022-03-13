@@ -69,7 +69,7 @@ void platform::imgui::Context_RenderDrawData(platform::Render::CommandList& CmdL
     if (!GVertexBuffer || GVertexBufferSize < draw_data->TotalVtxCount)
     {
         if (GVertexBuffer)
-            delete GVertexBuffer;
+            GVertexBuffer->Release();
 
         GVertexBufferSize = draw_data->TotalVtxCount + 5000;
 
@@ -82,7 +82,7 @@ void platform::imgui::Context_RenderDrawData(platform::Render::CommandList& CmdL
     if (!GIndexBuffer || GIndexBufferSize < draw_data->TotalIdxCount)
     {
         if (GIndexBuffer)
-            delete GIndexBuffer;
+            GIndexBuffer->Release();
 
         GIndexBufferSize = draw_data->TotalIdxCount + 5000;
 

@@ -21,6 +21,10 @@ namespace platform_ex::Windows {
 		private:
 			unsigned long Uses = 1;
 		public:
+			virtual ~RefCountBase()
+			{
+			}
+
 			unsigned long AddRef()
 			{
 				return _InterlockedIncrement(reinterpret_cast<volatile long*>(&Uses));
@@ -194,6 +198,7 @@ namespace platform_ex::Windows {
 			void InitAsAllocated(uint32 InSize, uint32 InAlignment, PoolAllocatorPrivateData* FreeBlock);
 			void InitAsHead(int16 InPoolIndex);
 			void InitAsFree(int16 InPoolIndex, uint32 InSize, uint32 InAlignment, uint32 InOffset);
+			void MarkFree(uint32 Alignment);
 			
 			void MoveFrom(PoolAllocatorPrivateData& InAllocated, bool InLocked)
 			{

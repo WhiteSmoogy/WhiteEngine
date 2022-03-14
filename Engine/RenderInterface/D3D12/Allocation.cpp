@@ -182,6 +182,25 @@ void MemoryPool::RemoveFromFreeBlocks(PoolAllocatorPrivateData* InFreeBlock)
 	}
 }
 
+void MemoryPool::Deallocate(PoolAllocatorPrivateData& AllocationData)
+{
+	wconstraint(AllocationData.IsLocked());
+	wconstraint(PoolIndex == AllocationData.GetPoolIndex());
+
+	// Free block should not be locked anymore - can be reused immediatly when we get to actual pool deallocate
+	bool bLocked = false;
+	uint64 AllocationSize = AllocationData.GetSize();
+
+	auto FreeBlock = GetNewAllocationData();
+	FreeBlock->MoveFrom(AllocationData, bLocked);
+	FreeBlock->MarkFree(PoolAlignment);
+
+	// Update working stats
+	FreeSize += FreeBlock->GetSize();
+
+	AddToFreeBlocks(FreeBlock);
+}
+
 PoolAllocatorPrivateData* MemoryPool::AddToFreeBlocks(PoolAllocatorPrivateData* InFreeBlock)
 {
 	wconstraint(InFreeBlock->IsFree());
@@ -685,6 +704,14 @@ void PoolAllocator<Order, Defrag>::Deallocate(ResourceLocation& ResourceLocation
 
 	// Update the last used frame fence (used during garbage collection)
 	Pools[PoolIndex]->UpdateLastUsedFrameFence(FrameFencedOperations.back().FrameFence);
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
+void PoolAllocator<Order, Defrag>::DeallocateInternal(PoolAllocatorPrivateData& AllocationData)
+{
+	wconstraint(AllocationData.IsAllocated());
+	wconstraint(AllocationData.GetPoolIndex() < Pools.size());
+	Pools[AllocationData.GetPoolIndex()]->Deallocate(AllocationData);
 }
 
 template<MemoryPool::FreeListOrder Order, bool Defrag>

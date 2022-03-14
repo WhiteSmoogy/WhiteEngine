@@ -57,6 +57,8 @@ namespace platform_ex::Windows::D3D12
 
 		int32 FindFreeBlock(uint32 InSizeInBytes, uint32 InAllocationAlignment);
 
+		void Deallocate(PoolAllocatorPrivateData& InData);
+
 		PoolAllocatorPrivateData* AddToFreeBlocks(PoolAllocatorPrivateData* InFreeBlock);
 
 		PoolAllocatorPrivateData* GetNewAllocationData();

@@ -46,6 +46,17 @@ namespace platform_ex::Windows {
 			PoolIndex = InPoolIndex;
 		}
 
+		void PoolAllocatorPrivateData::MarkFree(uint32 InAlignment)
+		{
+			wconstraint(IsAllocated());
+
+			// Mark as free and update the size, offset and alignment according to the new requested alignment
+			SetAllocationType(EAllocationType::Free);
+			Size = Align(Size, InAlignment);
+			Offset = AlignDown(Offset, InAlignment);
+			Alignment = InAlignment;
+		}
+
 
 		void PoolAllocatorPrivateData::AddBefore(PoolAllocatorPrivateData* InOther)
 		{

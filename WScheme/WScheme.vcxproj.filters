@@ -18,10 +18,6 @@
     <Text Include="doc.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ClearRenderTarget.ssl" />
-    <None Include="ClearRenderTargetv1.sxml" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="inc_Sxml.h">
       <Filter>头文件</Filter>
     </ClInclude>

@@ -10,7 +10,7 @@
 
 具体目的：配置包括形如fxml的Shader配置,形如xaml的UI配置,形如xml/json中的应用程序配置，其脚本操作应该支持诸如构建系统,应用程序API等。
 
-本文描述基于此出发点的 WScheme(Leo Scheme) 及其参考实现。
+本文描述基于此出发点的 WScheme(White Scheme) 及其参考实现。
 
 @1.1.1 诸如fxml的shader配置需求：
 

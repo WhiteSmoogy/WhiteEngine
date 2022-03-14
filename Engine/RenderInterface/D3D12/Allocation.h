@@ -39,6 +39,16 @@ namespace platform_ex::Windows::D3D12
 
 		HeapHolder* GetBackingHeap() const { return BackingHeap.Get(); }
 
+		uint64 GetUsedSize() const { return PoolSize - FreeSize; }
+
+		uint64 GetLastUsedFrameFence() const { return LastUsedFrameFence; }
+
+		int16 GetPoolIndex() const { return PoolIndex; }
+
+		uint64 GetPoolSize() const { return PoolSize; }
+
+		bool IsEmpty() const { return GetUsedSize() == 0; }
+
 		bool IsResourceTypeSupported(MemoryPool::PoolResouceTypes InAllocationResourceType) { return InAllocationResourceType == SupportResouceTypes; }
 
 		bool IsFull() { return FreeSize == 0; }
@@ -53,6 +63,9 @@ namespace platform_ex::Windows::D3D12
 		void ReleaseAllocationData(PoolAllocatorPrivateData* InData);
 
 		void RemoveFromFreeBlocks(PoolAllocatorPrivateData* InFreeBlock);
+
+		void UpdateLastUsedFrameFence(uint64 InFrameFence) { LastUsedFrameFence = std::max(LastUsedFrameFence, InFrameFence); }
+
 	private:
 		int16 PoolIndex;
 		uint64 PoolSize;
@@ -93,6 +106,8 @@ namespace platform_ex::Windows::D3D12
 
 		~PoolAllocator();
 
+		void CleanUpAllocations(uint64 InFrameLag);
+
 		bool  SupportsAllocation(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_FLAGS InResourceFlags, uint32 InBufferAccess, ResourceStateMode InResourceStateMode) const final;
 
 		void AllocDefaultResource(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& InDesc, uint32 InBufferAccess, ResourceStateMode InResourceStateMode,
@@ -123,6 +138,22 @@ namespace platform_ex::Windows::D3D12
 		void Deallocate(ResourceLocation& ResourceLocation) override;
 
 		void TransferOwnership(ResourceLocation& Destination, ResourceLocation& Source) override;
+	protected:
+		struct FrameFencedAllocationData
+		{
+			enum class EOperation
+			{
+				Invalid,
+				Deallocate,
+				Unlock,
+				Nop,
+			};
+
+			EOperation Operation = EOperation::Invalid;
+			ResourceHolder* PlacedResource = nullptr;
+			uint64 FrameFence = 0;
+			PoolAllocatorPrivateData* AllocationData = nullptr;
+		};
 	private:
 		const uint64 DefaultPoolSize;
 		const uint32 PoolAlignment;
@@ -136,8 +167,17 @@ namespace platform_ex::Windows::D3D12
 		const std::string Name;
 		AllocationStrategy Strategy;
 
+		// All operations which need to happen on specific frame fences
+		std::vector<FrameFencedAllocationData> FrameFencedOperations;
+
 		std::shared_mutex CS;
 
+		std::vector< PoolAllocatorPrivateData*> AllocationDataPool;
+
+		PoolAllocatorPrivateData* GetNewAllocationData();
+		void ReleaseAllocationData(PoolAllocatorPrivateData* InData);
+
+		void DeallocateInternal(PoolAllocatorPrivateData& InData);
 	};
 
 
@@ -366,6 +406,8 @@ namespace platform_ex::Windows::D3D12
 
 		template<ResourceStateMode mode>
 		void AllocDefaultResource(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& pDesc, uint32 InBufferAccess, D3D12_RESOURCE_STATES InCreateState, ResourceLocation& ResourceLocation, uint32 Alignment, const char* Name);
+
+		void CleanUpAllocations(uint64 InFrameLag);
 
 		template<ResourceStateMode mode>
 		static bool IsPlacedResource(D3D12_RESOURCE_FLAGS InResourceFlags);

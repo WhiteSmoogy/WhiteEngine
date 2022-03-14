@@ -117,6 +117,8 @@ namespace platform_ex::Windows {
 				return ResourceBaseAddress;
 			}
 
+			bool IsPlacedResource() const { return heap != nullptr; }
+
 		protected:
 			ResourceHolder();
 
@@ -351,6 +353,8 @@ namespace platform_ex::Windows {
 			virtual void Deallocate(ResourceLocation& ResourceLocation) = 0;
 			
 			virtual void TransferOwnership(ResourceLocation& Destination, ResourceLocation& Source) = 0;
+
+			virtual void CleanUpAllocations(uint64 InFrameLag) = 0;
 		};
 
 		class ResourceLocation :public DeviceChild, public white::noncopyable
@@ -375,6 +379,8 @@ namespace platform_ex::Windows {
 			inline void SetSize(uint64 Value) { Size = Value; }
 			inline void SetSubDeAllocator(ISubDeAllocator* Value) { SetAllocatorPtr(Value); }
 			inline void SetPoolAllocator(IPoolAllocator* Value) { SetAllocatorPtr(Value); }
+			inline void ClearAllocator() { DeAllocator = nullptr; }
+
 
 			inline ResourceHolder* GetResource() const { return UnderlyingResource; }
 			inline void* GetMappedBaseAddress() const { return MappedBaseAddress; }

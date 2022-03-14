@@ -294,6 +294,107 @@ PoolAllocator<Order, Defrag>::~PoolAllocator()
 }
 
 template<MemoryPool::FreeListOrder Order, bool Defrag>
+void PoolAllocator<Order, Defrag>::CleanUpAllocations(uint64 InFrameLag)
+{
+	std::unique_lock Lock{ CS };
+
+	auto Adapter = GetParentDevice()->GetParentAdapter();
+	auto& FrameFence = Adapter->GetFrameFence();
+
+	uint32 PopCount = 0;
+	for (size_t i = 0; i < FrameFencedOperations.size(); i++)
+	{
+		FrameFencedAllocationData& Operation = FrameFencedOperations[i];
+		if (FrameFence.IsFenceComplete(Operation.FrameFence))
+		{
+			switch (Operation.Operation)
+			{
+			case FrameFencedAllocationData::EOperation::Deallocate:
+			{
+				// Deallocate the locked block (actually free now)
+				DeallocateInternal(*Operation.AllocationData);
+				Operation.AllocationData->Reset();
+				ReleaseAllocationData(Operation.AllocationData);
+
+				// Free placed resource if created
+				if (Strategy == AllocationStrategy::kPlacedResource)
+				{
+					// Release the resource
+					wconstraint(Operation.PlacedResource != nullptr);
+					Operation.PlacedResource->Release();
+					Operation.PlacedResource = nullptr;
+				}
+				else
+				{
+					wconstraint(Operation.PlacedResource == nullptr);
+				}
+				break;
+			}
+			case FrameFencedAllocationData::EOperation::Unlock:
+			{
+				Operation.AllocationData->UnLock();
+				break;
+			}
+			case FrameFencedAllocationData::EOperation::Nop:
+			{
+				break;
+			}
+			default: wconstraint(false);
+			}
+
+			PopCount =static_cast<int>(i + 1);
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	if (PopCount)
+	{
+		FrameFencedOperations.erase(FrameFencedOperations.begin(), FrameFencedOperations.begin() + PopCount);
+	}
+
+	// Trim empty allocators if not used in last n frames
+	const uint64 CompletedFence = FrameFence.UpdateLastCompletedFence();
+	for (size_t PoolIndex = 0; PoolIndex < Pools.size(); ++PoolIndex)
+	{
+		auto Pool = Pools[PoolIndex];
+		if (Pool != nullptr && Pool->IsEmpty() && (Pool->GetLastUsedFrameFence() + InFrameLag <= CompletedFence))
+		{
+			delete(Pool);
+			Pools[PoolIndex] = nullptr;
+		}
+	}
+
+	// Update the allocation order
+	std::sort(PoolAllocationOrder.begin(), PoolAllocationOrder.end() ,[this](uint32 InLHS, uint32 InRHS)
+		{
+			// first allocate from 'fullest' pools when defrag is enabled, otherwise try and allocate from
+			// default sized pools with stable order
+			if (Defrag)
+			{
+				uint64 LHSUsePoolSize = Pools[InLHS] ? Pools[InLHS]->GetUsedSize() : UINT32_MAX;
+				uint64 RHSUsePoolSize = Pools[InRHS] ? Pools[InRHS]->GetUsedSize() : UINT32_MAX;
+				return LHSUsePoolSize > RHSUsePoolSize;
+			}
+			else
+			{
+				uint64 LHSPoolSize = Pools[InLHS] ? Pools[InLHS]->GetPoolSize() : UINT32_MAX;
+				uint64 RHSPoolSize = Pools[InRHS] ? Pools[InRHS]->GetPoolSize() : UINT32_MAX;
+				if (LHSPoolSize != RHSPoolSize)
+				{
+					return LHSPoolSize < RHSPoolSize;
+				}
+
+				uint64 LHSPoolIndex = Pools[InLHS] ? Pools[InLHS]->GetPoolIndex() : UINT32_MAX;
+				uint64 RHSPoolIndex = Pools[InRHS] ? Pools[InRHS]->GetPoolIndex() : UINT32_MAX;
+				return LHSPoolIndex < RHSPoolIndex;
+			}
+		});
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
 bool PoolAllocator<Order, Defrag>::SupportsAllocation(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_FLAGS InResourceFlags, uint32 InBufferAccess, ResourceStateMode InResourceStateMode) const
 {
 	auto InInitConfig = GetResourceAllocatorInitConfig(InHeapType, InResourceFlags, InBufferAccess);
@@ -524,9 +625,66 @@ void PoolAllocator<Order, Defrag>::TransferOwnership(ResourceLocation& Destinati
 }
 
 template<MemoryPool::FreeListOrder Order, bool Defrag>
+PoolAllocatorPrivateData* PoolAllocator<Order, Defrag>::GetNewAllocationData()
+{
+	return AllocationDataPool.empty() ? new PoolAllocatorPrivateData() : white::pop(AllocationDataPool);
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
+void PoolAllocator<Order, Defrag>::ReleaseAllocationData(PoolAllocatorPrivateData* InData)
+{
+	InData->Reset();
+	if (AllocationDataPool.size() >= 32)
+		delete InData;
+	else
+		AllocationDataPool.push_back(InData);
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
 void PoolAllocator<Order, Defrag>::Deallocate(ResourceLocation& ResourceLocation)
 {
+	wconstraint(IsOwner(ResourceLocation));
 
+	std::unique_lock Lock{ CS };
+
+	auto& AllocationData = ResourceLocation.GetPoolAllocatorPrivateData();
+	wconstraint(AllocationData.IsAllocated());
+
+	if (AllocationData.IsLocked())
+	{
+		for (FrameFencedAllocationData& Operation : FrameFencedOperations)
+		{
+			if (Operation.AllocationData == &AllocationData)
+			{
+				wconstraint(Operation.Operation == FrameFencedAllocationData::EOperation::Unlock);
+				Operation.Operation = FrameFencedAllocationData::EOperation::Nop;
+				Operation.AllocationData = nullptr;
+				break;
+			}
+		}
+	}
+
+	int16 PoolIndex = AllocationData.GetPoolIndex();
+	auto ReleasedAllocationData = GetNewAllocationData();
+	bool bLocked = true;
+	ReleasedAllocationData->MoveFrom(AllocationData, bLocked);
+
+	// Clear the allocator data
+	ResourceLocation.ClearAllocator();
+
+	// Store fence when last used so we know when to unlock the free data
+	auto Adapter = GetParentDevice()->GetParentAdapter();
+	auto& FrameFence = Adapter->GetFrameFence();
+
+	FrameFencedOperations.emplace_back(FrameFencedAllocationData{
+		.Operation = FrameFencedAllocationData::EOperation::Deallocate,
+		.PlacedResource = ResourceLocation.GetResource()->IsPlacedResource() ? ResourceLocation.GetResource() : nullptr,
+		.FrameFence = FrameFence.GetCurrentFence(),
+		.AllocationData = ReleasedAllocationData,
+		});
+
+	// Update the last used frame fence (used during garbage collection)
+	Pools[PoolIndex]->UpdateLastUsedFrameFence(FrameFencedOperations.back().FrameFence);
 }
 
 template<MemoryPool::FreeListOrder Order, bool Defrag>
@@ -1096,13 +1254,22 @@ FastConstantAllocator::FastConstantAllocator(NodeDevice* Parent, GPUMaskType InG
 void UploadHeapAllocator::CleanUpAllocations(uint64 InFrameLag)
 {
 	SmallBlockAllocator.CleanUpAllocations(InFrameLag);
-	//BigBlockAllocator.CleanUpAllocations(InFrameLag);
+	BigBlockAllocator.CleanUpAllocations(InFrameLag);
 	FastConstantAllocator.CleanUpAllocations(InFrameLag);
 }
 
 BufferAllocator::BufferAllocator(NodeDevice* Parent, GPUMaskType VisibleNodes)
 	:DeviceChild(Parent),MultiNodeGPUObject(Parent->GetGPUMask(),VisibilityMask)
 {
+}
+
+void BufferAllocator::CleanUpAllocations(uint64 InFrameLag)
+{
+	for (auto Pool : DefaultBufferPools)
+	{
+		if (Pool)
+			Pool->CleanUpAllocations(InFrameLag);
+	}
 }
 
 

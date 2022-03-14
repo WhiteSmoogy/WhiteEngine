@@ -385,6 +385,12 @@ void CommandContext::EndFrame()
 			CommandContext.ReleaseCommandAllocator();
 		}
 	}
+
+	uint64 BufferPoolDeletionFrameLag = 2;
+	Device->GetDefaultBufferAllocator().CleanUpAllocations(BufferPoolDeletionFrameLag);
+
+	uint64 FastAllocatorDeletionFrameLag = 10;
+	Device->GetDefaultFastAllocator().CleanupPages(FastAllocatorDeletionFrameLag);
 }
 
 void CommandContext::ClearState()

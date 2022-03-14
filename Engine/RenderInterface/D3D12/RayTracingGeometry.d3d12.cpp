@@ -171,7 +171,7 @@ void D12::CreateAccelerationStructureBuffers(shared_ptr<GraphicsBuffer>& Acceler
 	D3D12_RESOURCE_DESC AccelerationStructureBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
 		PrebuildInfo.ResultDataMaxSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-	AccelerationStructureBuffer = white::share_raw(Creator->CreateBuffer<ResourceStateMode::Single>(
+	AccelerationStructureBuffer = platform::Render::shared_raw_robject(Creator->CreateBuffer<ResourceStateMode::Single>(
 		nullptr, AccelerationStructureBufferDesc,Usage::Static,EAccessHint::EA_AccelerationStructure,D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT,
 		0, AccelerationStructureBufferDesc.Width, CreateInfo, nullptr));
 
@@ -179,7 +179,7 @@ void D12::CreateAccelerationStructureBuffers(shared_ptr<GraphicsBuffer>& Acceler
 		std::max(PrebuildInfo.UpdateScratchDataSizeInBytes, PrebuildInfo.ScratchDataSizeInBytes), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
 	CreateInfo.DebugName = isTopLevel ? "Acceleration structure scratch[Scene]" : "Acceleration structure scratch[Geometry]";
-	ScratchBuffer = white::share_raw(Creator->CreateBuffer<ResourceStateMode::Single>(
+	ScratchBuffer = platform::Render::shared_raw_robject(Creator->CreateBuffer<ResourceStateMode::Single>(
 		nullptr, ScratchBufferDesc, Usage::Static, EAccessHint::EA_GPUUnordered | EAccessHint::EA_Raw,D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT,
 		0, ScratchBufferDesc.Width, CreateInfo, nullptr));
 }

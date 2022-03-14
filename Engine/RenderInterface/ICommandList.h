@@ -426,7 +426,7 @@ namespace platform::Render {
 			return CmdPtr;
 		}
 
-	private:
+	protected:
 		CommandBase* CmdPtr;
 		uint32 NumCommands;
 	};

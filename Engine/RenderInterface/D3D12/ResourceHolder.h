@@ -193,6 +193,27 @@ namespace platform_ex::Windows {
 			void InitAsHead(int16 InPoolIndex);
 			void InitAsFree(int16 InPoolIndex, uint32 InSize, uint32 InAlignment, uint32 InOffset);
 			
+			void MoveFrom(PoolAllocatorPrivateData& InAllocated, bool InLocked)
+			{
+				wconstraint(InAllocated.IsAllocated());
+
+				Reset();
+
+				Size = InAllocated.Size;
+				Alignment = InAllocated.Alignment;
+				Type = InAllocated.Type;
+				Offset = InAllocated.Offset;
+				PoolIndex = InAllocated.PoolIndex;
+				Locked = InLocked;
+
+				// Update linked list
+				InAllocated.PreviousAllocation->NextAllocation = this;
+				InAllocated.NextAllocation->PreviousAllocation = this;
+				PreviousAllocation = InAllocated.PreviousAllocation;
+				NextAllocation = InAllocated.NextAllocation;
+
+				InAllocated.Reset();
+			}
 
 			void Reset()
 			{
@@ -206,6 +227,8 @@ namespace platform_ex::Windows {
 				Owner = nullptr;
 				PreviousAllocation = NextAllocation = nullptr;
 			}
+
+			bool IsAllocated() const {return Type == white::underlying(EAllocationType::Allocated);}
 
 			bool IsFree() const{ return Type == white::underlying(EAllocationType::Free); }
 
@@ -261,14 +284,7 @@ namespace platform_ex::Windows {
 				NextAllocation->PreviousAllocation = PreviousAllocation;
 			}
 
-			void AddBefore(PoolAllocatorPrivateData* InOther)
-			{
-				PreviousAllocation->NextAllocation = InOther;
-				InOther->PreviousAllocation = PreviousAllocation;
-
-				PreviousAllocation = InOther;
-				InOther->NextAllocation = this;
-			}
+			void AddBefore(PoolAllocatorPrivateData* InOther);
 
 			void AddAfter(PoolAllocatorPrivateData* InOther)
 			{
@@ -333,6 +349,8 @@ namespace platform_ex::Windows {
 			}
 
 			virtual void Deallocate(ResourceLocation& ResourceLocation) = 0;
+			
+			virtual void TransferOwnership(ResourceLocation& Destination, ResourceLocation& Source) = 0;
 		};
 
 		class ResourceLocation :public DeviceChild, public white::noncopyable

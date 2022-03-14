@@ -564,9 +564,7 @@ namespace platform_ex::Windows::D3D12 {
 				if (!CmdList.IsExecuting() && ba == Buffer::Write_Only)
 				{
 					auto Command = CL_ALLOC_COMMAND(CmdList, D3D12CommandRenameUploadBuffer)(this, GetParentDevice());
-					ResourceLocation Location(GetParentDevice());
-					Data = Adapter->GetUploadHeapAllocator(GetParentDevice()->GetGPUIndex()).AllocUploadResource(BufferSize,Alignment, Location);
-					ResourceLocation::TransferOwnership(Command->NewLocation, Location);
+					Data = Adapter->GetUploadHeapAllocator(GetParentDevice()->GetGPUIndex()).AllocUploadResource(BufferSize,Alignment, Command->NewLocation);
 				}
 				else
 				{

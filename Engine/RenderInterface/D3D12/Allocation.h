@@ -120,7 +120,9 @@ namespace platform_ex::Windows::D3D12
 
 		MemoryPool* CreateNewPool(int16 InPoolIndex, uint32 InMinimumAllocationSize, MemoryPool::PoolResouceTypes InAllocationResourceType);
 
-		void Deallocate(ResourceLocation& ResourceLocation);
+		void Deallocate(ResourceLocation& ResourceLocation) override;
+
+		void TransferOwnership(ResourceLocation& Destination, ResourceLocation& Source) override;
 	private:
 		const uint64 DefaultPoolSize;
 		const uint32 PoolAlignment;

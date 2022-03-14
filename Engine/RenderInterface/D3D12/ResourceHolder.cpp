@@ -1,5 +1,6 @@
 #include "ResourceHolder.h"
 #include "NodeDevice.h"
+#include "spdlog/spdlog.h"
 namespace platform_ex::Windows {
 	namespace D3D12 {
 		ImplDeDtor(ResourceHolder)
@@ -43,6 +44,16 @@ namespace platform_ex::Windows {
 			SetAllocationType(EAllocationType::Free);
 			Offset = InOffset;
 			PoolIndex = InPoolIndex;
+		}
+
+
+		void PoolAllocatorPrivateData::AddBefore(PoolAllocatorPrivateData* InOther)
+		{
+			PreviousAllocation->NextAllocation = InOther;
+			InOther->PreviousAllocation = PreviousAllocation;
+
+			PreviousAllocation = InOther;
+			InOther->NextAllocation = this;
 		}
 
 		bool ResourceHolder::UpdateResourceBarrier(D3D12_RESOURCE_BARRIER & barrier, D3D12_RESOURCE_STATES target_state)
@@ -177,6 +188,10 @@ namespace platform_ex::Windows {
 			std::memmove(&Destination, &Source, sizeof(ResourceLocation));
 
 			//Transfer Allocator
+			if (Source.GetAllocatorType() == AT_Pool)
+			{
+				Source.GetPoolAllocator()->TransferOwnership(Destination, Source);
+			}
 
 			Source.ClearMembers();
 		}

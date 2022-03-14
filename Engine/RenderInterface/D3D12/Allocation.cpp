@@ -509,6 +509,21 @@ MemoryPool* PoolAllocator<Order, Defrag>::CreateNewPool(int16 InPoolIndex, uint3
 }
 
 template<MemoryPool::FreeListOrder Order, bool Defrag>
+void PoolAllocator<Order, Defrag>::TransferOwnership(ResourceLocation& Destination, ResourceLocation& Source)
+{
+	std::unique_lock Lock{ CS };
+
+
+	wconstraint(IsOwner(Source));
+	
+	// Don't need to lock - ownership simply changed
+	bool bLocked = false;
+	auto& DestinationPoolData = Destination.GetPoolAllocatorPrivateData();
+	DestinationPoolData.MoveFrom(Source.GetPoolAllocatorPrivateData(), bLocked);
+	DestinationPoolData.SetOwner(&Destination);
+}
+
+template<MemoryPool::FreeListOrder Order, bool Defrag>
 void PoolAllocator<Order, Defrag>::Deallocate(ResourceLocation& ResourceLocation)
 {
 

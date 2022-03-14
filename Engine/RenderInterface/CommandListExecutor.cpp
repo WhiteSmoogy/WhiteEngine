@@ -243,12 +243,37 @@ void CommandListExecutor::ExecuteInner(CommandListBase& CmdList)
 	Execute(CmdList);
 }
 
+#ifndef NDEBUG
+class CommandListDebugIterator :public CommandListIterator
+{
+public:
+	CommandListDebugIterator(CommandListBase& CmdList)
+		:CommandListIterator(CmdList)
+	{
+	}
+
+	CommandListIterator& operator++()
+	{
+		PrevCmdPtr = CmdPtr;
+
+		CommandListIterator::operator++();
+
+		return *this;
+	}
+	
+private:
+	CommandBase* PrevCmdPtr;
+};
+#else
+using CommandListDebugIterator = CommandListIterator;
+#endif
+
 void CommandListExecutor::Execute(CommandListBase& CmdList)
 {
 	CmdList.bExecuting = true;
 
 	CommandListContext Context;
-	CommandListIterator Iter(CmdList);
+	CommandListDebugIterator Iter(CmdList);
 
 	while (Iter)
 	{

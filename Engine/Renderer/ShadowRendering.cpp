@@ -39,8 +39,7 @@ class ShadowDepthPS : public Render::BuiltInShader
 IMPLEMENT_BUILTIN_SHADER(ShadowDepthVS, "ShadowDepthVertexShader.wsl", "Main", platform::Render::VertexShader);
 IMPLEMENT_BUILTIN_SHADER(ShadowDepthPS, "ShadowDepthPixelShader.wsl", "Main", platform::Render::PixelShader);
 
-constexpr float CSMShadowDepthBias = 10.f;
-constexpr float CSMShadowSlopeScaleDepthBias = 3.0f;
+constexpr float CSMShadowDepthBias = 0.1f;
 
 void ProjectedShadowInfo::SetupWholeSceneProjection(const SceneInfo& scene, const WholeSceneProjectedShadowInitializer& initializer, uint32 InResolutionX, uint32 InResoultionY, uint32 InBorderSize)
 {
@@ -87,11 +86,11 @@ void ProjectedShadowInfo::SetupWholeSceneProjection(const SceneInfo& scene, cons
 	DepthBias = wm::lerp(DepthBias, DepthBias * WorldSpaceTexelSize, CascadeSettings.ShadowCascadeBiasDistribution);
 	DepthBias *= 0.5f;
 
-	SlopeSclaedDepthBias = CSMShadowSlopeScaleDepthBias;
+	SlopeSclaedDepthBias = WorldSpaceTexelSize;
 	SlopeSclaedDepthBias *= 0.5f;
 
-	ShaderDepthBias = std::max(DepthBias, 0.f);
-	ShaderSlopeDepthBias = std::max(DepthBias * SlopeSclaedDepthBias, 0.0f);
+	ShaderDepthBias = DepthBias;
+	ShaderSlopeDepthBias = std::max(SlopeSclaedDepthBias, 0.0f);
 	ShaderMaxSlopeDepthBias = 1.f;
 }
 

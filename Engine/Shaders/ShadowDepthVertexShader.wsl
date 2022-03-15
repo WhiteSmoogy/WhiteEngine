@@ -25,8 +25,8 @@
 			float Nol = abs(dot(LightDir,WorldVertexNormal));
 
 			const float MaxSlopeDepthBias = ShadowParams.z;
-			//tan(theta) = sqrt(1-cos^2)/cos
-			const float Slope = clamp(Nol>0?sqrt(saturate(1-Nol*Nol)) /Nol:MaxSlopeDepthBias,0,MaxSlopeDepthBias);
+			//sin(theta) = sqrt(1-cos^2)
+			const float Slope = sqrt(saturate(1-Nol*Nol));
 
 			//
 			const float SlopeDepthBias = ShadowParams.y;

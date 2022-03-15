@@ -39,10 +39,10 @@ class ShadowDepthPS : public Render::BuiltInShader
 IMPLEMENT_BUILTIN_SHADER(ShadowDepthVS, "ShadowDepthVertexShader.wsl", "Main", platform::Render::VertexShader);
 IMPLEMENT_BUILTIN_SHADER(ShadowDepthPS, "ShadowDepthPixelShader.wsl", "Main", platform::Render::PixelShader);
 
-constexpr float CSMShadowDepthBias = 10;
+constexpr float CSMShadowDepthBias = 10.f;
 constexpr float CSMShadowSlopeScaleDepthBias = 3.0f;
 
-void ProjectedShadowInfo::SetupWholeSceneProjection(const SceneInfo& scne, const WholeSceneProjectedShadowInitializer& initializer, uint32 InResolutionX, uint32 InResoultionY, uint32 InBorderSize)
+void ProjectedShadowInfo::SetupWholeSceneProjection(const SceneInfo& scene, const WholeSceneProjectedShadowInitializer& initializer, uint32 InResolutionX, uint32 InResoultionY, uint32 InBorderSize)
 {
 	PreShadowTranslation = initializer.ShadowTranslation;
 
@@ -57,9 +57,15 @@ void ProjectedShadowInfo::SetupWholeSceneProjection(const SceneInfo& scne, const
 
 	MinSubjectZ = (MaxSubjectZ - initializer.SubjectBounds.Radius * 2);
 
+	const float DepthRange = 200;
+	float MinRange = white::math::length(scene.AABBMax - scene.AABBMin);
+	MinRange = std::min(DepthRange, MinRange);
+	MaxSubjectZ = std::max(MaxSubjectZ, MinRange);
+	MinSubjectZ = std::min(MinSubjectZ, -MinRange);
+
 	SubjectAndReceiverMatrix = WorldToLightScaled * ShadowProjectionMatrix(MinSubjectZ, MaxSubjectZ, initializer.WAxis);
 
-	auto FarZPoint = wm::transform(wm::float4(0, 0, 1, 0), wm::inverse(WorldToLightScaled)) * initializer.SubjectBounds.Radius;
+	auto FarZPoint = wm::transform(wm::float4(0, 0, 1, 0), wm::inverse(WorldToLightScaled)) * MaxSubjectZ;
 	float MaxSubjectDepth = wm::transformpoint(
 		initializer.SubjectBounds.Origin.yzx+FarZPoint.xyz
 		, SubjectAndReceiverMatrix

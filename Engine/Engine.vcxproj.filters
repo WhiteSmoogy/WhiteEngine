@@ -425,6 +425,9 @@
     <ClCompile Include="RenderInterface\D3D12\Allocation.cpp">
       <Filter>RenderInterface\D3D12</Filter>
     </ClCompile>
+    <ClCompile Include="RenderInterface\D3D12\View.d3d12.cpp">
+      <Filter>RenderInterface\D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">

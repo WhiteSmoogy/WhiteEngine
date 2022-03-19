@@ -355,7 +355,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		if (!srv)
 		{
-			wconstraint(white::has_anyflags(access, EAccessHint::EA_GPURead));
+			wconstraint(white::has_anyflags(access, EAccessHint::EA_GPURead) || white::has_allflags(access, EAccessHint::EA_AccelerationStructure));
 			
 			auto CreateShaderResourceView = [&]<typename CommandType>()
 			{
@@ -376,6 +376,19 @@ namespace platform_ex::Windows::D3D12 {
 				return srv.get();
 			};
 
+			//TODO:switch case
+			if (white::has_allflags(access, EAccessHint::EA_AccelerationStructure))
+			{
+				D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
+
+				SRVDesc.Format = DXGI_FORMAT_UNKNOWN;
+				SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+				SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+				SRVDesc.RaytracingAccelerationStructure.Location = Location.GetGPUVirtualAddress() + StartOffsetBytes;
+
+				srv = std::make_unique<ShaderResourceView>(this, SRVDesc, 4);
+				return srv.get();
+			}
 			if (!white::has_anyflags(access, EAccessHint::EA_GPUStructured))
 			{
 				struct D3D12InitializeBufferSRVCommand final : platform::Render::CommandBase

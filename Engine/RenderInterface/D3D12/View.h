@@ -10,6 +10,7 @@ namespace platform_ex::Windows::D3D12 {
 	using platform::Render::SampleDesc;
 
 	class NodeDevice;
+	class GraphicsBuffer;
 
 	enum ViewSubresourceSubsetFlags
 	{
@@ -802,6 +803,9 @@ namespace platform_ex::Windows::D3D12 {
 		ShaderResourceView(NodeDevice* InParent)
 			:TView(InParent, ViewSubresourceSubsetFlags_None)
 		{}
+
+		ShaderResourceView(GraphicsBuffer* InBuffer, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc, uint32 InStride);
+
 
 		// Used for all other SRV resource types. Initialization is immediate on the calling thread.
 		// Should not be used for dynamic resources which can be renamed.

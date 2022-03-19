@@ -99,6 +99,13 @@ namespace white {
 		return (underlying(Flags) & underlying(Contains)) == underlying(Contains);
 	}
 
+	template<typename _type, typename Enum>
+		requires std::is_enum_v<Enum>&& std::is_same_v<_type, underlying_type_t<Enum>>
+	constexpr bool has_allflags(_type Flags, Enum Contains)
+	{
+		return (Flags & underlying(Contains)) == underlying(Contains);
+	}
+
 	template<typename Enum>
 	requires std::is_enum_v<Enum>
 	constexpr bool has_anyflags(Enum Flags, Enum Contains)

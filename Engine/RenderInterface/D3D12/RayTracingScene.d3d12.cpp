@@ -52,9 +52,9 @@ void RayTracingScene::BuildAccelerationStructure(CommandContext& CommandContext)
 
 	if (NumSceneInstances)
 	{
-		InstanceBuffer =white::unique_raw(Adapter->CreateVertexBuffer(Usage::Static, EAccessHint::EA_CPUWrite,
-			sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * PrebuildDescInputs.NumDescs,
-			EFormat::EF_Unknown));
+		InstanceBuffer =white::unique_raw(Adapter->CreateBuffer(static_cast<Usage>(0), EAccessHint::EA_CPUWrite,
+			sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * PrebuildDescInputs.NumDescs
+			, sizeof(D3D12_RAYTRACING_INSTANCE_DESC),nullptr));
 		InstanceBuffer->SetName("Acceleration structure [Instance] Init");
 		{
 			Mapper mapper(*InstanceBuffer, Access::Write_Only);
@@ -88,7 +88,7 @@ void RayTracingScene::BuildAccelerationStructure(CommandContext& CommandContext)
 					InstanceDesc.Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
 				}
 
-				InstanceDesc.AccelerationStructure = Geometry->AccelerationStructureBuffer->Resource()->GetGPUVirtualAddress();
+				InstanceDesc.AccelerationStructure = Geometry->AccelerationStructureBuffer->GetGPUVirtualAddress();
 
 				InstanceDesc.InstanceID = 0;
 
@@ -107,9 +107,9 @@ void RayTracingScene::BuildAccelerationStructure(CommandContext& CommandContext)
 
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC BuildDesc = {};
 	BuildDesc.Inputs = PrebuildDescInputs;
-	BuildDesc.Inputs.InstanceDescs = InstanceBuffer->Resource()->GetGPUVirtualAddress();
-	BuildDesc.DestAccelerationStructureData = AccelerationStructureBuffer->Resource()->GetGPUVirtualAddress();
-	BuildDesc.ScratchAccelerationStructureData = ScratchBuffer->Resource()->GetGPUVirtualAddress();
+	BuildDesc.Inputs.InstanceDescs = InstanceBuffer->GetGPUVirtualAddress();
+	BuildDesc.DestAccelerationStructureData = AccelerationStructureBuffer->GetGPUVirtualAddress();
+	BuildDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
 	BuildDesc.SourceAccelerationStructureData = D3D12_GPU_VIRTUAL_ADDRESS(0);
 
 	CommandContext.CommandListHandle.AddUAVBarrier();

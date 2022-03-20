@@ -1,7 +1,3 @@
-/*\par 修改时间 :
-	2017-03-27 15:14 +0800
-*/
-
 #ifndef WScheme_LSchemeA_H
 #define WScheme_LSchemeA_H 1
 
@@ -1152,7 +1148,7 @@ namespace scheme {
 		DefDeCtor(Environment)
 			DefDeCopyMoveCtorAssignment(Environment)
 		/*!
-		\brief 构造：使用包含绑定节点的指针。
+		\brief 构造：使用包含绑定节点的指针
 		\note 不检查绑定的名称。
 		*/
 		//@{

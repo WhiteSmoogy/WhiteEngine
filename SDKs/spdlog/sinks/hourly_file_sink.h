@@ -6,6 +6,7 @@
 #include <spdlog/common.h>
 #include <spdlog/details/file_helper.h>
 #include <spdlog/details/null_mutex.h>
+#include <spdlog/fmt/fmt.h>
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/details/os.h>
 #include <spdlog/details/circular_q.h>
@@ -26,12 +27,12 @@ namespace sinks {
 struct hourly_filename_calculator
 {
     // Create filename for the form basename.YYYY-MM-DD-H
-    static filename_t calc_filename(
-        const filename_t &filename, const std::chrono::file_time<std::chrono::system_clock::duration> &time_point)
+    static filename_t calc_filename(const filename_t &filename, const tm &now_tm)
     {
         filename_t basename, ext;
         std::tie(basename, ext) = details::file_helper::split_by_extension(filename);
-        return std::format(SPDLOG_FILENAME_T("{}.{:%Y-%m-%d-%H}{}"), basename, time_point, ext);
+        return fmt_lib::format(SPDLOG_FILENAME_T("{}_{:04d}-{:02d}-{:02d}_{:02d}{}"), basename, now_tm.tm_year + 1900, now_tm.tm_mon + 1,
+            now_tm.tm_mday, now_tm.tm_hour, ext);
     }
 };
 
@@ -45,8 +46,10 @@ class hourly_file_sink final : public base_sink<Mutex>
 {
 public:
     // create hourly file sink which rotates on given time
-    hourly_file_sink(filename_t base_filename, bool truncate = false, uint16_t max_files = 0)
+    hourly_file_sink(
+        filename_t base_filename, bool truncate = false, uint16_t max_files = 0, const file_event_handlers &event_handlers = {})
         : base_filename_(std::move(base_filename))
+        , file_helper_{event_handlers}
         , truncate_(truncate)
         , max_files_(max_files)
         , filenames_q_()
@@ -119,21 +122,24 @@ private:
         }
     }
 
-    decltype(auto) now_tm(log_clock::time_point tp)
+    tm now_tm(log_clock::time_point tp)
     {
-        return std::chrono::clock_cast<std::chrono::file_clock>(tp);
+        time_t tnow = log_clock::to_time_t(tp);
+        return spdlog::details::os::localtime(tnow);
     }
 
     log_clock::time_point next_rotation_tp_()
     {
         auto now = log_clock::now();
-
-        auto larget_time_p = std::chrono::floor<std::chrono::hours>(now);
-
-        if (larget_time_p > now)
-            return larget_time_p;
-
-        return {larget_time_p + std::chrono::hours(1)};
+        tm date = now_tm(now);
+        date.tm_min = 0;
+        date.tm_sec = 0;
+        auto rotation_time = log_clock::from_time_t(std::mktime(&date));
+        if (rotation_time > now)
+        {
+            return rotation_time;
+        }
+        return {rotation_time + std::chrono::hours(1)};
     }
 
     // Delete the file N rotations ago.
@@ -175,16 +181,16 @@ using hourly_file_sink_st = hourly_file_sink<details::null_mutex>;
 // factory functions
 //
 template<typename Factory = spdlog::synchronous_factory>
-inline std::shared_ptr<logger> hourly_logger_mt(
-    const std::string &logger_name, const filename_t &filename, bool truncate = false, uint16_t max_files = 0)
+inline std::shared_ptr<logger> hourly_logger_mt(const std::string &logger_name, const filename_t &filename, bool truncate = false,
+    uint16_t max_files = 0, const file_event_handlers &event_handlers = {})
 {
-    return Factory::template create<sinks::hourly_file_sink_mt>(logger_name, filename, truncate, max_files);
+    return Factory::template create<sinks::hourly_file_sink_mt>(logger_name, filename, truncate, max_files, event_handlers);
 }
 
 template<typename Factory = spdlog::synchronous_factory>
-inline std::shared_ptr<logger> hourly_logger_st(
-    const std::string &logger_name, const filename_t &filename, bool truncate = false, uint16_t max_files = 0)
+inline std::shared_ptr<logger> hourly_logger_st(const std::string &logger_name, const filename_t &filename, bool truncate = false,
+    uint16_t max_files = 0, const file_event_handlers &event_handlers = {})
 {
-    return Factory::template create<sinks::hourly_file_sink_st>(logger_name, filename, truncate, max_files);
+    return Factory::template create<sinks::hourly_file_sink_st>(logger_name, filename, truncate, max_files, event_handlers);
 }
 } // namespace spdlog

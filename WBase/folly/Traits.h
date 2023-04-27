@@ -24,6 +24,8 @@
 #include <tuple>
 #include <type_traits>
 
+#include "type_traits.hpp"
+
 #include <folly/Portability.h>
 
 namespace folly {
@@ -353,7 +355,7 @@ struct is_detected : detected_or<nonesuch, T, A...>::value_t {};
 
 template <typename T>
 using aligned_storage_for_t =
-    typename std::aligned_storage<sizeof(T), alignof(T)>::type;
+    typename white::aligned_storage<sizeof(T), alignof(T)>::type;
 
 // Older versions of libstdc++ do not provide std::is_trivially_copyable
 #if defined(__clang__) && !defined(_LIBCPP_VERSION)

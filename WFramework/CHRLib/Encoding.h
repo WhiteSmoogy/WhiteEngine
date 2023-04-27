@@ -3,6 +3,7 @@
 
 #include "WBase/winttype.hpp"//for white::byte_order,stdex::octer,stdex::byte
 #include <cstddef>
+#include <string>
 
 namespace CHRLib
 {

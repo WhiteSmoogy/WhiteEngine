@@ -194,10 +194,6 @@ namespace white {
 		using std::remove_pointer;
 		using std::add_pointer;
 
-		using std::aligned_storage;
-#	if !WB_IMPL_GNUC || WB_IMPL_GNUCPP >= 50000
-		using std::aligned_union;
-#	endif
 		using std::decay;
 		using std::enable_if;
 		using std::conditional;
@@ -237,8 +233,6 @@ namespace white {
 		using std::remove_pointer_t;
 		using std::add_pointer_t;
 
-		using std::aligned_storage_t;
-		using std::aligned_union_t;
 		using std::decay_t;
 		using std::enable_if_t;
 		using std::conditional_t;
@@ -981,6 +975,18 @@ namespace white {
 		= enable_if_t<is_same<_type1, _type2>::value, _type>;
 	//@}
 	//@}
+
+	template<std::size_t Len, std::size_t Align/* default alignment not implemented */>
+	struct aligned_storage
+	{
+		struct type
+		{
+			alignas(Align) unsigned char data[Len];
+		};
+	};
+
+	template<std::size_t Len, std::size_t Align/*default-alignment*/>
+	using aligned_storage_t = typename aligned_storage<Len, Align>::type;
 }
 
 #endif

@@ -355,8 +355,8 @@ bool TSimpTri<T>::ReplaceVertexIsValid( const TSimpVert<T>* oldV, const wm::floa
 	const wm::float3 d01 = v0 - v1;
 	const wm::float3 dp1 = pos - v1;
 
-	wm::float3 n0 = d01 ^ d21;
-	wm::float3 n1 = dp1 ^ d21;
+	wm::float3 n0 = wm::cross(d01,d21);
+	wm::float3 n1 = wm::cross(dp1,d21);
 
 	return wm::dot(n0 , n1) > 0.0f;
 }

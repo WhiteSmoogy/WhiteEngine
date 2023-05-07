@@ -178,7 +178,7 @@ namespace platform::lsl::math {
 			if (size > 1 && size < ans.size() + 2) {
 				auto i = std::next(term.begin());
 				for (auto j = ans.begin(); i != term.end() && j != ans.end(); ++i, ++j)
-					*j = AccessToScalar<_type::scalar_type>(*i);
+					*j = AccessToScalar<typename _type::scalar_type>(*i);
 			}
 			else {
 				throw  std::invalid_argument(white::sfmt(

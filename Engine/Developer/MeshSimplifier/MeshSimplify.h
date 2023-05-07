@@ -1940,7 +1940,7 @@ float TMeshSimplifier<T, NumAttributes>::SimplifyMesh( float maxErrorLimit, int 
 			top->v1->prev = top->v0;
 
 			// ungroup removed verts
-			std::vector< TSimpVert<T>*, TInlineAllocator<16> > vertList;
+			std::vector< TSimpVert<T>*> vertList;
 			
 			v = top->v1;
 			do {

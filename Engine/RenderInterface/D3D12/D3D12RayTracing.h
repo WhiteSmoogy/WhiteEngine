@@ -476,7 +476,7 @@ public:
 	uint32 LocalRecordStride = 0; // size of shader identifier + local root parameters, aligned to SHADER_RECORD_BYTE_ALIGNMENT (same for hit groups and callable shaders)
 
 	static constexpr uint32 RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT = D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT;
-	using aligned_byte =typename std::aligned_storage<1, 64>::type;
+	using aligned_byte =typename white::aligned_storage<1, 64>::type;
 	std::vector<aligned_byte> Data;
 
 	std::shared_ptr < Windows::D3D12::GraphicsBuffer> Buffer;

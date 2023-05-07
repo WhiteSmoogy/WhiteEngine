@@ -5,6 +5,7 @@
 
 #include <concepts>
 #include <type_traits>
+#include <string>
 
 namespace std
 {

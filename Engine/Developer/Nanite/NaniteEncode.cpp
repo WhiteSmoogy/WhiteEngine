@@ -2254,7 +2254,7 @@ namespace Nanite
 		return { N.x, N.y };
 	}
 
-	FORCEINLINE static wm::float3 OctahedronDecode(int32 X, int32 Y, int32 QuantizationBits)
+	static wm::float3 OctahedronDecode(int32 X, int32 Y, int32 QuantizationBits)
 	{
 		const int32 QuantizationMaxValue = (1 << QuantizationBits) - 1;
 		float fx = X * (2.0f / QuantizationMaxValue) - 1.0f;

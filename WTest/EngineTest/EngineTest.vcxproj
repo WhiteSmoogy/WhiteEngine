@@ -132,7 +132,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>ENGINE_TOOL;_DEBUG;_WINDOWS;%(PreprocessorDefinitions);INITGUID</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ENGINE_TOOL;_DEBUG;_WINDOWS;SPDLOG_COMPILED_LIB;%(PreprocessorDefinitions);INITGUID</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>

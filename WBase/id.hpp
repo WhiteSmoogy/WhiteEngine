@@ -8,6 +8,7 @@
 
 
 #include "wdef.h"
+#include "integer_sequence.hpp"
 #include <limits>
 #include <tuple>
 #include <functional> //for std::hash

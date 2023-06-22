@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <PackAsToolShimRuntimeIdentifiers>win-x64</PackAsToolShimRuntimeIdentifiers>
+    <RuntimeIdentifier></RuntimeIdentifier>
+    <TargetFrameworks>net7.0</TargetFrameworks>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="System.CommandLine" GeneratePathProperty="true" Version="2.0.0-beta3.22114.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="ClangSharp">
+			<HintPath>../lib/ClangSharp.dll</HintPath>
+		</Reference>
+		<Reference Include="ClangSharp.Interop">
+			<HintPath>../lib/ClangSharp.Interop.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+    <ProjectReference Include="..\ClangSharp.PInvokeGenerator\ClangSharp.PInvokeGenerator.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <LibClangName Condition="'$(LibClangName)' == ''">libclang</LibClangName>
+    <LibClangSharpName Condition="'$(LibClangSharpName)' == ''">libClangSharp</LibClangSharpName>
+    <LibLLVMName Condition="'$(LibLLVMName)' == ''">libLLVM</LibLLVMName>
+  </PropertyGroup>
+
+  <!-- Auto-detect LLVM... more or less -->
+  <PropertyGroup Condition="'$(LLVMIncludePath)' == ''">
+    <LLVMIncludePath Condition="'$(OS)' == 'Windows_NT'">E:\llvm\include</LLVMIncludePath>
+    <LLVMIncludePath Condition="'$(OS)' != 'Windows_NT'">/usr/lib/llvm-15/include</LLVMIncludePath>
+  </PropertyGroup>
+
+</Project>

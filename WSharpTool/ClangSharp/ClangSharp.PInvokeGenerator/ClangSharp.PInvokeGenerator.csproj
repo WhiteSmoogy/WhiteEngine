@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ClangSharp</RootNamespace>
+    <TargetFrameworks>net7.0</TargetFrameworks>
+	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+	  <NoWarn>8632</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+	  <Reference Include="ClangSharp">
+		  <HintPath>../lib/ClangSharp.dll</HintPath>
+	  </Reference>
+	  <Reference Include="ClangSharp.Interop">
+		  <HintPath>../lib/ClangSharp.Interop.dll</HintPath>
+	  </Reference>
+  </ItemGroup>
+
+</Project>

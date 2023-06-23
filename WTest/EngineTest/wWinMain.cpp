@@ -57,7 +57,6 @@ namespace we = WhiteEngine;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-
 class EngineTest : public Test::TestFrameWork {
 public:
 	using base = Test::TestFrameWork;
@@ -103,6 +102,9 @@ public:
 	unsigned StateFrameIndex = 0;
 
 	std::vector<std::unique_ptr<we::ProjectedShadowInfo>> ShadowInfos;
+
+	WhiteEngine::Sphere FreezeSphere[10];
+	int FreezeCount = 0;
 private:
 	bool SubWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam) override
 	{
@@ -241,7 +243,8 @@ private:
 			}
 		}
 
-		OnDrawLights(CmdList,viewmatrix,projmatrix);
+		//OnDrawLights(CmdList,viewmatrix,projmatrix);
+		RenderShadowDepth();
 
 		if(RayShadowMaskDenoiser)
 			pEffect->GetParameter("rayshadow_tex") = TextureSubresource(RayShadowMaskDenoiser, 0, RayShadowMask->GetArraySize(), 0, RayShadowMaskDenoiser->GetNumMipMaps());
@@ -264,7 +267,7 @@ private:
 		}
 
 		OnPostProcess(CmdList,screen_tex);
-		//OnDrawGizmos(depth_tex, CmdList);
+		OnDrawGizmos(depth_tex, CmdList);
 		OnDrawUI(CmdList);
 
 		CmdList.EndFrame();
@@ -524,8 +527,7 @@ private:
 		SCOPED_GPU_EVENT(CmdList, DrawLights);
 
 		//TODO: don't support create resource at other thread when cmd execute
-//D3D12 CORRUPTION: Two threads were found to be executing methods associated with the same CommandList at the same time. 
-#if 0
+		//D3D12 CORRUPTION: Two threads were found to be executing methods associated with the same CommandList at the same time. 
 		auto& screen_frame = Context::Instance().GetScreenFrame();
 		auto screen_tex = screen_frame->Attached(FrameBuffer::Target0);
 		auto depth_tex =static_cast<Texture2D*>(screen_frame->Attached(FrameBuffer::DepthStencil));
@@ -613,8 +615,6 @@ private:
 				svoutput
 			);
 		}
-#endif
-		RenderShadowDepth();
 	}
 
 	void OnDrawGizmos(Texture2D* depth_tex,CommandList& CmdList)
@@ -629,10 +629,10 @@ private:
 			wm::float4{0,0,1,1},//Blue
 		};
 
-		int Count = std::min<int>(4, ShadowInfos.size());
+		int Count = std::min<int>(4, FreezeCount);
 		for (int i = 0; i != Count;++i)
 		{
-			auto sphere = ShadowInfos[i]->ShadowBounds;
+			auto sphere = FreezeSphere[i];
 			gizmos.AddSphere(sphere.Center, sphere.W, Colors[i]);
 		}
 
@@ -715,14 +715,14 @@ private:
 
 		DirectLight directioal_light;
 		directioal_light.type = DIRECTIONAL_LIGHT;
-		directioal_light.direction = wm::float3(0.335837096f,0.923879147f,-0.183468640f);
+		directioal_light.direction = wm::float3(0,1,0);
 		directioal_light.color = wm::float3(1.0f, 1.0f, 1.0f);
 		lights.push_back(directioal_light);
 
 		sun_light.SetTransform(we::RotationMatrix(we::Rotator(-directioal_light.direction)));
 
-		sun_light.DynamicShadowCascades = 2;
-		sun_light.WholeSceneDynamicShadowRadius = modelRaidus;
+		sun_light.DynamicShadowCascades = 1;
+		sun_light.WholeSceneDynamicShadowRadius = 60;
 
 		pLightConstantBuffer = white::share_raw(Device.CreateBuffer(Buffer::Usage::Dynamic, EAccessHint::EA_GPURead | EAccessHint::EA_GPUStructured, sizeof(DirectLight)*lights.size(), static_cast<EFormat>(sizeof(DirectLight)),lights.data()));
 
@@ -821,10 +821,18 @@ private:
 			ImGui::Indent(16);
 			ImGui::SliderFloat("ShadowRadius", &sun_light.WholeSceneDynamicShadowRadius, 0, 200);
 			ImGui::SliderInt("ShadowCascades", &sun_light.DynamicShadowCascades, 1, scene.MaxShadowCascades);
+			ImGui::SliderFloat("CascadeDistributionExponent", &sun_light.CascadeDistributionExponent, 2, 4);
+
+			if (ImGui::Button("Freeze"))
+			{
+				FreezeCount = 0;
+				for (int i = 0; i != ShadowInfos.size(); ++i)
+				{
+					FreezeSphere[FreezeCount++] = ShadowInfos[i]->ShadowBounds;
+				}
+			}
 			ImGui::Unindent(16);
 		}
-
-		
 	}
 
 	void OnRaytracingUI()
@@ -856,17 +864,12 @@ private:
 
 		if (ImGui::CollapsingHeader("Gizmos"))
 		{
-			ImGui::SameLine();
-			//if (ImGui::Button("Clear"))
-			{
-			}
-
 			ImGui::Indent(16);
 
 
-			for (int i = 0; i != ShadowInfos.size();++i)
+			for (int i = 0; i != FreezeCount;++i)
 			{
-				sphere(i ,ShadowInfos[i]->ShadowBounds);
+				sphere(i , FreezeSphere[i]);
 			}
 
 			ImGui::Unindent(16);
@@ -1063,6 +1066,37 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR cmdLine, int nCmdShow)
 {
 	SetupLog();
 	SetupD3DDll();
+
+
+	int m = 700000;
+	int n = 600000;
+
+	int k = 100;
+
+	int p = 20;
+
+	int StepMin = m * m;
+	int KMin = k;
+
+	for (int k = 100; k < m; k += 100)
+	{
+		int count = m / k;
+
+		int Step = 0;
+
+		for (int i = 0; i < count; ++i)
+		{
+			auto step = k * (m-i*k) / 20;
+
+			Step += step;
+		}
+
+		if (Step < StepMin)
+		{
+			StepMin = Step;
+			KMin = k;
+		}
+	}
 	
 	static auto pInitGuard = WhiteEngine::System::InitGlobalEnvironment();
 

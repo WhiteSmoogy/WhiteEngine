@@ -23,7 +23,7 @@ using namespace platform::Render::Shader;
 using namespace platform_ex;
 using namespace D3DFlags;
 
-#define SHADER_OPTIMIZATION_LEVEL_MASK (D3DCOMPILE_OPTIMIZATION_LEVEL0 | D3DCOMPILE_OPTIMIZATION_LEVEL1 | D3DCOMPILE_OPTIMIZATION_LEVEL2 | D3DCOMPILE_OPTIMIZATION_LEVEL3)
+#define SHADER_OPTIMIZATION_LEVEL_MASK (D3DCOMPILE_OPTIMIZATION_LEVEL0 | D3DCOMPILE_OPTIMIZATION_LEVEL2 | D3DCOMPILE_OPTIMIZATION_LEVEL3)
 
 namespace asset::X::Shader {
 	void AppendCompilerEnvironment(FShaderCompilerEnvironment& environment, ShaderType type)
@@ -670,11 +670,6 @@ namespace asset::X::Shader::DXIL {
 			OutArgs.push_back(L"/O0");
 			break;
 
-		case D3DCOMPILE_OPTIMIZATION_LEVEL1:
-			CompileFlags &= ~D3DCOMPILE_OPTIMIZATION_LEVEL1;
-			OutArgs.push_back(L"/O1");
-			break;
-
 		case D3DCOMPILE_OPTIMIZATION_LEVEL2:
 			CompileFlags &= ~D3DCOMPILE_OPTIMIZATION_LEVEL2;
 			OutArgs.push_back(L"/O2");
@@ -683,10 +678,6 @@ namespace asset::X::Shader::DXIL {
 		case D3DCOMPILE_OPTIMIZATION_LEVEL3:
 			CompileFlags &= ~D3DCOMPILE_OPTIMIZATION_LEVEL3;
 			OutArgs.push_back(L"/O3");
-			break;
-
-		default:
-			spdlog::error("Unknown optimization level flag");
 			break;
 		}
 

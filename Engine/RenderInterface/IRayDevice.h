@@ -120,10 +120,7 @@ namespace platform::Render {
 
 		virtual RayTracingPipelineState* CreateRayTracingPipelineState(const RayTracingPipelineStateInitializer& initializer) = 0;
 
-		virtual RayTracingShader* CreateRayTracingSahder(white::span<const uint8> Code) = 0;
-
-		virtual void BuildAccelerationStructure(RayTracingGeometry* pGeometry) = 0;
-		virtual void BuildAccelerationStructure(RayTracingScene* pGeometry) =0;
+		virtual RayTracingShader* CreateRayTracingShader(white::span<const uint8> Code) = 0;
 	};
 }
 

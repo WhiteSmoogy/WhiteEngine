@@ -99,7 +99,7 @@ HardwareShader* ShaderMapResource_InlineCode::CreateHWShader(int32 ShaderIndex)
 #if D3D_RAYTRACING
 	if (ShaderEntry.Type >= RayGen)
 	{
-		Shader = Context::Instance().GetRayContext().GetDevice().CreateRayTracingSahder(code);
+		Shader = Context::Instance().GetRayContext().GetDevice().CreateRayTracingShader(code);
 	}
 	else
 #endif

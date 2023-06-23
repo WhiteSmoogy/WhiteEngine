@@ -50,7 +50,7 @@ namespace platform {
 				initializer.IndexBuffer = index_stream.get();
 
 				tracing_geometry =white::unique_raw(ray_device.CreateRayTracingGeometry(initializer));
-				ray_device.BuildAccelerationStructure(tracing_geometry.get());
+				tracing_geometry->BuildAccelerationStructure(*Context::Instance().GetDefaultCommandContext());
 
 				min = white::math::float3(FLT_MAX,FLT_MAX,FLT_MAX);
 				max = white::math::float3(FLT_MIN,FLT_MIN,FLT_MIN);

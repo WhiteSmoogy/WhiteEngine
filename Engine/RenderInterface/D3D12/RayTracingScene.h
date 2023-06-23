@@ -22,6 +22,7 @@ namespace platform_ex::Windows::D3D12 {
 	public:
 		RayTracingScene(const platform::Render::RayTracingSceneInitializer& initializer);
 
+		void BuildAccelerationStructure(platform::Render::CommandContext& CommandContext) override;
 		void BuildAccelerationStructure(CommandContext& CommandContext);
 
 		ShaderResourceView* GetShaderResourceView() const

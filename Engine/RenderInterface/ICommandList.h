@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ICommandContext.h"
+#include "IRayTracingGeometry.h"
+#include "IRayTracingScene.h"
 #include "Runtime/Core/MemStack.h"
 
 //Command List definitions for queueing up & executing later.
@@ -333,6 +335,21 @@ namespace platform::Render {
 		{
 			InsertCommand([=](CommandListBase& CmdList) {
 				CmdList.GetComputeContext().DispatchComputeShader(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+				});
+		}
+
+		//Ray-Tracing
+		void BuildAccelerationStructure(RayTracingGeometry* geometry)
+		{
+			InsertCommand([=](CommandListBase& CmdList) {
+				geometry->BuildAccelerationStructure(CmdList.GetContext());
+				});
+		}
+
+		void BuildAccelerationStructure(std::shared_ptr<RayTracingScene> scene)
+		{
+			InsertCommand([=](CommandListBase& CmdList) {
+				scene->BuildAccelerationStructure(CmdList.GetContext());
 				});
 		}
 

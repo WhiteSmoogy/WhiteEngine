@@ -5,7 +5,10 @@
 #include "Adapter.h"
 #include "Context.h"
 
-using namespace platform_ex::Windows::D3D12;
+namespace D12 = platform_ex::Windows::D3D12;
+namespace R = platform::Render;
+
+using namespace D12;
 using namespace platform::Render::Buffer;
 
 using std::shared_ptr;
@@ -16,6 +19,11 @@ RayTracingScene::RayTracingScene(const platform::Render::RayTracingSceneInitiali
 	ShaderSlotsPerGeometrySegment(initializer.ShaderSlotsPerGeometrySegment),
 	NumCallableShaderSlots(initializer.NumCallableShaderSlots)
 {
+}
+
+void RayTracingScene::BuildAccelerationStructure(platform::Render::CommandContext& CommandContext)
+{
+	return BuildAccelerationStructure(static_cast<D12::CommandContext&>(CommandContext));
 }
 
 void RayTracingScene::BuildAccelerationStructure(CommandContext& CommandContext)

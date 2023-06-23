@@ -153,7 +153,7 @@ std::shared_ptr<Render::RayTracingShader> platform::X::LoadRayTracingShader(Rend
 		std::vector<uint8> UnCompressCode;
 		auto ShaderCode = TryUncompressCode(pair.second.GetReadAccess(), pair.second.GetUncompressedSize(), UnCompressCode);
 
-		return shared_raw_robject(RayDevice.CreateRayTracingSahder(white::make_const_span(ShaderCode, pair.second.GetUncompressedSize())));
+		return shared_raw_robject(RayDevice.CreateRayTracingShader(white::make_const_span(ShaderCode, pair.second.GetUncompressedSize())));
 	}
 
 	return std::shared_ptr<Render::RayTracingShader>();

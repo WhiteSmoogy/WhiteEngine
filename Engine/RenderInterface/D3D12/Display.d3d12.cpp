@@ -42,12 +42,13 @@ Display::Display(IDXGIFactory4 * factory_4, ID3D12CommandQueue* cmd_queue, const
 	stereo_method = setting.stereo_method;
 	stereo_feature = factory_4->IsWindowedStereoEnabled();
 
-	//TODO:
-	/*
+
+	COMPtr<IDXGIFactory5> factory_5;
+	factory_4->QueryInterface(factory_5.ReleaseAndGetAddress());
 	BOOL allow_tearing = FALSE;
-	if(SUCCEEDED(factory_5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING,&allow_tearing,sizeof(allow_tearing))))
-	tearing_allow = allow_tearing;
-	*/
+	
+	if(factory_5 && SUCCEEDED(factory_5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING,&allow_tearing,sizeof(allow_tearing))))
+		tearing_allow = allow_tearing;
 
 	//todo rotate support
 	//std::swap(width,height);
@@ -76,11 +77,8 @@ Display::Display(IDXGIFactory4 * factory_4, ID3D12CommandQueue* cmd_queue, const
 		sc_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	}
 
-	//TODO
-	/*
-	if(tearing_fature)
-	sc_desc.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-	*/
+	if(tearing_allow)
+		sc_desc.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
 	//@{
 	//TODO Match Adapter Mode

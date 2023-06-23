@@ -62,25 +62,11 @@ RayTracingPipelineState* D12::RayDevice::CreateRayTracingPipelineState(const pla
 	return PipelineState;
 }
 
-RayTracingShader* D12::RayDevice::CreateRayTracingSahder(white::span<const uint8> Code)
+RayTracingShader* D12::RayDevice::CreateRayTracingShader(white::span<const uint8> Code)
 {
 	auto Shader = new RayTracingShader(Code);
 
 	return Shader;
-}
-
-void D12::RayDevice::BuildAccelerationStructure(R::RayTracingGeometry* geometry)
-{
-	RayTracingGeometry* pGeometry = static_cast<RayTracingGeometry*>(geometry);
-
-	pGeometry->BuildAccelerationStructure(*context->GetCommandContext());
-}
-
-void D12::RayDevice::BuildAccelerationStructure(R::RayTracingScene* scene)
-{
-	RayTracingScene* pScene = static_cast<RayTracingScene*>(scene);
-
-	pScene->BuildAccelerationStructure(*context->GetCommandContext());
 }
 
 const Fence& platform_ex::Windows::D3D12::RayDevice::GetFence() const

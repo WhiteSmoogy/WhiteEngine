@@ -64,6 +64,7 @@ namespace platform_ex::Windows::D3D12 {
 		std::shared_ptr<GraphicsBuffer> AccelerationStructureBuffer;
 		std::shared_ptr<GraphicsBuffer> ScratchBuffer;
 
+		void BuildAccelerationStructure(platform::Render::CommandContext& CommandContext) override;
 		void BuildAccelerationStructure(CommandContext& CommandContext);
 	};
 

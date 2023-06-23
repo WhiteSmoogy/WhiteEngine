@@ -9,11 +9,15 @@
 #include  <WBase/wmathtype.hpp>
 
 namespace platform::Render {
+	class CommandContext;
+
 	/** Top level ray tracing acceleration structure (contains instances of meshes). */
 	class RayTracingScene
 	{
 	public:
 		virtual ~RayTracingScene();
+
+		virtual void BuildAccelerationStructure(CommandContext& context) = 0;
 	};
 }
 

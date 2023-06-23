@@ -50,6 +50,11 @@ D12::RayTracingGeometry::RayTracingGeometry(const platform::Render::RayTracingGe
 	this->Segement = initializer.Segement;
 }
 
+void D12::RayTracingGeometry::BuildAccelerationStructure(platform::Render::CommandContext& CommandContext)
+{
+	return BuildAccelerationStructure(static_cast<D12::CommandContext&>(CommandContext));
+}
+
 void D12::RayTracingGeometry::BuildAccelerationStructure(CommandContext& CommandContext)
 {
 	wconstexpr white::uint32 IndicesPerPrimitive = 3; // Only triangle meshes are supported

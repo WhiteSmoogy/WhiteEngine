@@ -393,7 +393,8 @@ namespace white {
 	  */
 	  //@{
 	  //! \brief 一元 & 操作。
-	WB_Impl_Functor_Ops1(addrof, &, addrof_t<const _type&>)
+	template<typename _type = void>
+	using addrof = addressof_op<_type>;
 
 	//! \brief 一元 * 操作。
 	WB_Impl_Functor_Ops1(indirect, *, indirect_t<const _type&>)

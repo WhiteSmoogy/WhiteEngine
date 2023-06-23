@@ -52,7 +52,7 @@ void RayTracingScene::BuildAccelerationStructure(CommandContext& CommandContext)
 
 	if (NumSceneInstances)
 	{
-		InstanceBuffer =white::unique_raw(Adapter->CreateBuffer(static_cast<Usage>(0), EAccessHint::EA_CPUWrite,
+		InstanceBuffer =white::unique_raw(Adapter->CreateBuffer(Buffer::Dynamic, EAccessHint::EA_CPUWrite,
 			sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * PrebuildDescInputs.NumDescs
 			, sizeof(D3D12_RAYTRACING_INSTANCE_DESC),nullptr));
 		InstanceBuffer->SetName("Acceleration structure [Instance] Init");

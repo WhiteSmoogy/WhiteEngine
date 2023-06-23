@@ -243,7 +243,7 @@ private:
 			}
 		}
 
-		//OnDrawLights(CmdList,viewmatrix,projmatrix);
+		OnDrawLights(CmdList,viewmatrix,projmatrix);
 		RenderShadowDepth();
 
 		if(RayShadowMaskDenoiser)
@@ -569,13 +569,13 @@ private:
 			.Output = RayShadowMaskUAV.get()
 		};
 		
-		auto Scene = pEntities->BuildRayTracingScene();
-		Context::Instance().GetRayContext().GetDevice().BuildAccelerationStructure(Scene.get());
+		auto Scene = pEntities->CreateRayTracingScene();
+		CmdList.BuildAccelerationStructure(Scene);
 
-		//clear rt?
-		Context::Instance().GetRayContext().RayTraceShadow(Scene.get(),shadowconstant);
-
-
+		CmdList.InsertCommand([=](CommandListBase& CmdList) {
+			Context::Instance().GetRayContext().RayTraceShadow(Scene.get(), shadowconstant);
+		});
+		
 		platform::ScreenSpaceDenoiser::ShadowVisibilityInput svinput =
 		{
 			.Mask = RayShadowMask.get(),

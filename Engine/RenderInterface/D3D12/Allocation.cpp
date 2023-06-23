@@ -278,7 +278,7 @@ AllocatorConfig IPoolAllocator::GetResourceAllocatorInitConfig(D3D12_HEAP_TYPE I
 		else if (white::has_anyflags(InBufferAccess, EA_GPUUnordered))
 		{
 			wconstraint(InResourceFlags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-			InitConfig.InitialResourceState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			InitConfig.InitialResourceState = D3D12_RESOURCE_STATE_COMMON;
 		}
 		else
 		{

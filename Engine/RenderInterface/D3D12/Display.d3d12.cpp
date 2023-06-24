@@ -48,7 +48,7 @@ Display::Display(IDXGIFactory4 * factory_4, ID3D12CommandQueue* cmd_queue, const
 	BOOL allow_tearing = FALSE;
 	
 	if(factory_5 && SUCCEEDED(factory_5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING,&allow_tearing,sizeof(allow_tearing))))
-		tearing_allow = allow_tearing;
+		tearing_allow = true;
 
 	//todo rotate support
 	//std::swap(width,height);
@@ -82,7 +82,7 @@ Display::Display(IDXGIFactory4 * factory_4, ID3D12CommandQueue* cmd_queue, const
 
 	//@{
 	//TODO Match Adapter Mode
-	sc_fs_desc.RefreshRate.Numerator = 60;
+	sc_fs_desc.RefreshRate.Numerator = 144;
 	sc_fs_desc.RefreshRate.Denominator = 1;
 	//@}
 

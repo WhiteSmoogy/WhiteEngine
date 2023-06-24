@@ -10,7 +10,9 @@ namespace platform_ex::Windows::D3D12
 	using platform::Render::EAccessHint;
 	class NodeDevice;
 
-	constexpr uint32 d3d_buffer_alignment = 64 * 1024;
+	constexpr uint32 kBufferAlignment = 64 * 1024;
+
+	constexpr uint32 kManualSubAllocationAlignment = 256;
 
 	class MemoryPool :public DeviceChild, public MultiNodeGPUObject
 	{

@@ -294,6 +294,16 @@ namespace platform_ex::Windows::D3D12 {
 		ResourceCreateInfo& CreateInfo,
 		IResourceAllocator* ResourceAllocator);
 
+	template
+		GraphicsBuffer* platform_ex::Windows::D3D12::Device::CreateBuffer<ResourceStateMode::Multi>(
+			CommandListImmediate* Cmdlist,
+			const D3D12_RESOURCE_DESC& InDesc,
+			D3D12_RESOURCE_STATES InitialState,
+			const BufferDesc& BufferDesc,
+			uint32 Alignment,
+			ResourceCreateInfo& CreateInfo,
+			IResourceAllocator* ResourceAllocator);
+
 	template<ResourceStateMode Mode>
 	void Device::AllocateBuffer(NodeDevice* Device, const D3D12_RESOURCE_DESC& InDesc, 
 		const BufferDesc& BufferDesc,

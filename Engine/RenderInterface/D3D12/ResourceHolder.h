@@ -50,6 +50,7 @@ namespace platform_ex::Windows {
 		{
 			Default,
 			Single,
+			Multi,
 		};
 
 		class HeapHolder :public RefCountBase, public DeviceChild, public MultiNodeGPUObject
@@ -345,14 +346,14 @@ namespace platform_ex::Windows {
 			static AllocationStrategy GetResourceAllocationStrategy(D3D12_RESOURCE_FLAGS InResourceFlags, ResourceStateMode InResourceStateMode)
 			{
 				// Does the resource need state tracking and transitions
-				auto ResourceStateMode = white::underlying(InResourceStateMode);
-				if (ResourceStateMode == white::underlying(ResourceStateMode::Default))
+				auto ResourceStateMode = InResourceStateMode;
+				if (ResourceStateMode == ResourceStateMode::Default)
 				{
-					ResourceStateMode = (InResourceFlags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) ? 0xFF : 0xF;
+					ResourceStateMode = (InResourceFlags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) ? ResourceStateMode::Multi : ResourceStateMode::Single;
 				}
 
 				// multi state resource need to placed because each allocation can be in a different state
-				return (ResourceStateMode == 0xFF) ? AllocationStrategy::kPlacedResource : AllocationStrategy::kManualSubAllocation;
+				return (InResourceStateMode == ResourceStateMode::Multi) ? AllocationStrategy::kPlacedResource : AllocationStrategy::kManualSubAllocation;
 			}
 
 			virtual void Deallocate(ResourceLocation& ResourceLocation) = 0;

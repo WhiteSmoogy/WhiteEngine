@@ -478,7 +478,7 @@ void PoolAllocator<Order, Defrag>::AllocateResource(uint32 GPUIndex, D3D12_HEAP_
 		if (bPlacedResource)
 		{
 			// Writeable resources get separate ID3D12Resource* with their own resource state by using placed resources. Just make sure it's UAV, other flags are free to differ.
-			wconstraint(InDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER || (InDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0 || InHeapType == D3D12_HEAP_TYPE_READBACK);
+			wconstraint((InDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0 || InHeapType == D3D12_HEAP_TYPE_READBACK || InAllocationAlignment > kManualSubAllocationAlignment || InResourceStateMode == ResourceStateMode::Multi);
 
 			// If it's a placed resource then base offset will always be 0 from the actual d3d resource so ignore the allocation alignment - no extra offset required
 			// for creating the views!
@@ -530,7 +530,10 @@ void PoolAllocator<Order, Defrag>::AllocateResource(uint32 GPUIndex, D3D12_HEAP_
 		{
 			wconstraint(ResourceLocation.GetResource() == nullptr);
 
-			auto NewResource = CreatePlacedResource(AllocationData, InDesc, InCreateState, InResourceStateMode, InClearValue, InName);
+			D3D12_RESOURCE_DESC Desc = InDesc;
+			Desc.Alignment = AllocationAlignment;
+
+			auto NewResource = CreatePlacedResource(AllocationData, Desc, InCreateState, InResourceStateMode, InClearValue, InName);
 			ResourceLocation.SetResource(NewResource);
 		}
 	}
@@ -1357,8 +1360,10 @@ D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState(D3D12_HEAP
 
 template void BufferAllocator::AllocDefaultResource<ResourceStateMode::Default>(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& InResourceDesc, uint32 InBuffAccess, D3D12_RESOURCE_STATES InCreateState, ResourceLocation& ResourceLocation, uint32 Alignment, const char* Name);
 template void BufferAllocator::AllocDefaultResource<ResourceStateMode::Single>(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& InResourceDesc, uint32 InBuffAccess, D3D12_RESOURCE_STATES InCreateState, ResourceLocation& ResourceLocation, uint32 Alignment, const char* Name);
+template void BufferAllocator::AllocDefaultResource<ResourceStateMode::Multi>(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& InResourceDesc, uint32 InBuffAccess, D3D12_RESOURCE_STATES InCreateState, ResourceLocation& ResourceLocation, uint32 Alignment, const char* Name);
 template D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState<ResourceStateMode::Default>(D3D12_HEAP_TYPE InHeapType, uint32 InBufferAccess);
 template D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState<ResourceStateMode::Single>(D3D12_HEAP_TYPE InHeapType, uint32 InBufferAccess);
+template D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState<ResourceStateMode::Multi>(D3D12_HEAP_TYPE InHeapType, uint32 InBufferAccess);
 
 BufferPool* BufferAllocator::CreateBufferPool(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_FLAGS InResourceFlags, uint32 InBufferAccess, ResourceStateMode InResourceStateMode)
 {
@@ -1415,7 +1420,7 @@ void* FastAllocator::Allocate(uint32 Size, uint32 Alignment, class ResourceLocat
 		//Allocations are 64k aligned
 		if (Alignment)
 		{
-			Alignment = (d3d_buffer_alignment % Alignment) == 0 ? 0 : Alignment;
+			Alignment = (kBufferAlignment % Alignment) == 0 ? 0 : Alignment;
 		}
 
 		ResourceHolder* Resource = nullptr;

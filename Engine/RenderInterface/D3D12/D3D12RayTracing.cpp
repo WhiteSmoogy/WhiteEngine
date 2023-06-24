@@ -36,7 +36,7 @@ void RayTracingShaderTable::UploadToGPU(D3D12::CommandContext& Context)
 	};
 
 	Buffer = white::share_raw(
-		Context.GetParentAdapter()->CreateBuffer<D3D12::ResourceStateMode::Default>(
+		Context.GetParentAdapter()->CreateBuffer<D3D12::ResourceStateMode::Multi>(
 		&CommandListExecutor::GetImmediateCommandList(),
 		D3DBufferDesc,
 		D3D12_RESOURCE_STATE_COPY_DEST,

@@ -13,24 +13,39 @@
 
 #include <WFramework/Core/WString.h>
 
-namespace D3D12 = platform_ex::Windows::D3D12;
+namespace D3D12 = platform_ex::Windows::D3D12 ;
 
 using platform::Render::ShaderType;
+using platform::Render::CommandListExecutor;
+using platform::Render::BufferDesc;
 
-void RayTracingShaderTable::UploadToGPU(D3D12::Device* Device)
+void RayTracingShaderTable::UploadToGPU(D3D12::CommandContext& Context)
 {
 	if (!bIsDirty)
 		return;
 
-	Buffer = white::share_raw(Device->CreateVertexBuffer(
-		platform::Render::Buffer::Static,
-		platform::Render::EAccessHint::EA_GPURead,
-		static_cast<uint32>(Data.size()),
-		platform::Render::EF_Unknown,
-		Data.data()
+	D3D12_RESOURCE_DESC D3DBufferDesc = D3D12::CD3DX12_RESOURCE_DESC::Buffer(static_cast<uint32>(Data.size()), D3D12_RESOURCE_FLAG_NONE, D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
+
+	auto CreateInfo = D3D12::FillResourceCreateInfo(Data.data(), "RayTracingShaderTable::Buffer");
+
+	BufferDesc BufferDesc = {
+			.Size = static_cast<uint32>(Data.size()),
+			.Stride =0,
+			.Usage = platform::Render::Buffer::Static,
+			.Access = platform::Render::EAccessHint::EA_GPURead
+	};
+
+	Buffer = white::share_raw(
+		Context.GetParentAdapter()->CreateBuffer<D3D12::ResourceStateMode::Default>(
+		&CommandListExecutor::GetImmediateCommandList(),
+		D3DBufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST,
+		BufferDesc,
+		D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT,
+		CreateInfo,nullptr
 	));
 
-	Buffer->SetName("RayTracingShaderTable::Buffer");
+	D3D12::TransitionResource(Context.CommandListHandle, Buffer->Resource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 	bIsDirty = false;
 }
@@ -728,6 +743,8 @@ void ::DispatchRays(D3D12::CommandContext& CommandContext, const platform::Rende
 		FD3D12RayTracingGlobalResourceBinder ResourceBinder(CommandContext);
 		SetRayTracingShaderResources(CommandContext, RayGenShader, GlobalBindings, TransientDescriptorCache, ResourceBinder);
 	}
+
+	CommandContext.CommandListHandle.FlushResourceBarriers();
 
 	auto StateObject = Pipeline->StateObject.Get();
 

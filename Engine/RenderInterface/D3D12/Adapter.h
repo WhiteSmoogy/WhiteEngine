@@ -27,6 +27,9 @@ namespace platform_ex::Windows::D3D12 {
 	using platform::Render::SampleDesc;
 	using platform::Render::ElementInitData;
 	namespace Buffer = platform::Render::Buffer;
+	using platform::Render::BufferDesc;
+	using platform::Render::CommandListExecutor;
+	using platform::Render::CommandListImmediate;
 
 	struct ResourceCreateInfo
 	{
@@ -71,15 +74,18 @@ namespace platform_ex::Windows::D3D12 {
 		ShaderCompose* CreateShaderCompose(std::unordered_map<platform::Render::ShaderType, const asset::ShaderBlobAsset*> pShaderBlob, platform::Render::Effect::Effect* pEffect) override;
 
 		//\brief D3D12 Buffer 创建时没有BIND_FLAG
-		GraphicsBuffer* CreateBuffer(platform::Render::CommandListImmediate* Cmdlist,Buffer::Usage usage, white::uint32 access,uint32 size, uint32 stride, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo);
+		GraphicsBuffer* CreateBuffer(CommandListImmediate* Cmdlist, const BufferDesc& BufferDesc, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo);
+		GraphicsBuffer* CreateBuffer(CommandListImmediate* Cmdlist, const BufferDesc& BufferDesc, D3D12_RESOURCE_STATES InitialState, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo);
 
-	 GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, uint32 stride, std::optional<void const*>  init_data) override;
-
+		GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, uint32 stride, std::optional<void const*>  init_data) override;
 
 		template<ResourceStateMode Mode>
-		GraphicsBuffer* CreateBuffer(platform::Render::CommandListImmediate* Cmdlist, const D3D12_RESOURCE_DESC& InDesc,
-			Buffer::Usage usage, white::uint32 access, 
-			uint32 Alignment,uint32 Stride, uint64 Size, ResourceCreateInfo& CreateInfo,
+		GraphicsBuffer* CreateBuffer(CommandListImmediate* Cmdlist, 
+			const D3D12_RESOURCE_DESC& InDesc,
+			D3D12_RESOURCE_STATES InitialState,
+			const BufferDesc& BufferDesc,
+			uint32 Alignment,
+			ResourceCreateInfo& CreateInfo,
 			IResourceAllocator* ResourceAllocator);
 
 		ConstantBuffer* CreateConstantBuffer(Buffer::Usage usage, uint32 size_in_byte,const void*  init_data) override;
@@ -159,9 +165,7 @@ namespace platform_ex::Windows::D3D12 {
 		template<ResourceStateMode Mode>
 		void AllocateBuffer(NodeDevice* Device,
 			const D3D12_RESOURCE_DESC& InDesc,
-			uint32 Size,
-			uint32 InUsage,
-			uint32 InAccess,
+			const BufferDesc& BufferDesc,
 			D3D12_RESOURCE_STATES InCreateState,
 			ResourceCreateInfo& CreateInfo,
 			uint32 Alignment,

@@ -48,7 +48,7 @@ public:
 		return entities;
 	}
 
-	white::unique_ptr<platform::Render::RayTracingScene> BuildRayTracingScene()
+	white::shared_ptr<platform::Render::RayTracingScene> CreateRayTracingScene()
 	{
 		platform::Render::RayTracingSceneInitializer initializer;
 
@@ -66,7 +66,7 @@ public:
 
 		initializer.Instances = white::make_span(Instances);
 
-		return white::unique_raw(platform::Render::Context::Instance().GetRayContext().GetDevice().CreateRayTracingScene(initializer));
+		return white::share_raw(platform::Render::Context::Instance().GetRayContext().GetDevice().CreateRayTracingScene(initializer));
 	}
 
 	white::math::float3 min;

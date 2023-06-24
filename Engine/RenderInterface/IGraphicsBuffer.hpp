@@ -38,6 +38,19 @@ namespace platform::Render {
 		class Mapper;
 	}
 
+	struct BufferDesc
+	{
+		white::uint32 Size = 0;
+		white::uint32 Stride = 0;
+		Buffer::Usage Usage{};
+		white::uint32 Access{};
+
+		bool IsDynamic() const
+		{
+			return (Usage & Buffer::Usage::Dynamic) ? true : false;;
+		}
+	};
+
 	class GraphicsBuffer:public RObject {
 	public:
 		virtual ~GraphicsBuffer();

@@ -176,15 +176,35 @@ void D12::CreateAccelerationStructureBuffers(shared_ptr<GraphicsBuffer>& Acceler
 	D3D12_RESOURCE_DESC AccelerationStructureBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
 		PrebuildInfo.ResultDataMaxSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-	AccelerationStructureBuffer = platform::Render::shared_raw_robject(Creator->CreateBuffer<ResourceStateMode::Single>(
-		nullptr, AccelerationStructureBufferDesc,Usage::Static,EAccessHint::EA_AccelerationStructure,D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT,
-		0, AccelerationStructureBufferDesc.Width, CreateInfo, nullptr));
+	BufferDesc ASBufferDesc = {
+			.Size = static_cast<uint32>(AccelerationStructureBufferDesc.Width),
+			.Stride = 0,
+			.Usage = Buffer::Static,
+			.Access = EAccessHint::EA_AccelerationStructure
+	};
+
+	AccelerationStructureBuffer = platform::Render::shared_raw_robject(
+		Creator->CreateBuffer<ResourceStateMode::Single>(
+		nullptr, 
+		AccelerationStructureBufferDesc, 
+		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, 
+		ASBufferDesc,D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT,
+		CreateInfo, nullptr));
 
 	D3D12_RESOURCE_DESC ScratchBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
 		std::max(PrebuildInfo.UpdateScratchDataSizeInBytes, PrebuildInfo.ScratchDataSizeInBytes), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
+	BufferDesc SBufferDesc = {
+			.Size = static_cast<uint32>(ScratchBufferDesc.Width),
+			.Stride = 0,
+			.Usage = Buffer::Static,
+			.Access = EAccessHint::EA_GPUUnordered | EAccessHint::EA_Raw
+	};
+
 	CreateInfo.DebugName = isTopLevel ? "Acceleration structure scratch[Scene]" : "Acceleration structure scratch[Geometry]";
 	ScratchBuffer = platform::Render::shared_raw_robject(Creator->CreateBuffer<ResourceStateMode::Single>(
-		nullptr, ScratchBufferDesc, Usage::Static, EAccessHint::EA_GPUUnordered | EAccessHint::EA_Raw,D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT,
-		0, ScratchBufferDesc.Width, CreateInfo, nullptr));
+		nullptr, ScratchBufferDesc, 
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		SBufferDesc,D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT,
+		CreateInfo, nullptr));
 }

@@ -308,7 +308,14 @@ namespace platform_ex::Windows::D3D12 {
 	{
 		auto CreateInfo = FillResourceCreateInfo(init_data, "VertexBuffer");
 
-		auto vb = CreateBuffer(&platform::Render::CommandListExecutor::GetImmediateCommandList(), usage, access, size_in_byte, 0, Convert(format), CreateInfo);
+		BufferDesc BufferDesc = {
+			.Size = size_in_byte,
+			.Stride = 0,
+			.Usage = usage,
+			.Access = access
+		};
+
+		auto vb = CreateBuffer(&CommandListExecutor::GetImmediateCommandList(), BufferDesc, Convert(format), CreateInfo);
 
 		return vb;
 	}
@@ -318,7 +325,14 @@ namespace platform_ex::Windows::D3D12 {
 		wconstraint(format == platform::Render::EFormat::EF_R16UI || format == platform::Render::EFormat::EF_R32UI);
 		auto CreateInfo = FillResourceCreateInfo(init_data, "IndexBuffer");
 
-		return CreateBuffer(&platform::Render::CommandListExecutor::GetImmediateCommandList(), usage, access, size_in_byte,NumFormatBytes(format), Convert(format), CreateInfo);
+		BufferDesc BufferDesc = {
+			.Size = size_in_byte,
+			.Stride = NumFormatBytes(format),
+			.Usage = usage,
+			.Access = access
+		};
+
+		return CreateBuffer(&platform::Render::CommandListExecutor::GetImmediateCommandList(), BufferDesc, Convert(format), CreateInfo);
 	}
 
 	platform::Render::HardwareShader* Device::CreateShader(const white::span<const uint8>& Code, platform::Render::ShaderType Type)

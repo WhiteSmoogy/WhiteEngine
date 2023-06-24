@@ -407,7 +407,7 @@ public:
 	}
 
 
-	void UploadToGPU(Windows::D3D12::Device* Device);
+	void UploadToGPU(Windows::D3D12::CommandContext& Device);
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetShaderTableAddress() const
 	{

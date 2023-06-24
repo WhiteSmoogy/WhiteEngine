@@ -117,14 +117,6 @@ void D12::RayContext::RayTraceShadow(R::RayTracingScene* InScene, const platform
 
 	D12::ShaderResourceView* DepthSRV = Resource->RetriveShaderResourceView();
 
-	//todo:remove this
-	D3D12_RESOURCE_BARRIER barrier;
-	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	if (Resource->Resource()->UpdateResourceBarrier(barrier, D3D12_RESOURCE_STATE_DEPTH_READ))
-	{
-		command_context->CommandListHandle.AddTransitionBarrier(Resource->Resource(),barrier.Transition.StateBefore, D3D12_RESOURCE_STATE_DEPTH_READ, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-	}
-
 	platform::Render::RayTracingShaderBindingsWriter Bindings;
 	platform::Render::ShaderMapRef<ShadowRG> RayGenerationShader(GetBuiltInShaderMap());
 	SetShaderParameters(Bindings, RayGenerationShader, InConstants);
@@ -136,7 +128,7 @@ void D12::RayContext::RayTraceShadow(R::RayTracingScene* InScene, const platform
 	D12::RayTracingPipelineState* Pipeline = GetBasicRayTracingPipeline()->Shadow;
 
 	auto& ShaderTable = Pipeline->DefaultShaderTable;
-	ShaderTable.UploadToGPU(&Context::Instance().GetDevice());
+	ShaderTable.UploadToGPU(*command_context);
 
 	D3D12_DISPATCH_RAYS_DESC DispatchDesc = ShaderTable.GetDispatchRaysDesc(0, 0, 0);
 	auto desc = Resource->Resource()->GetDesc();
@@ -145,12 +137,6 @@ void D12::RayContext::RayTraceShadow(R::RayTracingScene* InScene, const platform
 	DispatchDesc.Depth = 1;
 
 	DispatchRays(*command_context, Bindings, Pipeline, 0, nullptr, DispatchDesc);
-
-	//todo:remove this
-	if (Resource->Resource()->UpdateResourceBarrier(barrier, D3D12_RESOURCE_STATE_DEPTH_WRITE))
-	{
-		command_context->CommandListHandle.AddTransitionBarrier(Resource->Resource(), barrier.Transition.StateBefore, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-	}
 }
 
 

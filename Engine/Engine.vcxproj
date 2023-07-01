@@ -48,6 +48,7 @@
     <ClCompile Include="D3D12\D3D12RayTracing.cpp" />
     <ClCompile Include="D3D12\d3d12_dxgi.cpp" />
     <ClCompile Include="D3D12\DescriptorCache.d3d12.cpp" />
+    <ClCompile Include="D3D12\DirectStorage.cpp" />
     <ClCompile Include="D3D12\Display.d3d12.cpp" />
     <ClCompile Include="D3D12\DXGIAdapter.d3d12.cpp" />
     <ClCompile Include="D3D12\Fence.cpp" />
@@ -208,6 +209,7 @@
     <ClInclude Include="D3D12\d3d12_dxgi.h" />
     <ClInclude Include="D3D12\D3DCommandList.h" />
     <ClInclude Include="D3D12\DescriptorCache.h" />
+    <ClInclude Include="D3D12\DirectStorage.h" />
     <ClInclude Include="D3D12\Display.h" />
     <ClInclude Include="D3D12\DXGIAdapter.h" />
     <ClInclude Include="D3D12\Fence.h" />

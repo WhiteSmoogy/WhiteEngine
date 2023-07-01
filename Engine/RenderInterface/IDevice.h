@@ -130,7 +130,7 @@ namespace platform::Render {
 		TexCreate_None = 0,
 	};
 
-	using DStorage = platform::Windows::D3D12::DirectStorage;
+	using DStorage = platform_ex::DirectStorage;
 
 	class Device {
 	public:
@@ -169,7 +169,7 @@ namespace platform::Render {
 		virtual HardwareShader* CreateGeometryShader(const white::span<const uint8>& Code) = 0;
 		virtual HardwareShader* CreateComputeShader(const white::span<const uint8>& Code) = 0;
 
-		virtual DStorage& GetDStorage();
+		virtual DStorage& GetDStorage() = 0;
 	};
 }
 

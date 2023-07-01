@@ -2,18 +2,22 @@
 
 #define DIRECT_STORAGE_SUPPORT 1
 
-#include <filesystem>
 #include <WBase/wmemory.hpp>
+#include <filesystem>
 
 namespace fs = std::filesystem;
 
-namespace platform::Windows::D3D12
+namespace platform_ex
 {
 	struct DStorageFile
 	{
 		virtual ~DStorageFile();
 
-		uint64_t FileSize;
+		DStorageFile(uint64_t filesize)
+			:file_size(filesize)
+		{}
+
+		uint64_t file_size;
 	};
 
 	class DirectStorage

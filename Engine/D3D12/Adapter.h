@@ -21,6 +21,7 @@ namespace platform::Render::Effect {
 
 namespace platform_ex::Windows::D3D12 {
 	class NodeDevice;
+	class DirectStorage;
 
 	namespace  Effect = platform::Render::Effect;
 	using namespace platform::Render::IFormat;
@@ -98,6 +99,8 @@ namespace platform_ex::Windows::D3D12 {
 		platform::Render::HardwareShader* CreatePixelShader(const white::span<const uint8>& Code) override;
 		platform::Render::HardwareShader* CreateGeometryShader(const white::span<const uint8>& Code) override;
 		platform::Render::HardwareShader* CreateComputeShader(const white::span<const uint8>& Code)  override;
+
+		platform_ex::DirectStorage& GetDStorage() override;
 
 		white::observer_ptr<RootSignature> CreateRootSignature(const QuantizedBoundShaderState& QBSS);
 
@@ -247,6 +250,8 @@ namespace platform_ex::Windows::D3D12 {
 		array<std::unique_ptr<Fence>, Device::CommandTypeCount> fences;
 
 		ManualFence* frame_fence;
+
+		std::unique_ptr<DirectStorage> dstorage;
 
 		//feature support
 		D3D12_RESOURCE_BINDING_TIER ResourceBindingTier;

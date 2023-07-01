@@ -1,6 +1,6 @@
 #include "DStorage.h"
 
-namespace platform::Windows::D3D12
+namespace platform_ex
 {
 	DStorageFile::~DStorageFile() = default;
 }

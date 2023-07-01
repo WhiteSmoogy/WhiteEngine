@@ -5,6 +5,8 @@
 #include "Runtime/Core/Coroutine/SyncWait.h"
 #include "spdlog/spdlog.h"
 
+#include <WFramework/Helper/ShellHelper.h>
+
 std::string Access(const char* name, const scheme::TermNode& node) {
 	auto it = std::find_if(node.begin(), node.end(), [&](const scheme::TermNode& child) {
 		if (!child.empty())
@@ -15,6 +17,8 @@ std::string Access(const char* name, const scheme::TermNode& node) {
 }
 
 Entities::Entities(const fs::path& file) {
+	LOG_TRACE(__FUNCTION__);
+
 	auto term_node = *platform::X::LoadNode(file).begin();
 
 	auto entity_nodes = platform::X::SelectNodes("entity", term_node);

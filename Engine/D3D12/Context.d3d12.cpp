@@ -13,6 +13,7 @@
 #include "RayContext.h"
 #include "NodeDevice.h"
 #include "CommandListManager.h"
+#include "DirectStorage.h"
 
 #if ENABLE_AFTER_MATH
 #include <Aftermath/GFSDK_Aftermath.h>

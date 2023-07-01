@@ -13,6 +13,7 @@
 #include "RootSignature.h"
 #include "HardwareShader.h"
 #include "Utility.h"
+#include "DirectStorage.h"
 
 namespace Vertex = platform::Render::Vertex;
 namespace Buffer = platform::Render::Buffer;
@@ -103,6 +104,9 @@ namespace platform_ex::Windows::D3D12 {
 			}
 		}
 
+		dstorage = std::make_unique<DirectStorage>();
+
+		dstorage->CreateUploadQueue(d3d_device.Get());
 	}
 
 	Texture1D* Device::CreateTexture(uint16 width, uint8 num_mipmaps, uint8 array_size, EFormat format, uint32 access, SampleDesc sample_info, std::optional<ElementInitData const *>  init_data)
@@ -902,5 +906,10 @@ namespace platform_ex::Windows::D3D12 {
 		}
 
 		return hr;
+	}
+
+	platform_ex::DirectStorage& D3D12::Device::GetDStorage()
+	{
+		return *dstorage;
 	}
 }

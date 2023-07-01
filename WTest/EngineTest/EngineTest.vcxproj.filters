@@ -77,4 +77,7 @@
       <UniqueIdentifier>{a389932c-3be9-4b9e-b9d5-ab1bdd4a9888}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>

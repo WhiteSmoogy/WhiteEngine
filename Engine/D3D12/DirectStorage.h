@@ -1,0 +1,41 @@
+#pragma once
+
+#include <WBase/wdef.h>
+#include <WFramework/Win32/WCLib/COM.h>
+#include "RenderInterface/DStorage.h"
+#include "d3d12_dxgi.h"
+
+namespace platform_ex::Windows::D3D12
+{
+	class DStorageFile : public platform_ex::DStorageFile
+	{
+	public:
+		DStorageFile(platform_ex::COMPtr<IDStorageFile> infile, BY_HANDLE_FILE_INFORMATION ininfo)
+			:platform_ex::DStorageFile(uint64(ininfo.nFileSizeHigh)<<32 | ininfo.nFileIndexLow),info(ininfo),file(infile)
+		{}
+
+		IDStorageFile* Get() const
+		{
+			return file.Get();
+		}
+	private:
+		BY_HANDLE_FILE_INFORMATION info;
+		platform_ex::COMPtr<IDStorageFile> file;
+	};
+
+	class DirectStorage :public platform_ex::DirectStorage
+	{
+	public:
+		DirectStorage();
+
+		void CreateUploadQueue(ID3D12Device* device);
+
+		void SubmitUpload();
+
+		std::shared_ptr<platform_ex::DStorageFile> OpenFile(const fs::path& path) override;
+	private:
+		platform_ex::COMPtr<IDStorageFactory> factory;
+
+		platform_ex::COMPtr<IDStorageQueue> file_upload_queue;
+	};
+}

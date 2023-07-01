@@ -431,6 +431,9 @@
     <ClCompile Include="D3D12\View.d3d12.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
+    <ClCompile Include="D3D12\DirectStorage.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">
@@ -1115,6 +1118,9 @@
       <Filter>D3D12</Filter>
     </ClInclude>
     <ClInclude Include="D3D12\View.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\DirectStorage.h">
       <Filter>D3D12</Filter>
     </ClInclude>
   </ItemGroup>

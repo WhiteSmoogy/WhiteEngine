@@ -16,6 +16,7 @@
 #include "IGraphicsPipelineState.h"
 #include "IShaderCompose.h"
 #include "RenderObject.h"
+#include "DStorage.h"
 #include "Runtime/Core/Hash/MessageDigest.h"
 #include <optional>
 
@@ -129,6 +130,8 @@ namespace platform::Render {
 		TexCreate_None = 0,
 	};
 
+	using DStorage = platform::Windows::D3D12::DirectStorage;
+
 	class Device {
 	public:
 		virtual Caps& GetCaps() = 0;
@@ -165,6 +168,8 @@ namespace platform::Render {
 		virtual HardwareShader* CreatePixelShader(const white::span<const uint8>& Code) = 0;
 		virtual HardwareShader* CreateGeometryShader(const white::span<const uint8>& Code) = 0;
 		virtual HardwareShader* CreateComputeShader(const white::span<const uint8>& Code) = 0;
+
+		virtual DStorage& GetDStorage();
 	};
 }
 

@@ -2,7 +2,7 @@ using platform::Render::Mapper;
 using TMA = platform::Render::TextureMapAccess;
 
 #include <WBase/exception.h>
-#include "../../Asset/TextureX.h"
+#include "Asset/TextureX.h"
 
 void Texture1D::Resize(platform::Render::Texture1D & base_target, const Box1D& dst,const Box1D& src, bool linear)
 {

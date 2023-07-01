@@ -1,5 +1,9 @@
+#include <WBase/wdef.h>
+#include <WFramework/Win32/WCLib/COM.h> //NoMinMax
+
+#include <dxgi1_6.h>
 #include "emacro.h"
-#include "RenderInterface/D3D12/d3d12_dxgi.h"
+
 
 namespace platform {
 	namespace Window {

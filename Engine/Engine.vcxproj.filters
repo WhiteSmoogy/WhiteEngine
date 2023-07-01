@@ -202,120 +202,6 @@
     <ClCompile Include="Runtime\Core\Compression\lz4hc.cpp">
       <Filter>Runtime\Core\Compression</Filter>
     </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\Adapter.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\CommandContext.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\CommandList.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\CommandListManager.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\ConstantBuffer.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\Context.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\ContextStateCache.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\Convert.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\d3d12_dxgi.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\DescriptorCache.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\Display.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\DXGIAdapter.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\Fence.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\FrameBuffer.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\GraphicsBuffer.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\GraphicsPipelineState.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\HardwareShader.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\InputLayout.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\NodeDevice.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\PipleState.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\ResourceHolder.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\RootSignature.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\SamplerState.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\ShaderCompose.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\Texture.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\Texture1D.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\Texture2D.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\Texture3D.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\TextureCube.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\Utility.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\VertexDeclaration.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\BuiltInRayTracingShaders.cpp">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\D3D12RayTracing.cpp">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\RayContext.cpp">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\RayTracingGeometry.d3d12.cpp">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\RayTracingPipelineState.cpp">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\RayTracingScene.d3d12.cpp">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\RayTracingShader.cpp">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClCompile>
     <ClCompile Include="RenderInterface\Effect\BiltEffect.cpp">
       <Filter>RenderInterface\Effect</Filter>
     </ClCompile>
@@ -422,11 +308,128 @@
     <ClCompile Include="RenderInterface\CommandListExecutor.cpp">
       <Filter>RenderInterface</Filter>
     </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\Allocation.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
+    <ClCompile Include="RenderInterface\DStorage.cpp">
+      <Filter>RenderInterface</Filter>
     </ClCompile>
-    <ClCompile Include="RenderInterface\D3D12\View.d3d12.cpp">
-      <Filter>RenderInterface\D3D12</Filter>
+    <ClCompile Include="D3D12\Adapter.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\Allocation.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\BuiltInRayTracingShaders.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\CommandContext.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\CommandList.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\CommandListManager.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\ConstantBuffer.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\Context.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\ContextStateCache.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\Convert.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\d3d12_dxgi.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\D3D12RayTracing.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\DescriptorCache.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\Display.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\DXGIAdapter.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\Fence.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\FrameBuffer.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\GraphicsBuffer.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\GraphicsPipelineState.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\HardwareShader.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\InputLayout.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\NodeDevice.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\PipleState.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\RayContext.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\RayTracingGeometry.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\RayTracingPipelineState.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\RayTracingScene.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\RayTracingShader.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\ResourceHolder.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\RootSignature.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\SamplerState.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\ShaderCompose.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\Texture.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\Texture1D.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\Texture2D.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\Texture3D.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\TextureCube.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\Utility.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\VertexDeclaration.d3d12.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D12\View.d3d12.cpp">
+      <Filter>D3D12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -838,117 +841,6 @@
     <ClInclude Include="Runtime\Core\Compression\lz4hc.h">
       <Filter>Runtime\Core\Compression</Filter>
     </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\Adapter.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\CommandContext.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\CommandListManager.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\Common.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\ConstantBuffer.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\Context.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\ContextStateCache.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\Convert.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\d3d12_dxgi.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\D3DCommandList.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\DescriptorCache.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\Display.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\DXGIAdapter.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\Fence.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\FrameBuffer.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\GraphicsBuffer.hpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\GraphicsPipelineState.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\HardwareShader.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\InputLayout.hpp">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\NodeDevice.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\PipleState.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\ResourceHolder.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\RootSignature.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\SamplerState.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\ShaderCompose.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\Texture.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\Utility.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\VertexDeclaration.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\View.h">
-      <Filter>RenderInterface\D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\BuiltInRayTracingShaders.h">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\D3D12RayTracing.h">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\RayContext.h">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\RayDevice.h">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\RayTracingGeometry.h">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\RayTracingPipelineState.h">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\RayTracingScene.h">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\RayTracingShader.h">
-      <Filter>RenderInterface\D3D12\RayTracing</Filter>
-    </ClInclude>
     <ClInclude Include="RenderInterface\Effect\BiltEffect.h">
       <Filter>RenderInterface\Effect</Filter>
     </ClInclude>
@@ -1108,8 +1000,122 @@
     <ClInclude Include="Runtime\Core\MemStack.h">
       <Filter>Runtime\Core</Filter>
     </ClInclude>
-    <ClInclude Include="RenderInterface\D3D12\Allocation.h">
-      <Filter>RenderInterface\D3D12</Filter>
+    <ClInclude Include="RenderInterface\DStorage.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\Adapter.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\Allocation.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\BuiltInRayTracingShaders.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\CommandContext.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\CommandListManager.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\Common.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\ConstantBuffer.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\Context.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\ContextStateCache.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\Convert.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\d3d12_dxgi.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\D3D12RayTracing.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\D3DCommandList.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\DescriptorCache.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\Display.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\DXGIAdapter.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\Fence.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\FrameBuffer.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\GraphicsBuffer.hpp">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\GraphicsPipelineState.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\HardwareShader.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\InputLayout.hpp">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\NodeDevice.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\PipleState.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\RayContext.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\RayDevice.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\RayTracingGeometry.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\RayTracingPipelineState.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\RayTracingScene.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\RayTracingShader.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\ResourceHolder.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\RootSignature.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\SamplerState.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\ShaderCompose.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\Texture.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\Utility.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\VertexDeclaration.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D12\View.h">
+      <Filter>D3D12</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1170,12 +1176,6 @@
     <Filter Include="RenderInterface">
       <UniqueIdentifier>{5b26259c-bdd7-411b-a6cb-36c3e5376e43}</UniqueIdentifier>
     </Filter>
-    <Filter Include="RenderInterface\D3D12">
-      <UniqueIdentifier>{2cf8afb0-fd5b-444b-b357-508760e055ec}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="RenderInterface\D3D12\RayTracing">
-      <UniqueIdentifier>{cf26db45-8ae4-489e-9924-9d1945a35667}</UniqueIdentifier>
-    </Filter>
     <Filter Include="RenderInterface\Effect">
       <UniqueIdentifier>{2f13adcf-582b-42d5-ae5a-cbd369ded2c3}</UniqueIdentifier>
     </Filter>
@@ -1211,6 +1211,9 @@
     </Filter>
     <Filter Include="System\Win32">
       <UniqueIdentifier>{f25aa773-20ec-4ddc-a773-3f1b98659fc5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12">
+      <UniqueIdentifier>{f168abe1-4489-4654-9309-4ca43254456c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

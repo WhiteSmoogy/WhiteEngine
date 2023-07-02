@@ -9,6 +9,7 @@
 #include <WBase/cache.hpp>
 #include "../Asset/Loader.hpp"
 #include "Runtime/Core/Coroutine/Task.h"
+#include "Runtime/Core/Coroutine/SyncWait.h"
 #include <WBase/sutility.h>
 #include <shared_mutex>
 
@@ -20,26 +21,7 @@ namespace platform {
 	public:
 		template<typename Loading, typename... _tParams>
 		std::shared_ptr<typename Loading::AssetType> SyncLoad(_tParams&&... args) {
-			std::shared_ptr<asset::IAssetLoading> key{ new Loading(wforward(args)...) };
-
-			auto itr = asset_loaded_caches.find(key);
-			if (itr != asset_loaded_caches.end()) {
-				//TODO Refresh Ticks
-				return std::static_pointer_cast<typename Loading::AssetType>(itr->second.loaded_asset);
-			}
-
-			std::shared_ptr<Loading> loading = std::static_pointer_cast<Loading>(key);
-			std::shared_ptr<typename Loading::AssetType> ret{};
-			auto coroutine = loading->Coroutine();
-			for (auto yiled : coroutine)
-				ret = yiled;
-
-			AssetLoadedDesc desc;
-			desc.loaded_asset = std::static_pointer_cast<void>(ret);
-			desc.loaded_tick = 0;
-			desc.delay_tick = 0;
-			asset_loaded_caches.emplace(key, desc);
-			return ret;
+			return white::coroutine::SyncWait(AsyncLoad<Loading, _tParams...>(wforward(args)...));
 		}
 
 		template<typename Loading, typename... _tParams>
@@ -59,13 +41,13 @@ namespace platform {
 			std::shared_ptr<typename Loading::AssetType> ret{};
 
 			ret = co_await loading->GetAwaiter();
+			AssetLoadedDesc desc;
+			desc.loaded_asset = std::static_pointer_cast<void>(ret);
+			desc.loaded_tick = 0;
+			desc.delay_tick = 0;
 
 			{
 				std::unique_lock write_lock{ caches_mutex };
-				AssetLoadedDesc desc;
-				desc.loaded_asset = std::static_pointer_cast<void>(ret);
-				desc.loaded_tick = 0;
-				desc.delay_tick = 0;
 				asset_loaded_caches.emplace(key, desc);
 			}
 

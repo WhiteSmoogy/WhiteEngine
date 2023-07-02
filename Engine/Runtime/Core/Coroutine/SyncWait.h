@@ -6,7 +6,7 @@ namespace white::coroutine {
 	template<typename AWAITABLE>
 	auto SyncWait(AWAITABLE&& awaitable)
 	{
-		auto task = details::make_sync_wait_task<AWAITABLE>(awaitable);
+		auto task = details::make_sync_wait_task(std::forward<AWAITABLE>(awaitable));
 
 		white::threading::manual_reset_event event;
 

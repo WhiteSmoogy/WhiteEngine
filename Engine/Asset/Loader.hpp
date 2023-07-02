@@ -5,11 +5,12 @@
 #ifndef WE_ASSET_LOADER_HPP
 #define WE_ASSET_LOADER_HPP 1
 
-#include "../emacro.h"
+#include "emacro.h"
 #include <WBase/memory.hpp>
 #include <WBase/winttype.hpp>
 
-#include <experimental/generator>
+#include "Runtime/Core/Coroutine/Task.h"
+
 #include <coroutine>
 #include <filesystem>
 
@@ -35,18 +36,14 @@ namespace asset {
 		virtual const path& Path() const = 0;
 	};
 
-
 	template<typename T>
 	class AssetLoading :public IAssetLoading
 	{
 	public:
 		using AssetType = T;
 
-		//wait Coroutine()
-		//返回值非空 已完成
-		virtual std::experimental::generator<std::shared_ptr<AssetType>> Coroutine() = 0;
+		virtual white::coroutine::Task<std::shared_ptr<AssetType>> GetAwaiter() = 0;
 	};
-
 }
 
 #endif

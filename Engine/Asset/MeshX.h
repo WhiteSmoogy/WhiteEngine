@@ -21,6 +21,9 @@ namespace platform {
 		white::coroutine::Task<std::shared_ptr<asset::MeshAsset>> AsyncLoadMeshAsset(path const& meshpath);
 		white::coroutine::Task<std::shared_ptr<Mesh>> AsyncLoadMesh(path const& meshpath, const std::string& name);
 
+
+		white::coroutine::Task<void> BatchLoadMeshAsset(white::span<const path> pathes, white::span<std::shared_ptr<asset::MeshAsset>> asset);
+		white::coroutine::Task<void> AsyncLoadMeshes(white::span<const path> pathes, white::span<std::shared_ptr<Mesh>> meshes);
 	}
 }
 #endif

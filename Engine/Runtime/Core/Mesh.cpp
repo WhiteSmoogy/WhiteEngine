@@ -156,4 +156,30 @@ namespace platform {
 
 		co_return pMesh;
 	}
+
+	white::coroutine::Task<void> AsyncLoadMeshes(white::span<const X::path> pathes, white::span<std::shared_ptr<Mesh>> meshes)
+	{
+		std::vector<std::shared_ptr<asset::MeshAsset>> asset(pathes.size());
+
+		co_await X::BatchLoadMeshAsset(pathes, white::make_span(asset));
+
+		co_await Environment->Scheduler->schedule_render();
+
+		for (size_t i = 0; i < pathes.size(); ++i)
+		{
+			auto name = X::path(pathes[i]).replace_extension().string();
+			if (auto pMesh = MeshesHolder::Instance().FindResource(asset[i], name))
+				meshes[i] = pMesh;
+			else
+			{
+				pMesh = std::make_shared<Mesh>(*asset[i], name);
+				MeshesHolder::Instance().Connect(asset[i], pMesh);
+			}
+		}
+
+		co_await Environment->Scheduler->schedule();
+
+		co_return;
+	}
+
 }

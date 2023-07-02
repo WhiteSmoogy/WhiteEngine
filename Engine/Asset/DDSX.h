@@ -1104,9 +1104,9 @@ namespace dds {
 			return dds_desc.dds_path;
 		}
 
-		std::experimental::generator<std::shared_ptr<AssetType>> Coroutine() override {
-			co_yield ReadDDS();
-			co_yield ConvertFormat();
+		white::coroutine::Task<std::shared_ptr<AssetType>> GetAwaiter() override {
+			ReadDDS();
+			co_return ConvertFormat();
 		}
 
 	private:

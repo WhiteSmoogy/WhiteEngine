@@ -16,7 +16,7 @@ namespace platform::Render {
 	class CommandList;
 
 	class Context
- {
+	{
 	public:
 		virtual Device& GetDevice() = 0;
 		virtual Display& GetDisplay() = 0;

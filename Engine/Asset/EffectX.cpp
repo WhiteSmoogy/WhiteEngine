@@ -44,17 +44,16 @@ namespace platform {
 			return Super::Path();
 		}
 
-		std::experimental::generator<std::shared_ptr<AssetType>> Coroutine() override {
-			co_yield PreCreate();
-			co_yield LoadNode();
-			co_yield ParseNode();
-			co_yield CreateAsset();
+		white::coroutine::Task<std::shared_ptr<AssetType>> GetAwaiter() override {
+			PreCreate();
+			LoadNode();
+			ParseNode();
+			co_return CreateAsset();
 		}
 	private:
-		std::shared_ptr<AssetType> PreCreate()
+		void PreCreate()
 		{
 			Super::PreCreate();
-			return nullptr;
 		}
 
 		asset::path Path(const asset::path& path) const override
@@ -68,18 +67,15 @@ namespace platform {
 			return path;
 		}
 
-		std::shared_ptr<AssetType> LoadNode()
+		void LoadNode()
 		{
 			Super::LoadNode();
-			return  nullptr;
 		}
 
-		std::shared_ptr<AssetType> ParseNode()
+		void ParseNode()
 		{
 			Super::ParseNode();
 			ParseTechnique(GetNode());
-
-			return nullptr;
 		}
 
 		std::shared_ptr<AssetType> CreateAsset()

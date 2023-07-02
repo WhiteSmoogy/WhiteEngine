@@ -520,13 +520,6 @@ public:
 		return path;
 	}
 
-	std::experimental::generator<std::shared_ptr<AssetType>> Coroutine() override {
-		co_yield PreCreate();
-		co_yield LoadNode();
-		co_yield ParseNode();
-		co_yield CreateAsset();
-	}
-
 	white::coroutine::Task<std::shared_ptr<HLSLAsset>> GetAwaiter()
 	{
 		PreCreate();

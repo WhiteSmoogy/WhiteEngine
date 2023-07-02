@@ -40,11 +40,11 @@ namespace details {
 			return material_desc.material_path;
 		}
 
-		std::experimental::generator<std::shared_ptr<AssetType>> Coroutine() override {
-			co_yield PreCreate();
-			co_yield LoadNode();
-			co_yield LoadEffect();
-			co_yield ParseNode();
+		white::coroutine::Task<std::shared_ptr<AssetType>> GetAwaiter() override {
+			PreCreate();
+			LoadNode();
+			LoadEffect();
+			ParseNode();
 			//load textures
 			for (auto& pair : material_desc.material_asset->GetBindValues()) {
 				auto& effect_asset = material_desc.effect_asset;
@@ -56,10 +56,9 @@ namespace details {
 				if (IsTextureReadType(param.GetType())) {
 					auto path = white::any_cast<std::string>(pair.second.GetContent());
 					platform::AssetResourceScheduler::Instance().SyncLoad<dds::DDSLoadingDesc>(path);
-					co_yield nullptr;
 				}
 			}
-			co_yield CreateAsset();
+			co_return CreateAsset();
 		}
 
 	private:

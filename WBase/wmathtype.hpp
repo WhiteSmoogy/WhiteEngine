@@ -30,7 +30,40 @@
 namespace white {
 	namespace math {
 		template<typename scalar, size_t multi>
-		struct data_storage;
+		struct data_storage
+		{
+			scalar data[multi];
+
+			constexpr size_t size() const {
+				return multi;
+			}
+
+			constexpr const scalar operator[](std::size_t index) const noexcept {
+				wassume(index < size());
+				return data[index];
+			}
+
+			constexpr scalar& operator[](std::size_t index) noexcept {
+				wassume(index < size());
+				return data[index];
+			}
+
+			const scalar* begin() const {
+				return data + 0;
+			}
+
+			const scalar* end() const {
+				return data + size();
+			}
+
+			scalar* begin() {
+				return data + 0;
+			}
+
+			scalar* end() {
+				return data + size();
+			}
+		};
 
 #ifdef WB_IMPL_MSCPP
 #pragma warning(push)

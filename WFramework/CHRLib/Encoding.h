@@ -1,7 +1,7 @@
 #ifndef LBase_CHRLib_Encoding_h
 #define LBase_CHRLib_Encoding_h 1
 
-#include "WBase/winttype.hpp"//for white::byte_order,stdex::octer,stdex::byte
+#include "WBase/winttype.hpp"//for white::byte_order,stdex::octer,byte
 #include <cstddef>
 #include <string>
 
@@ -13,7 +13,7 @@ namespace CHRLib
 
 	using ByteOrder = white::byte_order;
 	using stdex::octet;
-	using stdex::byte;
+	using white::byte;
 	using std::size_t;
 	
 

@@ -11,6 +11,7 @@
 //	and_, is_trivial, enable_if_t, is_object_pointer, remove_pointer_t,
 //	aligned_storage_t, is_reference, remove_reference_t, exclude_self_t,
 //	decay_t;
+#include "winttype.hpp"
 #include <new> // for placement ::operator new from standard library;
 
 #ifdef WB_IMPL_MSCPP
@@ -20,7 +21,6 @@
 
 namespace white
 {
-	using stdex::byte;
 	/*!	\defgroup aligned_type_traits Aligned Type Traits
 	\ingroup binary_type_traits
 	\brief 对齐类型特征。

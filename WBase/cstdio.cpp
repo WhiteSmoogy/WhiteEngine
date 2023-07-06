@@ -1,4 +1,5 @@
 #include "cstdio.h"
+#include "winttype.hpp"
 
 namespace white
 {

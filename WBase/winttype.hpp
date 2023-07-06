@@ -12,6 +12,19 @@
 
 namespace white
 {
+	inline namespace inttype {
+		using stdex::octet;
+		using byte = stdex::octet;
+		using uint8 = std::uint8_t;
+		using int8 = std::int8_t;
+		using uint16 = std::uint16_t;
+		using int16 = std::int16_t;
+		using uint32 = std::uint32_t;
+		using int32 = std::int32_t;
+		using uint64 = std::uint64_t;
+		using int64 = std::int64_t;
+	}
+
 	/*!
 	\brief 字节序。
 	\todo 使用单独的头文件。
@@ -29,8 +42,6 @@ namespace white
 	//@{
 	namespace details
 	{
-		using byte = stdex::byte;
-
 		struct bit_order_tester
 		{
 			unsigned char le : 4, : CHAR_BIT - 4;
@@ -62,18 +73,7 @@ namespace white
 	}
 	//@}
 
-	inline namespace inttype {
-		using stdex::byte;
-		using stdex::octet;
-		using uint8 = std::uint8_t;
-		using int8 = std::int8_t;
-		using uint16 = std::uint16_t;
-		using int16 = std::int16_t;
-		using uint32 = std::uint32_t;
-		using int32 = std::int32_t;
-		using uint64 = std::uint64_t;
-		using int64 = std::int64_t;
-	}
+	
 
 	using std::integral_constant;
 	using std::make_signed;

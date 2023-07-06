@@ -663,12 +663,10 @@
 
 namespace stdex
 {
-
 	//char无unsigned和signed指定
-	using byte = unsigned char;
 #if  CHAR_BIT == 8
 	//一字节并不一定等于8位!
-	using octet = byte;
+	using octet = unsigned char;
 #else
 	using octet = void;
 #endif

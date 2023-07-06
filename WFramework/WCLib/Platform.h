@@ -6,9 +6,9 @@
 #ifndef FrameWork_Platform_h
 #define FrameWork_Platform_h 1
 
-#include <WBase/wdef.h> // for std::uintmax_t, stdex::byte, stdex::octet,
+#include <WBase/wdef.h> // for std::uintmax_t,, stdex::octet,
 //  ::ptrdiff_t, ::size_t, ::wint_t stdex::nullptr_t;
-
+#include <WBase/winttype.hpp> // for white::byte
 
 /*!
 \def WF_DLL
@@ -198,7 +198,7 @@ namespace platform
 		\brief 平台通用数据类型。
 		*/
 		//@{
-		using stdex::byte;
+		using white::byte;
 		using stdex::octet;
 		using stdex::ptrdiff_t;
 		using stdex::size_t;

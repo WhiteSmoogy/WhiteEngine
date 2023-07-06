@@ -4,6 +4,7 @@
 #include "sutility.h" // for noncopyable;
 #include "cassert.h" // for wdef.h, <cstdio> and wconstraint;
 #include "iterator_op.hpp" // for iterator_operators_t, is_undereferenceable;
+#include "winttype.hpp"
 
 #include <cstdarg> // for std::va_list;
 #include <memory> // for std::unique_ptr;
@@ -11,8 +12,6 @@
 
 namespace white
 {
-	using stdex::byte;
-
 	/*!
 	\brief 关闭流缓冲。
 	\pre 参数非空。

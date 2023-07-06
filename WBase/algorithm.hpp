@@ -12,12 +12,11 @@
 //	std::placeholders::_1, less;
 #include "cassert.h" // for wconstraint;
 #include "deref_op.hpp" // for is_undereferenceable;
+#include "winttype.hpp"
 #include <cstring> // for std::memcpy, std::memmove;
 #include <numeric> // for std::accumulate;
 
 namespace white {
-	using stdex::byte;
-
 	/*!	\defgroup algorithms Gerneral Algorithms
 	\brief 算法。
 	\note 范围包含序列容器及内建数组等。容器概念和容器要求参见 ISO C++ Clause 23 。

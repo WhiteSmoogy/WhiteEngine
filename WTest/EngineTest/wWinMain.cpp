@@ -955,7 +955,7 @@ void TestNanite()
 	std::vector<Nanite::FStaticMeshBuildVertex> Vertices;
 	Vertices.resize(asset->GetVertexCount());
 
-	stdex::byte empty_element[64] = {};
+	white::byte empty_element[64] = {};
 	auto get_element = [&](Vertex::Usage usage,uint8 index=0)
 	{
 		auto& elements = asset->GetVertexElements();

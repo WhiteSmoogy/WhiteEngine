@@ -22,9 +22,10 @@ void DirectStorage::CreateUploadQueue(ID3D12Device* device)
 	CheckHResult(factory->CreateQueue(&queueDesc, COMPtr_RefParam(file_upload_queue, IID_IDStorageQueue)));
 }
 
-void DirectStorage::SubmitUpload()
+std::shared_ptr<platform::Render::SyncPoint> DirectStorage::SubmitUpload()
 {
 	file_upload_queue->Submit();
+	return {};
 }
 
 std::shared_ptr<platform_ex::DStorageFile> DirectStorage::OpenFile(const fs::path& path)

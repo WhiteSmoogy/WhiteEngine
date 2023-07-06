@@ -7,10 +7,13 @@
 
 #include <WBase/sutility.h>
 #include <WBase/wmathtype.hpp>
+#include <WBase/winttype.hpp>
 
 #include "RenderInterface/InputLayout.hpp"
 
 namespace asset {
+	using white::byte;
+
 	class MeshAsset :white::noncopyable {
 	public:
 		struct SubMeshDescrption
@@ -39,19 +42,19 @@ namespace asset {
 			DefGetter(const wnothrow, white::uint32, IndexCount, index_count)
 			DefSetter(wnothrow, white::uint32, IndexCount, index_count)
 
-			DefGetter(wnothrow, std::vector<std::unique_ptr<stdex::byte[]>>&, VertexStreamsRef, vertex_streams)
-			DefGetter(const wnothrow,const std::vector<std::unique_ptr<stdex::byte[]>>&, VertexStreams, vertex_streams)
+			DefGetter(wnothrow, std::vector<std::unique_ptr<byte[]>>&, VertexStreamsRef, vertex_streams)
+			DefGetter(const wnothrow,const std::vector<std::unique_ptr<byte[]>>&, VertexStreams, vertex_streams)
 	
-			DefGetter(wnothrow, std::unique_ptr<stdex::byte[]>&, IndexStreamsRef, index_stream)
-			DefGetter(const wnothrow, white::observer_ptr<stdex::byte>, IndexStreams,white::make_observer(index_stream.get()))
+			DefGetter(wnothrow, std::unique_ptr<byte[]>&, IndexStreamsRef, index_stream)
+			DefGetter(const wnothrow, white::observer_ptr<byte>, IndexStreams,white::make_observer(index_stream.get()))
 
 			DefGetter(const wnothrow, const std::vector<SubMeshDescrption>&, SubMeshDesces, sub_meshes)
 			DefGetter(wnothrow, std::vector<SubMeshDescrption>&, SubMeshDescesRef, sub_meshes)
 	private:
 		std::vector<platform::Render::Vertex::Element> vertex_elements;
 		platform::Render::EFormat index_format;
-		std::vector<std::unique_ptr<stdex::byte[]>> vertex_streams;
-		std::unique_ptr<stdex::byte[]> index_stream;
+		std::vector<std::unique_ptr<byte[]>> vertex_streams;
+		std::unique_ptr<byte[]> index_stream;
 		std::vector<SubMeshDescrption> sub_meshes;
 		white::uint32 vertex_count;
 		white::uint32 index_count;

@@ -190,7 +190,7 @@
     <ClCompile Include="Runtime\Core\Coroutine\IOScheduler.cpp">
       <Filter>Runtime\Core\Coroutine</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\Core\Coroutine\FileAsyncStream.cpp">
+    <ClCompile Include="Runtime\Core\Coroutine\AsyncStream.cpp">
       <Filter>Runtime\Core\Coroutine</Filter>
     </ClCompile>
     <ClCompile Include="Runtime\Core\Container\HashTable.cpp">
@@ -814,7 +814,7 @@
     <ClInclude Include="Runtime\Core\Coroutine\IOScheduler.h">
       <Filter>Runtime\Core\Coroutine</Filter>
     </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\FileAsyncStream.h">
+    <ClInclude Include="Runtime\Core\Coroutine\AsyncStream.h">
       <Filter>Runtime\Core\Coroutine</Filter>
     </ClInclude>
     <ClInclude Include="Runtime\Core\Coroutine\AwaitableTraits.h">
@@ -1122,6 +1122,9 @@
     </ClInclude>
     <ClInclude Include="D3D12\DirectStorage.h">
       <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\SyncPoint.h">
+      <Filter>RenderInterface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

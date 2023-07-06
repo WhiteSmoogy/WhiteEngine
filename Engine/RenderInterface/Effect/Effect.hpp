@@ -130,7 +130,7 @@ namespace platform::Render::Effect {
 		friend class Variable;
 	private:
 		std::unique_ptr<platform::Render::ConstantBuffer> gpu_buffer;
-		std::vector<stdex::byte> cpu_buffer;
+		std::vector<byte> cpu_buffer;
 		bool dirty;
 	};
 

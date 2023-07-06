@@ -1,5 +1,5 @@
 #include "AsyncArchive.h"
-#include "Runtime/Core/Coroutine/FileAsyncStream.h"
+#include "Runtime/Core/Coroutine/AsyncStream.h"
 #include "System/SystemEnvironment.h"
 namespace WhiteEngine
 {

@@ -160,7 +160,7 @@ namespace platform::Render::Shader
 
 		if (archive.IsLoading())
 		{
-			pBlob->first = std::make_unique<stdex::byte[]>(initializer.pBlob->second);
+			pBlob->first = std::make_unique<byte[]>(initializer.pBlob->second);
 		}
 		co_await archive.Serialize(pBlob->first.get(), pBlob->second);
 

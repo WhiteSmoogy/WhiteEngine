@@ -10,6 +10,7 @@
 #include <atomic>
 #include "d3d12_dxgi.h"
 #include "Common.h"
+#include "RenderInterface/SyncPoint.h"
 #include "System/Win32/NTHandle.h"
 
 
@@ -85,6 +86,25 @@ namespace platform_ex::Windows::D3D12 {
 		{
 			return fence_val++;
 		}
+	};
+
+	class AwaitableSyncPoint :public platform::Render::SyncPoint
+	{
+	public:
+		bool IsReady() const override
+		{
+			return fence->IsAvailable();
+		}
+
+		void Wait()
+		{
+			WaitForSingleObject(fence->GetCompletionEvent(), INFINITE);
+		}
+
+		void AwaitSuspend(std::coroutine_handle<> handle);
+	private:
+		std::unique_ptr<FenceCore> fence;
+		std::coroutine_handle<> continuation_handle;
 	};
 }
 

@@ -9,6 +9,7 @@
 #include <optional>
 #include <WBase/span.hpp>
 #include "Runtime/Core/Hash/MessageDigest.h"
+#include <cstddef>
 
 #if WFL_Win32
 #define D3D_RAYTRACING 1
@@ -37,6 +38,7 @@ namespace platform::Render {
 		using white::uint32;
 		using white::int32;
 		using white::uint8;
+		using white::byte;
 
 		struct ShaderCodeResourceCounts
 		{
@@ -70,7 +72,7 @@ namespace platform::Render {
 		};
 
 
-		using ShaderBlob = std::pair<std::unique_ptr<stdex::byte[]>, std::size_t>;
+		using ShaderBlob = std::pair<std::unique_ptr<byte[]>, std::size_t>;
 
 		enum ShaderBaseType
 		{

@@ -1,4 +1,4 @@
-#include "FileAsyncStream.h"
+#include "AsyncStream.h"
 #include <WFramework/WCLib/NativeAPI.h>
 #include <WFramework/Win32/WCLib/Mingw32.h>
 #include <spdlog/spdlog.h>

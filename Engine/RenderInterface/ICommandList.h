@@ -101,7 +101,7 @@ namespace platform::Render {
 
 		void ExchangeCmdList(CommandListBase& CmdList)
 		{
-			std::byte storage[sizeof(CommandListBase)];
+			byte storage[sizeof(CommandListBase)];
 			std::memcpy(storage, &CmdList, sizeof(storage));
 			std::memcpy(&CmdList, this, sizeof(storage));
 			std::memcpy(this, storage, sizeof(storage));

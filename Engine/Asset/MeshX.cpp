@@ -4,12 +4,14 @@
 
 #include "Runtime/Core/AssetResourceScheduler.h"
 #include "Runtime/Core/LFile.h"
-#include "Runtime/Core/Coroutine/FileAsyncStream.h"
+#include "Runtime/Core/Coroutine/AsyncStream.h"
 #include "Runtime/Core/MemStack.h"
 #include "System/SystemEnvironment.h"
 #include "RenderInterface/IContext.h"
 
 #include "MeshX.h"
+
+#include <ranges>
 
 namespace platform {
 	//Mesh文件格式
@@ -29,7 +31,7 @@ namespace platform {
 	struct SectionCommonHeader {
 		white::uint16 SectionIndex;//这是当前的第几节
 		white::uint32 NextSectionOffset;//下一节开始相对文件的偏移
-		stdex::byte Name[8];//使用名字决定节加载器
+		byte Name[8];//使用名字决定节加载器
 		white::uint32 Size;//本节的大小,意味着节是由最大大小限制的,注意是包含填充大小的
 	};
 
@@ -52,14 +54,13 @@ namespace platform {
 		return value;
 	}
 
-	template<typename type>
-	white::coroutine::Task<type> Read(white::coroutine::FileAsyncStream& stream)
+	template<typename type,typename AsyncStream>
+	white::coroutine::Task<type> Read(AsyncStream& stream)
 	{
 		type value;
 		co_await stream.Read(&value, sizeof(type));
 		co_return value;
 	}
-
 
 	class MeshSectionLoading {
 	protected:
@@ -70,6 +71,7 @@ namespace platform {
 		}
 	public:
 		virtual white::coroutine::Task<void> GetAwaiter(white::coroutine::FileAsyncStream& file) = 0;
+		virtual white::coroutine::Task<void> GetAwaiter(white::coroutine::MemoryAsyncReadStream& memory) = 0;
 		virtual std::array<byte, 8> Name() = 0;
 
 		void ReBind(std::shared_ptr<AssetType> target)
@@ -114,103 +116,99 @@ namespace platform {
 			}[MeshesCount]
 		};
 		*/
-		white::coroutine::Task<void> GetAwaiter(white::coroutine::FileAsyncStream& file) override {
+		template<typename AsyncStream>
+		white::coroutine::Task<void> GetAwaiter(AsyncStream& stream) {
 			//read header
-			GeomertySectionHeader header;//common header had read
-			co_await file.Read(&header.FourCC, sizeof(header.FourCC));
+			GeomertySectionHeader header = co_await Read<GeomertySectionHeader>(stream);//common header had read
 			if (header.FourCC != asset::four_cc_v < 'L', 'E', 'M', 'E'>)
 				co_return;
 
-			co_await file.Read(&header.Version, sizeof(header.Version));
-			if (header.Version != GeomertyCurrentVersion)
-				co_return;
+			stream.Skip(header.SizeOfOptional);
 
-			co_await file.Read(&header.CompressVersion, sizeof(header.CompressVersion));
-			if (header.CompressVersion != 0)
-				co_return;
-
-			co_await file.Read(&header.SizeOfOptional, sizeof(header.SizeOfOptional));
-			if (header.SizeOfOptional != 0)
-				co_return;
-
-			file.Skip(header.SizeOfOptional);
-
-			white::uint8 VertexElmentsCount = co_await Read<white::uint8>(file);
+			white::uint8 VertexElmentsCount = co_await Read<white::uint8>(stream);
 			auto& vertex_elements = mesh_asset->GetVertexElementsRef();
 			vertex_elements.reserve(VertexElmentsCount);
 			for (auto i = 0; i != VertexElmentsCount; ++i) {
 				Render::Vertex::Element element;
-				element.usage = (Render::Vertex::Usage)co_await Read<byte>(file);
-				element.usage_index = co_await Read<byte>(file);
-				element.format = co_await Read<Render::EFormat>(file);
+				element.usage = (Render::Vertex::Usage)co_await Read<byte>(stream);
+				element.usage_index = co_await Read<byte>(stream);
+				element.format = co_await Read<Render::EFormat>(stream);
 				vertex_elements.emplace_back(element);
 			}
-			auto index_format = co_await Read<Render::EFormat>(file);
+			auto index_format = co_await Read<Render::EFormat>(stream);
 			mesh_asset->SetIndexFormat(index_format);
 
 			auto index16bit = index_format == Render::EFormat::EF_R16UI;
-			uint32 vertex_count = index16bit ? co_await Read<uint16>(file) : co_await Read<uint32>(file);
-			uint32 index_count = index16bit ? co_await Read<uint16>(file) : co_await Read<uint32>(file);
+			uint32 vertex_count = index16bit ? co_await Read<uint16>(stream) : co_await Read<uint32>(stream);
+			uint32 index_count = index16bit ? co_await Read<uint16>(stream) : co_await Read<uint32>(stream);
 
 			mesh_asset->SetVertexCount(vertex_count);
 			mesh_asset->SetIndexCount(index_count);
 			auto& vertex_streams = mesh_asset->GetVertexStreamsRef();
 			for (auto i = 0; i != VertexElmentsCount; ++i) {
-				auto vertex_stream = std::make_unique<stdex::byte[]>(vertex_elements[i].GetElementSize() * vertex_count);
-				co_await file.Read(vertex_stream.get(), vertex_elements[i].GetElementSize() * vertex_count);
+				auto vertex_stream = std::make_unique<byte[]>(vertex_elements[i].GetElementSize() * vertex_count);
+				co_await stream.Read(vertex_stream.get(), vertex_elements[i].GetElementSize() * vertex_count);
 				vertex_streams.emplace_back(std::move(vertex_stream));
 			}
 
-			auto index_stream = std::make_unique<stdex::byte[]>(Render::NumFormatBytes(index_format) * index_count);
-			co_await file.Read(index_stream.get(), Render::NumFormatBytes(index_format) * index_count);
+			auto index_stream = std::make_unique<byte[]>(Render::NumFormatBytes(index_format) * index_count);
+			co_await stream.Read(index_stream.get(), Render::NumFormatBytes(index_format) * index_count);
 			mesh_asset->GetIndexStreamsRef() = std::move(index_stream);
 
 			auto& sub_meshes = mesh_asset->GetSubMeshDescesRef();
-			auto sub_mesh_count = co_await Read<white::uint8>(file);
+			auto sub_mesh_count = co_await Read<white::uint8>(stream);
 			for (auto i = 0; i != sub_mesh_count; ++i) {
 				asset::MeshAsset::SubMeshDescrption mesh_desc;
-				mesh_desc.MaterialIndex = co_await Read<white::uint8>(file);
-				auto lods_count = co_await Read<white::uint8>(file);
+				mesh_desc.MaterialIndex = co_await Read<white::uint8>(stream);
+				auto lods_count = co_await Read<white::uint8>(stream);
 
-				auto pc =co_await Read<white::math::data_storage<float, 3>>(file);
-				auto po =co_await Read<white::math::data_storage<float, 3>>(file);
-				auto tc =co_await Read<white::math::data_storage<float, 2>>(file);
-				auto to =co_await Read<white::math::data_storage<float, 2>>(file);
+				/*pc po tc to*/
+				co_await Read<white::math::data_storage<float, 10>>(stream);
 
 				for (auto lod_index = 0; lod_index != lods_count; ++lod_index) {
 					asset::MeshAsset::SubMeshDescrption::LodDescription lod_desc;
 					if (index16bit) {
-						lod_desc.VertexNum = co_await Read<white::uint16>(file);
-						lod_desc.VertexBase = co_await Read<white::uint16>(file);
-						lod_desc.IndexNum = co_await Read<white::uint16>(file);
-						lod_desc.IndexBase = co_await Read<white::uint16>(file);
+						lod_desc.VertexNum = co_await Read<white::uint16>(stream);
+						lod_desc.VertexBase = co_await Read<white::uint16>(stream);
+						lod_desc.IndexNum = co_await Read<white::uint16>(stream);
+						lod_desc.IndexBase = co_await Read<white::uint16>(stream);
 					}
 					else {
-						lod_desc.VertexNum = co_await Read<white::uint32>(file);
-						lod_desc.VertexBase = co_await Read<white::uint32>(file);
-						lod_desc.IndexNum = co_await Read<white::uint32>(file);
-						lod_desc.IndexBase = co_await Read<white::uint32>(file);
+						lod_desc.VertexNum = co_await Read<white::uint32>(stream);
+						lod_desc.VertexBase = co_await Read<white::uint32>(stream);
+						lod_desc.IndexNum = co_await Read<white::uint32>(stream);
+						lod_desc.IndexBase = co_await Read<white::uint32>(stream);
 					}
 					mesh_desc.LodsDescription.emplace_back(lod_desc);
 				}
 				sub_meshes.emplace_back(std::move(mesh_desc));
 			}
 		}
+
+		white::coroutine::Task<void> GetAwaiter(white::coroutine::FileAsyncStream& file) override
+		{
+			return GetAwaiter<white::coroutine::FileAsyncStream>(file);
+		}
+
+		white::coroutine::Task<void> GetAwaiter(white::coroutine::MemoryAsyncReadStream& file) override
+		{
+			return GetAwaiter<white::coroutine::MemoryAsyncReadStream>(file);
+		}
 	};
+
+	using SectionLoaders = std::vector<std::unique_ptr<MeshSectionLoading>>;
 
 	template<typename... section_types>
 	class MeshLoadingDesc : public asset::AssetLoading<asset::MeshAsset> {
 	private:
 		struct MeshDesc {
 			X::path mesh_path;
-			std::shared_ptr<AssetType> mesh_asset;
-			std::vector<std::unique_ptr<MeshSectionLoading>> section_loaders;
+			SectionLoaders section_loaders;
 		} mesh_desc;
 	public:
 		explicit MeshLoadingDesc(X::path const & meshpath)
 		{
 			mesh_desc.mesh_path = meshpath;
-			mesh_desc.mesh_asset = std::make_shared<AssetType>();
 			ForEachSectionTypeImpl<std::tuple<section_types...>>(white::make_index_sequence<sizeof...(section_types)>());
 		}
 
@@ -219,7 +217,7 @@ namespace platform {
 			int ignore[] = { (static_cast<void>(
 				mesh_desc.section_loaders
 				.emplace_back(
-					std::make_unique<std::tuple_element_t<indices,tuple>>(mesh_desc.mesh_asset))),0)
+					std::make_unique<std::tuple_element_t<indices,tuple>>(std::shared_ptr<asset::MeshAsset>{}))),0)
 				...
 			};
 			(void)ignore;
@@ -237,45 +235,47 @@ namespace platform {
 			return mesh_desc.mesh_path;
 		}
 
-		white::coroutine::Task<std::shared_ptr<AssetType>> GetAwaiter() override
+		template<typename AsyncStream>
+		static white::coroutine::Task<std::shared_ptr<asset::MeshAsset>> GetAwaiter(AsyncStream& stream, SectionLoaders& section_loaders)
 		{
-			white::coroutine::FileAsyncStream file{ Environment->Scheduler->GetIOScheduler() ,mesh_desc.mesh_path,white::coroutine::file_share_mode::read };
-
-			MeshHeader header;
-			header.Signature =co_await Read<white::uint32>(file);
+			MeshHeader header = co_await Read<MeshHeader>(stream);
 			if (header.Signature != asset::four_cc_v <'M', 'E', 'S', 'H'>)
 				co_return nullptr;
 
-			header.Machine = co_await Read<white::uint16>(file);
-			header.NumberOfSections = co_await Read<white::uint16>(file);
-			header.FirstSectionOffset = co_await Read<white::uint16>(file);
+			auto mesh_asset = std::make_shared<asset::MeshAsset>();
 
-			file.Skip(header.FirstSectionOffset);
+			stream.Skip(header.FirstSectionOffset);
 
 			for (auto i = 0; i != header.NumberOfSections; ++i) {
-				SectionCommonHeader common_header;
-				common_header.SectionIndex = co_await Read<white::uint16>(file);
-				common_header.NextSectionOffset = co_await Read<white::uint32>(file);
-				co_await file.Read(common_header.Name, sizeof(common_header.Name));
-				common_header.Size = co_await Read<white::uint32>(file);
+				SectionCommonHeader common_header = co_await Read<SectionCommonHeader>(stream);
 
 				//find loader
-				auto loader_iter = std::find_if(mesh_desc.section_loaders.begin(),
-					mesh_desc.section_loaders.end(), [&](const std::unique_ptr<MeshSectionLoading>& pLoader) {
+				auto loader_iter = std::find_if(section_loaders.begin(),
+					section_loaders.end(), [&](const std::unique_ptr<MeshSectionLoading>& pLoader) {
 						auto name = pLoader->Name();
 						for (auto j = 0; j != 8; ++j)
 							if (name[j] != common_header.Name[j])
 								return false;
 						return true;
 					});
-				if (loader_iter != mesh_desc.section_loaders.end()) {
-					co_await(*loader_iter)->GetAwaiter(file);
+				if (loader_iter != section_loaders.end()) {
+					(*loader_iter)->ReBind(mesh_asset);
+					co_await(*loader_iter)->GetAwaiter(stream);
 				}
 
-				file.SkipTo(common_header.NextSectionOffset);
+				stream.SkipTo(common_header.NextSectionOffset);
 			}
 
-			co_return mesh_desc.mesh_asset;
+			co_return mesh_asset;
+		}
+
+		white::coroutine::Task<std::shared_ptr<AssetType>> GetAwaiter() override
+		{
+			white::coroutine::FileAsyncStream file{ Environment->Scheduler->GetIOScheduler() ,mesh_desc.mesh_path,white::coroutine::file_share_mode::read };
+
+			auto asset = co_await GetAwaiter<white::coroutine::FileAsyncStream>(file, mesh_desc.section_loaders);
+
+			co_return asset;
 		}
 	};
 
@@ -324,7 +324,23 @@ namespace platform {
 				buffers.emplace_back(white::make_observer(new (mesh_desc.memory) byte[file->file_size]));
 			}
 
-			co_return;
+			for (auto index : std::views::iota(0u, buffers.size()))
+			{
+				platform_ex::DStorageFile2MemoryRequest Request;
+				Request.File = {
+					.Source = files[index],
+					.Offset = 0,
+					.Size = static_cast<uint32>(files[index]->file_size),
+				};
+				Request.Memory = {
+					.Buffer = buffers[index].get(),
+					.Size = Request.File.Size
+				};
+
+				dstorage.EnqueueRequest(Request);
+			}
+
+			co_await dstorage.SubmitUpload();
 		}
 	};
 

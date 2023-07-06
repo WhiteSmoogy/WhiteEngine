@@ -208,7 +208,7 @@ void FillD3D12Reflect(ID3D1xShaderReflection* pReflection, ShaderInfo* pInfo, Sh
 		if (type == ShaderType::VertexShader) {
 			union {
 				D3D12_SIGNATURE_PARAMETER_DESC signature_desc;
-				stdex::byte signature_data[sizeof(D3D12_SIGNATURE_PARAMETER_DESC)];
+				byte signature_data[sizeof(D3D12_SIGNATURE_PARAMETER_DESC)];
 			} s2d;
 
 			size_t signature = 0;
@@ -336,7 +336,7 @@ void FillD3D11Reflect(ID3D11ShaderReflection* pReflection, ShaderInfo* pInfo, Sh
 	if (type == ShaderType::VertexShader) {
 		union {
 			D3D11_SIGNATURE_PARAMETER_DESC signature_desc;
-			stdex::byte signature_data[sizeof(D3D12_SIGNATURE_PARAMETER_DESC)];
+			byte signature_data[sizeof(D3D12_SIGNATURE_PARAMETER_DESC)];
 		} s2d;
 
 		size_t signature = 0;
@@ -382,7 +382,7 @@ namespace asset::X::Shader::DXBC {
 
 		if (code_blob) {
 			ShaderBlob blob;
-			blob.first = std::make_unique<stdex::byte[]>(code_blob->GetBufferSize());
+			blob.first = std::make_unique<byte[]>(code_blob->GetBufferSize());
 			blob.second = code_blob->GetBufferSize();
 			std::memcpy(blob.first.get(), code_blob->GetBufferPointer(), blob.second);
 			return std::move(blob);
@@ -410,7 +410,7 @@ namespace asset::X::Shader::DXBC {
 		platform_ex::COMPtr<ID3DBlob> stripped_blob;
 		platform_ex::CheckHResult(D3DStripShader(code_blob.first.get(), code_blob.second, flags, &stripped_blob));
 		ShaderBlob blob;
-		blob.first = std::make_unique<stdex::byte[]>(stripped_blob->GetBufferSize());
+		blob.first = std::make_unique<byte[]>(stripped_blob->GetBufferSize());
 		blob.second = stripped_blob->GetBufferSize();
 		std::memcpy(blob.first.get(), stripped_blob->GetBufferPointer(), blob.second);
 		return std::move(blob);
@@ -853,7 +853,7 @@ namespace asset::X::Shader::DXIL {
 		}
 
 		ShaderBlob blob;
-		blob.first = std::make_unique<stdex::byte[]>(code_blob->GetBufferSize());
+		blob.first = std::make_unique<byte[]>(code_blob->GetBufferSize());
 		blob.second = code_blob->GetBufferSize();
 		std::memcpy(blob.first.get(), code_blob->GetBufferPointer(), blob.second);
 		return std::move(blob);
@@ -861,7 +861,7 @@ namespace asset::X::Shader::DXIL {
 
 	ShaderBlob StripDXIL(const ShaderBlob& code_blob, white::uint32 flags) {
 		ShaderBlob blob;
-		blob.first = std::make_unique<stdex::byte[]>(code_blob.second);
+		blob.first = std::make_unique<byte[]>(code_blob.second);
 		blob.second = code_blob.second;
 		std::memcpy(blob.first.get(), code_blob.first.get(), blob.second);
 		return std::move(blob);

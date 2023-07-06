@@ -5,6 +5,8 @@
 #include "file.h"
 #include "Task.h"
 
+#include <WBase/span.hpp>
+
 namespace white::coroutine
 {
 	class FileAsyncStream : public file
@@ -55,5 +57,39 @@ namespace white::coroutine
 #ifndef NDEBUG
 		std::filesystem::path path;
 #endif
+	};
+
+	class MemoryAsyncReadStream
+	{
+	public:
+		MemoryAsyncReadStream(white::span<std::byte> buffer)
+			:read_buffer(buffer)
+		{}
+
+		Task<std::size_t> Read(
+			void* dstbuffer,
+			std::size_t byteCount) noexcept
+		{
+			std::memcpy(dstbuffer, &read_buffer[bufferOffset], byteCount);
+			bufferOffset += byteCount;
+
+			co_return byteCount;
+		}
+
+		void Skip(std::uint64_t offset)
+		{
+			if (offset == 0)
+				return;
+			bufferOffset += offset;
+		}
+
+		void SkipTo(std::uint64_t offset)
+		{
+			bufferOffset = offset;
+		}
+
+	private:
+		white::span<std::byte> read_buffer;
+		std::size_t bufferOffset = 0;
 	};
 }

@@ -30,7 +30,7 @@ namespace platform_ex::Windows::D3D12
 
 		void CreateUploadQueue(ID3D12Device* device);
 
-		void SubmitUpload();
+		std::shared_ptr<platform::Render::SyncPoint> SubmitUpload() override;
 
 		std::shared_ptr<platform_ex::DStorageFile> OpenFile(const fs::path& path) override;
 	private:

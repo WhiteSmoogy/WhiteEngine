@@ -139,7 +139,7 @@
     <ClCompile Include="Runtime\Core\Compression\lz4hc.cpp" />
     <ClCompile Include="Runtime\Core\Container\HashTable.cpp" />
     <ClCompile Include="Runtime\Core\Coroutine\file.coroutine.cpp" />
-    <ClCompile Include="Runtime\Core\Coroutine\FileAsyncStream.cpp" />
+    <ClCompile Include="Runtime\Core\Coroutine\AsyncStream.cpp" />
     <ClCompile Include="Runtime\Core\Coroutine\file_read_operation.cpp" />
     <ClCompile Include="Runtime\Core\Coroutine\file_write_operation.cpp" />
     <ClCompile Include="Runtime\Core\Coroutine\IOScheduler.cpp" />
@@ -305,6 +305,7 @@
     <ClInclude Include="RenderInterface\ShaderParamterTraits.hpp" />
     <ClInclude Include="RenderInterface\ShaderPermutation.h" />
     <ClInclude Include="RenderInterface\ShaderTextureTraits.hpp" />
+    <ClInclude Include="RenderInterface\SyncPoint.h" />
     <ClInclude Include="RenderInterface\TextureSampleDesc.h" />
     <ClInclude Include="RenderInterface\ViewPort.h" />
     <ClInclude Include="Runtime\Core\AssetResourceScheduler.h" />
@@ -321,7 +322,7 @@
     <ClInclude Include="Runtime\Core\Container\vector.hpp" />
     <ClInclude Include="Runtime\Core\Coroutine\AwaitableTraits.h" />
     <ClInclude Include="Runtime\Core\Coroutine\file.h" />
-    <ClInclude Include="Runtime\Core\Coroutine\FileAsyncStream.h" />
+    <ClInclude Include="Runtime\Core\Coroutine\AsyncStream.h" />
     <ClInclude Include="Runtime\Core\Coroutine\filemode.h" />
     <ClInclude Include="Runtime\Core\Coroutine\file_read_operation.h" />
     <ClInclude Include="Runtime\Core\Coroutine\file_write_operation.hpp" />

@@ -157,7 +157,7 @@ namespace platform {
 		co_return pMesh;
 	}
 
-	white::coroutine::Task<void> AsyncLoadMeshes(white::span<const X::path> pathes, white::span<std::shared_ptr<Mesh>> meshes)
+	white::coroutine::Task<void> platform::X::AsyncLoadMeshes(white::span<const X::path> pathes, white::span<std::shared_ptr<Mesh>> meshes)
 	{
 		std::vector<std::shared_ptr<asset::MeshAsset>> asset(pathes.size());
 

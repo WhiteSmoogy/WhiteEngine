@@ -91,6 +91,8 @@ namespace platform_ex::Windows::D3D12 {
 	class AwaitableSyncPoint :public platform::Render::SyncPoint
 	{
 	public:
+		AwaitableSyncPoint(D3D12Adapter* InParent, uint64 InitialValue, uint32 GPUIndex);
+
 		bool IsReady() const override
 		{
 			return fence->IsAvailable();
@@ -102,9 +104,12 @@ namespace platform_ex::Windows::D3D12 {
 		}
 
 		void AwaitSuspend(std::coroutine_handle<> handle);
+
+		FenceCore& GetFence() { return *fence; }
 	private:
 		std::unique_ptr<FenceCore> fence;
-		std::coroutine_handle<> continuation_handle;
+
+		platform::Render::RenderTask task;
 	};
 }
 

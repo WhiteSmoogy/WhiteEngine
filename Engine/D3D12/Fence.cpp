@@ -148,4 +148,20 @@ uint64 ManualFence::Signal(CommandQueueType InQueueType, uint64 FenceToSignal)
 	return FenceToSignal;
 }
 
+AwaitableSyncPoint::AwaitableSyncPoint(D3D12Adapter* InParent, uint64 InitialValue, uint32 GPUIndex)
+	:fence(std::make_unique<FenceCore>(InParent,InitialValue,GPUIndex)),task(nullptr)
+{
+}
+
+
+void AwaitableSyncPoint::AwaitSuspend(std::coroutine_handle<> handle)
+{
+	task.swap([this,handle]() -> platform::Render::RenderTask
+		{
+			this->Wait();
+			handle.resume();
+			co_return;
+		}());
+}
+
 

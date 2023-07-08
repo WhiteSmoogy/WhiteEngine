@@ -27,12 +27,21 @@ namespace platform_ex
 		uint64_t file_size;
 	};
 
+	enum class DStorageCompressionFormat
+	{
+		None = 0,
+		GDeflate = 1,
+		Zlib = 0x80,
+	};
+
 	template<typename Source,typename Target>
 	struct DStorageRequest;
 
 	template<>
 	struct DStorageRequest< DStorageFile, byte>
 	{
+		DStorageCompressionFormat Compression = DStorageCompressionFormat::None;
+
 		struct {
 			std::shared_ptr<const DStorageFile> Source;
 			uint64 Offset;

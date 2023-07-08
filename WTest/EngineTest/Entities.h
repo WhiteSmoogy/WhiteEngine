@@ -19,8 +19,8 @@ namespace fs = std::filesystem;
 
 class Entity {
 public:
-	Entity(const std::string& mesh_name,const std::string& material_name) {
-		pMesh = platform::X::LoadMesh(mesh_name + ".asset", mesh_name);
+	Entity(std::shared_ptr<platform::Mesh> mesh,const std::string& material_name) 
+	:pMesh(mesh){
 		pMaterial = platform::X::LoadMaterial(material_name + ".mat.wsl", material_name);
 	}
 
@@ -36,8 +36,8 @@ public:
 		return *pMesh;
 	}
 private:
-	std::shared_ptr<platform::Material> pMaterial;
 	std::shared_ptr<platform::Mesh> pMesh;
+	std::shared_ptr<platform::Material> pMaterial;
 };
 
 class Entities {

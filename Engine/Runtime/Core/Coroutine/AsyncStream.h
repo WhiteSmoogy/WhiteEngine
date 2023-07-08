@@ -62,7 +62,7 @@ namespace white::coroutine
 	class MemoryAsyncReadStream
 	{
 	public:
-		MemoryAsyncReadStream(white::span<std::byte> buffer)
+		MemoryAsyncReadStream(white::span<white::byte> buffer)
 			:read_buffer(buffer)
 		{}
 
@@ -89,7 +89,7 @@ namespace white::coroutine
 		}
 
 	private:
-		white::span<std::byte> read_buffer;
+		white::span<white::byte> read_buffer;
 		std::size_t bufferOffset = 0;
 	};
 }

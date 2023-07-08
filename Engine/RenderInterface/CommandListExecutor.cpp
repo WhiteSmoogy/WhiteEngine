@@ -91,107 +91,18 @@ namespace white::coroutine
 	}
 }
 
-class render_task;
-
-using schedule_operation = white::coroutine::ThreadScheduler::schedule_operation;
-
-class render_promise :public schedule_operation
-{
-public:
-	render_promise()
-		:schedule_operation(Environment->Scheduler->schedule_render())
-	{}
-
-	auto initial_suspend() noexcept
-	{
-		return *this;
-	}
-
-	auto final_suspend() noexcept
-	{
-		return std::suspend_always{};
-	}
-
-	render_task get_return_object() noexcept;
-
-	void unhandled_exception() {
-		exception = std::current_exception();
-	}
-
-	void return_void() noexcept
-	{
-		if (exception)
-		{
-			std::rethrow_exception(exception);
-		}
-	}
-private:
-	std::exception_ptr exception;
-};
-
-class render_task
-{
-public:
-	using promise_type = render_promise;
-
-	explicit render_task(std::coroutine_handle<promise_type> coroutine)
-		: coroutine_handle(coroutine)
-	{}
-
-	explicit render_task(std::nullptr_t)
-		:coroutine_handle(nullptr)
-	{}
-
-	render_task(render_task&& t) noexcept
-		: coroutine_handle(t.coroutine_handle)
-	{
-		t.coroutine_handle = nullptr;
-	}
-
-	~render_task()
-	{
-		if (coroutine_handle)
-		{
-			coroutine_handle.destroy();
-		}
-		coroutine_handle = nullptr;
-	}
-
-	bool is_ready() const noexcept
-	{
-		return !coroutine_handle || coroutine_handle.done();
-	}
-
-	void swap(render_task&& t) noexcept
-	{
-		std::swap(coroutine_handle, t.coroutine_handle);
-	}
-
-	void assign(render_task&& t) noexcept
-	{
-		this->~render_task();
-		swap(std::move(t));
-	}
-
-private:
-	std::coroutine_handle<promise_type> coroutine_handle;
-};
-
-render_task render_promise::get_return_object() noexcept
-{
-	return render_task{ std::coroutine_handle<render_promise>::from_promise(*this) };
-}
-
 using namespace platform::Render;
+
+SyncPoint::~SyncPoint() = default;
 
 class RenderTaskArray
 {
 public:
 	RenderTaskArray()
-		:tasks{ render_task(nullptr),render_task(nullptr),render_task(nullptr) }
+		:tasks{ RenderTask(nullptr),RenderTask(nullptr),RenderTask(nullptr) }
 	{}
 
-	void assign(render_task&& t)
+	void assign(RenderTask&& t)
 	{
 		for (size_t i = 0; i != white::arrlen(tasks); ++i)
 		{
@@ -205,11 +116,11 @@ public:
 		WAssert(false, "out of max render_tasks");
 	}
 
-	render_task tasks[3];
+	RenderTask tasks[3];
 };
 
 RenderTaskArray SwapTasks;
-render_task CommandTask { nullptr };
+RenderTask CommandTask { nullptr };
 
 void CommandListExecutor::ExecuteList(CommandListBase& CmdList)
 {
@@ -229,7 +140,7 @@ void CommandListExecutor::ExecuteInner(CommandListBase& CmdList)
 		CmdList.PSOContext = SwapCmdList->PSOContext;
 
 		SwapTasks.assign(std::move(CommandTask));
-		CommandTask.swap([](CommandListBase* cmdlist)->render_task
+		CommandTask.swap([](CommandListBase* cmdlist)->RenderTask
 		{
 			Execute(*cmdlist);
 

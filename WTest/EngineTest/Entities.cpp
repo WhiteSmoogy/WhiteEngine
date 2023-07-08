@@ -24,28 +24,22 @@ Entities::Entities(const fs::path& file) {
 	auto entity_nodes = platform::X::SelectNodes("entity", term_node);
 	
 	std::vector<std::shared_ptr<platform::Mesh>> meshs;
-	std::vector< white::coroutine::Task<void>> tasks;
+	std::vector<platform::X::path> pathes;
 
 	meshs.resize(entity_nodes.size());
-	int index = 0;
 	for (auto& entity_node : entity_nodes)
 	{
 		auto mesh_name = Access("mesh", entity_node);
-
-		tasks.emplace_back(Environment->Scheduler->Schedule([&meshs](std::string mesh_name,int index)->white::coroutine::Task<void> {
-			spdlog::info("AsyncLoadMesh {}", mesh_name);
-			meshs[index] = co_await platform::X::AsyncLoadMesh(mesh_name + ".asset", mesh_name);
-			co_return;
-			}(mesh_name,index++)));
+		pathes.emplace_back(mesh_name + ".asset");
 	}
 
-	white::coroutine::SyncWait(white::coroutine::WhenAllReady(std::move(tasks)));
+	white::coroutine::SyncWait(platform::X::AsyncLoadMeshes(white::make_const_span(pathes),white::make_span(meshs)));
 
+	int index = 0;
 	for (auto& entity_node : platform::X::SelectNodes("entity", term_node))
 	{
-		auto mesh_name = Access("mesh", entity_node);
 		auto material_name = Access("material", entity_node);
-		entities.emplace_back(mesh_name, material_name);
+		entities.emplace_back(meshs[index++], material_name);
 	}
 
 	min = white::math::float3(FLT_MAX, FLT_MAX, FLT_MAX);

@@ -341,6 +341,13 @@ namespace platform {
 			}
 
 			co_await dstorage.SubmitUpload();
+
+			for (auto index : std::views::iota(0u, buffers.size()))
+			{
+				white::coroutine::MemoryAsyncReadStream stream{ white::make_span(buffers[index].get(),files[index]->file_size) };
+
+				mesh_desc.assets[index] = co_await MeshLoadingDesc<section_types...>::GetAwaiter(stream, mesh_desc.section_loaders);
+			}
 		}
 	};
 
@@ -362,7 +369,7 @@ namespace platform {
 	{
 		BatchMeshLoadingDesc<GeomertySection> desc{ pathes,asset };
 
-		return desc.GetAwaiter();;
+		co_await desc.GetAwaiter();;
 	}
 
 	

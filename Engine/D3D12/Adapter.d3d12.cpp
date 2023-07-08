@@ -104,7 +104,7 @@ namespace platform_ex::Windows::D3D12 {
 			}
 		}
 
-		dstorage = std::make_unique<DirectStorage>();
+		dstorage = std::make_unique<DirectStorage>(this);
 
 		dstorage->CreateUploadQueue(d3d_device.Get());
 	}

@@ -101,15 +101,31 @@ namespace platform_ex::Windows::D3D12 {
 		void Wait()
 		{
 			WaitForSingleObject(fence->GetCompletionEvent(), INFINITE);
+			if(waited_callback)
+				waited_callback();
+		}
+
+		void SetEventOnCompletion(uint64 signal_value)
+		{
+			fence->FenceValueAvailableAt = signal_value;
+			fence->GetFence()->SetEventOnCompletion(signal_value, fence->GetCompletionEvent());
 		}
 
 		void AwaitSuspend(std::coroutine_handle<> handle);
 
 		FenceCore& GetFence() { return *fence; }
+
+		template<typename Fn>
+		void SetOnWaited(Fn&& fn)
+		{
+			waited_callback = std::forward<Fn>(fn);
+		}
 	private:
 		std::unique_ptr<FenceCore> fence;
 
 		platform::Render::RenderTask task;
+
+		std::function<void()> waited_callback;
 	};
 }
 

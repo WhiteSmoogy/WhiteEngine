@@ -30,7 +30,6 @@ namespace WhiteEngine
 			, MinMarksToAlloc(InMinMarksToAlloc)
 			, bShouldEnforceAllocMarks(false)
 		{
-
 		}
 
 		~MemStackBase()

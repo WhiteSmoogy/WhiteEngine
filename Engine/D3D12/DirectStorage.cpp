@@ -27,10 +27,26 @@ void DirectStorage::CreateUploadQueue(ID3D12Device* device)
 std::shared_ptr<platform::Render::SyncPoint> DirectStorage::SubmitUpload()
 {
 	auto syncpoint = std::make_shared<AwaitableSyncPoint>(adapter, fence_commit_value++, 0);
+	syncpoint->SetEventOnCompletion(fence_commit_value);
 
-	file_upload_queue->EnqueueSignal(syncpoint->GetFence().GetFence(), fence_commit_value);
+	auto& fence = syncpoint->GetFence();
+
+	file_upload_queue->EnqueueSignal(fence.GetFence(), fence_commit_value);
 	file_upload_queue->Submit();
 	file_references.clear();
+
+	syncpoint->SetOnWaited([queue = this->file_upload_queue]()
+		{
+			DSTORAGE_ERROR_RECORD errorRecord{};
+			queue->RetrieveErrorRecord(&errorRecord);
+
+			if (FAILED(errorRecord.FirstFailure.HResult))
+			{
+
+			}
+
+			CheckHResult(errorRecord.FirstFailure.HResult);
+		});
 
 	return syncpoint;
 }

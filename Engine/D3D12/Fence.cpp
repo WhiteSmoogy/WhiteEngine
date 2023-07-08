@@ -156,12 +156,12 @@ AwaitableSyncPoint::AwaitableSyncPoint(D3D12Adapter* InParent, uint64 InitialVal
 
 void AwaitableSyncPoint::AwaitSuspend(std::coroutine_handle<> handle)
 {
-	task.swap([this,handle]() -> platform::Render::RenderTask
+	task.swap([](std::shared_ptr<SyncPoint> sync, std::coroutine_handle<> handle) -> platform::Render::RenderTask
 		{
-			this->Wait();
+			sync->Wait();
 			handle.resume();
 			co_return;
-		}());
+		}(shared_from_this(),handle));
 }
 
 

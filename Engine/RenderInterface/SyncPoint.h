@@ -104,7 +104,7 @@ namespace platform::Render
 		}
 	}
 
-	struct SyncPoint
+	struct SyncPoint:public std::enable_shared_from_this<SyncPoint>
 	{
 		struct awaiter : std::suspend_always
 		{

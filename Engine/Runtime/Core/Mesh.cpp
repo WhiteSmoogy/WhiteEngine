@@ -174,6 +174,7 @@ namespace platform {
 			{
 				pMesh = std::make_shared<Mesh>(*asset[i], name);
 				MeshesHolder::Instance().Connect(asset[i], pMesh);
+				meshes[i] = pMesh;
 			}
 		}
 

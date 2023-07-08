@@ -15,7 +15,7 @@
 
 namespace platform {
 	//Mesh文件格式
-	struct MeshHeader
+	struct MeshHeader 
 	{
 		//TODO Asset Common Header?
 		white::uint32 Signature; //Magic Number == 'MESH'
@@ -119,9 +119,14 @@ namespace platform {
 		template<typename AsyncStream>
 		white::coroutine::Task<void> GetAwaiter(AsyncStream& stream) {
 			//read header
-			GeomertySectionHeader header = co_await Read<GeomertySectionHeader>(stream);//common header had read
+			GeomertySectionHeader header;//common header had read
+			co_await stream.Read(&header.FourCC, sizeof(header.FourCC));
 			if (header.FourCC != asset::four_cc_v < 'L', 'E', 'M', 'E'>)
 				co_return;
+
+			co_await stream.Read(&header.Version, sizeof(header.Version));
+			co_await stream.Read(&header.CompressVersion, sizeof(header.CompressVersion));
+			co_await stream.Read(&header.SizeOfOptional, sizeof(header.SizeOfOptional));
 
 			stream.Skip(header.SizeOfOptional);
 
@@ -238,16 +243,25 @@ namespace platform {
 		template<typename AsyncStream>
 		static white::coroutine::Task<std::shared_ptr<asset::MeshAsset>> GetAwaiter(AsyncStream& stream, SectionLoaders& section_loaders)
 		{
-			MeshHeader header = co_await Read<MeshHeader>(stream);
+			MeshHeader header;
+			sizeof(header);
+			header.Signature = co_await Read<white::uint32>(stream);
 			if (header.Signature != asset::four_cc_v <'M', 'E', 'S', 'H'>)
 				co_return nullptr;
+			header.Machine = co_await Read<white::uint16>(stream);
+			header.NumberOfSections = co_await Read<white::uint16>(stream);
+			header.FirstSectionOffset = co_await Read<white::uint16>(stream);
 
 			auto mesh_asset = std::make_shared<asset::MeshAsset>();
 
 			stream.Skip(header.FirstSectionOffset);
 
 			for (auto i = 0; i != header.NumberOfSections; ++i) {
-				SectionCommonHeader common_header = co_await Read<SectionCommonHeader>(stream);
+				SectionCommonHeader common_header;
+				common_header.SectionIndex = co_await Read<white::uint16>(stream);
+				common_header.NextSectionOffset = co_await Read<white::uint32>(stream);
+				co_await stream.Read(common_header.Name, sizeof(common_header.Name));
+				common_header.Size = co_await Read<white::uint32>(stream);
 
 				//find loader
 				auto loader_iter = std::find_if(section_loaders.begin(),
@@ -287,7 +301,7 @@ namespace platform {
 			white::span<const X::path> pathes;
 			white::span<std::shared_ptr<asset::MeshAsset>> assets;
 			std::vector<std::unique_ptr<MeshSectionLoading>> section_loaders;
-			WhiteEngine::MemStackBase memory;
+			WhiteEngine::MemStackBase memory {0};
 		} mesh_desc;
 	public:
 		explicit BatchMeshLoadingDesc(white::span<const X::path> pathes, white::span<std::shared_ptr<asset::MeshAsset>> asset)

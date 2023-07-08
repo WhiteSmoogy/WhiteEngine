@@ -12,7 +12,7 @@ namespace platform_ex::Windows::D3D12
 	{
 	public:
 		DStorageFile(platform_ex::COMPtr<IDStorageFile> infile, BY_HANDLE_FILE_INFORMATION ininfo)
-			:platform_ex::DStorageFile(uint64(ininfo.nFileSizeHigh)<<32 | ininfo.nFileIndexLow),info(ininfo),file(infile)
+			:platform_ex::DStorageFile(uint64(ininfo.nFileSizeHigh)<<32 | ininfo.nFileSizeLow),info(ininfo),file(infile)
 		{}
 
 		IDStorageFile* Get() const

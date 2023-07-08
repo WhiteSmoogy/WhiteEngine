@@ -28,7 +28,7 @@ namespace white::coroutine
 			std::size_t byteCount
 		) noexcept;
 
-		void Skip(std::uint64_t offset)
+		void Skip(std::ptrdiff_t offset)
 		{
 			if (offset == 0)
 				return;
@@ -76,7 +76,7 @@ namespace white::coroutine
 			co_return byteCount;
 		}
 
-		void Skip(std::uint64_t offset)
+		void Skip(std::ptrdiff_t offset)
 		{
 			if (offset == 0)
 				return;

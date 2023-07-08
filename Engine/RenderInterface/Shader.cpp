@@ -440,7 +440,7 @@ namespace platform::Render::Shader
 			if (auto pBuiltInMeta = meta->GetBuiltInShaderType())
 			{
 				ShadeFileNames.emplace(meta->GetSourceFileName());
-				tasks.emplace_back([&context](BuiltInShaderMeta* meta) -> white::coroutine::Task<void>
+				tasks.emplace_back([](BuiltInShaderMeta* meta, FileTimeCacheContext& context) -> white::coroutine::Task<void>
 				{
 					std::vector< white::coroutine::Task<void>> tasks;
 
@@ -472,7 +472,7 @@ namespace platform::Render::Shader
 						context.CheckDependentTime(dependent,true);
 					}
 					co_await WriteShaderCache(meta,std::move(Dependents));
-				}(pBuiltInMeta));
+				}(pBuiltInMeta,context));
 			}
 		}
 

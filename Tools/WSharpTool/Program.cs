@@ -19,6 +19,7 @@
 			engineModule.Definitions.Add("WINDOWS");
 
 			var toolchain = new LibClangToolChain();
+			
 
 			var rspFiles = engineModule.Compile(toolchain);
 

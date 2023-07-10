@@ -22,7 +22,7 @@ struct std::formatter<WhiteEngine::EFormat, CharT> :std::formatter<std::underlyi
 	using base = std::formatter<std::underlying_type_t<WhiteEngine::EFormat>, CharT>;
 	template<class FormatContext>
 	auto format(WhiteEngine::EFormat format, FormatContext& fc) {
-		return base::format(std::to_underlying(format), fc);
+		return base::format((uint64)(format), fc);
 	}
 };
 

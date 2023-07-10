@@ -23,9 +23,9 @@ namespace platform::Render {
 		};
 
 		enum class Type {
-			T_1D,
-			T_2D,
-			T_3D,
+			T_1D = 2,
+			T_2D = 3,
+			T_3D = 4,
 			T_Cube
 		};
 

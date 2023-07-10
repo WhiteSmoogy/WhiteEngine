@@ -39,12 +39,6 @@ std::shared_ptr<platform::Render::SyncPoint> DirectStorage::SubmitUpload()
 		{
 			DSTORAGE_ERROR_RECORD errorRecord{};
 			queue->RetrieveErrorRecord(&errorRecord);
-
-			if (FAILED(errorRecord.FirstFailure.HResult))
-			{
-
-			}
-
 			CheckHResult(errorRecord.FirstFailure.HResult);
 		});
 

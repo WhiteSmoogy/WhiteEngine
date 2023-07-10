@@ -1126,6 +1126,9 @@
     <ClInclude Include="RenderInterface\SyncPoint.h">
       <Filter>RenderInterface</Filter>
     </ClInclude>
+    <ClInclude Include="Asset\DStorageAsset.h">
+      <Filter>Asset</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Asset">

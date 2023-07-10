@@ -16,10 +16,16 @@ namespace WhiteEngine
 		{
 		}
 	public:
-		int64 Tell()
+		int64 Tell() const override
 		{
 			return Offset;
 		}
+
+		void Seek(int64 offset) override
+		{
+			Offset = offset;
+		}
+
 	protected:
 		int64				Offset;
 	};

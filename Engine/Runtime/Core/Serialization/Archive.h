@@ -78,6 +78,15 @@ namespace WhiteEngine
 			return *this;
 		}
 
+		virtual int64 Tell() const 
+		{
+			return 0;
+		}
+
+		virtual void Seek(int64)
+		{
+		}
+
 		template<typename T> requires std::is_enum_v<T>
 			Archive& operator>>(T& v)
 			{

@@ -1,8 +1,9 @@
 #include "RenderObject.h"
+#include <WBase/UnboundedQueue.h>
 
 using namespace platform::Render;
 
-white::USPSCQueue<RObject*,false> RObject::PendingDeletes;
+static white::USPSCQueue<RObject*,false> PendingDeletes;
 white::uint32 RObject::CurrentFrame = 0;
 std::vector<RObject::RObjectToDelete> RObject::DeferredDeletionQueue;
 
@@ -56,3 +57,9 @@ void RObject::FlushPendingDeletes()
 platform::Render::RObject::~RObject()
 {
 }
+
+void platform::Render::RObject::EnqueueDelete(RObject* value)
+{
+	PendingDeletes.enqueue(value);
+}
+

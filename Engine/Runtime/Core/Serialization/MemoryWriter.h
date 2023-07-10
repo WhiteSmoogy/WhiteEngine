@@ -46,7 +46,6 @@ namespace WhiteEngine
 		{
 			return Bytes.size();
 		}
-
 	protected:
 		std::vector<uint8>& Bytes;
 	};

@@ -1,6 +1,5 @@
-/*! \file Engine\Render\d3d12_dxgi.h
-\ingroup Engine
-\brief 包装需要动态载入的D3D12函数和声明相关接口以及相关常量定义。
+/* D3D12/d3d12_dxgi.h
+包装需要动态载入的D3D12函数和声明相关接口以及相关常量定义。
 */
 #ifndef WE_RENDER_D3D12_d3d12_dxgi_h
 #define WE_RENDER_D3D12_d3d12_dxgi_h 1
@@ -925,6 +924,27 @@ namespace platform_ex::Windows::D3D12 {
 		}
 	};
 
+	// Row-by-row memcpy
+	inline void MemcpySubresource(
+		_In_ const D3D12_MEMCPY_DEST* pDest,
+		_In_ const D3D12_SUBRESOURCE_DATA* pSrc,
+		SIZE_T RowSizeInBytes,
+		UINT NumRows,
+		UINT NumSlices) noexcept
+	{
+		for (UINT z = 0; z < NumSlices; ++z)
+		{
+			auto pDestSlice = static_cast<BYTE*>(pDest->pData) + pDest->SlicePitch * z;
+			auto pSrcSlice = static_cast<const BYTE*>(pSrc->pData) + pSrc->SlicePitch * LONG_PTR(z);
+			for (UINT y = 0; y < NumRows; ++y)
+			{
+				memcpy(pDestSlice + pDest->RowPitch * y,
+					pSrcSlice + pSrc->RowPitch * LONG_PTR(y),
+					RowSizeInBytes);
+			}
+		}
+	}
+
 	//------------------------------------------------------------------------------------------------
 	// D3D12 exports a new method for serializing root signatures in the Windows 10 Anniversary Update.
 	// To help enable root signature 1.1 features when they are available and not require maintaining
@@ -1114,10 +1134,14 @@ namespace platform_ex::Windows::D3D12 {
 }
 
 #if WFL_Win64
+#ifndef USE_PIX
 #define USE_PIX 1
 #endif
+#endif
 
+#ifndef ENABLE_AFTER_MATH
 #define ENABLE_AFTER_MATH 1
+#endif
 
 #if ENABLE_AFTER_MATH
 extern int GEnableNvidaiAfterMath;

@@ -23,7 +23,7 @@ namespace platform_ex {
 
 	public:
 		COM()
-			: hResult(::CoInitialize(nullptr))
+			: hResult(::CoInitializeEx(nullptr, COINIT_MULTITHREADED))
 		{}
 		~COM()
 		{

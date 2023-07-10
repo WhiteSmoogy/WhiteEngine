@@ -911,7 +911,7 @@ void BuddyUploadAllocator::Initialize()
 
 void BuddyUploadAllocator::ReleaseAllResources()
 {
-	CHECK(DeferredDeletionQueue.empty());
+	wassume(DeferredDeletionQueue.empty());
 
 	delete BackingResource;
 }

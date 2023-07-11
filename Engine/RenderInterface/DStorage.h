@@ -13,7 +13,8 @@ namespace fs = std::filesystem;
 
 namespace platform::Render
 {
-	class Textures;
+	class Texture;
+	class RObject;
 }
 
 namespace platform_ex
@@ -91,6 +92,8 @@ namespace platform_ex
 		};
 
 		std::variant< TextureRegion, MultipleSubresources> Destination;
+
+		uint32 UncompressedSize;
 	};
 
 	using DStorageFile2MemoryRequest = DStorageRequest< DStorageFile, byte>;
@@ -102,14 +105,14 @@ namespace platform_ex
 		Gpu = 0x2,
 	};
 
-	constexpr inline DStorageQueueType operator|(DStorageQueueType lhs, DStorageQueueType rhs)
-	{
-		return static_cast<DStorageQueueType>(static_cast<int32>(lhs) | static_cast<int32>(rhs));
-	}
-
-	class DStorageSyncPoint :platform::Render::SyncPoint
+	class DStorageSyncPoint :public platform::Render::SyncPoint
 	{
 	};
+
+	inline platform::Render::SyncPoint::awaiter operator co_await(std::shared_ptr<DStorageSyncPoint> dispatcher)
+	{
+		return { {}, std::static_pointer_cast<platform::Render::SyncPoint>(dispatcher) };
+	}
 
 	class DirectStorage
 	{

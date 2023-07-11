@@ -354,7 +354,7 @@ namespace platform {
 				dstorage.EnqueueRequest(Request);
 			}
 
-			co_await dstorage.SubmitUpload();
+			co_await dstorage.SubmitUpload(platform_ex::DStorageQueueType::Memory);
 
 			for (auto index : std::views::iota(0u, buffers.size()))
 			{

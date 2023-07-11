@@ -96,6 +96,7 @@ namespace platform_ex
 			uint32 Flags;
 		};
 
+		//256MB
 		constexpr uint32 kDefaultStagingBufferSize = 256 * 1024 * 1024;
 
 		struct CpuMetaHeader

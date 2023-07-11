@@ -178,8 +178,6 @@ namespace platform {
 			}
 		}
 
-		co_await Environment->Scheduler->schedule();
-
 		co_return;
 	}
 

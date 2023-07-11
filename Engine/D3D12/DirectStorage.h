@@ -31,20 +31,48 @@ namespace platform_ex::Windows::D3D12
 
 		void CreateUploadQueue(ID3D12Device* device);
 
-		std::shared_ptr<platform::Render::SyncPoint> SubmitUpload() override;
+		std::shared_ptr<platform_ex::DStorageSyncPoint> SubmitUpload(platform_ex::DStorageQueueType type) override;
 
 		std::shared_ptr<platform_ex::DStorageFile> OpenFile(const fs::path& path) override;
 
 		void EnqueueRequest(const DStorageFile2MemoryRequest& request) override;
+		void EnqueueRequest(const DStorageFile2GpuRequest& request) override;
+
+		uint32 RequestNextStatusIndex();
+	private:
+		struct DStorageSyncPoint :platform_ex::DStorageSyncPoint
+		{
+			DStorageSyncPoint(platform_ex::COMPtr<IDStorageStatusArray> statusArray,uint32 index);
+
+			~DStorageSyncPoint();
+
+			bool IsReady() const override;
+
+			void Wait() override;
+
+			void AwaitSuspend(std::coroutine_handle<> handle) override;
+
+			platform_ex::COMPtr<IDStorageStatusArray> status_array;
+			uint32 status_index;
+			HANDLE complete_event;
+			std::coroutine_handle<> continue_handle;
+			TP_WAIT* wait;
+		};
 	private:
 		D3D12Adapter* adapter;
 
 		platform_ex::COMPtr<IDStorageFactory> factory;
 
-		platform_ex::COMPtr<IDStorageQueue> file_upload_queue;
+		platform_ex::COMPtr<IDStorageQueue1> memory_upload_queue;
+		platform_ex::COMPtr<IDStorageQueue1> gpu_upload_queue;
 
 		std::vector<std::shared_ptr<const platform_ex::DStorageFile>> file_references;
 
 		uint64 fence_commit_value;
+
+		platform_ex::COMPtr<IDStorageStatusArray> status_array;
+
+		constexpr static uint32 kStatusCount = 16;
+		uint32 status_count = kStatusCount;
 	};
 }

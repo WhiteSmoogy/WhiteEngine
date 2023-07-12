@@ -117,5 +117,5 @@ namespace platform_ex
 		};
 	}
 
-	white::coroutine::Task<void> AsyncLoadDstorageAsset(path const& assetpath);
+	white::coroutine::Task<void> AsyncLoadDStorageAsset(path const& assetpath);
 }

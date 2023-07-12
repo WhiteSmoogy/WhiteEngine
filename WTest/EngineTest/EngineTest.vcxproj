@@ -217,6 +217,7 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\..\packages\Microsoft.Direct3D.D3D12.1.610.4\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\..\packages\Microsoft.Direct3D.D3D12.1.610.4\build\native\Microsoft.Direct3D.D3D12.targets')" />
     <Import Project="..\..\packages\Microsoft.Direct3D.DirectStorage.1.2.1\build\native\targets\Microsoft.Direct3D.DirectStorage.targets" Condition="Exists('..\..\packages\Microsoft.Direct3D.DirectStorage.1.2.1\build\native\targets\Microsoft.Direct3D.DirectStorage.targets')" />
+    <Import Project="..\..\packages\zlib-msvc-x64.1.2.11.8900\build\native\zlib-msvc-x64.targets" Condition="Exists('..\..\packages\zlib-msvc-x64.1.2.11.8900\build\native\zlib-msvc-x64.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -225,5 +226,6 @@
     <Error Condition="!Exists('..\..\packages\Microsoft.Direct3D.D3D12.1.610.4\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Direct3D.D3D12.1.610.4\build\native\Microsoft.Direct3D.D3D12.props'))" />
     <Error Condition="!Exists('..\..\packages\Microsoft.Direct3D.D3D12.1.610.4\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Direct3D.D3D12.1.610.4\build\native\Microsoft.Direct3D.D3D12.targets'))" />
     <Error Condition="!Exists('..\..\packages\Microsoft.Direct3D.DirectStorage.1.2.1\build\native\targets\Microsoft.Direct3D.DirectStorage.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Direct3D.DirectStorage.1.2.1\build\native\targets\Microsoft.Direct3D.DirectStorage.targets'))" />
+    <Error Condition="!Exists('..\..\packages\zlib-msvc-x64.1.2.11.8900\build\native\zlib-msvc-x64.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\zlib-msvc-x64.1.2.11.8900\build\native\zlib-msvc-x64.targets'))" />
   </Target>
 </Project>

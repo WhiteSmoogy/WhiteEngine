@@ -70,6 +70,7 @@ namespace WhiteEngine
 		{
 			std::size_t size = v.size();
 			Serialize(&size, sizeof(size));
+
 			if (IsLoading())
 			{
 				v.resize(size);

@@ -3,12 +3,16 @@
 #include "Asset/DStorageAsset.h"
 #include "Texture.h"
 #include "View.h"
+#include <zlib.h>
+
+#include <WinPixEventRuntime/pix3.h>
 
 using namespace platform_ex::Windows::D3D12;
 
-DEFINE_GUID(IID_IDStorageFactory,	0x6924ea0c, 0xc3cd, 0x4826, 0xb1, 0x0a, 0xf6, 0x4f, 0x4e, 0xd9, 0x27, 0xc1);
-DEFINE_GUID(IID_IDStorageQueue1,		0xdd2f482c, 0x5eff, 0x41e8, 0x9c, 0x9e, 0xd2, 0x37, 0x4b, 0x27, 0x81, 0x28);
-DEFINE_GUID(IID_IDStorageFile,		0x5de95e7b, 0x955a, 0x4868, 0xa7, 0x3c, 0x24, 0x3b, 0x29, 0xf4, 0xb8, 0xda);
+DEFINE_GUID(IID_IDStorageFactory, 0x6924ea0c, 0xc3cd, 0x4826, 0xb1, 0x0a, 0xf6, 0x4f, 0x4e, 0xd9, 0x27, 0xc1);
+DEFINE_GUID(IID_IDStorageQueue1, 0xdd2f482c, 0x5eff, 0x41e8, 0x9c, 0x9e, 0xd2, 0x37, 0x4b, 0x27, 0x81, 0x28);
+DEFINE_GUID(IID_IDStorageFile, 0x5de95e7b, 0x955a, 0x4868, 0xa7, 0x3c, 0x24, 0x3b, 0x29, 0xf4, 0xb8, 0xda);
+
 
 DirectStorage::DirectStorage(D3D12Adapter* InParent)
 	:adapter(InParent)
@@ -24,6 +28,14 @@ DirectStorage::DirectStorage(D3D12Adapter* InParent)
 	factory->SetStagingBufferSize(platform_ex::DSFileFormat::kDefaultStagingBufferSize);
 
 	RequestNextStatusIndex();
+
+	decompression_queue = factory.As<IDStorageCustomDecompressionQueue1>();
+	decompression_queue_event = decompression_queue->GetEvent();
+
+	decompression_wait = CreateThreadpoolWait(OnCustomDecompressionRequestsAvailable, this, nullptr);
+	SetThreadpoolWait(decompression_wait, decompression_queue_event, nullptr);
+
+	decompression_work = CreateThreadpoolWork(DecompressionWork, this, nullptr);
 }
 
 uint32 DirectStorage::RequestNextStatusIndex()
@@ -120,7 +132,7 @@ std::shared_ptr<platform_ex::DStorageSyncPoint> DirectStorage::SubmitUpload(plat
 	upload_queue->EnqueueStatus(syncpoint->status_array.Get(), syncpoint->status_index);
 	upload_queue->Submit();
 	file_references.clear();
-	
+
 	return syncpoint;
 }
 
@@ -192,4 +204,103 @@ void DirectStorage::EnqueueRequest(const DStorageFile2GpuRequest& req)
 		}, req.Destination);
 
 	gpu_upload_queue->EnqueueRequest(&request);
+}
+
+constexpr DSTORAGE_COMPRESSION_FORMAT CUSTOM_COMPRESSION_FORMAT_ZLIB = static_cast<DSTORAGE_COMPRESSION_FORMAT>(platform_ex::DStorageCompressionFormat::Zlib);
+
+void CALLBACK DirectStorage::DecompressionWork(TP_CALLBACK_INSTANCE*, void* pv, TP_WORK*)
+{
+	PIXScopedEvent(0, "OnDecompress");
+
+	auto context = reinterpret_cast<DirectStorage*>(pv);
+
+	DSTORAGE_CUSTOM_DECOMPRESSION_REQUEST request;
+	{
+		std::unique_lock lock(context->requests_mutex);
+
+		// DecompressionWork is submitted once per request added to the deque
+		wassume(!context->decompression_requests.empty());
+
+		request = context->decompression_requests.front();
+		context->decompression_requests.pop_front();
+	}
+
+	WAssert(request.CompressionFormat == CUSTOM_COMPRESSION_FORMAT_ZLIB, "only expect ZLib requests");
+
+	// The destination maybe an upload heap (write-combined memory)
+	// ZLib decompression tends to read from the destination buffer, which is extremely slow from write-combined memory.
+	std::unique_ptr<uint8_t[]> scratchBuffer;
+	void* decompressionDestination;
+
+	if (request.Flags & DSTORAGE_CUSTOM_DECOMPRESSION_FLAG_DEST_IN_UPLOAD_HEAP)
+	{
+		scratchBuffer.reset(new uint8_t[request.DstSize]);
+		decompressionDestination = scratchBuffer.get();
+	}
+	else
+	{
+		decompressionDestination = request.DstBuffer;
+	}
+
+	// Perform the actual decompression
+	uLong decompressedSize = static_cast<uLong>(request.DstSize);
+	int uncompressResult = uncompress(
+		reinterpret_cast<Bytef*>(decompressionDestination),
+		&decompressedSize,
+		static_cast<Bytef const*>(request.SrcBuffer),
+		static_cast<uLong>(request.SrcSize));
+
+	if (uncompressResult == Z_OK && decompressionDestination != request.DstBuffer)
+	{
+		memcpy(request.DstBuffer, decompressionDestination, request.DstSize);
+	}
+
+	// Tell DirectStorage that this request has been completed.
+	DSTORAGE_CUSTOM_DECOMPRESSION_RESULT result{};
+	result.Id = request.Id;
+	result.Result = uncompressResult == Z_OK ? S_OK : E_FAIL;
+
+	context->decompression_queue->SetRequestResults(1, &result);
+}
+
+void CALLBACK DirectStorage::OnCustomDecompressionRequestsAvailable(TP_CALLBACK_INSTANCE*, void* pv, TP_WAIT* wait, TP_WAIT_RESULT)
+{
+	PIXScopedEvent(0, "OnCustomDecompressionRequestsReady");
+
+	auto context = reinterpret_cast<DirectStorage*>(pv);
+
+	// Loop through all requests pending requests until no more remain.
+	while (true)
+	{
+		DSTORAGE_CUSTOM_DECOMPRESSION_REQUEST requests[64];
+		uint32_t numRequests = 0;
+
+		DSTORAGE_GET_REQUEST_FLAGS flags = DSTORAGE_GET_REQUEST_FLAG_SELECT_CUSTOM;
+
+		// Pull off a batch of requests to process in this loop.
+		CheckHResult(context->decompression_queue->GetRequests1(flags, _countof(requests), requests, &numRequests));
+
+		if (numRequests == 0)
+			break;
+
+		std::unique_lock lock(context->requests_mutex);
+
+		for (uint32_t i = 0; i < numRequests; ++i)
+		{
+			context->decompression_requests.push_back(requests[i]);
+		}
+
+		lock.unlock();
+
+		// Submit one piece of work for each request.
+		for (uint32_t i = 0; i < numRequests; ++i)
+		{
+			SubmitThreadpoolWork(context->decompression_work);
+		}
+	}
+
+	// Re-register the custom decompression queue event with this callback to be
+	// called when the next decompression requests become available for
+	// processing.
+	SetThreadpoolWait(wait, context->decompression_queue_event, nullptr);
 }

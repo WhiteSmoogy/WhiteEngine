@@ -44,6 +44,7 @@
 #include "Developer/Nanite/Cluster.h"
 #include "Developer/Nanite/NaniteBuilder.h"
 #include "Asset/MeshX.h"
+#include "Asset/DStorageAsset.h"
 
 #include <windowsx.h>
 #include <ranges>
@@ -685,6 +686,8 @@ private:
 		HDROutput = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EA_GPURead | EA_RTV, {}, &data));
 		NormalOutput = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EA_GPURead | EA_RTV, {}, &data));
 
+		//sync load
+		white::coroutine::SyncWait(platform_ex::AsyncLoadDStorageAsset("sponza_crytek/textures.dsff.asset"));
 		pEntities = std::make_unique<Entities>("sponza_crytek.entities.wsl");
 
 		scene.AABBMin = pEntities->min;

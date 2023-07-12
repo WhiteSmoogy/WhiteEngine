@@ -196,7 +196,7 @@ namespace platform_ex {
 		{
 			COMPtr<IUnknown> res;
 
-			CheckHResult(Deref(pInterface).QueryInterface(riid,
+			CheckHResult(platform::Deref(pInterface).QueryInterface(riid,
 				white::replace_cast<void**>(&res.ReleaseAndGetRef())));
 			return res;
 		}
@@ -206,7 +206,7 @@ namespace platform_ex {
 		{
 			COMPtr<_iOther> res;
 
-			CheckHResult(Deref(pInterface).QueryInterface(__uuidof(_iOther),
+			CheckHResult(platform::Deref(pInterface).QueryInterface(__uuidof(_iOther),
 				white::replace_cast<void**>(&res.ReleaseAndGetRef())));
 			return res;
 		}

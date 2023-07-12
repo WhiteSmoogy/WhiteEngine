@@ -434,6 +434,9 @@
     <ClCompile Include="D3D12\DirectStorage.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
+    <ClCompile Include="Asset\DStorageAsset.cpp">
+      <Filter>Asset</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">

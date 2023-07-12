@@ -5,6 +5,7 @@
 #include "RenderInterface/DStorage.h"
 #include "Common.h"
 #include "d3d12_dxgi.h"
+#include <shared_mutex>
 
 namespace platform_ex::Windows::D3D12
 {
@@ -58,10 +59,20 @@ namespace platform_ex::Windows::D3D12
 			std::coroutine_handle<> continue_handle;
 			TP_WAIT* wait;
 		};
+
+		static void CALLBACK DecompressionWork(TP_CALLBACK_INSTANCE*, void*, TP_WORK*);
+		static void CALLBACK OnCustomDecompressionRequestsAvailable(TP_CALLBACK_INSTANCE*, void*, TP_WAIT* wait, TP_WAIT_RESULT);
 	private:
 		D3D12Adapter* adapter;
 
 		platform_ex::COMPtr<IDStorageFactory> factory;
+		platform_ex::COMPtr<IDStorageCustomDecompressionQueue1> decompression_queue;
+		HANDLE decompression_queue_event;
+		TP_WAIT* decompression_wait;
+		TP_WORK* decompression_work;
+
+		std::deque<DSTORAGE_CUSTOM_DECOMPRESSION_REQUEST> decompression_requests;
+		std::shared_mutex requests_mutex;
 
 		platform_ex::COMPtr<IDStorageQueue1> memory_upload_queue;
 		platform_ex::COMPtr<IDStorageQueue1> gpu_upload_queue;

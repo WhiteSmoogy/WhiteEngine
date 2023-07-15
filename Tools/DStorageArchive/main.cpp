@@ -489,6 +489,7 @@ private:
         auto [fixupHeader] = WriteStruct(archive, &header, &header);
 
         header.TexturesCount = static_cast<uint32>(texture_descs.size());
+        header.StagingBufferSize = stagingBufferSize;
 
         std::vector<DSFileFormat::TexturMetadata> metadatas;
         metadatas.resize(texture_metadatas.size());

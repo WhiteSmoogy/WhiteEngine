@@ -1,6 +1,7 @@
 #include "DStorageAsset.h"
 #include "RenderInterface/IContext.h"
 #include "RenderInterface/ITexture.hpp"
+#include "Asset/DDSX.h"
 #include <vector>
 
 using platform::Render::DStorage;
@@ -10,6 +11,11 @@ using platform_ex::DStorageFile2GpuRequest;
 using platform_ex::DStorageCompressionFormat;
 using platform_ex::path;
 using namespace platform_ex::DSFileFormat;
+
+namespace platform
+{
+	void EmplaceResource(const std::string& name, Render::TexturePtr texture);
+}
 
 template<typename T>
 class MemoryRegion
@@ -94,13 +100,68 @@ struct DStorageAssetFile
 
 		co_await storage_api.SubmitUpload(DStorageQueueType::Memory);
 
-		std::vector<std::shared_ptr<platform::Render::Texture>> textures;
+		std::vector<platform::Render::TexturePtr> textures;
 
 		co_await Environment->Scheduler->schedule_render();
 
+		auto& device = platform::Render::Context::Instance().GetDevice();
 		for (uint32 i = 0; i < metadata->TexturesCount; ++i)
 		{
-			//create texture
+			const auto& desc = metadata->TexuresDesc[i];
+
+			textures.emplace_back(platform::Render::shared_raw_robject(
+				CreateTexture(device, desc)));
+
+			const char* Name = metadata->Textures[i].Name;
+
+			platform::EmplaceResource(Name, textures.back());
+		}
+
+		co_await Environment->Scheduler->schedule();
+
+	}
+
+	platform::Render::Texture* CreateTexture(platform::Render::Device& device, const platform_ex::DSFileFormat::D3DResourceDesc& desc)
+	{
+		auto format = dds::FromDXGIFormat(desc.Format);
+		auto access = platform::Render::EA_GPURead | platform::Render::EA_Immutable;
+		platform::Render::SampleDesc sample_info{ desc.SampleDesc.Count,desc.SampleDesc.Quality };
+
+		switch ((platform::Render::TextureType)desc.Dimension)
+		{
+		case platform::Render::TextureType::T_1D:
+			return device.CreateTexture(
+				static_cast<uint16>(desc.Width),
+				static_cast<uint8>(desc.MipLevels),
+				static_cast<uint8>(desc.DepthOrArraySize),
+				format, access, sample_info, nullptr
+			);
+		case platform::Render::TextureType::T_2D:
+			return device.CreateTexture(
+				static_cast<uint16>(desc.Width),
+				static_cast<uint16>(desc.Height),
+				static_cast<uint8>(desc.MipLevels),
+				static_cast<uint8>(desc.DepthOrArraySize),
+				format,access,sample_info,nullptr
+			);
+		case platform::Render::TextureType::T_3D:
+		{
+			platform::Render::Texture3DInitializer Initializer
+			{
+				.Width = static_cast<uint16>(desc.Width),
+				.Height = static_cast<uint16>(desc.Height),
+				.Depth = static_cast<uint16>(desc.DepthOrArraySize),
+				.NumMipmaps = static_cast<uint8>(desc.MipLevels),
+				.ArraySize = 1,
+				.Format = format,
+				.Access = access,
+				.NumSamples = 1
+			};
+			return device.CreateTexture(Initializer, nullptr);
+		}
+		default:
+			WAssert(false, "unexcepted texture Dimension");
+			break;
 		}
 	}
 

@@ -389,6 +389,11 @@ namespace platform {
 		std::unordered_map<std::string, std::weak_ptr<Texture>> loaded_texs;
 	} TextureHolder;
 
+	void EmplaceResource(const std::string& name, Render::TexturePtr texture)
+	{
+		TextureHolder.EmplaceResource(name, texture);
+	}
+
 	Render::TexturePtr X::LoadTexture(X::path const& texpath, uint32 access) {
 		//normalize
 		auto key = texpath.string();

@@ -62,6 +62,7 @@ namespace platform_ex::Windows::D3D12
 
 		static void CALLBACK DecompressionWork(TP_CALLBACK_INSTANCE*, void*, TP_WORK*);
 		static void CALLBACK OnCustomDecompressionRequestsAvailable(TP_CALLBACK_INSTANCE*, void*, TP_WAIT* wait, TP_WAIT_RESULT);
+		static void CALLBACK OnQueueError(TP_CALLBACK_INSTANCE*, void*, TP_WAIT* wait, TP_WAIT_RESULT);
 	private:
 		D3D12Adapter* adapter;
 

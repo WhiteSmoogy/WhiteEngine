@@ -20,7 +20,7 @@ namespace platform_ex
 
 			operator const type* () const
 			{
-				return reinterpret_cast<type*>(reinterpret_cast<white::byte*>(this) + Offset);
+				return reinterpret_cast<const type*>(reinterpret_cast<const white::byte*>(this) + Offset);
 			}
 
 			operator type* ()

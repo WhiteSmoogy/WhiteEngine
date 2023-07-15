@@ -4,6 +4,7 @@
 #include "Texture.h"
 #include "View.h"
 #include <zlib.h>
+#include <spdlog/spdlog.h>
 
 #include <WinPixEventRuntime/pix3.h>
 
@@ -22,7 +23,7 @@ DirectStorage::DirectStorage(D3D12Adapter* InParent)
 
 	CheckHResult(DStorageGetFactory(COMPtr_RefParam(factory, IID_IDStorageFactory)));
 
-#ifndef  NDEBUG
+#ifndef NDEBUG
 	factory->SetDebugFlags(DSTORAGE_DEBUG_BREAK_ON_ERROR | DSTORAGE_DEBUG_SHOW_ERRORS);
 #endif // ! NDEBUG
 	factory->SetStagingBufferSize(platform_ex::DSFileFormat::kDefaultStagingBufferSize);
@@ -60,8 +61,13 @@ void DirectStorage::CreateUploadQueue(ID3D12Device* device)
 		queueDesc.Priority = DSTORAGE_PRIORITY_NORMAL;
 		queueDesc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
 		queueDesc.Device = nullptr;
+		queueDesc.Name = "memory_upload_queue";
 
 		CheckHResult(factory->CreateQueue(&queueDesc, COMPtr_RefParam(memory_upload_queue, IID_IDStorageQueue1)));
+
+		auto error_event = memory_upload_queue->GetErrorEvent();
+		auto error_wait = CreateThreadpoolWait(OnQueueError, memory_upload_queue.Get(), nullptr);
+		SetThreadpoolWait(error_wait, error_event, nullptr);
 	}
 
 	{
@@ -70,8 +76,12 @@ void DirectStorage::CreateUploadQueue(ID3D12Device* device)
 		queueDesc.Priority = DSTORAGE_PRIORITY_NORMAL;
 		queueDesc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
 		queueDesc.Device = device;
+		queueDesc.Name = "gpu_upload_queue";
 
 		CheckHResult(factory->CreateQueue(&queueDesc, COMPtr_RefParam(gpu_upload_queue, IID_IDStorageQueue1)));
+		auto error_event = gpu_upload_queue->GetErrorEvent();
+		auto error_wait = CreateThreadpoolWait(OnQueueError, gpu_upload_queue.Get(), nullptr);
+		SetThreadpoolWait(error_wait, error_event, nullptr);
 	}
 }
 
@@ -171,7 +181,6 @@ void DirectStorage::EnqueueRequest(const DStorageFile2GpuRequest& req)
 
 	DSTORAGE_REQUEST request = {};
 	request.Options.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
-	request.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_MEMORY;
 	request.Options.CompressionFormat = static_cast<DSTORAGE_COMPRESSION_FORMAT>(req.Compression);
 	request.Source.File.Source = std::static_pointer_cast<const DStorageFile>(req.File.Source)->Get();
 	request.Source.File.Offset = req.File.Offset;
@@ -303,4 +312,19 @@ void CALLBACK DirectStorage::OnCustomDecompressionRequestsAvailable(TP_CALLBACK_
 	// called when the next decompression requests become available for
 	// processing.
 	SetThreadpoolWait(wait, context->decompression_queue_event, nullptr);
+}
+
+void CALLBACK DirectStorage::OnQueueError(TP_CALLBACK_INSTANCE*, void* pv, TP_WAIT* wait, TP_WAIT_RESULT)
+{
+	auto queue = reinterpret_cast<IDStorageQueue1*>(pv);
+
+	DSTORAGE_ERROR_RECORD record;
+	queue->RetrieveErrorRecord(&record);
+
+	DSTORAGE_QUEUE_INFO info;
+	queue->Query(&info);
+
+	spdlog::error("DirectStorage Queue:{} FailureCount:{} FirstFailure:{:x}", info.Desc.Name, record.FailureCount, record.FirstFailure.HResult);
+
+	SetThreadpoolWait(wait, queue->GetErrorEvent(), nullptr);
 }

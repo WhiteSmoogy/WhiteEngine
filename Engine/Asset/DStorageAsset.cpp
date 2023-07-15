@@ -119,6 +119,62 @@ struct DStorageAssetFile
 
 		co_await Environment->Scheduler->schedule();
 
+		for (uint32 i = 0; i < metadata->TexturesCount; ++i)
+		{
+			const auto& desc = metadata->TexuresDesc[i];
+			const auto& textureMetadata = metadata->Textures[i];
+
+			EnqueuReadTexture(textures[i], desc, textureMetadata);
+		}
+
+		co_await storage_api.SubmitUpload(DStorageQueueType::Gpu);
+	}
+
+	DStorageFile2GpuRequest BuildRequestForRegion(const GpuRegion& region)
+	{
+		DStorageFile2GpuRequest r;
+		r.Compression = region.Compression;
+		r.UncompressedSize = region.UncompressedSize;
+		r.File.Offset = region.Data.Offset;
+		r.File.Source = file;
+		r.File.Size = region.CompressedSize;
+
+		return r;
+	}
+
+	void EnqueuReadTexture(platform::Render::TexturePtr tex, const D3DResourceDesc& desc, TexturMetadata const& textureMetadata)
+	{
+		for (uint32_t i = 0; i < textureMetadata.SingleMipsCount; ++i)
+		{
+			auto const& region = textureMetadata.SingleMips[i];
+
+			DStorageFile2GpuRequest r = BuildRequestForRegion(region);
+
+			DStorageFile2GpuRequest::TextureRegion destRegion;
+			destRegion.Region.Right = static_cast<uint32_t>(desc.Width >> i);
+			destRegion.Region.Bottom = static_cast<uint32_t>(desc.Height >> i);
+			destRegion.Region.Back = 1;
+			destRegion.Target = tex.get();
+			destRegion.SubresourceIndex = i;
+
+			r.Destination = destRegion;
+
+			storage_api.EnqueueRequest(r);
+		}
+
+		//has remaing mips?
+		if (textureMetadata.RemainingMips.UncompressedSize > 0)
+		{
+			DStorageFile2GpuRequest r = BuildRequestForRegion(textureMetadata.RemainingMips);
+
+			DStorageFile2GpuRequest::MultipleSubresources multiRes;
+
+			multiRes.Texture = tex.get();
+			multiRes.FirstSubresource = textureMetadata.SingleMipsCount;
+			r.Destination = multiRes;
+
+			storage_api.EnqueueRequest(r);
+		}
 	}
 
 	platform::Render::Texture* CreateTexture(platform::Render::Device& device, const platform_ex::DSFileFormat::D3DResourceDesc& desc)

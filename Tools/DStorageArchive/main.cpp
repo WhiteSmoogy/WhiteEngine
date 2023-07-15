@@ -496,6 +496,7 @@ private:
 
         std::vector<Fixup<DSFileFormat::TexturMetadata>> fixups;
 
+        header.Textures.Offset = archive.Tell();
         //metadatas placeholder
         for (auto index : std::views::iota(0u, texture_metadatas.size()))
         {

@@ -76,7 +76,7 @@ namespace platform_ex::Windows::D3D12
 		std::shared_mutex requests_mutex;
 
 		platform_ex::COMPtr<IDStorageQueue1> memory_upload_queue;
-		platform_ex::COMPtr<IDStorageQueue1> gpu_upload_queue;
+		platform_ex::COMPtr<IDStorageQueue2> gpu_upload_queue;
 
 		std::vector<std::shared_ptr<const platform_ex::DStorageFile>> file_references;
 

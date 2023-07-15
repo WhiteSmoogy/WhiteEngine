@@ -12,6 +12,7 @@ using namespace platform_ex::Windows::D3D12;
 
 DEFINE_GUID(IID_IDStorageFactory, 0x6924ea0c, 0xc3cd, 0x4826, 0xb1, 0x0a, 0xf6, 0x4f, 0x4e, 0xd9, 0x27, 0xc1);
 DEFINE_GUID(IID_IDStorageQueue1, 0xdd2f482c, 0x5eff, 0x41e8, 0x9c, 0x9e, 0xd2, 0x37, 0x4b, 0x27, 0x81, 0x28);
+DEFINE_GUID(IID_IDStorageQueue2, 0xb1c9d643, 0x3a49, 0x44a2, 0xb4, 0x6f, 0x65, 0x36, 0x49, 0x47, 0x0d, 0x18);
 DEFINE_GUID(IID_IDStorageFile, 0x5de95e7b, 0x955a, 0x4868, 0xa7, 0x3c, 0x24, 0x3b, 0x29, 0xf4, 0xb8, 0xda);
 
 
@@ -78,10 +79,25 @@ void DirectStorage::CreateUploadQueue(ID3D12Device* device)
 		queueDesc.Device = device;
 		queueDesc.Name = "gpu_upload_queue";
 
-		CheckHResult(factory->CreateQueue(&queueDesc, COMPtr_RefParam(gpu_upload_queue, IID_IDStorageQueue1)));
+		CheckHResult(factory->CreateQueue(&queueDesc, COMPtr_RefParam(gpu_upload_queue, IID_IDStorageQueue2)));
 		auto error_event = gpu_upload_queue->GetErrorEvent();
 		auto error_wait = CreateThreadpoolWait(OnQueueError, gpu_upload_queue.Get(), nullptr);
 		SetThreadpoolWait(error_wait, error_event, nullptr);
+
+		auto support = gpu_upload_queue->GetCompressionSupport(DSTORAGE_COMPRESSION_FORMAT_GDEFLATE);
+
+		if (has_anyflags(support,DSTORAGE_COMPRESSION_SUPPORT_CPU_FALLBACK))
+		{
+			spdlog::error(R"(DSTORAGE_COMPRESSION_FORMAT_GDEFLATE CompressionSupport
+   CPU fallback implementation will be used.
+   This can occur if:
+   * Optimized driver support and built-in GPU decompression is not available.
+   * GPU decompression support has been explicitly disabled using
+     DSTORAGE_CONFIGURATION.
+   * DirectStorage runtime encounters a failure during initialization of its
+     GPU decompression system.
+)");
+		}
 	}
 }
 
@@ -136,7 +152,7 @@ std::shared_ptr<platform_ex::DStorageSyncPoint> DirectStorage::SubmitUpload(plat
 	auto status_index = RequestNextStatusIndex();
 	auto syncpoint = std::make_shared<DStorageSyncPoint>(status_array, status_index);
 
-	auto upload_queue = type == platform_ex::DStorageQueueType::Gpu ? gpu_upload_queue : memory_upload_queue;
+	IDStorageQueue1* upload_queue = type == platform_ex::DStorageQueueType::Gpu ? gpu_upload_queue.Get() : memory_upload_queue.Get();
 
 	upload_queue->EnqueueSetEvent(syncpoint->complete_event);
 	upload_queue->EnqueueStatus(syncpoint->status_array.Get(), syncpoint->status_index);

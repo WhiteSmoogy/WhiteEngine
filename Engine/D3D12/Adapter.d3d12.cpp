@@ -76,6 +76,9 @@ namespace platform_ex::Windows::D3D12 {
 				char const * feature_level_str;
 				switch (req_feature_levels.MaxSupportedFeatureLevel)
 				{
+				case D3D_FEATURE_LEVEL_12_2:
+					feature_level_str = " D3D_FEATURE_LEVEL_12_2";
+					break;
 				case D3D_FEATURE_LEVEL_12_1:
 					feature_level_str = " D3D_FEATURE_LEVEL_12_1";
 					break;
@@ -96,7 +99,7 @@ namespace platform_ex::Windows::D3D12 {
 					feature_level_str = " D3D_FEATURE_LEVEL_UN_0";
 					break;
 				}
-				WF_Trace(platform::Descriptions::Notice, "%s Adapter Description:%s", wfname, desc.c_str());
+				WF_Trace(platform::Descriptions::Notice, "Adapter Description:%s Feature Level:%s", desc.c_str(), feature_level_str);
 
 				//todo if something
 

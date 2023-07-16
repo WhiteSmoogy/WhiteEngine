@@ -19,7 +19,7 @@ DEFINE_GUID(IID_IDStorageFile, 0x5de95e7b, 0x955a, 0x4868, 0xa7, 0x3c, 0x24, 0x3
 DirectStorage::DirectStorage(D3D12Adapter* InParent)
 	:adapter(InParent)
 {
-	DSTORAGE_CONFIGURATION1 config;
+	DSTORAGE_CONFIGURATION1 config {};
 	CheckHResult(DStorageSetConfiguration1(&config));
 
 	CheckHResult(DStorageGetFactory(COMPtr_RefParam(factory, IID_IDStorageFactory)));
@@ -79,7 +79,7 @@ void DirectStorage::CreateUploadQueue(ID3D12Device* device)
 		queueDesc.Device = device;
 		queueDesc.Name = "gpu_upload_queue";
 
-		CheckHResult(factory->CreateQueue(&queueDesc, COMPtr_RefParam(gpu_upload_queue, IID_IDStorageQueue2)));
+		CheckHResult(factory->CreateQueue(&queueDesc, IID_PPV_ARGS(gpu_upload_queue.ReleaseAndGetAddress())));
 		auto error_event = gpu_upload_queue->GetErrorEvent();
 		auto error_wait = CreateThreadpoolWait(OnQueueError, gpu_upload_queue.Get(), nullptr);
 		SetThreadpoolWait(error_wait, error_event, nullptr);

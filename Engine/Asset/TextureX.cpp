@@ -367,15 +367,11 @@ namespace platform {
 			std::shared_lock lock{ CS };
 			auto itr = loaded_texs.find(key);
 
-			Render::TexturePtr ret{};
 			if (itr != loaded_texs.end()) {
-				ret = itr->second.lock();
-
-				if (ret == nullptr)
-					loaded_texs.erase(itr);
+				return itr->second;
 			}
 
-			return ret;
+			return nullptr;
 		}
 
 		void EmplaceResource(const std::string& name, Render::TexturePtr resouce)
@@ -386,7 +382,7 @@ namespace platform {
 
 	private:
 		std::shared_mutex CS;;
-		std::unordered_map<std::string, std::weak_ptr<Texture>> loaded_texs;
+		std::unordered_map<std::string, std::shared_ptr<Texture>> loaded_texs;
 	} TextureHolder;
 
 	void EmplaceResource(const std::string& name, Render::TexturePtr texture)

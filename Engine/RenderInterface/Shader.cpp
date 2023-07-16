@@ -547,7 +547,7 @@ namespace platform::Render::Shader
 
 		//load cache
 		auto pArchive = white::unique_raw(WhiteEngine::CreateFileReader(path));
-
+		spdlog::debug("LoadShaderCache {} by {}", path.string(), meta->GetSourceFileName());
 		auto hash = std::hash<std::string>()(meta->GetSourceFileName());
 		//Serialize meta
 		co_await pArchive->Serialize(&hash, sizeof(hash));

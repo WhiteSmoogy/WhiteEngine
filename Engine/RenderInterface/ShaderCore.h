@@ -24,6 +24,7 @@ namespace white::coroutine
 namespace WhiteEngine
 {
 	class AsyncArchive;
+	class Archive;
 }
 
 namespace platform::Render {
@@ -51,6 +52,7 @@ namespace platform::Render {
 			uint16 NumCBs = 0;
 
 			Task<void> Serialize(WhiteEngine::AsyncArchive& v);
+			void Serialize(WhiteEngine::Archive& v);
 		};
 
 		enum ShaderType : white::uint8
@@ -195,6 +197,7 @@ namespace platform::Render {
 
 
 			Task<void> Serialize(WhiteEngine::AsyncArchive& v);
+			void Serialize(WhiteEngine::Archive& v);
 		};
 
 		enum class ShaderParamClass :uint8_t
@@ -226,7 +229,7 @@ namespace platform::Render {
 					uint16_t size;
 
 					Task<void> Serialize(WhiteEngine::AsyncArchive& v);
-					
+					void Serialize(WhiteEngine::Archive& v);
 				};
 				std::vector<VariableInfo> var_desc;
 
@@ -236,7 +239,7 @@ namespace platform::Render {
 				uint32_t bind_point;
 
 				Task<void> Serialize(WhiteEngine::AsyncArchive& v);
-				
+				void Serialize(WhiteEngine::Archive& v);
 			};
 			std::vector<ConstantBufferInfo> ConstantBufferInfos;
 
@@ -248,7 +251,7 @@ namespace platform::Render {
 				uint16_t bind_point;
 
 				Task<void> Serialize(WhiteEngine::AsyncArchive& v);
-				
+				void Serialize(WhiteEngine::Archive& v);
 			};
 			std::vector<BoundResourceInfo> BoundResourceInfos;
 
@@ -260,7 +263,7 @@ namespace platform::Render {
 			std::optional<RayTracingShaderInfo> RayTracingInfos = std::nullopt;
 
 			Task<void> Serialize(WhiteEngine::AsyncArchive& v);
-			
+			void Serialize(WhiteEngine::Archive& v);
 		};
 
 		using ShaderMacro = std::pair<std::string, std::string>;

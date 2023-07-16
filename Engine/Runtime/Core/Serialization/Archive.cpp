@@ -1,12 +1,14 @@
 #include "AsyncArchive.h"
 #include "Runtime/Core/Coroutine/AsyncStream.h"
+#include "Runtime/Core/LFile.h"
 #include "System/SystemEnvironment.h"
+
 namespace WhiteEngine
 {
-	class FileReadArchive : public AsyncArchive
+	class FileAsyncReadArchive : public AsyncArchive
 	{
 	public:
-		FileReadArchive(const std::filesystem::path& path)
+		FileAsyncReadArchive(const std::filesystem::path& path)
 			:stream(Environment->Scheduler->GetIOScheduler(),path,white::coroutine::file_share_mode::read)
 			
 		{
@@ -22,15 +24,15 @@ namespace WhiteEngine
 		white::coroutine::FileAsyncStream stream;
 	};
 
-	AsyncArchive* CreateFileReader(const std::filesystem::path& filename)
+	AsyncArchive* CreateFileAsyncReader(const std::filesystem::path& filename)
 	{
-		return new FileReadArchive(filename);
+		return new FileAsyncReadArchive(filename);
 	}
 
-	class FileWriteArchive : public AsyncArchive
+	class FileAsyncWriteArchive : public AsyncArchive
 	{
 	public:
-		FileWriteArchive(const std::filesystem::path& path)
+		FileAsyncWriteArchive(const std::filesystem::path& path)
 			:stream(Environment->Scheduler->GetIOScheduler(), path, white::coroutine::file_share_mode::write)
 		{
 			ArIsSaving = true;
@@ -45,8 +47,43 @@ namespace WhiteEngine
 		white::coroutine::FileAsyncStream stream;
 	};
 
-	AsyncArchive* CreateFileWriter(const std::filesystem::path& filename)
+	AsyncArchive* CreateFileAsyncWriter(const std::filesystem::path& filename)
 	{
-		return new FileWriteArchive(filename);
+		return new FileAsyncWriteArchive(filename);
+	}
+
+	class FileReadArchive :public Archive
+	{
+	public:
+		FileReadArchive(const std::filesystem::path& path)
+			:file(path.wstring(), platform::File::kToRead)
+		{
+			ArIsLoading = true;
+		}
+
+		int64 Tell() const override
+		{
+			return Offset;
+		}
+
+		void Seek(int64 offset) override
+		{
+			Offset = offset;
+		}
+
+		Archive& Serialize(void* v, white::uint64 length) override
+		{
+			auto io = file.Read(v, length,static_cast<uint64>(Offset));
+			Offset += io;
+			return *this;
+		}
+	private:
+		platform::File file;
+		int64 Offset = 0;
+	};
+
+	Archive* CreateFileReader(const std::filesystem::path& filename)
+	{
+		return new FileReadArchive(filename);
 	}
 }

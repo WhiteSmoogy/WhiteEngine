@@ -15,6 +15,14 @@ WhiteEngine::Task<void> platform::Render::ShaderCodeResourceCounts::Serialize(Wh
 	co_await(v >> NumCBs);
 }
 
+void platform::Render::ShaderCodeResourceCounts::Serialize(WhiteEngine::Archive& v)
+{
+	v >> NumSamplers;
+	v >> NumSRVs;
+	v >> NumUAVs;
+	v >> NumCBs;
+}
+
 WhiteEngine::Task<void> platform::Render::Shader::ShaderInfo::ConstantBufferInfo::VariableInfo::Serialize(WhiteEngine::AsyncArchive& v)
 {
 	co_await(v >> name);
@@ -26,6 +34,17 @@ WhiteEngine::Task<void> platform::Render::Shader::ShaderInfo::ConstantBufferInfo
 	co_await(v >> size);
 }
 
+void platform::Render::Shader::ShaderInfo::ConstantBufferInfo::VariableInfo::Serialize(WhiteEngine::Archive& v)
+{
+	v >> name;
+	v >> start_offset;
+	v >> type;
+	v >> rows;
+	v >> columns;
+	v >> elements;
+	v >> size;
+}
+
 WhiteEngine::Task<void> platform::Render::Shader::ShaderInfo::ConstantBufferInfo::Serialize(WhiteEngine::AsyncArchive& v)
 {
 	co_await(v >> var_desc);
@@ -35,11 +54,27 @@ WhiteEngine::Task<void> platform::Render::Shader::ShaderInfo::ConstantBufferInfo
 	co_await(v >> bind_point);
 }
 
+void platform::Render::Shader::ShaderInfo::ConstantBufferInfo::Serialize(WhiteEngine::Archive& v)
+{
+	v >> var_desc;
+	v >> name;
+	v >> name_hash;
+	v >> size;
+	v >> bind_point;
+}
+
 WhiteEngine::Task<void> platform::Render::Shader::RayTracingShaderInfo::Serialize(WhiteEngine::AsyncArchive& v)
 {
 	co_await(v >> EntryPoint);
 	co_await(v >> AnyHitEntryPoint);
 	co_await(v >> IntersectionEntryPoint);
+}
+
+void platform::Render::Shader::RayTracingShaderInfo::Serialize(WhiteEngine::Archive& v)
+{
+	v >> EntryPoint;
+	v >> AnyHitEntryPoint;
+	v >> IntersectionEntryPoint;
 }
 
 WhiteEngine::Task<void> platform::Render::Shader::ShaderInfo::BoundResourceInfo::Serialize(WhiteEngine::AsyncArchive& v)
@@ -48,6 +83,14 @@ WhiteEngine::Task<void> platform::Render::Shader::ShaderInfo::BoundResourceInfo:
 	co_await(v >> type);
 	co_await(v >> dimension);
 	co_await(v >> bind_point);
+}
+
+void platform::Render::Shader::ShaderInfo::BoundResourceInfo::Serialize(WhiteEngine::Archive& v)
+{
+	v >> name;
+	v >> type;
+	v >> dimension;
+	v >> bind_point;
 }
 
 WhiteEngine::Task<void> platform::Render::Shader::ShaderInfo::Serialize(WhiteEngine::AsyncArchive& v)
@@ -59,6 +102,17 @@ WhiteEngine::Task<void> platform::Render::Shader::ShaderInfo::Serialize(WhiteEng
 	co_await(v >> InputSignature);
 	co_await(v >> CSBlockSize);
 	co_await(v >> RayTracingInfos);
+}
+
+void platform::Render::Shader::ShaderInfo::Serialize(Archive& v)
+{
+	v >> Type;
+	v >> ConstantBufferInfos;
+	v >> BoundResourceInfos;
+	v >> ResourceCounts;
+	v >> InputSignature;
+	v >> CSBlockSize;
+	v >> RayTracingInfos;
 }
 
 void ShaderParameterMap::AddParameterAllocation(const std::string& ParameterName, uint16 BufferIndex, uint16 BaseIndex, uint16 Size, ShaderParamClass ParameterType)

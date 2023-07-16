@@ -6,6 +6,7 @@
 #include <concepts>
 #include <type_traits>
 #include <string>
+#include <filesystem>
 
 namespace std
 {
@@ -93,7 +94,7 @@ namespace WhiteEngine
 			{
 				std::underlying_type_t<T>& value = reinterpret_cast<std::underlying_type_t<T>&>(v);
 				Serialize(&value, sizeof(value));
-				*this;
+				return *this;
 			}
 	public:
 		virtual Archive& Serialize(void* v, white::uint64 length) {
@@ -157,4 +158,5 @@ namespace WhiteEngine
 		return archive.Serialize(v.begin(), sizeof(T) * 3);
 	}
 
+	Archive* CreateFileReader(const std::filesystem::path& filename);
 }

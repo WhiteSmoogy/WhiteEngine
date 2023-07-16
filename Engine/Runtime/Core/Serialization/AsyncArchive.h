@@ -43,8 +43,8 @@ namespace WhiteEngine
 		}
 	};
 
-	AsyncArchive* CreateFileReader(const std::filesystem::path& filename);
-	AsyncArchive* CreateFileWriter(const std::filesystem::path& filename);
+	AsyncArchive* CreateFileAsyncReader(const std::filesystem::path& filename);
+	AsyncArchive* CreateFileAsyncWriter(const std::filesystem::path& filename);
 
 	template<class T>
 	concept AsyncSerializable =

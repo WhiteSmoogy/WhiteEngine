@@ -712,9 +712,6 @@
     <ClInclude Include="Runtime\Core\Compression.h">
       <Filter>Runtime\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Runtime\Core\LFile.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
     <ClInclude Include="Runtime\Core\Materail.h">
       <Filter>Runtime\Core</Filter>
     </ClInclude>
@@ -1131,6 +1128,9 @@
     </ClInclude>
     <ClInclude Include="Asset\DStorageAsset.h">
       <Filter>Asset</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Core\LFile.h">
+      <Filter>Runtime\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -168,6 +168,24 @@ namespace platform::Render::Shader
 		co_await pInfo->Serialize(archive);
 	}
 
+	Archive& operator>>(Archive& archive, platform::Render::ShaderInitializer& initializer)
+	{
+		auto pBlob = const_cast<ShaderBlob*>(initializer.pBlob);
+
+		archive >> pBlob->second;
+		if (archive.IsLoading())
+		{
+			pBlob->first = std::make_unique<byte[]>(initializer.pBlob->second);
+		}
+		archive.Serialize(pBlob->first.get(), pBlob->second);
+
+		auto pInfo = const_cast<ShaderInfo*>(initializer.pInfo);
+
+		pInfo->Serialize(archive);
+
+		return archive;
+	}
+
 	fs::path RedirectPath(const std::string& path)
 	{
 		static fs::path shaders_path = WhiteEngine::PathSet::EngineDir() / "Shaders";
@@ -271,7 +289,7 @@ namespace platform::Render::Shader
 		std::unordered_map<std::string, bool> caches;
 	};
 
-	white::coroutine::Task<bool> IsShaderCache(BuiltInShaderMeta* meta,const fs::path& path, FileTimeCacheContext& contenxt);
+	bool IsShaderCache(BuiltInShaderMeta* meta,const fs::path& path, FileTimeCacheContext& contenxt);
 
 	white::coroutine::Task<void> WriteShaderCache(BuiltInShaderMeta* meta, std::set<std::string>&& sets);
 
@@ -448,10 +466,10 @@ namespace platform::Render::Shader
 
 					auto localcachepath = FormatShaderSavePath(meta);
 
-					if (co_await IsShaderCache(meta, localcachepath, context))
+					if (IsShaderCache(meta, localcachepath, context))
 						co_return;
 
-					auto pArchive = white::unique_raw(WhiteEngine::CreateFileWriter(localcachepath));
+					auto pArchive = white::unique_raw(WhiteEngine::CreateFileAsyncWriter(localcachepath));
 
 					auto hash = std::hash<std::string>()(meta->GetSourceFileName());
 					//Serialize meta
@@ -526,23 +544,23 @@ namespace platform::Render::Shader
 
 	namespace fs = std::filesystem;
 
-	white::coroutine::Task<bool> IsShaderCache(BuiltInShaderMeta* meta, const fs::path& path, FileTimeCacheContext& context) 
+	bool IsShaderCache(BuiltInShaderMeta* meta, const fs::path& path, FileTimeCacheContext& context) 
 	{
 		if (!fs::exists(path))
-			co_return false;
+			return false;
 
 		if (!context.CheckFileTime(meta->GetSourceFileName()))
-			co_return false;
+			return false;
 
 		//read manifest
 		auto dependents = WhiteEngine::ShaderDB::QueryDependent(meta->GetSourceFileName());
 		if (!dependents.has_value())
-			co_return false;
+			return false;
 
 		for(auto& dependent : *dependents)
 		{
 			if (!context.CheckDependentTime(dependent,false))
-				co_return false;
+				return false;
 		}
 
 		//load cache
@@ -550,7 +568,7 @@ namespace platform::Render::Shader
 		spdlog::debug("LoadShaderCache {} by {}", path.string(), meta->GetSourceFileName());
 		auto hash = std::hash<std::string>()(meta->GetSourceFileName());
 		//Serialize meta
-		co_await pArchive->Serialize(&hash, sizeof(hash));
+		pArchive->Serialize(&hash, sizeof(hash));
 
 		for (int32 PermutationId = 0; PermutationId < meta->GetPermutationCount(); PermutationId++)
 		{
@@ -567,14 +585,13 @@ namespace platform::Render::Shader
 			};
 
 			int32 CheckId;
-			co_await (*pArchive >> CheckId);
+			(*pArchive >> CheckId >> initializer);
 			WAssert(CheckId == PermutationId, "invalid shader achive");
-			co_await(*pArchive >> initializer);
 
 			InsertCompileOuput(meta, initializer, PermutationId);
 		}
 
-		co_return true;
+		return true;
 	}
 
 	fs::path FormatShaderSavePath(BuiltInShaderMeta* meta) {

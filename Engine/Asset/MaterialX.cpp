@@ -54,8 +54,7 @@ namespace details {
 
 				auto& param = effect_asset->GetParams()[param_index];
 				if (IsTextureReadType(param.GetType())) {
-					auto path = white::any_cast<std::string>(pair.second.GetContent());
-					platform::AssetResourceScheduler::Instance().SyncLoad<dds::DDSLoadingDesc>(path);
+					//TODO:preload single texture
 				}
 			}
 			co_return CreateAsset();

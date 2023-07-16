@@ -533,6 +533,8 @@ public:
 			co_await ParseNodeAsync(Environment->Scheduler->GetIOScheduler());
 		}
 
+		co_await Environment->Scheduler->schedule();
+
 		co_return CreateAsset();
 	}
 private:

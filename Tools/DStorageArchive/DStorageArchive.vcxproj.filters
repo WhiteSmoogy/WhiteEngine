@@ -22,4 +22,12 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DDSArchive.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Archive.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

@@ -158,6 +158,10 @@
       <Project>{596f0cdd-56fd-406e-a5e4-2d3d5ec7ca78}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Archive.h" />
+    <ClInclude Include="DDSArchive.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\..\packages\Microsoft.Direct3D.DirectStorage.1.2.1\build\native\targets\Microsoft.Direct3D.DirectStorage.targets" Condition="Exists('..\..\packages\Microsoft.Direct3D.DirectStorage.1.2.1\build\native\targets\Microsoft.Direct3D.DirectStorage.targets')" />

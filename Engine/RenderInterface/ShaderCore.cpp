@@ -1,6 +1,6 @@
 #include "ShaderCore.h"
-#include "Runtime/Core/Serialization/AsyncArchive.h"
-#include "Runtime/Core/Compression.h"
+#include "Core/Serialization/AsyncArchive.h"
+#include "Runtime/Compression.h"
 
 using namespace platform::Render;
 using namespace platform::Render::Shader;

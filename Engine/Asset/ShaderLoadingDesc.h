@@ -10,9 +10,9 @@
 
 #include "ShaderAsset.h"
 #include "WSLAssetX.h"
-#include "Runtime/Core/Coroutine/ReadOnlyFile.h"
-#include "Runtime/Core/Coroutine/IOScheduler.h"
-#include "Runtime/Core/Coroutine/SyncWait.h"
+#include "Core/Coroutine/ReadOnlyFile.h"
+#include "Core/Coroutine/IOScheduler.h"
+#include "Core/Coroutine/SyncWait.h"
 #include "../System/SystemEnvironment.h"
 
 namespace platform::X

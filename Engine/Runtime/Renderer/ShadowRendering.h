@@ -2,10 +2,11 @@
 
 #include <WBase/wmath.hpp>
 #include "RenderInterface/ICommandList.h"
-#include "Runtime/Core/Math/IntRect.h"
-#include "Runtime/Core/Math/Sphere.h"
-#include "Runtime/SceneInfo.h"
-#include "Runtime/SceneClasses.h"
+#include "Core/Math/IntRect.h"
+#include "Core/Math/Sphere.h"
+
+#include "SceneInfo.h"
+#include "SceneClasses.h"
 
 namespace WhiteEngine
 {

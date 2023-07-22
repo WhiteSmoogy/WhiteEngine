@@ -1,8 +1,8 @@
 #pragma once
 #include "CoreTypes.h"
-#include "Runtime/Core/Math/Sphere.h"
-#include "Runtime/Core/Serialization/BulkData.h"
-#include "Runtime/Core/Serialization/Archive.h"
+#include "Core/Math/Sphere.h"
+#include "Core/Serialization/BulkData.h"
+#include "Core/Serialization/Archive.h"
 #include "spdlog/spdlog.h"
 #include <WFramework/Helper/ShellHelper.h>
 #define USE_STRIP_INDICES	1	// must match define in NaniteDataDecode.h

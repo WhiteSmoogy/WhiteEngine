@@ -8,7 +8,7 @@
 #include "NodeDevice.h"
 #include "CommandListManager.h"
 
-#include "../Runtime/Core/Hash/CityHash.h"
+#include "../Core/Hash/CityHash.h"
 
 
 #include <WFramework/Core/WString.h>

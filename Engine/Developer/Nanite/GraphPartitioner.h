@@ -1,10 +1,10 @@
 #pragma once
 
 #include "CoreTypes.h"
-#include "Runtime/Core/ParallelFor.h"
-#include "Runtime/Core/Sorting.h"
-#include "Runtime/Core/Container/DisjointSet.h"
-#include "Runtime/Core/Math/PlatformMath.h"
+#include "Runtime/ParallelFor.h"
+#include "Runtime/Sorting.h"
+#include "Core/Container/DisjointSet.h"
+#include "Core/Math/PlatformMath.h"
 #include "Bounds.h"
 #include "metis.h"
 #include <atomic>

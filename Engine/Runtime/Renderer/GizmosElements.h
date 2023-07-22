@@ -1,7 +1,7 @@
 #pragma once
 #include "RenderInterface/Color_T.hpp"
 #include "RenderInterface/ICommandList.h"
-#include "Runtime/SceneInfo.h"
+#include "Runtime/Renderer/SceneInfo.h"
 
 
 namespace WhiteEngine

@@ -2,7 +2,7 @@
 
 #include <WBase/winttype.hpp>
 #include "RenderInterface/IFormat.hpp"
-#include "Runtime/Core/Math/PlatformMath.h"
+#include "Core/Math/PlatformMath.h"
 #include "emacro.h"
 
 #include <format>

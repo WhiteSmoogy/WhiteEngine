@@ -2,8 +2,8 @@
 
 #include <WBase/winttype.hpp>
 #include <WBase/cassert.h>
-#include "Runtime/Core/Math/PlatformMath.h"
-#include "Runtime/Core/PlatformAtomics.h"
+#include "Core/Math/PlatformMath.h"
+#include "Core/PlatformAtomics.h"
 namespace white
 {
 	/*-----------------------------------------------------------------------------

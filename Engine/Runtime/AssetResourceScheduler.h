@@ -8,8 +8,8 @@
 
 #include <WBase/cache.hpp>
 #include "../Asset/Loader.hpp"
-#include "Runtime/Core/Coroutine/Task.h"
-#include "Runtime/Core/Coroutine/SyncWait.h"
+#include "Core/Coroutine/Task.h"
+#include "Core/Coroutine/SyncWait.h"
 #include <WBase/sutility.h>
 #include <shared_mutex>
 

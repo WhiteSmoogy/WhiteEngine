@@ -1,7 +1,7 @@
 #include "RayTracingX.h"
 #include "ShaderAsset.h"
 #include "D3DShaderCompiler.h"
-#include "Runtime/Core/AssetResourceScheduler.h"
+#include "Runtime/AssetResourceScheduler.h"
 #include "WFramework/Helper/ShellHelper.h"
 #include "ShaderLoadingDesc.h"
 #include <unordered_map>

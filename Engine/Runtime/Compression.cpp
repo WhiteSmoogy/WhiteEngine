@@ -1,5 +1,5 @@
 #include "Compression.h"
-#include "Compression/lz4hc.h"
+#include "Core/Compression/lz4hc.h"
 
 namespace WhiteEngine
 {

@@ -7,9 +7,9 @@
 
 #include <WBase/any.h>
 
-#include "WSLEvaluator.h"
-#include "Resource.h"
-#include "../Asset/MaterialAsset.h"
+#include "Runtime/WSLEvaluator.h"
+#include "Runtime/Resource.h"
+#include "Asset/MaterialAsset.h"
 #include "RenderInterface/Effect/Effect.hpp"
 
 #include <unordered_set>

@@ -96,6 +96,12 @@ struct DStorageAssetFile
 
 		co_await storage_api.SubmitUpload(DStorageQueueType::Memory);
 
+		if (header.Signature == DSTexture_Signature)
+			co_await LoadTexturesFile(header);
+	}
+
+	white::coroutine::Task<void> LoadTexturesFile(Header header)
+	{
 		auto metadata = EnqueueRead(header.CpuMedadata);
 
 		co_await storage_api.SubmitUpload(DStorageQueueType::Memory);

@@ -7,12 +7,12 @@
 #include "RenderInterface/ITexture.hpp"
 #include "RenderInterface/IContext.h"
 #include "RenderInterface/PipelineStateUtility.h"
-#include "Renderer/ScreenRendering.h"
-#include "Runtime/Core/Math/TranslationMatrix.h"
-#include "Runtime/Core/Math/RotationMatrix.h"
-#include "Runtime/Core/Math/ScaleMatrix.h"
-#include "Runtime/Core/Math/ShadowProjectionMatrix.h"
-#include "Runtime/Core/Math/TranslationMatrix.h"
+#include "Runtime/Renderer/ScreenRendering.h"
+#include "Core/Math/TranslationMatrix.h"
+#include "Core/Math/RotationMatrix.h"
+#include "Core/Math/ScaleMatrix.h"
+#include "Core/Math/ShadowProjectionMatrix.h"
+#include "Core/Math/TranslationMatrix.h"
 #include <WBase/smart_ptr.hpp>
 
 using namespace WhiteEngine;

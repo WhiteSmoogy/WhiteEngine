@@ -1,6 +1,6 @@
 #include "RayTracingShader.h"
 #include "Context.h"
-#include "Runtime/Core/Serialization/MemoryReader.h"
+#include "Core/Serialization/MemoryReader.h"
 #include <WFramework/Core/WString.h>
 
 using namespace platform_ex::Windows::D3D12;

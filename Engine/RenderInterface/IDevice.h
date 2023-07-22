@@ -17,7 +17,7 @@
 #include "IShaderCompose.h"
 #include "RenderObject.h"
 #include "DStorage.h"
-#include "Runtime/Core/Hash/MessageDigest.h"
+#include "Core/Hash/MessageDigest.h"
 #include <optional>
 
 namespace asset {

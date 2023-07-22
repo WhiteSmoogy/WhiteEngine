@@ -7,7 +7,7 @@
 
 #include "EffectX.h"
 #include "MaterialAsset.h"
-#include "Runtime/Core/Materail.h"
+#include "Runtime/Renderer/Materail.h"
 namespace platform {
 	namespace X {
 		using path = std::filesystem::path;

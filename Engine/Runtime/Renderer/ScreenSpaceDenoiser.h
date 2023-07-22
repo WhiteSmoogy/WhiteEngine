@@ -3,7 +3,7 @@
 #include <RenderInterface/ICommandList.h>
 #include "RenderInterface/ShaderParamterTraits.hpp"
 #include "RenderInterface/ShaderParameterStruct.h"
-#include "Runtime/Core/Math/PlatformMath.h"
+#include "Core/Math/PlatformMath.h"
 
 namespace platform
 {

@@ -1,7 +1,7 @@
 #include "PipelineStateUtility.h"
 #include "IContext.h"
 #include <WBase/smart_ptr.hpp>
-#include "Runtime/Core/Hash/CityHash.h"
+#include "Core/Hash/CityHash.h"
 using namespace platform::Render;
 
 namespace platform::Render::PipelineStateCache

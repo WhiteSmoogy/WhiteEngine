@@ -9,12 +9,12 @@
 
 
 #include "RenderInterface/IContext.h"
-#include "Runtime/Core/AssetResourceScheduler.h"
+#include "Runtime/AssetResourceScheduler.h"
 
 #include "EffectX.h"
 #include "WSLAssetX.h"
 #include "D3DShaderCompiler.h"
-#include "Runtime/Core/Path.h"
+#include "Runtime/Path.h"
 
 #pragma warning(disable:4715) //return value or throw exception;
 using namespace platform::Render::Shader;

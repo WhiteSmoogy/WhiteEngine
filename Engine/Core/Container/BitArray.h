@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <bitset>
-#include "Runtime/Core/Math/PlatformMath.h"
+#include "Core/Math/PlatformMath.h"
 namespace white
 {
 	template<typename Allocator = std::allocator<bool>>

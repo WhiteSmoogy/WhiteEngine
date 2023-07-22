@@ -1,8 +1,8 @@
 #pragma once
 
 #include "RenderInterface/DStorage.h"
-#include "Runtime/Core/Coroutine/Task.h"
-#include <filesystem>
+#include "Core/Coroutine/Task.h"
+#include "FileFormat.h"
 
 namespace platform_ex
 {
@@ -108,13 +108,19 @@ namespace platform_ex
 			OffsetArray<D3DResourceDesc> TexuresDesc;
 		};
 
+		constexpr unsigned char DStorage_Sign = 'D' | 'S';
+		constexpr uint32 DSTexture_Signature = asset::four_cc_v<DStorage_Sign, 'T', 'e', 'x'>;
+
 		struct Header
 		{
-			uint32 Signature; //'DSFF'
+			uint32 Signature = DSTexture_Signature;
 			white::uint32 Version;
 
 			Region<CpuMetaHeader> CpuMedadata;
 		};
+
+		//directstorage Trinf
+		constexpr uint32 DSTrinf_Signature = asset::four_cc_v<DStorage_Sign, 'T', 'r', 'i'>;
 	}
 
 	white::coroutine::Task<void> AsyncLoadDStorageAsset(path const& assetpath);

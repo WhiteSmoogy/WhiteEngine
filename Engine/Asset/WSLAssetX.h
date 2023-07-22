@@ -6,7 +6,7 @@
 #define WE_ASSET_LSL_X_H 1
 
 #include <WScheme/WScheme.h>
-#include "Runtime/Core/LFile.h"
+#include "Runtime/LFile.h"
 
 namespace platform {
 	namespace X {

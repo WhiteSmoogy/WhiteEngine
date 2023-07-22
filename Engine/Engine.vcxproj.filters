@@ -46,36 +46,6 @@
     <ClCompile Include="Asset\RayTracingX.cpp">
       <Filter>Asset</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\PostProcess\PostProcessCombineLUTs.cpp">
-      <Filter>Renderer\PostProcess</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\VolumeRendering.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\imgui\imgui_context.cpp">
-      <Filter>Renderer\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\PostProcess\PostProcessToneMap.cpp">
-      <Filter>Renderer\PostProcess</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\ScreenSpaceDenoiser.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Light.cpp">
-      <Filter>Runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\DirectionalLight.cpp">
-      <Filter>Runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\ShadowRendering.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\ScreenRendering.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\GizmosElements.cpp">
-      <Filter>Runtime</Filter>
-    </ClCompile>
     <ClCompile Include="Plugins\sqlite\sqlite3.c">
       <Filter>Plugins\sqlite</Filter>
     </ClCompile>
@@ -99,108 +69,6 @@
     </ClCompile>
     <ClCompile Include="Developer\Nanite\NaniteBuilder.cpp">
       <Filter>Developer\Nanite</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\SceneRendering.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Threading\AutoResetEvent.cpp">
-      <Filter>Runtime\Core\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Threading\ManualResetEvent.cpp">
-      <Filter>Runtime\Core\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Threading\SpinMutex.cpp">
-      <Filter>Runtime\Core\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Threading\SpinWait.cpp">
-      <Filter>Runtime\Core\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Threading\TaskScheduler.cpp">
-      <Filter>Runtime\Core\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Threading\Win32Thread.cpp">
-      <Filter>Runtime\Core\Threading</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Serialization\Archive.cpp">
-      <Filter>Runtime\Core\Serialization</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Serialization\BulkData.cpp">
-      <Filter>Runtime\Core\Serialization</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\AssetResourceScheduler.cpp">
-      <Filter>Runtime\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Camera.cpp">
-      <Filter>Runtime\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\CameraController.cpp">
-      <Filter>Runtime\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Compression.cpp">
-      <Filter>Runtime\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Materail.cpp">
-      <Filter>Runtime\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Mesh.cpp">
-      <Filter>Runtime\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Path.cpp">
-      <Filter>Runtime\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\ResourcesHolder.cpp">
-      <Filter>Runtime\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\WSLBuilder.cpp">
-      <Filter>Runtime\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\WSLEvaluator.cpp">
-      <Filter>Runtime\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Hash\CityHash.cpp">
-      <Filter>Runtime\Core\Hash</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Hash\MessageDigest.cpp">
-      <Filter>Runtime\Core\Hash</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Coroutine\writable_file.cpp">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Coroutine\readable_file.cpp">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Coroutine\file_write_operation.cpp">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Coroutine\file_read_operation.cpp">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Coroutine\file.coroutine.cpp">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Coroutine\WriteOnlyFile.cpp">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Coroutine\ThreadScheduler.cpp">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Coroutine\ReadOnlyFile.cpp">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Coroutine\IOScheduler.cpp">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Coroutine\AsyncStream.cpp">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Container\HashTable.cpp">
-      <Filter>Runtime\Core\Container</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Compression\lz4.cpp">
-      <Filter>Runtime\Core\Compression</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\Compression\lz4hc.cpp">
-      <Filter>Runtime\Core\Compression</Filter>
     </ClCompile>
     <ClCompile Include="RenderInterface\Effect\BiltEffect.cpp">
       <Filter>RenderInterface\Effect</Filter>
@@ -301,9 +169,6 @@
     </ClCompile>
     <ClCompile Include="System\Win32\NTHandle.cpp">
       <Filter>System\Win32</Filter>
-    </ClCompile>
-    <ClCompile Include="Runtime\Core\MemStack.cpp">
-      <Filter>Runtime\Core</Filter>
     </ClCompile>
     <ClCompile Include="RenderInterface\CommandListExecutor.cpp">
       <Filter>RenderInterface</Filter>
@@ -437,6 +302,141 @@
     <ClCompile Include="Asset\DStorageAsset.cpp">
       <Filter>Asset</Filter>
     </ClCompile>
+    <ClCompile Include="Runtime\Renderer\DirectionalLight.cpp">
+      <Filter>Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\GizmosElements.cpp">
+      <Filter>Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\Light.cpp">
+      <Filter>Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\Materail.cpp">
+      <Filter>Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\Mesh.cpp">
+      <Filter>Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\SceneRendering.cpp">
+      <Filter>Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\ScreenRendering.cpp">
+      <Filter>Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\ScreenSpaceDenoiser.cpp">
+      <Filter>Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\ShadowRendering.cpp">
+      <Filter>Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\VolumeRendering.cpp">
+      <Filter>Runtime\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\PostProcess\PostProcessCombineLUTs.cpp">
+      <Filter>Runtime\Renderer\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\PostProcess\PostProcessToneMap.cpp">
+      <Filter>Runtime\Renderer\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\imgui\imgui_context.cpp">
+      <Filter>Runtime\Renderer\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\AssetResourceScheduler.cpp">
+      <Filter>Runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Camera.cpp">
+      <Filter>Runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\CameraController.cpp">
+      <Filter>Runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Compression.cpp">
+      <Filter>Runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\MemStack.cpp">
+      <Filter>Runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Path.cpp">
+      <Filter>Runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\ResourcesHolder.cpp">
+      <Filter>Runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\WSLBuilder.cpp">
+      <Filter>Runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\WSLEvaluator.cpp">
+      <Filter>Runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Compression\lz4.cpp">
+      <Filter>Core\Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Compression\lz4hc.cpp">
+      <Filter>Core\Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Container\HashTable.cpp">
+      <Filter>Core\Container</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Coroutine\AsyncStream.cpp">
+      <Filter>Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Coroutine\file.coroutine.cpp">
+      <Filter>Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Coroutine\file_read_operation.cpp">
+      <Filter>Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Coroutine\file_write_operation.cpp">
+      <Filter>Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Coroutine\IOScheduler.cpp">
+      <Filter>Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Coroutine\readable_file.cpp">
+      <Filter>Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Coroutine\ReadOnlyFile.cpp">
+      <Filter>Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Coroutine\ThreadScheduler.cpp">
+      <Filter>Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Coroutine\writable_file.cpp">
+      <Filter>Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Coroutine\WriteOnlyFile.cpp">
+      <Filter>Core\Coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Hash\CityHash.cpp">
+      <Filter>Core\Hash</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Hash\MessageDigest.cpp">
+      <Filter>Core\Hash</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Threading\AutoResetEvent.cpp">
+      <Filter>Core\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Threading\ManualResetEvent.cpp">
+      <Filter>Core\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Threading\SpinMutex.cpp">
+      <Filter>Core\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Threading\SpinWait.cpp">
+      <Filter>Core\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Threading\TaskScheduler.cpp">
+      <Filter>Core\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Threading\Win32Thread.cpp">
+      <Filter>Core\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Serialization\Archive.cpp">
+      <Filter>Core\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Serialization\BulkData.cpp">
+      <Filter>Core\Serialization</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">
@@ -502,21 +502,6 @@
     <ClInclude Include="Asset\RayTracingX.h">
       <Filter>Asset</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\PostProcess\PostProcessCombineLUTs.h">
-      <Filter>Renderer\PostProcess</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\VolumeRendering.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\imgui\imgui_context.h">
-      <Filter>Renderer\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\PostProcess\PostProcessToneMap.h">
-      <Filter>Renderer\PostProcess</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\ScreenSpaceDenoiser.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="Shaders\SSD\SSDMetadata.h">
       <Filter>Shaders\SSD</Filter>
     </ClInclude>
@@ -556,27 +541,6 @@
     <ClInclude Include="Shaders\Platform.h">
       <Filter>Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="Runtime\DirectionalLight.h">
-      <Filter>Runtime</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Light.h">
-      <Filter>Runtime</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\SceneClasses.h">
-      <Filter>Runtime</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\SceneInfo.h">
-      <Filter>Runtime</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\ShadowRendering.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\ScreenRendering.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\GizmosElements.h">
-      <Filter>Runtime</Filter>
-    </ClInclude>
     <ClInclude Include="Plugins\sqlite\sqlite_orm.h">
       <Filter>Plugins\sqlite</Filter>
     </ClInclude>
@@ -610,9 +574,6 @@
     <ClInclude Include="Developer\Nanite\NaniteEncode.h">
       <Filter>Developer\Nanite</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Nanite.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="Developer\Nanite\Cluster.h">
       <Filter>Developer\Nanite</Filter>
     </ClInclude>
@@ -631,218 +592,8 @@
     <ClInclude Include="Shaders\Util.h">
       <Filter>Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="Runtime\Core\Math\BoxSphereBounds.h">
-      <Filter>Runtime\Core\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Math\Float32.h">
-      <Filter>Runtime\Core\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Math\IntRect.h">
-      <Filter>Runtime\Core\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Math\InverseRotationMatrix.h">
-      <Filter>Runtime\Core\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Math\PlatformMath.h">
-      <Filter>Runtime\Core\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Math\RotationMatrix.h">
-      <Filter>Runtime\Core\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Math\Rotator.h">
-      <Filter>Runtime\Core\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Math\ScaleMatrix.h">
-      <Filter>Runtime\Core\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Math\ShadowProjectionMatrix.h">
-      <Filter>Runtime\Core\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Math\Sphere.h">
-      <Filter>Runtime\Core\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Math\TranslationMatrix.h">
-      <Filter>Runtime\Core\Math</Filter>
-    </ClInclude>
     <ClInclude Include="Shaders\SSD\SSDDefinitions.h">
       <Filter>Shaders\SSD</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Threading\AutoResetEvent.h">
-      <Filter>Runtime\Core\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Threading\ManualResetEvent.h">
-      <Filter>Runtime\Core\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Threading\SpinMutex.h">
-      <Filter>Runtime\Core\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Threading\SpinWait.h">
-      <Filter>Runtime\Core\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Threading\TaskScheduler.h">
-      <Filter>Runtime\Core\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Serialization\Archive.h">
-      <Filter>Runtime\Core\Serialization</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Serialization\AsyncArchive.h">
-      <Filter>Runtime\Core\Serialization</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Serialization\BulkData.h">
-      <Filter>Runtime\Core\Serialization</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Serialization\MemoryArchive.h">
-      <Filter>Runtime\Core\Serialization</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Serialization\MemoryReader.h">
-      <Filter>Runtime\Core\Serialization</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Serialization\MemoryWriter.h">
-      <Filter>Runtime\Core\Serialization</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\AssetResourceScheduler.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Camera.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\CameraController.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Compression.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Materail.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Mesh.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\ParallelFor.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Path.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\PlatformAtomics.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\PlatformMemory.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Resource.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\ResourcesHolder.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Sorting.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\WSLBuilder.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\WSLEvaluator.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Hash\CityHash.h">
-      <Filter>Runtime\Core\Hash</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Hash\MessageDigest.h">
-      <Filter>Runtime\Core\Hash</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Hash\Murmur.h">
-      <Filter>Runtime\Core\Hash</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\writable_file.h">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\when_all_task.h">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\when_all_ready_awaitable.h">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\when_all_counter.h">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\sync_wait_task.h">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\readable_file.h">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\is_awaiter.h">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\io_state.h">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\get_awaiter.h">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\filemode.h">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\file_write_operation.hpp">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\file_read_operation.h">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\file.h">
-      <Filter>Runtime\Core\Coroutine\details</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\WriteOnlyFile.h">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\WhenAllReady.h">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\ThreadScheduler.h">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\Task.h">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\SyncWait.h">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\ReadOnlyFile.h">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\IOScheduler.h">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\AsyncStream.h">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Coroutine\AwaitableTraits.h">
-      <Filter>Runtime\Core\Coroutine</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Container\BinaryHeap.h">
-      <Filter>Runtime\Core\Container</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Container\BitArray.h">
-      <Filter>Runtime\Core\Container</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Container\DisjointSet.h">
-      <Filter>Runtime\Core\Container</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Container\HashTable.h">
-      <Filter>Runtime\Core\Container</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Container\map.hpp">
-      <Filter>Runtime\Core\Container</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Container\vector.hpp">
-      <Filter>Runtime\Core\Container</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Compression\lz4.h">
-      <Filter>Runtime\Core\Compression</Filter>
-    </ClInclude>
-    <ClInclude Include="Runtime\Core\Compression\lz4hc.h">
-      <Filter>Runtime\Core\Compression</Filter>
     </ClInclude>
     <ClInclude Include="RenderInterface\Effect\BiltEffect.h">
       <Filter>RenderInterface\Effect</Filter>
@@ -1000,9 +751,6 @@
     <ClInclude Include="System\Win32\WindowsPlatformMath.h">
       <Filter>System\Win32</Filter>
     </ClInclude>
-    <ClInclude Include="Runtime\Core\MemStack.h">
-      <Filter>Runtime\Core</Filter>
-    </ClInclude>
     <ClInclude Include="RenderInterface\DStorage.h">
       <Filter>RenderInterface</Filter>
     </ClInclude>
@@ -1129,8 +877,272 @@
     <ClInclude Include="Asset\DStorageAsset.h">
       <Filter>Asset</Filter>
     </ClInclude>
-    <ClInclude Include="Runtime\Core\LFile.h">
-      <Filter>Runtime\Core</Filter>
+    <ClInclude Include="Asset\TrinfAsset.h">
+      <Filter>Asset</Filter>
+    </ClInclude>
+    <ClInclude Include="Asset\FileFormat.h">
+      <Filter>Asset</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\DirectionalLight.h">
+      <Filter>Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\GizmosElements.h">
+      <Filter>Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\Light.h">
+      <Filter>Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\Materail.h">
+      <Filter>Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\Mesh.h">
+      <Filter>Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\Nanite.h">
+      <Filter>Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\SceneClasses.h">
+      <Filter>Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\SceneInfo.h">
+      <Filter>Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\ScreenRendering.h">
+      <Filter>Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\ScreenSpaceDenoiser.h">
+      <Filter>Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\ShadowRendering.h">
+      <Filter>Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\VolumeRendering.h">
+      <Filter>Runtime\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\PostProcess\PostProcessCombineLUTs.h">
+      <Filter>Runtime\Renderer\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\PostProcess\PostProcessToneMap.h">
+      <Filter>Runtime\Renderer\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Renderer\imgui\imgui_context.h">
+      <Filter>Runtime\Renderer\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\AssetResourceScheduler.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Camera.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\CameraController.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Compression.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\LFile.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\MemStack.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\ParallelFor.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Path.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\PlatformAtomics.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\PlatformMemory.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Resource.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\ResourcesHolder.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Sorting.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\WSLBuilder.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\WSLEvaluator.h">
+      <Filter>Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Compression\lz4.h">
+      <Filter>Core\Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Compression\lz4hc.h">
+      <Filter>Core\Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Container\BinaryHeap.h">
+      <Filter>Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Container\BitArray.h">
+      <Filter>Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Container\DisjointSet.h">
+      <Filter>Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Container\HashTable.h">
+      <Filter>Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Container\map.hpp">
+      <Filter>Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Container\vector.hpp">
+      <Filter>Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\AsyncStream.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\AwaitableTraits.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\file.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\file_read_operation.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\file_write_operation.hpp">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\filemode.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\get_awaiter.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\io_state.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\IOScheduler.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\is_awaiter.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\readable_file.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\ReadOnlyFile.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\sync_wait_task.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\SyncWait.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\Task.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\ThreadScheduler.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\when_all_counter.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\when_all_ready_awaitable.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\when_all_task.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\WhenAllReady.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\writable_file.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Coroutine\WriteOnlyFile.h">
+      <Filter>Core\Coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Hash\CityHash.h">
+      <Filter>Core\Hash</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Hash\MessageDigest.h">
+      <Filter>Core\Hash</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Hash\Murmur.h">
+      <Filter>Core\Hash</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Math\BoxSphereBounds.h">
+      <Filter>Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Math\Float32.h">
+      <Filter>Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Math\IntRect.h">
+      <Filter>Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Math\InverseRotationMatrix.h">
+      <Filter>Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Math\PlatformMath.h">
+      <Filter>Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Math\RotationMatrix.h">
+      <Filter>Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Math\Rotator.h">
+      <Filter>Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Math\ScaleMatrix.h">
+      <Filter>Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Math\ShadowProjectionMatrix.h">
+      <Filter>Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Math\Sphere.h">
+      <Filter>Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Math\TranslationMatrix.h">
+      <Filter>Core\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Threading\AutoResetEvent.h">
+      <Filter>Core\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Threading\ManualResetEvent.h">
+      <Filter>Core\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Threading\SpinMutex.h">
+      <Filter>Core\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Threading\SpinWait.h">
+      <Filter>Core\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Threading\TaskScheduler.h">
+      <Filter>Core\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Serialization\Archive.h">
+      <Filter>Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Serialization\AsyncArchive.h">
+      <Filter>Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Serialization\BulkData.h">
+      <Filter>Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Serialization\MemoryArchive.h">
+      <Filter>Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Serialization\MemoryReader.h">
+      <Filter>Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Serialization\MemoryWriter.h">
+      <Filter>Core\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\PlatformAtomics.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\PlatformMemory.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1146,17 +1158,8 @@
     <Filter Include="Shaders\RayTracing">
       <UniqueIdentifier>{73f3839e-b5c2-4624-b87b-281acaaa2950}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer">
-      <UniqueIdentifier>{b7649f30-fc79-43ee-822e-8c91c73332c2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Renderer\PostProcess">
-      <UniqueIdentifier>{13811411-eaf2-4603-a4a1-32513bf1e4cf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shaders\PostProcess">
       <UniqueIdentifier>{12c18834-075b-4cc8-9dc6-689f35954d1e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Renderer\imgui">
-      <UniqueIdentifier>{0a6189e7-13dd-46ee-8ac9-a35a64ee13a4}</UniqueIdentifier>
     </Filter>
     <Filter Include="Shaders\imgui">
       <UniqueIdentifier>{a6aa923e-d059-4ce1-b801-e3785e526cd7}</UniqueIdentifier>
@@ -1197,38 +1200,44 @@
     <Filter Include="RenderInterface\Material">
       <UniqueIdentifier>{661cd8e8-d189-4430-94d4-c68076f60cd9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Runtime\Core">
-      <UniqueIdentifier>{d71e34b1-aaa2-42c7-8011-d97ac858468a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Runtime\Core\Threading">
-      <UniqueIdentifier>{551030a7-f19e-45ed-87c8-0cd0d623401e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Runtime\Core\Coroutine">
-      <UniqueIdentifier>{ed04117b-5f27-42a1-8c75-d5f552ae646e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Runtime\Core\Coroutine\details">
-      <UniqueIdentifier>{4729c41f-8d7d-4ed8-b252-8956f69e7282}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Runtime\Core\Serialization">
-      <UniqueIdentifier>{dcb49f88-74ab-4e39-9f7b-6a779ea0a44b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Runtime\Core\Hash">
-      <UniqueIdentifier>{a8d87a4e-523e-4ac2-a78a-ea2f3c546b2d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Runtime\Core\Container">
-      <UniqueIdentifier>{4f6b6faa-0ecd-4484-bc11-1f1f4fae7f68}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Runtime\Core\Compression">
-      <UniqueIdentifier>{ba2fb6d8-bcc3-4185-ae87-1cc813b543c7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Runtime\Core\Math">
-      <UniqueIdentifier>{d81b66ec-3168-4ea4-9210-ea8fe28dcb62}</UniqueIdentifier>
-    </Filter>
     <Filter Include="System\Win32">
       <UniqueIdentifier>{f25aa773-20ec-4ddc-a773-3f1b98659fc5}</UniqueIdentifier>
     </Filter>
     <Filter Include="D3D12">
       <UniqueIdentifier>{f168abe1-4489-4654-9309-4ca43254456c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Renderer">
+      <UniqueIdentifier>{b7649f30-fc79-43ee-822e-8c91c73332c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Renderer\PostProcess">
+      <UniqueIdentifier>{13811411-eaf2-4603-a4a1-32513bf1e4cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Renderer\imgui">
+      <UniqueIdentifier>{0a6189e7-13dd-46ee-8ac9-a35a64ee13a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{c4e85175-8881-4bd3-b952-7da7f1263617}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Compression">
+      <UniqueIdentifier>{b6a4d3d7-338a-4051-92c9-de064223c8d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Container">
+      <UniqueIdentifier>{2103cf07-5e9f-4ce4-89f3-002efb8acc3d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Coroutine">
+      <UniqueIdentifier>{e90f32b2-339c-43a5-848a-ddeedb8c8e2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Hash">
+      <UniqueIdentifier>{02d2d277-e058-437a-881c-96d32a2ec782}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Math">
+      <UniqueIdentifier>{ac203b50-a783-489d-ba52-1e29173875b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Serialization">
+      <UniqueIdentifier>{5c8a480a-6c21-49f6-9d96-91f99bc2ef01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Threading">
+      <UniqueIdentifier>{ba8e5599-55ef-4f38-904b-e05d25432ec4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

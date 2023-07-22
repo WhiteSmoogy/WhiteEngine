@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreTypes.h"
-#include "Runtime/Core/Hash/Murmur.h"
-#include "Runtime/Core/Math/PlatformMath.h"
+#include "Core/Hash/Murmur.h"
+#include "Core/Math/PlatformMath.h"
 #include "Developer/MeshBuild.h"
 
 #include <unordered_map>

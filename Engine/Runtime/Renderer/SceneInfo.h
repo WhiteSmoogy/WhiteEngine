@@ -1,7 +1,7 @@
 #pragma once
 #include <WBase/wmath.hpp>
 #include <WBase/winttype.hpp>
-#include "Runtime/Core/Math/IntRect.h"
+#include "Core/Math/IntRect.h"
 #include "RenderInterface/ShaderParamterTraits.hpp"
 #include "RenderInterface/ShaderTextureTraits.hpp"
 

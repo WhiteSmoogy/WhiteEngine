@@ -1,8 +1,8 @@
 #include "Materail.h"
-#include "WSLBuilder.h"
-#include "AssetResourceScheduler.h"
-#include "../Asset/MaterialX.h"
-#include "../Asset/TextureX.h"
+#include "Runtime/WSLBuilder.h"
+#include "Runtime/AssetResourceScheduler.h"
+#include "Asset/MaterialX.h"
+#include "Asset/TextureX.h"
 
 using namespace platform;
 using namespace scheme;

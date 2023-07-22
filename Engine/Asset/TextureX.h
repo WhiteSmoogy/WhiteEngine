@@ -5,9 +5,10 @@
 #ifndef WE_ASSET_TEXTURE_X_H
 #define WE_ASSET_TEXTURE_X_H 1
 
-#include "RenderInterface/ITexture.hpp"
-#include "Runtime/Core/LFile.h"
 #include <WBase/span.hpp>
+
+#include "RenderInterface/ITexture.hpp"
+#include "Runtime/LFile.h"
 
 #include <filesystem>
 

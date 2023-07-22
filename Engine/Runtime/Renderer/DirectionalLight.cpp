@@ -1,5 +1,5 @@
 #include "DirectionalLight.h"
-#include "Runtime/Core/Math/InverseRotationMatrix.h"
+#include "Core/Math/InverseRotationMatrix.h"
 using namespace WhiteEngine;
 
 void DirectionalLight::GetProjectedShadowInitializer(const SceneInfo& scene, int32 CascadeIndex, WholeSceneProjectedShadowInitializer& initializer) const

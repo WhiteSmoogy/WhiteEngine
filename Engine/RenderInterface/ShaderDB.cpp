@@ -1,5 +1,5 @@
 #include "ShaderDB.h"
-#include "Runtime/Core/Path.h"
+#include "Runtime/Path.h"
 #define SQLITE_ORM_OMITS_CODECVT 1
 #include <sqlite/sqlite_orm.h>
 #include <mutex>

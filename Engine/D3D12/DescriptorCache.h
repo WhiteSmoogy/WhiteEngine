@@ -2,7 +2,7 @@
 
 #include <WBase/wdef.h>
 
-#include "Runtime/Core/Hash/CityHash.h"
+#include "Core/Hash/CityHash.h"
 #include "RenderInterface/ShaderCore.h"
 
 #include "d3d12_dxgi.h"

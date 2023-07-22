@@ -2,11 +2,11 @@
 #include <WBase/smart_ptr.hpp>
 #include "Mesh.h"
 #include "RenderInterface/IContext.h"
-#include "AssetResourceScheduler.h"
-#include "../Asset/MeshX.h"
+#include "Runtime/AssetResourceScheduler.h"
+#include "Asset/MeshX.h"
 #include "RenderInterface/IRayDevice.h"
 #include "RenderInterface/IRayContext.h"
-#include "../System/SystemEnvironment.h"
+#include "System/SystemEnvironment.h"
 
 namespace platform {
 	using namespace Render;

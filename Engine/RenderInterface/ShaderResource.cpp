@@ -1,9 +1,9 @@
 #include "Shader.h"
-#include "Runtime/Core/Compression.h"
+#include "Runtime/Compression.h"
 #include "IContext.h"
 #include "IDevice.h"
 #include "IRayContext.h"
-#include "Runtime/Core/Container/vector.hpp"
+#include "Core/Container/vector.hpp"
 using namespace platform::Render;
 using namespace WhiteEngine;
 

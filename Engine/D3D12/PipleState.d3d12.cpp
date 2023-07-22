@@ -4,7 +4,7 @@
 #include "InputLayout.hpp"
 #include "ShaderCompose.h"
 #include "Context.h"
-#include "Runtime/Core/Hash/CityHash.h"
+#include "Core/Hash/CityHash.h"
 
 namespace platform_ex::Windows::D3D12 {
 	PipleState::PipleState(const base & state)

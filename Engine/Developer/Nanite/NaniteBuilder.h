@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Renderer/Nanite.h"
+#include "Runtime/Renderer/Nanite.h"
 
 namespace Nanite
 {

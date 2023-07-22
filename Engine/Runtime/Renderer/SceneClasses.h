@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Runtime/Core/Math/BoxSphereBounds.h"
+#include "Core/Math/BoxSphereBounds.h"
 #include <WBase/winttype.hpp>
 
 namespace WhiteEngine

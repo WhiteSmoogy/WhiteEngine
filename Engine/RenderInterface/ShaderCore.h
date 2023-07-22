@@ -8,7 +8,7 @@
 #include <WFramework/WCLib/Platform.h>
 #include <optional>
 #include <WBase/span.hpp>
-#include "Runtime/Core/Hash/MessageDigest.h"
+#include "Core/Hash/MessageDigest.h"
 #include <cstddef>
 
 #if WFL_Win32

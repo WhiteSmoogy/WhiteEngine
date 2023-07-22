@@ -6,9 +6,9 @@
 #define WE_Core_Mesh_H 1
 
 #include "Asset/MeshAsset.h"
-#include "Resource.h"
+#include "Runtime/Resource.h"
+#include "Runtime/ResourcesHolder.h"
 #include "RenderInterface/InputLayout.hpp"
-#include "ResourcesHolder.h"
 #include "RenderInterface/IRayTracingGeometry.h"
 
 namespace platform {

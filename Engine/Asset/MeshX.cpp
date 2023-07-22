@@ -2,10 +2,12 @@
 #include <WBase/wmathtype.hpp>
 #include <WBase/id.hpp>
 
-#include "Runtime/Core/AssetResourceScheduler.h"
-#include "Runtime/Core/LFile.h"
-#include "Runtime/Core/Coroutine/AsyncStream.h"
-#include "Runtime/Core/MemStack.h"
+#include "Core/Coroutine/AsyncStream.h"
+
+#include "Runtime/AssetResourceScheduler.h"
+#include "Runtime/LFile.h"
+#include "Runtime/MemStack.h"
+
 #include "System/SystemEnvironment.h"
 #include "RenderInterface/IContext.h"
 

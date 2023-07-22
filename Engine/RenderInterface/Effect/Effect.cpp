@@ -6,12 +6,12 @@
 
 #include <WFramework/WCLib/Debug.h>
 
-#include "../../asset/EffectX.h"
-#include "../IContext.h"
-#include "../IGraphicsBuffer.hpp"
-#include "../ITexture.hpp"
+#include "Asset/EffectX.h"
+#include "RenderInterface/IContext.h"
+#include "RenderInterface/IGraphicsBuffer.hpp"
+#include "RenderInterface/ITexture.hpp"
 
-#include "../Runtime/Core/AssetResourceScheduler.h"
+#include "Runtime/AssetResourceScheduler.h"
 #include <WFramework/WCLib/Logger.h>
 #include <WBase/smart_ptr.hpp>
 #include <typeindex>

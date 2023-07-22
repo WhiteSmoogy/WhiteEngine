@@ -4,11 +4,14 @@
 
 #include <WBase/winttype.hpp>
 #include <WBase/span.hpp>
-#include "Renderer/Nanite.h"
-#include "RenderInterface/Color_T.hpp"
-#include "Runtime/Core/Container/BitArray.h"
+
 #include "Bounds.h"
-#include "Runtime/Core/Math/Sphere.h"
+
+#include "Runtime/Renderer/Nanite.h"
+#include "Core/Container/BitArray.h"
+#include "Core/Math/Sphere.h"
+
+#include "RenderInterface/Color_T.hpp"
 
 #include <unordered_map>
 

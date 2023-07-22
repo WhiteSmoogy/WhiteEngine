@@ -4,7 +4,7 @@
 #include "spdlog/spdlog.h"
 
 #include "System/Win32/WindowsPlatformMath.h"
-#include "Runtime/Core/Hash/CityHash.h"
+#include "Core/Hash/CityHash.h"
 
 
 using namespace platform_ex::Windows::D3D12;

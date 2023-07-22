@@ -12,7 +12,7 @@
 #include "Texture.h"
 #include "Convert.h"
 #include "RootSignature.h"
-#include "Runtime/Core/Compression.h"
+#include "Runtime/Compression.h"
 
 using namespace platform_ex::Windows;
 using platform::Render::ShaderType;

@@ -13,10 +13,11 @@
 #include <WBase/pointer.hpp>
 #include <WFramework/WCLib/Debug.h>
 
-#include "../PipleState.h"
-#include "Runtime/Core/ResourcesHolder.h"
-#include "../ShaderCore.h"
-#include "../IShaderCompose.h"
+#include "RenderInterface/PipleState.h"
+#include "RenderInterface/ShaderCore.h"
+#include "RenderInterface/IShaderCompose.h"
+
+#include "Runtime/ResourcesHolder.h"
 
 #include <tuple>
 #include <vector>

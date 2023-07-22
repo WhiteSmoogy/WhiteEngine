@@ -1,14 +1,14 @@
 #include "TextureX.h"
 #include "DDSX.h"
 #undef FindResource
-#include "Runtime/Core/ResourcesHolder.h"
+#include "Runtime/ResourcesHolder.h"
 #include "CompressionBC.hpp"
 #include "CompressionETC.hpp"
 
 #include "RenderInterface/Color_T.hpp"
 #include "RenderInterface/IContext.h"
 
-#include "Runtime/Core/AssetResourceScheduler.h"
+#include "Runtime/AssetResourceScheduler.h"
 
 #include <WFramework/WCLib/Debug.h>
 #include <WBase/smart_ptr.hpp>

@@ -3,7 +3,7 @@
 #include "ICommandContext.h"
 #include "IRayTracingGeometry.h"
 #include "IRayTracingScene.h"
-#include "Runtime/Core/MemStack.h"
+#include "Runtime/MemStack.h"
 
 //Command List definitions for queueing up & executing later.
 

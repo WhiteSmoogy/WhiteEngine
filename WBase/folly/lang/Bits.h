@@ -59,6 +59,7 @@
 #include <cstring>
 #include <limits>
 #include <type_traits>
+#include <bit>
 
 #include <folly/ConstexprMath.h>
 #include <folly/Portability.h>

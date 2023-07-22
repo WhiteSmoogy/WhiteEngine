@@ -1,8 +1,8 @@
 #include "Entities.h"
 #include "Asset/WSLAssetX.h"
 #include "System/SystemEnvironment.h"
-#include "Runtime/Core/Coroutine/WhenAllReady.h"
-#include "Runtime/Core/Coroutine/SyncWait.h"
+#include "Core/Coroutine/WhenAllReady.h"
+#include "Core/Coroutine/SyncWait.h"
 #include "spdlog/spdlog.h"
 
 #include <WFramework/Helper/ShellHelper.h>

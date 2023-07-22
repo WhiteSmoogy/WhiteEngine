@@ -4,7 +4,7 @@
 #include <Asset/Loader.hpp>
 #include <dstorage.h>
 #include <dstorageerr.h>
-#include <Runtime/Core/Serialization/MemoryWriter.h>
+#include <Core/Serialization/MemoryWriter.h>
 #include <Asset/TextureX.h>
 #include <Asset/DDSX.h>
 #include "CLI11.hpp"
@@ -302,7 +302,7 @@ public:
         out.open(output, std::ios::out | std::ios::trunc | std::ios::binary);
 
         DSFileFormat::Header header;
-        header.Signature = asset::four_cc_v<'D', 'S', 'F', 'F'>;
+        header.Signature = DSFileFormat::DSTexture_Signature;
         header.Version = 0;
 
         //placeholder

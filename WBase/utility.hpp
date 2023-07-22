@@ -229,18 +229,6 @@ namespace white
 		return std::forward<_type>(arg);
 	}
 
-
-	/*!
-	\brief 取枚举值的底层整数。
-	\since build 1.4
-	*/
-	template<typename _type, wimpl(typename = enable_if_t<is_enum<_type>::value>)>
-	wconstfn underlying_type_t<_type>
-		underlying(_type val) wnothrow
-	{
-		return underlying_type_t<_type>(val);
-	}
-
 	/*!
 	\brief 计算指定数组类型对象的长度。
 	*/

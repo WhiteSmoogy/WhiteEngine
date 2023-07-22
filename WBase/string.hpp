@@ -15,6 +15,7 @@
 #include "string_utility.hpp"
 #include "array.hpp" // for std::bidirectional_iterator_tag, to_array;
 #include "type_traits.hpp"
+#include "enum.hpp" // for underlying
 #include <istream> // for std::basic_istream;
 #include "ios.hpp" // for rethrow_badstate;
 #include <ostream> // for std::basic_ostream;

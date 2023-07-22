@@ -9,6 +9,7 @@
 #include "wdef.h"
 #include <numeric>
 #include <limits>
+#include <bit>
 
 namespace white
 {

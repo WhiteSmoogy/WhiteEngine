@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Nanite.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

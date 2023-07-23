@@ -107,6 +107,8 @@ public:
 
             metadata.Clusters = WriteArray(children_archive, Trinfs[index].Clusters);
             fixup.FixOffset(&metadata, metadata.Clusters);
+
+            fixup.Set(children_archive, metadata);
         }
 
         fixupHeader.Set(children_archive, gridHeader);
@@ -140,7 +142,6 @@ public:
                 for (size_t i = 0; i != Indexs.size(); ++i)
                     fill_index(i);
             }
-            IndexBuffer.insert(IndexBuffer.end(), Indexs.begin(), Indexs.end());
 
             white::byte empty_element[64] = {};
             auto get_element = [&](Usage usage, uint8 index = 0)
@@ -175,23 +176,23 @@ public:
             }
             PositionBuffer.insert(PositionBuffer.end(), Positions.begin(), Positions.end());
 
-            std::vector<uint32> Tangents;
             {
+                std::vector<uint32> Tangents;
                 Tangents.resize(mesh->GetVertexCount());
                 auto tangent_stream = get_element(Usage::Tangent);
 
-                fill_elem(tangent_stream, Positions);
+                fill_elem(tangent_stream, Tangents);
+                TangentBuffer.insert(TangentBuffer.end(), Tangents.begin(), Tangents.end());
             }
-            TangentBuffer.insert(TangentBuffer.end(), Tangents.begin(), Tangents.end());
 
-            std::vector<wm::float2> TexCoords;
             {
+                std::vector<wm::float2> TexCoords;
                 TexCoords.resize(mesh->GetVertexCount());
                 auto uv_stream = get_element(Usage::TextureCoord, 0);
 
-                fill_elem(uv_stream, Positions);
+                fill_elem(uv_stream, TexCoords);
+                TexCoordBuffer.insert(TexCoordBuffer.end(), TexCoords.begin(), TexCoords.end());
             }
-            TexCoordBuffer.insert(TexCoordBuffer.end(), TexCoords.begin(), TexCoords.end());
 
             //one submesh
             auto desc = mesh->GetSubMeshDesces()[0].LodsDescription[0];
@@ -239,6 +240,13 @@ public:
                 metadata.Compacts.emplace_back(clusterTriangleCount,clusterStart );
                 metadata.Clusters.emplace_back(aabbMin, aabbMax);
             }
+
+            for (auto& index : Indexs)
+            {
+                index += mesh->GetVertexCount();
+            }
+            IndexBuffer.insert(IndexBuffer.end(), Indexs.begin(), Indexs.end());
+
 
             Trinfs.push_back(std::move(metadata));
         }

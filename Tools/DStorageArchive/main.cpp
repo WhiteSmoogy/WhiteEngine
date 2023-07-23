@@ -137,6 +137,8 @@ int main(int argc,char** argv)
     if(try_gdeflate)
         CheckHResult(DStorageCreateCompressionCodec(DSTORAGE_COMPRESSION_FORMAT_GDEFLATE, 0, IID_PPV_ARGS(g_gdeflate_codec.ReleaseAndGetAddress())));
 
+    static auto pInitGuard = WhiteEngine::System::InitGlobalEnvironment();
+
     if (format == Format::Textures)
     {
         DDSArchive archive{ stagingMB };

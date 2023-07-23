@@ -1144,6 +1144,9 @@
     <ClInclude Include="Core\PlatformMemory.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Runtime\Renderer\Trinf.h">
+      <Filter>Runtime\Renderer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Asset">

@@ -66,6 +66,7 @@
     </ClInclude>
     <ClInclude Include="Entities.h" />
     <ClInclude Include="Legacy_Forward.h" />
+    <ClInclude Include="VisBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="EntityComponentSystem">

@@ -383,6 +383,7 @@
     <ClInclude Include="Runtime\Renderer\ScreenRendering.h" />
     <ClInclude Include="Runtime\Renderer\ScreenSpaceDenoiser.h" />
     <ClInclude Include="Runtime\Renderer\ShadowRendering.h" />
+    <ClInclude Include="Runtime\Renderer\Trinf.h" />
     <ClInclude Include="Runtime\Renderer\VolumeRendering.h" />
     <ClInclude Include="Runtime\Resource.h" />
     <ClInclude Include="Runtime\ResourcesHolder.h" />

@@ -20,9 +20,10 @@ namespace fs = std::filesystem;
 
 extern COMPtr<IDStorageCompressionCodec> g_gdeflate_codec;
 
-template<typename T>
+template<typename T> requires requires {typename T::value_type; }
 static DStorageCompressionFormat BestCompressFormat(T&& source)
 {
+    static_assert(sizeof(typename T::value_type) == 1);
     DStorageCompressionFormat compression = DStorageCompressionFormat::None;
 
     size_t bestSize = source.size();
@@ -66,9 +67,12 @@ static DStorageCompressionFormat BestCompressFormat(T&& source)
     return compression;
 }
 
-template<typename T>
+template<typename T> requires requires {typename std::remove_reference_t<T>::value_type; }
 static std::remove_reference_t<T> Compress(DStorageCompressionFormat compression, T&& source)
 {
+    typedef typename std::remove_reference_t<T>::value_type value_type;
+    size_t source_bytes = source.size() * sizeof(value_type);
+
     if (compression == DStorageCompressionFormat::None)
     {
         return source;
@@ -77,14 +81,14 @@ static std::remove_reference_t<T> Compress(DStorageCompressionFormat compression
     {
         size_t maxSize;
         if (compression == DStorageCompressionFormat::GDeflate)
-            maxSize = g_gdeflate_codec->CompressBufferBound(static_cast<uint32_t>(source.size()));
+            maxSize = g_gdeflate_codec->CompressBufferBound(static_cast<uint32_t>(source_bytes));
         else if (compression == DStorageCompressionFormat::Zlib)
-            maxSize = static_cast<size_t>(compressBound(static_cast<uLong>(source.size())));
+            maxSize = static_cast<size_t>(compressBound(static_cast<uLong>(source_bytes)));
         else
             throw std::runtime_error("Unknown Compression type");
 
         std::remove_reference_t<T> dest;
-        dest.resize(maxSize);
+        dest.resize(maxSize / sizeof(value_type));
 
         size_t actualCompressedSize = 0;
 
@@ -94,20 +98,20 @@ static std::remove_reference_t<T> Compress(DStorageCompressionFormat compression
         {
             compressionResult = g_gdeflate_codec->CompressBuffer(
                 reinterpret_cast<const void*>(source.data()),
-                static_cast<uint32_t>(source.size()),
+                static_cast<uint32_t>(source_bytes),
                 DSTORAGE_COMPRESSION_BEST_RATIO,
                 reinterpret_cast<void*>(dest.data()),
-                static_cast<uint32_t>(dest.size()),
+                static_cast<uint32_t>(maxSize),
                 &actualCompressedSize);
         }
         else if (compression == DStorageCompressionFormat::Zlib)
         {
-            uLong destSize = static_cast<uLong>(dest.size());
+            uLong destSize = static_cast<uLong>(maxSize);
             int result = compress(
                 reinterpret_cast<Bytef*>(dest.data()),
                 &destSize,
                 reinterpret_cast<Bytef const*>(source.data()),
-                static_cast<uLong>(source.size()));
+                static_cast<uLong>(source_bytes));
 
             if (result == Z_OK)
                 compressionResult = S_OK;
@@ -123,7 +127,7 @@ static std::remove_reference_t<T> Compress(DStorageCompressionFormat compression
             std::abort();
         }
 
-        dest.resize(actualCompressedSize);
+        dest.resize(actualCompressedSize / sizeof(value_type));
 
         return dest;
     }
@@ -238,9 +242,11 @@ public:
     }
 
 protected:
-    template<typename T, DStorageCompressionFormat Compression, typename C>
+    template<typename T, DStorageCompressionFormat Compression, typename C>  requires requires {typename C::value_type; }
     DSFileFormat::Region<T> WriteRegion(C uncompressedRegion, char const* name)
     {
+        constexpr size_t value_size = sizeof(C::value_type);
+
         size_t uncompressedSize = uncompressedRegion.size();
 
         C compressedRegion;
@@ -259,10 +265,10 @@ protected:
         DSFileFormat::Region<T> r;
         r.Compression = compression;
         r.Data.Offset = static_cast<uint32_t>(archive.Tell());
-        r.CompressedSize = static_cast<uint32_t>(compressedRegion.size());
-        r.UncompressedSize = static_cast<uint32_t>(uncompressedSize);
+        r.CompressedSize = static_cast<uint32_t>(compressedRegion.size() * value_size);
+        r.UncompressedSize = static_cast<uint32_t>(uncompressedSize * value_size);
 
-        archive.Serialize(const_cast<void*>(reinterpret_cast<const void*>(compressedRegion.data())), compressedRegion.size());
+        archive.Serialize(const_cast<void*>(reinterpret_cast<const void*>(compressedRegion.data())), compressedRegion.size() * value_size);
 
         auto toString = [](DStorageCompressionFormat c)
             {

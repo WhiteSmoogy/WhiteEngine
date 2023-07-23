@@ -1,11 +1,13 @@
 #include "DDSArchive.h"
-
+#include "TrinfArchive.h"
 #include "CLI11.hpp"
 
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/msvc_sink.h"
 #include "spdlog/sinks/wincolor_sink.h"
+
+#include <regex>
 
 using namespace platform_ex;
 using namespace WhiteEngine;
@@ -66,6 +68,12 @@ void SetupLog()
     );
 }
 
+enum class Format
+{
+    Textures,
+    Trinf,
+};
+
 int main(int argc,char** argv)
 {
     SetupLog();
@@ -76,40 +84,69 @@ int main(int argc,char** argv)
     bool try_gdeflate = false;
     app.add_option("--gdeflate", try_gdeflate,"try compress by gpu deflate");
 
-    std::vector<std::string> ddsfiles;
-    app.add_option("--dds", ddsfiles, "dds file");
+    std::vector<std::string> files;
+    app.add_option("--file", files, "input files");
 
     uint64 stagingMB = DSFileFormat::kDefaultStagingBufferSize / 1024 / 1024;
     app.add_option("--stagingsize", stagingMB, "staging buffer size")->check(CLI::Range(16,256));
 
-    std::filesystem::path extension = ".dds";
 
-    app.add_option_function<std::vector<std::string>>("--ddsdir", [&](const std::vector<std::string>& ddsdirs) ->void
+    std::string filter = "";
+    app.add_option("--filter", filter, "regex filter file");
+
+    Format format{ Format::Textures };
+    // specify string->value mappings
+    std::map<std::string, Format> map{ {"tex",Format::Textures}, {"tri", Format::Trinf}};
+    app.add_option("-f,--format", format, "format settings")
+        ->required()->transform(CLI::CheckedTransformer(map, CLI::ignore_case));
+
+    app.add_option_function<std::vector<std::string>>("--dir", [&](const std::vector<std::string>& dirs) ->void
         {
-            for (auto& dir : ddsdirs)
+            for (auto& dir : dirs)
             {
                 for (auto file : std::filesystem::directory_iterator(dir))
                 {
-                    if (file.path().extension() == extension)
-                    {
-                        auto ddsfile = file.path().string();
-                        std::replace(ddsfile.begin(), ddsfile.end(), '\\', '/');
-                        ddsfiles.emplace_back(ddsfile);
-                    }
+                        auto normalize_name = file.path().string();
+                        std::replace(normalize_name.begin(), normalize_name.end(), '\\', '/');
+                        files.emplace_back(normalize_name);
                 }
             }
-        }, "dds directory");
+        }, "input directory");
 
     std::string output = "dstorage.asset";
 
-    app.add_option("--output", output, "output file path");
+    app.add_option("--output", output, "output file path")->required();
 
     CLI11_PARSE(app,argc,argv);
+
+    std::vector<std::string> filterfiles;
+
+    if (filter.size() > 0)
+    {
+        std::regex pattern(filter);
+        for (auto& file : files)
+        {
+            if (std::regex_search(file, pattern))
+                filterfiles.emplace_back(file);
+        }
+
+        filterfiles.swap(files);
+    }
+    
 
     if(try_gdeflate)
         CheckHResult(DStorageCreateCompressionCodec(DSTORAGE_COMPRESSION_FORMAT_GDEFLATE, 0, IID_PPV_ARGS(g_gdeflate_codec.ReleaseAndGetAddress())));
 
-    DDSArchive archive{stagingMB};
+    if (format == Format::Textures)
+    {
+        DDSArchive archive{ stagingMB };
 
-    archive.Archive(output, ddsfiles);
+        archive.Archive(output, files);
+    }
+    else
+    {
+        TrinfArchive archive{ stagingMB };
+
+        archive.Archive(output, files);
+    }
 }

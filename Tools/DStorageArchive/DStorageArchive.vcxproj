@@ -161,6 +161,7 @@
   <ItemGroup>
     <ClInclude Include="Archive.h" />
     <ClInclude Include="DDSArchive.h" />
+    <ClInclude Include="TrinfArchive.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

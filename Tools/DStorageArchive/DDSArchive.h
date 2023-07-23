@@ -226,12 +226,12 @@ private:
     DSFileFormat::Region<DSFileFormat::CpuMetaHeader> WriteCpuMetadata(const std::vector<std::string>& ddsfiles)
     {
         std::vector<uint8> bytes;
-        MemoryWriter archive(bytes);
+        MemoryWriter children_archive(bytes);
 
         DSFileFormat::CpuMetaHeader header;
 
         //placeholder
-        auto [fixupHeader] = WriteStruct(archive, &header, &header);
+        auto [fixupHeader] = WriteStruct(children_archive, &header, &header);
 
         header.TexturesCount = static_cast<uint32>(texture_descs.size());
         header.StagingBufferSize = stagingBufferSize;
@@ -241,11 +241,11 @@ private:
 
         std::vector<Fixup<DSFileFormat::TexturMetadata>> fixups;
 
-        header.Textures.Offset = archive.Tell();
+        header.Textures.Offset = children_archive.Tell();
         //metadatas placeholder
         for (auto index : std::views::iota(0u, texture_metadatas.size()))
         {
-            fixups.emplace_back(std::get<0>(WriteStruct(archive, &metadatas[index], &metadatas[index])));
+            fixups.emplace_back(std::get<0>(WriteStruct(children_archive, &metadatas[index], &metadatas[index])));
         }
 
         for (auto index : std::views::iota(0u, texture_metadatas.size()))
@@ -253,25 +253,25 @@ private:
             auto& fixup = fixups[index];
             auto& metadata = metadatas[index];
 
-            metadata.Name = WriteArray(archive, ddsfiles[index]);
+            metadata.Name = WriteArray(children_archive, ddsfiles[index]);
             fixup.FixOffset(&metadata, metadata.Name);
             char c = 0;
-            archive >> c; // null terminate the name string
+            children_archive >> c; // null terminate the name string
 
             metadata.SingleMipsCount = static_cast<uint32>(texture_metadatas[index].SingleMips.size());
-            metadata.SingleMips = WriteArray(archive, texture_metadatas[index].SingleMips);
+            metadata.SingleMips = WriteArray(children_archive, texture_metadatas[index].SingleMips);
             fixup.FixOffset(&metadata, metadata.SingleMips);
 
             //GpuRegion don't need fix
             metadata.RemainingMips = texture_metadatas[index].RemainingMips;
 
-            fixup.Set(archive, metadata);
+            fixup.Set(children_archive, metadata);
         }
 
-        header.TexuresDesc = WriteArray(archive, texture_descs);
+        header.TexuresDesc = WriteArray(children_archive, texture_descs);
         fixupHeader.FixOffset(&header, header.TexuresDesc);
 
-        fixupHeader.Set(archive, header);
+        fixupHeader.Set(children_archive, header);
 
         return WriteRegion<DSFileFormat::CpuMetaHeader, DStorageCompressionFormat::Zlib>(bytes, "CPU Metadata");
     }

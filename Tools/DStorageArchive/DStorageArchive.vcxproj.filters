@@ -29,5 +29,8 @@
     <ClInclude Include="Archive.h">
       <Filter>源文件</Filter>
     </ClInclude>
+    <ClInclude Include="TrinfArchive.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

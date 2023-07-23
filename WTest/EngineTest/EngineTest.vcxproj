@@ -204,6 +204,7 @@
     <ClInclude Include="EntityComponentSystem\EntitySystem.h" />
     <ClInclude Include="EntityComponentSystem\System.h" />
     <ClInclude Include="imgui\imgui_impl_win32.h" />
+    <ClInclude Include="Legacy_Forward.h" />
     <ClInclude Include="Scene\CameraComponent.h" />
     <ClInclude Include="Scene\MeshRendererComponent.h" />
     <ClInclude Include="Scene\SceneComponent.h" />

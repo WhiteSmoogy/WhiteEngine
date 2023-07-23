@@ -65,6 +65,7 @@
       <Filter>imgui</Filter>
     </ClInclude>
     <ClInclude Include="Entities.h" />
+    <ClInclude Include="Legacy_Forward.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="EntityComponentSystem">

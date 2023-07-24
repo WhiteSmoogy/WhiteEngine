@@ -60,6 +60,8 @@ namespace Trinf
 		struct GrowOnlySpanAllocator
 		{
 			int32 Allocate(int32 Num);
+
+			int32 GetMaxSize();
 		};
 
 		template<typename T>
@@ -75,10 +77,7 @@ namespace Trinf
 				return Allocator.Allocate((region.UncompressedSize + kPageSize - 1) / kPageSize);
 			}
 
-			std::shared_ptr<platform::Render::GraphicsBuffer> ResizeByteAddressBufferIfNeeded(platform::Render::CommandList& cmdList)
-			{
-				return DataBuffer;
-			}
+			std::shared_ptr<platform::Render::GraphicsBuffer> ResizeByteAddressBufferIfNeeded(platform::Render::CommandList& cmdList);
 		};
 
 		TrinfBuffer<wm::float3> Position;

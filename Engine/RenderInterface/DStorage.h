@@ -15,6 +15,7 @@ namespace platform::Render
 {
 	class Texture;
 	class RObject;
+	class GraphicsBuffer;
 }
 
 namespace platform_ex
@@ -91,7 +92,14 @@ namespace platform_ex
 			uint32 FirstSubresource;
 		};
 
-		std::variant< TextureRegion, MultipleSubresources> Destination;
+		struct Buffer
+		{
+			platform::Render::GraphicsBuffer* Target;
+			uint64 Offset;
+			uint32 Size;
+		};
+
+		std::variant< TextureRegion, MultipleSubresources, Buffer> Destination;
 
 		uint32 UncompressedSize;
 	};

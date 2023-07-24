@@ -2,6 +2,7 @@
 #include "RenderInterface/IContext.h"
 #include "RenderInterface/ITexture.hpp"
 #include "Asset/DDSX.h"
+#include "Runtime/Renderer/Trinf.h"
 #include <vector>
 
 using platform::Render::DStorage;
@@ -16,34 +17,6 @@ namespace platform
 {
 	void EmplaceResource(const std::string& name, Render::TexturePtr texture);
 }
-
-template<typename T>
-class MemoryRegion
-{
-	std::unique_ptr<white::byte[]> buffer;
-public:
-	MemoryRegion() = default;
-
-	MemoryRegion(std::unique_ptr<white::byte[]> buffer)
-		: buffer(std::move(buffer))
-	{
-	}
-
-	white::byte* data()
-	{
-		return buffer.get();
-	}
-
-	T* operator->()
-	{
-		return reinterpret_cast<T*>(buffer.get());
-	}
-
-	T const* operator->() const
-	{
-		return reinterpret_cast<T const*>(buffer.get());
-	}
-};
 
 struct DStorageAssetFile
 {
@@ -70,9 +43,9 @@ struct DStorageAssetFile
 	}
 
 	template<typename T>
-	MemoryRegion<T> EnqueueRead(const Region<T>& region)
+	platform_ex::MemoryRegion<T> EnqueueRead(const Region<T>& region)
 	{
-		MemoryRegion<T> memory{ std::make_unique<white::byte[]>(region.UncompressedSize) };
+		platform_ex::MemoryRegion<T> memory{ std::make_unique<white::byte[]>(region.UncompressedSize) };
 
 		DStorageFile2MemoryRequest r{};
 
@@ -89,7 +62,7 @@ struct DStorageAssetFile
 		return memory;
 	}
 
-	white::coroutine::Task<void> LoadAsync()
+	white::coroutine::Task<std::shared_ptr<void>> LoadAsync()
 	{
 		Header header;
 		EnqueueRead(0, &header);
@@ -97,7 +70,32 @@ struct DStorageAssetFile
 		co_await storage_api.SubmitUpload(DStorageQueueType::Memory);
 
 		if (header.Signature == DSTexture_Signature)
+		{
 			co_await LoadTexturesFile(header);
+			co_return nullptr;
+		}
+		else if (header.Signature == DSTrinf_Signature)
+		{
+			co_return co_await LoadTrinf(header);
+		}
+	}
+
+	white::coroutine::Task<std::shared_ptr<Trinf::Resources>> LoadTrinf(Header header)
+	{
+		auto trinf = std::make_shared<Trinf::Resources>();
+
+		trinf->Header.CpuMedadata = header.CpuMedadata;
+		trinf->Header.Signature = header.Signature;
+		trinf->Header.Version = static_cast<TrinfVersion>(header.Version);
+
+		trinf->File = file;
+		trinf->IORequest = nullptr;
+
+		trinf->Metadata = EnqueueRead(trinf->Header.CpuMedadata);
+
+		co_await storage_api.SubmitUpload(DStorageQueueType::Memory);
+
+		co_return trinf;
 	}
 
 	white::coroutine::Task<void> LoadTexturesFile(Header header)
@@ -232,9 +230,9 @@ private:
 	std::shared_ptr<platform_ex::DStorageFile> file;
 };
 
-white::coroutine::Task<void> platform_ex::AsyncLoadDStorageAsset(path const& assetpath)
+white::coroutine::Task<std::shared_ptr<void>> platform_ex::AsyncLoadDStorageAsset(path const& assetpath)
 {
 	DStorageAssetFile asset(assetpath);
 
-	co_await asset.LoadAsync();
+	co_return co_await asset.LoadAsync();
 }

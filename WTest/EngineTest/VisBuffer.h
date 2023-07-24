@@ -40,6 +40,8 @@ public:
 
 	WhiteEngine::Core::Camera camera;
 	std::unique_ptr<WhiteEngine::Core::TrackballCameraManipulator> pCameraMainpulator;
+
+	std::shared_ptr<Trinf::Resources> sponza_trinf;
 private:
 	bool SubWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override
 	{
@@ -127,6 +129,7 @@ private:
 		auto& Device = render::Context::Instance().GetDevice();
 
 		white::coroutine::SyncWait(platform_ex::AsyncLoadDStorageAsset("sponza_crytek/textures.dsff.asset"));
+		sponza_trinf = std::static_pointer_cast<Trinf::Resources>(white::coroutine::SyncWait(platform_ex::AsyncLoadDStorageAsset("sponza_crytek/trinf.ds.asset")));
 
 		white::math::float3 up_vec{ 0,1.f,0 };
 		white::math::float3 view_vec{ 0.94f,-0.1f,0.2f };

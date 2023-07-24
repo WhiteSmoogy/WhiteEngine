@@ -2,6 +2,7 @@
 #define TEST_CODE 1
 
 #include "Legacy_Forward.h"
+#include "VisBuffer.h"
 #include "Runtime/Path.h"
 #include "WFramework/Win32/WCLib/Mingw32.h"
 
@@ -113,7 +114,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR cmdLine, int nCmdShow)
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
-	ForwardTest Test(L"Forward");
+	//ForwardTest Test(L"Forward");
+	VisBufferTest Test(L"VisBuffer");
 	Test.Create();
 	Test.Run();
 

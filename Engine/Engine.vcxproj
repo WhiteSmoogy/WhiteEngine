@@ -164,6 +164,7 @@
     <ClCompile Include="Runtime\Renderer\ScreenRendering.cpp" />
     <ClCompile Include="Runtime\Renderer\ScreenSpaceDenoiser.cpp" />
     <ClCompile Include="Runtime\Renderer\ShadowRendering.cpp" />
+    <ClCompile Include="Runtime\Renderer\Trinf.cpp" />
     <ClCompile Include="Runtime\Renderer\VolumeRendering.cpp" />
     <ClCompile Include="Runtime\ResourcesHolder.cpp" />
     <ClCompile Include="Runtime\WSLBuilder.cpp" />

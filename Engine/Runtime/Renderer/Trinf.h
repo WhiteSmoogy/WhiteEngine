@@ -16,10 +16,14 @@ namespace Trinf
 			Resident,
 		};
 
-		uint64 StreamingKey;
-		StreamingState State;
+		uint64 StreamingKey = -1;
+		StreamingState State = StreamingState::None;
+
+		std::shared_ptr<platform_ex::DStorageFile> File;
+		std::shared_ptr<platform_ex::DStorageSyncPoint> IORequest;
 
 		platform_ex::DSFileFormat::TrinfHeader Header;
+		platform_ex::MemoryRegion<platform_ex::DSFileFormat::TrinfGridHeader> Metadata;
 	};
 
 	class StreamingScene

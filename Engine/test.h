@@ -1,3 +1,4 @@
+#pragma once
 #include <WBase/wdef.h>
 #include <WFramework/Win32/WCLib/COM.h> //NoMinMax
 

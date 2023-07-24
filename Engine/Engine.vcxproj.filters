@@ -437,6 +437,9 @@
     <ClCompile Include="Core\Serialization\BulkData.cpp">
       <Filter>Core\Serialization</Filter>
     </ClCompile>
+    <ClCompile Include="Runtime\Renderer\Trinf.cpp">
+      <Filter>Runtime\Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">

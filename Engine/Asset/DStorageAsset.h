@@ -66,6 +66,15 @@ namespace platform_ex
 			OffsetPtr<T> Data;
 			uint32 CompressedSize;
 			uint32 UncompressedSize;
+
+			template<typename Y>
+			void operator=(const Region<Y>& alias)
+			{
+				Compression = alias.Compression;
+				Data.Offset = alias.Data.Offset;
+				CompressedSize = alias.CompressedSize;
+				UncompressedSize = alias.UncompressedSize;
+			}
 		};
 
 		// A Region that's loaded into GPU memory
@@ -123,5 +132,33 @@ namespace platform_ex
 		constexpr uint32 DSTrinf_Signature = asset::four_cc_v<DStorage_Sign, 'T', 'r', 'i'>;
 	}
 
-	white::coroutine::Task<void> AsyncLoadDStorageAsset(path const& assetpath);
+	template<typename T>
+	class MemoryRegion
+	{
+		std::unique_ptr<white::byte[]> buffer;
+	public:
+		MemoryRegion() = default;
+
+		MemoryRegion(std::unique_ptr<white::byte[]> buffer)
+			: buffer(std::move(buffer))
+		{
+		}
+
+		white::byte* data()
+		{
+			return buffer.get();
+		}
+
+		T* operator->()
+		{
+			return reinterpret_cast<T*>(buffer.get());
+		}
+
+		T const* operator->() const
+		{
+			return reinterpret_cast<T const*>(buffer.get());
+		}
+	};
+
+	white::coroutine::Task<std::shared_ptr<void>> AsyncLoadDStorageAsset(path const& assetpath);
 }

@@ -51,6 +51,7 @@ public:
             std::ofstream out{};
             out.open(output, std::ios::out | std::ios::trunc | std::ios::binary);
             out.write(reinterpret_cast<char const*>(bytes.data()), bytes.size());
+            out.close();
         }
 
         uint64 filesize = 0;
@@ -270,6 +271,7 @@ private:
 
         header.TexuresDesc = WriteArray(children_archive, texture_descs);
         fixupHeader.FixOffset(&header, header.TexuresDesc);
+        fixupHeader.FixOffset(&header, header.Textures);
 
         fixupHeader.Set(children_archive, header);
 

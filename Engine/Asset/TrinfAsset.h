@@ -14,55 +14,59 @@ namespace platform_ex
 {
 	namespace DSFileFormat
 	{
-		enum class TrinfVersion : uint32
+		inline namespace TrinfFormat
 		{
-			ForgeGeometry
-		};
 
-		struct ClusterCompact
-		{
-			uint32 TriangleCount;
-			uint32 ClusterStart;
-		};
+			enum class TrinfVersion : uint32
+			{
+				ForgeGeometry
+			};
 
-		struct Cluster
-		{
-			white::math::float3 AABBMin;
-			white::math::float3 AABBMax;
-		};
+			struct ClusterCompact
+			{
+				uint32 TriangleCount;
+				uint32 ClusterStart;
+			};
 
-		struct TriinfMetadata
-		{
-			OffsetPtr<char> Name;
+			struct Cluster
+			{
+				white::math::float3 AABBMin;
+				white::math::float3 AABBMax;
+			};
 
-			OffsetArray<ClusterCompact> ClusterCompacts;
-			uint32 ClusterCount;
-			OffsetArray< Cluster> Clusters;
-		};
+			struct TriinfMetadata
+			{
+				OffsetPtr<char> Name;
 
-		struct TrinfGridHeader
-		{
-			uint32 StagingBufferSize;
+				OffsetArray<ClusterCompact> ClusterCompacts;
+				uint32 ClusterCount;
+				OffsetArray< Cluster> Clusters;
+			};
 
-			OffsetArray<TriinfMetadata> Trinfs;
-			uint32 TrinfsCount;
+			struct TrinfGridHeader
+			{
+				uint32 StagingBufferSize;
 
-			GpuRegion Position;
-			GpuRegion Tangent;
-			GpuRegion TexCoord;
+				OffsetArray<TriinfMetadata> Trinfs;
+				uint32 TrinfsCount;
 
-			OffsetArray<GpuRegion> AdditioalVB;
-			uint32 AdditioalVBCount;
+				GpuRegion Position;
+				GpuRegion Tangent;
+				GpuRegion TexCoord;
 
-			GpuRegion Index;
-		};
+				OffsetArray<GpuRegion> AdditioalVB;
+				uint32 AdditioalVBCount;
 
-		struct TrinfHeader
-		{
-			uint32 Signature = DSTrinf_Signature;
-			TrinfVersion Version = TrinfVersion::ForgeGeometry;
+				GpuRegion Index;
+			};
 
-			Region<TrinfGridHeader> CpuMedadata;
-		};
+			struct TrinfHeader
+			{
+				uint32 Signature = DSTrinf_Signature;
+				TrinfVersion Version = TrinfVersion::ForgeGeometry;
+
+				Region<TrinfGridHeader> CpuMedadata;
+			};
+		}
 	}
 }

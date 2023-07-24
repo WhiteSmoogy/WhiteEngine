@@ -179,7 +179,7 @@ inline namespace Shader
 
 		std::vector<Digest::SHAHash> ShaderHashes;
 		std::vector<ShaderEntry> ShaderEntries;
-
+	private:
 		std::mutex ShaderCriticalSection;
 	};
 
@@ -193,7 +193,7 @@ inline namespace Shader
 
 		virtual HardwareShader* CreateHWShader(int32 ShaderIndex) override;
 
-		std::unique_ptr<ShaderMapResourceCode> Code;
+		white::observer_ptr<ShaderMapResourceCode> Code;
 	};
 	
 	class RenderShader

@@ -14,6 +14,7 @@ namespace platform::Render
 	namespace HLSLTraits
 	{
 		struct RWByteAddressBuffer {};
+		struct RWTexture2D {};
 	}
 
 #define MS_ALIGN(n) __declspec(align(n))
@@ -107,13 +108,23 @@ namespace platform::Render
 			using DeclType = white::math::uint2;
 		};
 
-		template<>
-		struct TShaderParameterTypeInfo<HLSLTraits::RWByteAddressBuffer> : ShaderTypeInfo<SPT_rwbyteAddressBuffer>
+		template<ShaderParamType ShaderType>
+		struct TShaderParameterUAVType : ShaderTypeInfo<ShaderType>
 		{
 			using DeclType = platform::Render::UnorderedAccessView*;
 
 			template<std::size_t Boundary = 0>
 			static constexpr std::size_t Alignement = sizeof(DeclType);
+		};
+
+		template<>
+		struct TShaderParameterTypeInfo<HLSLTraits::RWByteAddressBuffer> : TShaderParameterUAVType<SPT_rwbyteAddressBuffer>
+		{
+		};
+
+		template<>
+		struct TShaderParameterTypeInfo<HLSLTraits::RWTexture2D> : TShaderParameterUAVType<SPT_rwtexture2D>
+		{
 		};
 		
 		template<typename TypeParameter>

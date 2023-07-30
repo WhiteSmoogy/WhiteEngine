@@ -82,8 +82,8 @@ std::shared_ptr<platform::Render::GraphicsBuffer> StreamingScene::TrinfBuffer<T>
 		platform::Render::MemcpyResourceParams params =
 		{
 			.Count = DataBuffer->GetSize(),
+			.SrcOffset = 0,
 			.DstOffset = 0,
-			.SrcOffset = 0
 		};
 		platform::Render::MemcpyResource(cmdList, NewDataBuffer, DataBuffer, params);
 

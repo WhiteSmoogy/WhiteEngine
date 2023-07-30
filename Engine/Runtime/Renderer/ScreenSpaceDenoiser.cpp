@@ -226,7 +226,7 @@ public:
 		SHADER_PARAMETER(float, KernelSpreadFactor)
 
 		SHADER_PARAMETER_TEXTURE(Render::Texture2D, SignalInput_Textures_0)
-		SHADER_PARAMETER_TEXTURE(Render::Shader::RWTexture2D, SignalOutput_UAVs_0)
+		SHADER_PARAMETER_UAV(RWTexture2D, SignalOutput_UAVs_0)
 		
 		END_SHADER_PARAMETER_STRUCT();
 
@@ -247,7 +247,7 @@ namespace Shadow
 			SHADER_PARAMETER_STRUCT_INCLUDE(SSDCommonParameters, CommonParameters)
 			SHADER_PARAMETER(white::math::float4, InputBufferUVMinMax)
 			SHADER_PARAMETER_TEXTURE(Render::Texture2D, SignalInput_Textures_0)
-			SHADER_PARAMETER_TEXTURE(Render::Shader::RWTexture2D, SignalOutput_UAVs_0)
+			SHADER_PARAMETER_UAV(RWTexture2D, SignalOutput_UAVs_0)
 			SHADER_PARAMETER_SAMPLER(Render::TextureSampleDesc, point_sampler)
 			END_SHADER_PARAMETER_STRUCT();
 

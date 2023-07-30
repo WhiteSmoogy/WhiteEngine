@@ -275,14 +275,13 @@ AllocatorConfig IPoolAllocator::GetResourceAllocatorInitConfig(D3D12_HEAP_TYPE I
 		{
 			InitConfig.InitialResourceState = D3D12_RESOURCE_STATE_COPY_DEST;
 		}
-		else if (white::has_anyflags(InBufferAccess, EA_GPUUnordered))
-		{
-			wconstraint(InResourceFlags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-			InitConfig.InitialResourceState = D3D12_RESOURCE_STATE_COMMON;
-		}
 		else
 		{
-			InitConfig.InitialResourceState = D3D12_RESOURCE_STATE_GENERIC_READ;
+			if (white::has_anyflags(InBufferAccess, EA_GPUUnordered))
+			{
+				wconstraint(InResourceFlags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+			}
+			InitConfig.InitialResourceState = D3D12_RESOURCE_STATE_COMMON;
 		}
 
 	InitConfig.HeapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
@@ -1354,7 +1353,7 @@ D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState(D3D12_HEAP
 	}
 	else
 	{
-		return D3D12_RESOURCE_STATE_GENERIC_READ;
+		return D3D12_RESOURCE_STATE_COMMON;
 	}
 }
 

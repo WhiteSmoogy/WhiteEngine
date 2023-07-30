@@ -6,7 +6,7 @@
 
 #include "RenderInterface/RayTracingDefinitions.h"
 #include "RenderInterface/IGPUResourceView.h"
-#include "RenderInterface/ShaderParameters.h"
+#include "Runtime/RenderCore/ShaderParameters.h"
 
 #include "d3d12_dxgi.h"
 #include "GraphicsBuffer.hpp"

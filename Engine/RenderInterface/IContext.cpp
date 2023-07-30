@@ -49,15 +49,6 @@ namespace platform::Render {
 		return screen_frame_buffer;
 	}
 
-	ConstantBuffer* CreateConstantBuffer(const void* Contents, Buffer::Usage Usage, const ShaderParametersMetadata& Layout)
-	{
-		auto& Device = GRenderIF->GetDevice();
-
-		Usage =static_cast<Buffer::Usage>(Usage | Buffer::Usage::Static);
-
-		return Device.CreateConstantBuffer(Usage,Layout.GetSize(),Contents);
-	}
-
 	GraphicsBuffer* CreateVertexBuffer(white::span<const std::byte> Contents, Buffer::Usage Usage, uint32 Access)
 	{
 		auto& Device = Context::Instance().GetDevice();

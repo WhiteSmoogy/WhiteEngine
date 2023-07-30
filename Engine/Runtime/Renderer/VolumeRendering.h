@@ -4,8 +4,8 @@
 #include "RenderInterface/IGraphicsBuffer.hpp"
 #include "RenderInterface/IDevice.h"
 #include "RenderInterface/ICommandList.h"
-#include "RenderInterface/ShaderParamterTraits.hpp"
-#include "RenderInterface/ShaderParameterStruct.h"
+#include "Runtime/RenderCore/ShaderParamterTraits.hpp"
+#include "Runtime/RenderCore/ShaderParameterStruct.h"
 
 namespace platform
 {

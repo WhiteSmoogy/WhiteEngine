@@ -1,5 +1,5 @@
 #pragma once
-#include "Shader.h"
+#include "RenderInterface/Shader.h"
 #include "ShaderParametersMetadata.h"
 #include <WBase/cformat.h>
 

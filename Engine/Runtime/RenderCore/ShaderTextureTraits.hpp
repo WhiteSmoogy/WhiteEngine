@@ -1,9 +1,9 @@
 #pragma once
 
 #include "ShaderParamterTraits.hpp"
-#include "ITexture.hpp"
-#include "IGPUResourceView.h"
-#include "TextureSampleDesc.h"
+#include "RenderInterface/ITexture.hpp"
+#include "RenderInterface/IGPUResourceView.h"
+#include "RenderInterface/TextureSampleDesc.h"
 
 namespace platform::Render
 {

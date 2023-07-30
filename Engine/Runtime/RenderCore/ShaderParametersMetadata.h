@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ShaderCore.h"
+#include "RenderInterface/ShaderCore.h"
 #include <WBase/exception_type.h>
 
 #define PR_NAMESPACE_BEGIN  namespace platform::Render {

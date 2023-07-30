@@ -1,10 +1,10 @@
 #pragma once
 
 
-#include "ITexture.hpp"
-#include "IGraphicsBuffer.hpp"
-#include "IGPUResourceView.h"
-#include "TextureSampleDesc.h"
+#include "RenderInterface/ITexture.hpp"
+#include "RenderInterface/IGraphicsBuffer.hpp"
+#include "RenderInterface/IGPUResourceView.h"
+#include "RenderInterface/TextureSampleDesc.h"
 
 namespace platform::Render
 {

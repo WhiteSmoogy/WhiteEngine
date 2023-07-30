@@ -7,8 +7,8 @@
 
 #include "IRayDevice.h"
 #include "IFrameBuffer.h"
-#include "ShaderParamterTraits.hpp"
-#include "ShaderTextureTraits.hpp"
+#include "Runtime/RenderCore/ShaderParamterTraits.hpp"
+#include "Runtime/RenderCore/ShaderTextureTraits.hpp"
 
 namespace platform::Render {
 

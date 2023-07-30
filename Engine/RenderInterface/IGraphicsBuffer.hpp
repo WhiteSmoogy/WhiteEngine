@@ -10,7 +10,7 @@
 #include <WBase/wmacro.h>
 #include <WBase/span.hpp>
 #include "RenderObject.h"
-#include "ShaderParametersMetadata.h"
+
 namespace platform::Render {
 	class CommandList;
 	class CommandListImmediate;
@@ -118,44 +118,7 @@ namespace platform::Render {
 		virtual void Update(platform::Render::CommandList& CmdList,white::uint32 size, void const* data) = 0;
 	};
 
-	ConstantBuffer* CreateConstantBuffer(const void* Contents, Buffer::Usage Usage,const ShaderParametersMetadata& Layout);
-
-	template<typename TBufferStruct>
-	requires requires{ TBufferStruct::TypeInfo::GetStructMetadata(); }
-	class GraphicsBufferRef
-	{
-	public:
-		static GraphicsBufferRef<TBufferStruct> CreateGraphicsBuffeImmediate(const TBufferStruct& Value, Buffer::Usage Usage)
-		{
-			return GraphicsBufferRef<TBufferStruct>(CreateConstantBuffer(&Value, Usage, *TBufferStruct::TypeInfo::GetStructMetadata()));
-		}
-
-		operator std::shared_ptr<ConstantBuffer>()
-		{
-			return buffer;
-		}
-
-		ConstantBuffer* Get() const
-		{
-			return buffer.get();
-		}
-	private:
-		GraphicsBufferRef(ConstantBuffer* InBuffer)
-			:buffer(InBuffer,RObjectDeleter())
-		{
-		}
-
-		std::shared_ptr<ConstantBuffer> buffer;
-	};
-
-	template<typename TBufferStruct>
-	requires requires{ TBufferStruct::TypeInfo::GetStructMetadata(); }
-	GraphicsBufferRef<TBufferStruct> CreateGraphicsBuffeImmediate(const TBufferStruct& Value, Buffer::Usage Usage)
-	{
-		return GraphicsBufferRef<TBufferStruct>::CreateGraphicsBuffeImmediate(Value, Usage);
-	}
-
-	GraphicsBuffer* CreateVertexBuffer(white::span<const std::byte> Contents, Buffer::Usage Usage,uint32 Access);
+	GraphicsBuffer* CreateVertexBuffer(white::span<const std::byte> Contents, Buffer::Usage Usage,white::uint32 Access);
 }
 
 #endif

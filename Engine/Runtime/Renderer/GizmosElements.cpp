@@ -1,7 +1,7 @@
 #include "GizmosElements.h"
 #include "RenderInterface/PipelineStateUtility.h"
-#include "RenderInterface/ShaderParamterTraits.hpp"
-#include "RenderInterface/ShaderParameterStruct.h"
+#include "Runtime/RenderCore/ShaderParamterTraits.hpp"
+#include "Runtime/RenderCore/ShaderParameterStruct.h"
 #include "RenderInterface/BuiltInShader.h"
 
 using namespace WhiteEngine;

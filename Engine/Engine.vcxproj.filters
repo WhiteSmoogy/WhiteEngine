@@ -142,27 +142,6 @@
     <ClCompile Include="RenderInterface\ResourceView.cpp">
       <Filter>RenderInterface</Filter>
     </ClCompile>
-    <ClCompile Include="RenderInterface\Shader.cpp">
-      <Filter>RenderInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\ShaderCore.cpp">
-      <Filter>RenderInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\ShaderDB.cpp">
-      <Filter>RenderInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\ShaderParametersMetadata.cpp">
-      <Filter>RenderInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\ShaderParameterUtility.cpp">
-      <Filter>RenderInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\ShaderParamterTraits.cpp">
-      <Filter>RenderInterface</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderInterface\ShaderResource.cpp">
-      <Filter>RenderInterface</Filter>
-    </ClCompile>
     <ClCompile Include="test.cpp" />
     <ClCompile Include="System\Win32\File.cpp">
       <Filter>System\Win32</Filter>
@@ -440,6 +419,30 @@
     <ClCompile Include="Runtime\Renderer\Trinf.cpp">
       <Filter>Runtime\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="Runtime\RenderCore\ShaderDB.cpp">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\RenderCore\ShaderParametersMetadata.cpp">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\RenderCore\ShaderParameterUtility.cpp">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\RenderCore\ShaderParamterTraits.cpp">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\RenderCore\ShaderResource.cpp">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\Shader.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInterface\ShaderCore.cpp">
+      <Filter>RenderInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\RenderCore\UnifiedBuffer..cpp">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">
@@ -704,33 +707,6 @@
       <Filter>RenderInterface</Filter>
     </ClInclude>
     <ClInclude Include="RenderInterface\RenderPassInfo.h">
-      <Filter>RenderInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\Shader.h">
-      <Filter>RenderInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\ShaderCore.h">
-      <Filter>RenderInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\ShaderDB.h">
-      <Filter>RenderInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\ShaderParameters.h">
-      <Filter>RenderInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\ShaderParametersMetadata.h">
-      <Filter>RenderInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\ShaderParameterStruct.h">
-      <Filter>RenderInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\ShaderParamterTraits.hpp">
-      <Filter>RenderInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\ShaderPermutation.h">
-      <Filter>RenderInterface</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderInterface\ShaderTextureTraits.hpp">
       <Filter>RenderInterface</Filter>
     </ClInclude>
     <ClInclude Include="RenderInterface\TextureSampleDesc.h">
@@ -1150,6 +1126,36 @@
     <ClInclude Include="Runtime\Renderer\Trinf.h">
       <Filter>Runtime\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="Runtime\RenderCore\UnifiedBuffer.h">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\RenderCore\ShaderDB.h">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\RenderCore\ShaderParameters.h">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\RenderCore\ShaderParametersMetadata.h">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\RenderCore\ShaderParameterStruct.h">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\RenderCore\ShaderParamterTraits.hpp">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\RenderCore\ShaderTextureTraits.hpp">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\Shader.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ShaderCore.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\ShaderPermutation.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Asset">
@@ -1244,6 +1250,9 @@
     </Filter>
     <Filter Include="Core\Threading">
       <UniqueIdentifier>{ba8e5599-55ef-4f38-904b-e05d25432ec4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\RuntimeCore">
+      <UniqueIdentifier>{e687d0e2-f2d3-4fd9-9cf4-24aa77da22b0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

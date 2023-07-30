@@ -2,8 +2,8 @@
 #include <WBase/wmath.hpp>
 #include <WBase/winttype.hpp>
 #include "Core/Math/IntRect.h"
-#include "RenderInterface/ShaderParamterTraits.hpp"
-#include "RenderInterface/ShaderTextureTraits.hpp"
+#include "Runtime/RenderCore/ShaderParamterTraits.hpp"
+#include "Runtime/RenderCore/ShaderTextureTraits.hpp"
 
 namespace WhiteEngine
 {

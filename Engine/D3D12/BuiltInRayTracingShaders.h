@@ -2,9 +2,9 @@
 
 #include "RenderInterface/BuiltInRayTracingShader.h"
 #include "RenderInterface/IRayContext.h"
-#include "RenderInterface/ShaderParamterTraits.hpp"
-#include "RenderInterface/ShaderTextureTraits.hpp"
-#include "RenderInterface/ShaderParameterStruct.h"
+#include "Runtime/RenderCore/ShaderParamterTraits.hpp"
+#include "Runtime/RenderCore/ShaderTextureTraits.hpp"
+#include "Runtime/RenderCore/ShaderParameterStruct.h"
 #include <list>
 
 namespace platform_ex::Windows::D3D12 {

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <RenderInterface/ICommandList.h>
-#include "RenderInterface/ShaderParamterTraits.hpp"
-#include "RenderInterface/ShaderParameterStruct.h"
+#include "Runtime/RenderCore/ShaderParamterTraits.hpp"
+#include "Runtime/RenderCore/ShaderParameterStruct.h"
 #include "Core/Math/PlatformMath.h"
 
 namespace platform

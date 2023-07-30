@@ -1,4 +1,3 @@
-#pragma once
 #ifndef WE_RENDER_ShaderCore_h
 #define WE_RENDER_ShaderCore_h 1
 

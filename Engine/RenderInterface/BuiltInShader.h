@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Shader.h"
+#include "RenderInterface/Shader.h"
 #include <shared_mutex>
 
 #define PR_NAMESPACE_BEGIN  namespace platform::Render {

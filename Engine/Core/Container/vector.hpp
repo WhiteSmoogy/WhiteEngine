@@ -48,4 +48,11 @@ namespace white
 		vec.resize(vec.size()-1);
 		return last;
 	}
+
+	template<typename T, typename Allocator>
+	void remove_at_swap(std::vector<T, Allocator>& vec, int32 Index)
+	{
+		std::swap(vec[Index], vec[vec.size() - 1]);
+		vec.pop_back();
+	}
 }

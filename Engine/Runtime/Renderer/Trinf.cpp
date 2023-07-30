@@ -2,6 +2,8 @@
 #include "RenderInterface/InputLayout.hpp"
 #include "RenderInterface/IContext.h"
 
+#include "Core/Container/vector.hpp"
+
 using Trinf::StreamingScene;
 using namespace platform::Render::Vertex;
 namespace pr = platform::Render;
@@ -9,6 +11,53 @@ using namespace platform_ex;
 using platform::Render::Context;
 
 std::unique_ptr<StreamingScene> Trinf::Scene;
+
+int32 StreamingScene::GrowOnlySpanAllocator::Allocate(int32 Num)
+{
+	const int32 FoundIndex = SearchFreeList(Num);
+
+	// Use an existing free span if one is found
+	if (FoundIndex != white::INDEX_NONE)
+	{
+		auto FreeSpan = FreeSpans[FoundIndex];
+
+		if (FreeSpan.Num > Num)
+		{
+			// Update existing free span with remainder
+			FreeSpans[FoundIndex] = LinearAlloc(FreeSpan.StartOffset + Num, FreeSpan.Num - Num);
+		}
+		else
+		{
+			// Fully consumed the free span
+			white::remove_at_swap(FreeSpans, FoundIndex);
+		}
+
+		return FreeSpan.StartOffset;
+	}
+
+	// New allocation
+	int32 StartOffset = MaxSize;
+	MaxSize = MaxSize + Num;
+
+	return StartOffset;
+}
+
+int32 StreamingScene::GrowOnlySpanAllocator::SearchFreeList(int32 Num)
+{
+	// Search free list for first matching
+	for (int32 i = 0; i < FreeSpans.size(); i++)
+	{
+		auto CurrentSpan = FreeSpans[i];
+
+		if (CurrentSpan.Num >= Num)
+		{
+			return i;
+		}
+	}
+
+	return white::INDEX_NONE;
+}
+
 
 StreamingScene::StreamingScene()
 	:storage_api(Context::Instance().GetDevice().GetDStorage())
@@ -72,7 +121,7 @@ void StreamingScene::BeginAsyncUpdate(platform::Render::CommandList& cmdList)
 		if ((*itr)->IORequest->IsReady())
 		{
 			itr = Streaming.erase(itr);
-			Resident.emplace_back(itr);
+			Resident.emplace_back(*itr);
 			(*itr)->State = Resources::StreamingState::Resident;
 		}
 		else

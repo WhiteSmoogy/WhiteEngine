@@ -61,7 +61,37 @@ namespace Trinf
 		{
 			int32 Allocate(int32 Num);
 
-			int32 GetMaxSize();
+			int32 GetMaxSize()
+			{
+				return MaxSize;
+			}
+
+			int32 SearchFreeList(int32 Num);
+			
+		private:
+			struct LinearAlloc
+			{
+				LinearAlloc(int32 InStartOffset, int32 InNum) :
+					StartOffset(InStartOffset),
+					Num(InNum)
+				{}
+
+				int32 StartOffset;
+				int32 Num;
+
+				bool Contains(LinearAlloc Other)
+				{
+					return StartOffset <= Other.StartOffset && (StartOffset + Num) >= (Other.StartOffset + Other.Num);
+				}
+
+				bool operator<(const LinearAlloc& Other) const
+				{
+					return StartOffset < Other.StartOffset;
+				}
+			};
+
+			int32 MaxSize;
+			std::vector<LinearAlloc> FreeSpans;
 		};
 
 		template<typename T>

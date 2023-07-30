@@ -52,5 +52,5 @@ namespace platform::Render
 	};
 
 	template<typename ResourceType>
-	void MemcpyResource(Render::CommandList& cmdList, const ResourceType& DstBuffer, const ResourceType& SrcBuffer, const MemcpyResourceParams& Params);
+	void MemcpyResource(CommandList& cmdList, const ResourceType& DstBuffer, const ResourceType& SrcBuffer, const MemcpyResourceParams& Params);
 }

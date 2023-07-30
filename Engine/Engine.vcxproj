@@ -152,7 +152,9 @@
     <ClCompile Include="Runtime\RenderCore\ShaderParameterUtility.cpp" />
     <ClCompile Include="Runtime\RenderCore\ShaderParamterTraits.cpp" />
     <ClCompile Include="Runtime\RenderCore\ShaderResource.cpp" />
-    <ClCompile Include="Runtime\RenderCore\UnifiedBuffer..cpp" />
+    <ClCompile Include="Runtime\RenderCore\UnifiedBuffer..cpp">
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
+    </ClCompile>
     <ClCompile Include="Runtime\Renderer\DirectionalLight.cpp" />
     <ClCompile Include="Runtime\Renderer\GizmosElements.cpp" />
     <ClCompile Include="Runtime\Renderer\imgui\imgui_context.cpp" />

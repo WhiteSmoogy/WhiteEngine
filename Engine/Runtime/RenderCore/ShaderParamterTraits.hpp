@@ -2,6 +2,7 @@
 
 #include <WBase/wmathtype.hpp>
 #include "ShaderParametersMetadata.h"
+#include "RenderInterface/IGPUResourceView.h"
 
 namespace platform::Render
 {
@@ -10,6 +11,10 @@ namespace platform::Render
 		constexpr std::size_t VariableBoundary = 16;
 	}
 
+	namespace HLSLTraits
+	{
+		struct RWByteAddressBuffer {};
+	}
 
 #define MS_ALIGN(n) __declspec(align(n))
 	inline namespace Shader
@@ -101,11 +106,21 @@ namespace platform::Render
 
 			using DeclType = white::math::uint2;
 		};
+
+		template<>
+		struct TShaderParameterTypeInfo<HLSLTraits::RWByteAddressBuffer> : ShaderTypeInfo<SPT_rwbyteAddressBuffer>
+		{
+			using DeclType = platform::Render::UnorderedAccessView*;
+
+			template<std::size_t Boundary = 0>
+			static constexpr std::size_t Alignement = sizeof(DeclType);
+		};
 		
 		template<typename TypeParameter>
 		struct TShaderTextureTypeInfo;
 	}
 }
+
 
 #define INTERNAL_LOCAL_SHADER_PARAMETER_GET_STRUCT_METADATA(StructTypeName) \
 	static platform::Render::ShaderParametersMetadata StaticStructMetadata(sizeof(StructTypeName),\
@@ -209,6 +224,9 @@ namespace platform::Render
  * SHADER_PARAMETER_SAMPLER(SamplerState, MySampler)
  */
 #define SHADER_PARAMETER_SAMPLER(MemberType,MemberName) SHADER_PARAMETER(MemberType,MemberName)
+
+#define SHADER_PARAMETER_UAV(MemberType,MemberName) \
+	INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>::ShaderType, platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>,MemberType,MemberName)
 
 /** Include a shader parameter structure into another one in shader code.
 *

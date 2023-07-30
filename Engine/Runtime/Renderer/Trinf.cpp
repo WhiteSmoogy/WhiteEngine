@@ -1,7 +1,7 @@
 #include "Trinf.h"
 #include "RenderInterface/InputLayout.hpp"
 #include "RenderInterface/IContext.h"
-
+#include "Runtime/RenderCore/UnifiedBuffer.h"
 #include "Core/Container/vector.hpp"
 
 using Trinf::StreamingScene;
@@ -79,7 +79,13 @@ std::shared_ptr<platform::Render::GraphicsBuffer> StreamingScene::TrinfBuffer<T>
 	{
 		auto NewDataBuffer = pr::shared_raw_robject(CreateByteAddressBuffer(target_size, sizeof(T)));
 
-		DataBuffer->CopyToBuffer(*NewDataBuffer);
+		platform::Render::MemcpyResourceParams params =
+		{
+			.Count = DataBuffer->GetSize(),
+			.DstOffset = 0,
+			.SrcOffset = 0
+		};
+		platform::Render::MemcpyResource(cmdList, NewDataBuffer, DataBuffer, params);
 
 		DataBuffer = NewDataBuffer;
 	}

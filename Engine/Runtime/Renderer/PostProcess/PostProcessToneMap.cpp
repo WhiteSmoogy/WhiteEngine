@@ -4,7 +4,7 @@
 #include "RenderInterface/PipelineStateUtility.h"
 #include "RenderInterface/PixelShaderUtils.h"
 #include "RenderInterface/PipleState.h"
-#include "RenderInterface/ShaderTextureTraits.hpp"
+#include "Runtime/RenderCore/ShaderTextureTraits.hpp"
 
 #include "Runtime/Renderer/VolumeRendering.h"
 

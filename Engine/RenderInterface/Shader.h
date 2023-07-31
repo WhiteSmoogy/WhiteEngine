@@ -199,7 +199,7 @@ inline namespace Shader
 	class RenderShader
 	{
 	public:
-		using FPermutationDomain = FShaderPermutationNone;
+		using PermutationDomain = FShaderPermutationNone;
 		using FPermutationParameters = FShaderPermutationParameters;
 		static constexpr bool RootParameterStruct = false;
 
@@ -487,7 +487,7 @@ inline namespace Shader
 	static constexpr bool HasParameters =  platform::Render::ShaderParametersType<ShaderClass>::HasParameters;\
 	static void ModifyCompilationEnvironmentImpl(const platform::Render::FShaderPermutationParameters& Parameters, platform::Render::FShaderCompilerEnvironment& OutEnvironment) \
 	{ \
-		const typename ShaderClass::FPermutationDomain PermutationVector(Parameters.PermutationId); \
+		const typename ShaderClass::PermutationDomain PermutationVector(Parameters.PermutationId); \
 		PermutationVector.ModifyCompilationEnvironment(OutEnvironment); \
 		ShaderClass::ModifyCompilationEnvironment(static_cast<const typename ShaderClass::FPermutationParameters&>(Parameters), OutEnvironment); \
 	} \
@@ -512,7 +512,7 @@ public:\
 	{ }
 
 #define SHADER_VTABLE(ShaderClass) \
-	ShaderClass::FPermutationDomain::PermutationCount,\
+	ShaderClass::PermutationDomain::PermutationCount,\
 	ShaderClass::ConstructInstance, \
 	ShaderClass::ModifyCompilationEnvironmentImpl,\
 	ShaderClass::ShouldCompilePermutationImpl
@@ -538,13 +538,13 @@ public:\
 			: ShaderRef<ShaderType>(ShaderIndex->template GetShader<ShaderType>(/* PermutationId = */ 0)) // gcc3 needs the template quantifier so it knows the < is not a less-than
 		{
 			static_assert(
-				std::is_same_v<typename ShaderType::FPermutationDomain, FShaderPermutationNone>,
+				std::is_same_v<typename ShaderType::PermutationDomain, FShaderPermutationNone>,
 				"Missing permutation vector argument for shader that have a permutation domain.");
 		}
 
 		ShaderMapRef(
 			const typename ShaderType::ShaderMapType* ShaderIndex,
-			const typename ShaderType::FPermutationDomain& PermutationVector)
+			const typename ShaderType::PermutationDomain& PermutationVector)
 			: ShaderRef<ShaderType>(ShaderIndex->template GetShader<ShaderType>(PermutationVector.ToDimensionValueId())) // gcc3 needs the template quantifier so it knows the < is not a less-than
 		{ }
 	};
@@ -568,7 +568,7 @@ public:\
 
 		/** Finds the shader with the given type.  Asserts on failure. */
 		template<typename ShaderType>
-		ShaderType* GetShader(const typename ShaderType::FPermutationDomain& PermutationVector) const
+		ShaderType* GetShader(const typename ShaderType::PermutationDomain& PermutationVector) const
 		{
 			return GetShader<ShaderType>(PermutationVector.ToDimensionValueId());
 		}

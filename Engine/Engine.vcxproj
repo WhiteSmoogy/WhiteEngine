@@ -367,6 +367,7 @@
     <ClInclude Include="Runtime\Path.h" />
     <ClInclude Include="Runtime\PlatformAtomics.h" />
     <ClInclude Include="Runtime\PlatformMemory.h" />
+    <ClInclude Include="Runtime\RenderCore\Dispatch.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderDB.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderParameters.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderParametersMetadata.h" />
@@ -432,6 +433,7 @@
     <None Include="RenderInterface\Effect\PreZ.wsl" />
     <None Include="RenderInterface\Material\FPDS.mat.wsl" />
     <None Include="Shaders\ACES.h" />
+    <None Include="Shaders\ByteBuffer.wsl" />
     <None Include="Shaders\Common.h" />
     <None Include="Shaders\GammaCorrectionCommon.h" />
     <None Include="Shaders\GizmosElementsVertexShader.wsl" />

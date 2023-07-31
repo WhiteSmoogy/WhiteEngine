@@ -1156,6 +1156,9 @@
     <ClInclude Include="RenderInterface\ShaderPermutation.h">
       <Filter>RenderInterface</Filter>
     </ClInclude>
+    <ClInclude Include="Runtime\RenderCore\Dispatch.h">
+      <Filter>Runtime\RuntimeCore</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Asset">
@@ -1359,6 +1362,9 @@
       <Filter>RenderInterface</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="Shaders\ByteBuffer.wsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Shaders\ShadowProjectionVertexShader.wsl">

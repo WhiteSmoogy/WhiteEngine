@@ -3,6 +3,7 @@
 #include "Runtime/RenderCore/ShaderParamterTraits.hpp"
 #include "Runtime/RenderCore/ShaderParameterStruct.h"
 #include "Runtime/RenderCore/ShaderTextureTraits.hpp"
+#include "Runtime/RenderCore/Dispatch.h"
 #include "RenderInterface/DrawEvent.h"
 #include "RenderInterface/ShaderPermutation.h"
 #include "RenderInterface/IContext.h"
@@ -115,11 +116,11 @@ public:
 	class FStageDim : SHADER_PERMUTATION_ENUM_CLASS("DIM_STAGE", Stage);
 	class FUpscaleDim : SHADER_PERMUTATION_BOOL("DIM_UPSCALE");
 
-	using FPermutationDomain = Render::TShaderPermutationDomain<FSignalProcessingDim, FStageDim, FUpscaleDim, FSignalBatchSizeDim, FMultiSPPDim>;
+	using PermutationDomain = Render::TShaderPermutationDomain<FSignalProcessingDim, FStageDim, FUpscaleDim, FSignalBatchSizeDim, FMultiSPPDim>;
 
 	static bool ShouldCompilePermutation(const Render::FBuiltInShaderPermutationParameters& Parameters)
 	{
-		FPermutationDomain PermutationVector(Parameters.PermutationId);
+		PermutationDomain PermutationVector(Parameters.PermutationId);
 		SignalProcessing SignalProcessing = PermutationVector.Get<FSignalProcessingDim>();
 
 		// Only reconstruction have upscale capability for now.
@@ -180,7 +181,7 @@ public:
 		return true;
 	}
 
-	static FPermutationDomain RemapPermutationVector(FPermutationDomain PermutationVector)
+	static PermutationDomain RemapPermutationVector(PermutationDomain PermutationVector)
 	{
 		SignalProcessing SignalProcessing = PermutationVector.Get<FSignalProcessingDim>();
 
@@ -367,7 +368,7 @@ void platform::ScreenSpaceDenoiser::DenoiseShadowVisibilityMasks(Render::Command
 		Parameters.SignalOutput_UAVs_0 = uav.get();
 
 
-		SSDSpatialAccumulationCS::FPermutationDomain PermutationVector;
+		SSDSpatialAccumulationCS::PermutationDomain PermutationVector;
 		PermutationVector.Set<FSignalProcessingDim>(SignalProcessing::ShadowVisibilityMask);
 		PermutationVector.Set<FSignalBatchSizeDim>(1);
 		PermutationVector.Set<SSDSpatialAccumulationCS::FStageDim>(SSDSpatialAccumulationCS::Stage::ReConstruction);
@@ -399,7 +400,7 @@ void platform::ScreenSpaceDenoiser::DenoiseShadowVisibilityMasks(Render::Command
 		Parameters.SignalInput_Textures_0 = SignalHistroy;
 		Parameters.SignalOutput_UAVs_0 = uav.get();
 
-		SSDSpatialAccumulationCS::FPermutationDomain PermutationVector;
+		SSDSpatialAccumulationCS::PermutationDomain PermutationVector;
 		PermutationVector.Set<FSignalProcessingDim>(SignalProcessing::ShadowVisibilityMask);
 		PermutationVector.Set<FSignalBatchSizeDim>(1);
 		PermutationVector.Set<SSDSpatialAccumulationCS::FStageDim>(SSDSpatialAccumulationCS::Stage::PreConvolution);
@@ -425,7 +426,7 @@ void platform::ScreenSpaceDenoiser::DenoiseShadowVisibilityMasks(Render::Command
 		Parameters.SignalInput_Textures_0 = SignalHistroy;
 		Parameters.SignalOutput_UAVs_0 = Output.MaskUAV;
 
-		SSDSpatialAccumulationCS::FPermutationDomain PermutationVector;
+		SSDSpatialAccumulationCS::PermutationDomain PermutationVector;
 		PermutationVector.Set<FSignalProcessingDim>(SignalProcessing::ShadowVisibilityMask);
 		PermutationVector.Set<FSignalBatchSizeDim>(1);
 		PermutationVector.Set<SSDSpatialAccumulationCS::FStageDim>(SSDSpatialAccumulationCS::Stage::FinalOutput);

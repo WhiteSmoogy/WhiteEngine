@@ -134,8 +134,6 @@ namespace platform::Render {
 
 	class Device {
 	public:
-		virtual Caps& GetCaps() = 0;
-
 		virtual Texture1D* CreateTexture(uint16 width, uint8 num_mipmaps, uint8 array_size,
 			EFormat format, uint32 access, SampleDesc sample_info, std::optional<ElementInitData const *> init_data = nullptr) = 0;
 

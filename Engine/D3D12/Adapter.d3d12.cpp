@@ -521,8 +521,10 @@ namespace platform_ex::Windows::D3D12 {
 	}
 
 	void Device::FillCaps() {
-		d3d_caps.type = platform::Render::Caps::Type::D3D12;
-		d3d_caps.max_texture_depth = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
+		auto& d3d_caps = platform::Render::Caps;
+
+		platform::Render::Caps.type = platform::Render::DeviceCaps::Type::D3D12;
+		platform::Render::Caps.max_texture_depth = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
 
 		std::pair<EFormat, DXGI_FORMAT> fmts[] =
 		{
@@ -769,10 +771,10 @@ namespace platform_ex::Windows::D3D12 {
 		d3d_caps.support_hdr = [&]() {
 			return adapter.CheckHDRSupport();
 		}();
-	}
 
-	platform::Render::Caps& Device::GetCaps() {
-		return d3d_caps;
+		d3d_caps.MaxDispatchThreadGroupsPerDimension.x = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
+		d3d_caps.MaxDispatchThreadGroupsPerDimension.y = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
+		d3d_caps.MaxDispatchThreadGroupsPerDimension.z = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
 	}
 
 	platform::Render::Effect::CopyEffect& D3D12::Device::BiltEffect()

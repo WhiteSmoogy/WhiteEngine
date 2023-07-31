@@ -2,6 +2,7 @@
 #include "IContext.h"
 
 platform::Render::Context* GRenderIF;
+platform::Render::DeviceCaps platform::Render::Caps;
 
 enum ContextType {
 	Context_D3D12
@@ -18,6 +19,7 @@ namespace platform_ex {
 
 namespace platform::Render {
 	HardwareShader::~HardwareShader() = default;
+
 
 	Context& Context::Instance() {
 		static bool call_onece = [&]()->bool {

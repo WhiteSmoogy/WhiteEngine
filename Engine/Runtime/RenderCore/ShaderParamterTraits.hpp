@@ -14,6 +14,7 @@ namespace platform::Render
 	namespace HLSLTraits
 	{
 		struct RWByteAddressBuffer {};
+		struct ByteAddressBuffer {};
 		struct RWTexture2D {};
 	}
 
@@ -117,8 +118,22 @@ namespace platform::Render
 			static constexpr std::size_t Alignement = sizeof(DeclType);
 		};
 
+		template<ShaderParamType ShaderType>
+		struct TShaderParameterSRVType : ShaderTypeInfo<ShaderType>
+		{
+			using DeclType = platform::Render::ShaderResourceView*;
+
+			template<std::size_t Boundary = 0>
+			static constexpr std::size_t Alignement = sizeof(DeclType);
+		};
+
 		template<>
 		struct TShaderParameterTypeInfo<HLSLTraits::RWByteAddressBuffer> : TShaderParameterUAVType<SPT_rwbyteAddressBuffer>
+		{
+		};
+
+		template<>
+		struct TShaderParameterTypeInfo<HLSLTraits::ByteAddressBuffer> : TShaderParameterSRVType<SPT_byteAddressBuffer>
 		{
 		};
 
@@ -237,6 +252,9 @@ namespace platform::Render
 #define SHADER_PARAMETER_SAMPLER(MemberType,MemberName) SHADER_PARAMETER(MemberType,MemberName)
 
 #define SHADER_PARAMETER_UAV(MemberType,MemberName) \
+	INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>::ShaderType, platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>,MemberType,MemberName)
+
+#define SHADER_PARAMETER_SRV(MemberType,MemberName) \
 	INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>::ShaderType, platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>,MemberType,MemberName)
 
 /** Include a shader parameter structure into another one in shader code.

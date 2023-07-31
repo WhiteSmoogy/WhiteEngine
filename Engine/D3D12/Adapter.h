@@ -65,8 +65,6 @@ namespace platform_ex::Windows::D3D12 {
 		TextureCube* CreateTextureCube(uint16 size, uint8 num_mipmaps, uint8 array_size,
 			EFormat format, uint32 access, SampleDesc sample_info, std::optional<ElementInitData const*>  init_data = nullptr) override;
 
-		platform::Render::Caps& GetCaps() override;
-
 		bool IsHeapNotZeroedSupported() const
 		{
 			return bHeapNotZeroedSupported;
@@ -234,7 +232,6 @@ namespace platform_ex::Windows::D3D12 {
 
 		//@}
 
-		platform::Render::Caps d3d_caps;
 		bool bHeapNotZeroedSupported;
 
 		std::unique_ptr<platform::Render::Effect::CopyEffect> bilt_effect;

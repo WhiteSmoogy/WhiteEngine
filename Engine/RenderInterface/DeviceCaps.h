@@ -6,12 +6,12 @@
 #define WE_RENDER_DeviceCaps_h 1
 
 #include "IFormat.hpp"
-
+#include "WBase/wmathtype.hpp"
 #include <functional>
 
 namespace platform{
 	namespace Render {
-		struct Caps {
+		struct DeviceCaps {
 			enum class Type {
 				D3D12
 			};
@@ -25,7 +25,11 @@ namespace platform{
 			std::function<bool(EFormat)> TextureFormatSupport;
 			std::function<bool(EFormat)> VertexFormatSupport;
 			std::function<bool(EFormat, SampleDesc)>	RenderTargetMSAASupport;
+
+			white::math::uint3 MaxDispatchThreadGroupsPerDimension;
 		};
+
+		extern DeviceCaps Caps;
 
 		/** The number of render-targets that may be simultaneously written to. */
 		constexpr unsigned MaxSimultaneousRenderTargets = 8;

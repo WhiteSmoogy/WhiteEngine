@@ -205,7 +205,7 @@ public:
 
 	class FFadePlane : SHADER_PERMUTATION_BOOL("USE_FADE_PLANE");
 
-	using FPermutationDomain = Render::TShaderPermutationDomain<FFadePlane>;
+	using PermutationDomain = Render::TShaderPermutationDomain<FFadePlane>;
 
 	void Set(wr::CommandList& CmdList, wr::ShaderRef<ShadowProjectionPS> This, const SceneInfo& scene, const ProjectedShadowInfo* ShadowInfo)
 	{
@@ -255,7 +255,7 @@ void ProjectedShadowInfo::RenderProjection(wr::CommandList& CmdList, const Scene
 	};
 
 	//BindShadowProjectionShaders
-	ShadowProjectionPS::FPermutationDomain PermutationVector;
+	ShadowProjectionPS::PermutationDomain PermutationVector;
 	PermutationVector.Set < ShadowProjectionPS::FFadePlane>(CascadeSettings.FadePlaneLength > 0);
 
 	auto PixelShader = wr::GetBuiltInShaderMap()->GetShader< ShadowProjectionPS>(PermutationVector);

@@ -1122,8 +1122,7 @@ namespace dds {
 
 		std::shared_ptr<AssetType> ConvertFormat() {
 			auto pAsset = dds_desc.dds_asset;
-			auto caps = Context::Instance().GetDevice().GetCaps();
-			if ((TextureType::T_3D == pAsset->GetTextureType()) && (caps.max_texture_depth < pAsset->GetDepth()))
+			if ((TextureType::T_3D == pAsset->GetTextureType()) && (Caps.max_texture_depth < pAsset->GetDepth()))
 			{
 				pAsset->GetTextureTypeRef() = TextureType::T_2D;
 				pAsset->GetHeightRef() *= pAsset->GetDepth();
@@ -1138,8 +1137,8 @@ namespace dds {
 				array_size *= 6;
 			}
 
-			if (((EF_BC5 == pAsset->GetFormat()) && !caps.TextureFormatSupport(EF_BC5))
-				|| ((EF_BC5_SRGB == pAsset->GetFormat()) && !caps.TextureFormatSupport(EF_BC5_SRGB)))
+			if (((EF_BC5 == pAsset->GetFormat()) && !Caps.TextureFormatSupport(EF_BC5))
+				|| ((EF_BC5_SRGB == pAsset->GetFormat()) && !Caps.TextureFormatSupport(EF_BC5_SRGB)))
 			{
 				BC1Block tmp;
 				for (size_t i = 0; i < pAsset->GetElementInitDatas().size(); ++i)
@@ -1162,8 +1161,8 @@ namespace dds {
 					pAsset->GetFormatRef() = EF_BC3;
 				}
 			}
-			if (((EF_BC4 == pAsset->GetFormat()) && !caps.TextureFormatSupport(EF_BC4))
-				|| ((EF_BC4_SRGB == pAsset->GetFormat()) && !caps.TextureFormatSupport(EF_BC4_SRGB)))
+			if (((EF_BC4 == pAsset->GetFormat()) && !Caps.TextureFormatSupport(EF_BC4))
+				|| ((EF_BC4_SRGB == pAsset->GetFormat()) && !Caps.TextureFormatSupport(EF_BC4_SRGB)))
 			{
 				BC1Block tmp;
 				for (size_t i = 0; i < pAsset->GetElementInitDatas().size(); ++i)
@@ -1187,7 +1186,7 @@ namespace dds {
 				}
 			}
 
-			while (!caps.TextureFormatSupport(pAsset->GetFormat()))
+			while (!Caps.TextureFormatSupport(pAsset->GetFormat()))
 			{
 				bool found = false;
 				for (size_t i = 0; i != 27; ++i)

@@ -811,6 +811,12 @@ namespace white {
 			using base::base;
 		};
 
+		struct uint3 :vector3<uint32>
+		{
+			using base = vector3<uint32>;
+			using base::base;
+		};
+
 		struct uint4 :vector4<uint32>
 		{
 			using base = vector4<uint32>;

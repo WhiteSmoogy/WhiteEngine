@@ -144,7 +144,7 @@ inline namespace Shader
 
 		/** Finds the shader with the given type.  Asserts on failure. */
 		template<typename ShaderContentType>
-		ShaderRef<ShaderContentType> GetShader(const typename ShaderContentType::FPermutationDomain& PermutationVector) const
+		ShaderRef<ShaderContentType> GetShader(const typename ShaderContentType::PermutationDomain& PermutationVector) const
 		{
 			return GetShader<ShaderContentType>(PermutationVector.ToDimensionValueId());
 		}

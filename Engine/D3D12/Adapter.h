@@ -32,6 +32,9 @@ namespace platform_ex::Windows::D3D12 {
 	using platform::Render::CommandListExecutor;
 	using platform::Render::CommandListImmediate;
 
+	using platform::Render::SRVRIRef;
+	using platform::Render::UAVRIRef;
+
 	struct ResourceCreateInfo
 	{
 		unsigned int GPUIndex = 0;
@@ -111,6 +114,9 @@ namespace platform_ex::Windows::D3D12 {
 		ComputePipelineState* CreateComputePipelineState(platform::Render::ComputeHWShader* ComputeShader);
 
 		UnorderedAccessView* CreateUnorderedAccessView(platform::Render::Texture2D* InTexture) override;
+
+		SRVRIRef CreateShaderResourceView(platform::Render::GraphicsBuffer* InBuffer, EFormat format);
+		UAVRIRef CreateUnorderedAccessView(platform::Render::GraphicsBuffer* InBuffer, EFormat format);
 
 		platform::Render::Effect::CopyEffect& BiltEffect();
 

@@ -34,8 +34,6 @@ namespace platform_ex::Windows::D3D12 {
 		ID3D12Resource* UploadResource() const;
 
 		RenderTargetView* RetriveRenderTargetView(uint16 width, uint16 height, platform::Render::EFormat pf);
-		ShaderResourceView* RetriveShaderResourceView();
-		UnorderedAccessView* RetriveUnorderedAccessView();
 
 		DXGI_FORMAT GetFormat() const { return format; }
 	private:
@@ -45,8 +43,6 @@ namespace platform_ex::Windows::D3D12 {
 		friend class Device;
 		friend class Context;
 
-		std::unique_ptr<ShaderResourceView> srv;
-		std::unique_ptr<UnorderedAccessView> uav;
 		std::unique_ptr<std::unordered_map<std::size_t, std::unique_ptr<RenderTargetView>>> rtv_maps;
 
 		DXGI_FORMAT format;

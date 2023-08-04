@@ -1,10 +1,213 @@
 #include "View.h"
 #include "GraphicsBuffer.hpp"
+#include "Adapter.h"
+#include "Convert.h"
 
 using namespace platform_ex::Windows::D3D12;
+using platform::Render::shared_raw_robject;
 
 ShaderResourceView::ShaderResourceView(GraphicsBuffer* InBuffer, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc, uint32 InStride)
 	:TView(InBuffer->GetParentDevice(), ViewSubresourceSubsetFlags_None)
 {
 	Initialize(InDesc, InBuffer, InBuffer->Location, InStride);
+}
+
+SRVRIRef Device::CreateShaderResourceView(platform::Render::GraphicsBuffer* InBuffer, EFormat format)
+{
+	auto Resource = static_cast<GraphicsBuffer*>(InBuffer);
+	auto access = InBuffer->GetAccess();
+	auto usage = InBuffer->GetUsage();
+
+	uint32 StartOffsetBytes = 0;
+	uint32 NumElements = -1;
+
+	wconstraint(white::has_anyflags(access, EAccessHint::EA_GPURead) || white::has_allflags(access, EAccessHint::EA_AccelerationStructure));
+
+	auto CreateShaderResourceView = [&]<typename CommandType>()
+	{
+		auto srv = new ShaderResourceView(Resource->GetParentDevice());
+
+		auto& CmdList = platform::Render::CommandListExecutor::GetImmediateCommandList();
+
+		if (!CmdList.IsExecuting() && white::has_anyflags(usage, Buffer::Dynamic))
+		{
+			CL_ALLOC_COMMAND(CmdList, CommandType) { Resource, srv, StartOffsetBytes, NumElements, format };
+		}
+		else
+		{
+			CommandType Command{ Resource,srv,StartOffsetBytes,NumElements, format};
+			Command.ExecuteNoCmdList();
+		}
+
+		return shared_raw_robject(srv);
+	};
+
+	//TODO:switch case
+	if (white::has_allflags(access, EAccessHint::EA_AccelerationStructure))
+	{
+		D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
+
+		SRVDesc.Format = DXGI_FORMAT_UNKNOWN;
+		SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+		SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		SRVDesc.RaytracingAccelerationStructure.Location = Resource->Location.GetGPUVirtualAddress() + StartOffsetBytes;
+
+		auto srv = new ShaderResourceView(Resource, SRVDesc, 4);
+		return shared_raw_robject(srv);
+	}
+	if (!white::has_anyflags(access, EAccessHint::EA_GPUStructured))
+	{
+		struct D3D12InitializeBufferSRVCommand final : platform::Render::CommandBase
+		{
+			GraphicsBuffer* Buffer;
+			ShaderResourceView* SRV;
+			uint32 StartOffsetBytes;
+			uint32 NumElements;
+			DXGI_FORMAT Format;
+
+			D3D12InitializeBufferSRVCommand(GraphicsBuffer* InBuffer, ShaderResourceView* InSrv, uint32 InStartOffsetBytes, uint32 InNumElements, EFormat InFormat)
+				:Buffer(InBuffer), SRV(InSrv), StartOffsetBytes(InStartOffsetBytes), NumElements(InNumElements),Format(Buffer->GetFormat())
+			{}
+
+			void ExecuteAndDestruct(platform::Render::CommandListBase& CmdList, platform::Render::CommandListContext& Context)
+			{
+				ExecuteNoCmdList();
+				this->~D3D12InitializeBufferSRVCommand();
+			}
+
+			void ExecuteNoCmdList()
+			{
+				auto& Location = Buffer->Location;
+				const auto Stride = Buffer->Stride;
+				const auto access = Buffer->GetAccess();
+				const uint32 BufferSize = Buffer->size_in_byte;
+
+				uint32 CreationStride = Stride;
+
+				if (CreationStride == 0)
+				{
+					if (white::has_anyflags(access, EAccessHint::EA_Raw))
+						CreationStride = 4;
+					else
+					{
+						CreationStride = NumFormatBytes(Convert(Format));
+					}
+				}
+
+				const auto BufferOffset = Location.GetOffsetFromBaseOfResource();
+				const uint64 NumRequestedBytes = NumElements * CreationStride;
+
+				const uint32 OffsetBytes = std::min(StartOffsetBytes, BufferSize);
+				const uint32 NumBytes = static_cast<uint32>(std::min<uint64>(NumRequestedBytes, BufferSize - OffsetBytes));
+
+				D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
+
+				SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+				SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+
+				if (white::has_anyflags(access, EAccessHint::EA_Raw))
+				{
+					SRVDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+					SRVDesc.Buffer.Flags |= D3D12_BUFFER_SRV_FLAG_RAW;
+				}
+				else
+				{
+					SRVDesc.Format = Format;
+				}
+
+				SRVDesc.Buffer.FirstElement = (BufferOffset) / CreationStride;
+				SRVDesc.Buffer.NumElements = NumBytes / CreationStride;
+
+				SRV->Initialize(SRVDesc, Buffer, CreationStride);
+			}
+		};
+
+		return CreateShaderResourceView.operator() < D3D12InitializeBufferSRVCommand > ();
+	}
+	else {
+
+		struct D3D12InitializeStructuredBufferSRVCommand final : platform::Render::CommandBase
+		{
+			GraphicsBuffer* StructuredBuffer;
+			ShaderResourceView* SRV;
+			uint32 StartOffsetBytes;
+			uint32 NumElements;
+			EFormat Format;
+
+			D3D12InitializeStructuredBufferSRVCommand(GraphicsBuffer* InBuffer, ShaderResourceView* InSrv, uint32 InStartOffsetBytes, uint32 InNumElements, EFormat InFormat)
+				:StructuredBuffer(InBuffer), SRV(InSrv), StartOffsetBytes(InStartOffsetBytes), NumElements(InNumElements), Format(InFormat)
+			{}
+
+			void ExecuteAndDestruct(platform::Render::CommandListBase& CmdList, platform::Render::CommandListContext& Context)
+			{
+				ExecuteNoCmdList();
+				this->~D3D12InitializeStructuredBufferSRVCommand();
+			}
+
+			void ExecuteNoCmdList()
+			{
+				auto& Location = StructuredBuffer->Location;
+
+				const uint64 Offset = Location.GetOffsetFromBaseOfResource();
+				const D3D12_RESOURCE_DESC& BufferDesc = Location.GetResource()->GetDesc();
+
+				const bool bByteAccessBuffer = white::has_anyflags(StructuredBuffer->access, EAccessHint::EA_Raw);
+				// Create a Shader Resource View
+				D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
+				SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+				uint32 Stride = NumFormatBytes(Format);
+				uint32 MaxElements = static_cast<uint32>(Location.GetSize() / Stride);
+				StartOffsetBytes = std::min<uint32>(StartOffsetBytes, static_cast<uint32>(Location.GetSize()));
+				uint32 StartElement = StartOffsetBytes / Stride;
+
+				if (bByteAccessBuffer)
+				{
+					SRVDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+					SRVDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+					Stride = 4;
+				}
+				else
+				{
+					SRVDesc.Buffer.StructureByteStride = Stride;
+					SRVDesc.Format = Convert(Format);
+				}
+
+				SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+				SRVDesc.Buffer.NumElements = std::min<uint32>(MaxElements - StartElement, NumElements);
+				SRVDesc.Buffer.FirstElement = Offset / Stride + StartElement;
+
+				SRV->Initialize(SRVDesc, StructuredBuffer, Stride);
+			}
+		};
+
+		return CreateShaderResourceView.operator() < D3D12InitializeStructuredBufferSRVCommand > ();
+	}
+}
+
+UAVRIRef Device::CreateUnorderedAccessView(platform::Render::GraphicsBuffer* InBuffer, EFormat format)
+{
+	auto Buffer = static_cast<GraphicsBuffer*>(InBuffer);
+	auto& Location = Buffer->Location;
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc{};
+	UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+
+	uint32 EffectiveStride;
+	if (white::has_anyflags(Buffer->GetAccess(), EAccessHint::EA_Raw))
+	{
+		UAVDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+		UAVDesc.Buffer.Flags |= D3D12_BUFFER_UAV_FLAG_RAW;
+		EffectiveStride = 4;
+	}
+	else
+	{
+		UAVDesc.Format = FindUnorderedAccessDXGIFormat(Convert(format));
+		EffectiveStride = NumFormatBytes(format);
+	}
+
+	UAVDesc.Buffer.FirstElement = Location.GetOffsetFromBaseOfResource() / EffectiveStride;
+	UAVDesc.Buffer.NumElements = Location.GetSize() / EffectiveStride;
+
+	return shared_raw_robject(new UnorderedAccessView(Buffer->GetParentDevice(), UAVDesc, Buffer, nullptr));
 }

@@ -11,16 +11,17 @@ namespace platform {
 	namespace Render {
 		class FrameBuffer;
 
-		class ShaderResourceView{
+		class ShaderResourceView :public RObject {
 		public:
-			virtual ~ShaderResourceView();
 		};
 
 		class UnorderedAccessView :public RObject
 		{
 		public:
-			virtual ~UnorderedAccessView();
 		};
+
+		using SRVRIRef = std::shared_ptr<platform::Render::ShaderResourceView>;
+		using UAVRIRef = std::shared_ptr<platform::Render::UnorderedAccessView>;
 	}
 }
 

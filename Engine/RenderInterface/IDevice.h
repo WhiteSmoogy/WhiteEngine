@@ -167,6 +167,9 @@ namespace platform::Render {
 		virtual HardwareShader* CreateGeometryShader(const white::span<const uint8>& Code) = 0;
 		virtual HardwareShader* CreateComputeShader(const white::span<const uint8>& Code) = 0;
 
+		virtual SRVRIRef CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format = EF_Unknown) = 0;
+		virtual UAVRIRef CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format = EF_Unknown) = 0;
+
 		virtual DStorage& GetDStorage() = 0;
 	};
 }

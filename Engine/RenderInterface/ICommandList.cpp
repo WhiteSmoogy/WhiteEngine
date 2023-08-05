@@ -57,3 +57,12 @@ void platform::Render::CommandList::Present(Display* display)
 
 	GRenderIF->AdvanceDisplayBuffer();
 }
+
+SRVRIRef platform::Render::CommandList::CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format)
+{
+	return GRenderIF->GetDevice().CreateShaderResourceView(InBuffer, format);
+}
+UAVRIRef platform::Render::CommandList::CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format)
+{
+	return GRenderIF->GetDevice().CreateUnorderedAccessView(InBuffer, format);
+}

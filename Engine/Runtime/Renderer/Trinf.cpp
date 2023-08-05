@@ -67,7 +67,9 @@ pr::GraphicsBuffer* CreateByteAddressBuffer(uint32 size, uint32 stride)
 {
 	auto& device = Context::Instance().GetDevice();
 
-	return device.CreateBuffer(pr::Buffer::Usage::Static, pr::EAccessHint::EA_GPURead | pr::EAccessHint::EA_GPUStructured |pr::EAccessHint::EA_Raw, sizeof(uint32), sizeof(uint32), nullptr);
+	return device.CreateBuffer(pr::Buffer::Usage::Static, 
+		pr::EAccessHint::EA_GPURead | pr::EAccessHint::EA_GPUStructured |pr::EAccessHint::EA_Raw | pr::EAccessHint::EA_GPUUnordered | pr::EAccessHint::EA_GPUWrite,
+		sizeof(uint32), sizeof(uint32), nullptr);
 }
 
 template<typename T>
@@ -115,6 +117,8 @@ void StreamingScene::AddResource(std::shared_ptr<Resources> pResource)
 
 		Keys.resize(std::max(Keys.size(),pResource->TrinfKey + 1));
 		Keys[pResource->TrinfKey] = key;
+
+		PendingAdds.emplace_back(pResource);
 	}
 }
 
@@ -126,9 +130,10 @@ void StreamingScene::BeginAsyncUpdate(platform::Render::CommandList& cmdList)
 	{
 		if ((*itr)->IORequest->IsReady())
 		{
-			itr = Streaming.erase(itr);
 			Resident.emplace_back(*itr);
 			(*itr)->State = Resources::StreamingState::Resident;
+
+			itr = Streaming.erase(itr);
 		}
 		else
 			++itr;

@@ -3,6 +3,7 @@
 #include "Asset/DStorageAsset.h"
 #include "Texture.h"
 #include "View.h"
+#include "GraphicsBuffer.hpp"
 #include <zlib.h>
 #include <spdlog/spdlog.h>
 
@@ -225,6 +226,15 @@ void DirectStorage::EnqueueRequest(const DStorageFile2GpuRequest& req)
 				request.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_MULTIPLE_SUBRESOURCES;
 				request.Destination.MultipleSubresources.Resource = Resouce->D3DResource();
 				request.Destination.MultipleSubresources.FirstSubresource = Destination.FirstSubresource;
+			}
+			else if constexpr (std::is_same_v<T, DStorageFile2GpuRequest::Buffer>)
+			{
+				auto Resouce = static_cast<GraphicsBuffer*>(Destination.Target);
+
+				request.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_BUFFER;
+				request.Destination.Buffer.Resource = Resouce->D3DResource();
+				request.Destination.Buffer.Offset = Resouce->Resource()->GetOffsetFromBaseOfResource() + Destination.Offset;
+				request.Destination.Buffer.Size = Destination.Size;
 			}
 		}, req.Destination);
 

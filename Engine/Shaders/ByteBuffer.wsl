@@ -11,7 +11,6 @@
 #define STRUCTURED_ELEMENT_SIZE_UINT1 (0)
 #define STRUCTURED_ELEMENT_SIZE_UINT2 (1)
 #define STRUCTURED_ELEMENT_SIZE_UINT4 (2)
-#define STRUCTURED_ELEMENT_SIZE_UINT8 (3)
 
 uint Value;
 uint Size;
@@ -28,14 +27,6 @@ uint Float4sPerLine;
 #elif STRUCTURED_ELEMENT_SIZE_UINT4 == STRUCTURED_ELEMENT_SIZE
 	#define STRUCTURED_BUFFER_ACCESS(BufferName, Index) BufferName##4x[(Index)]
 	#define STRUCTURED_VALUE uint4(Value,Value,Value,Value)
-#elif STRUCTURED_ELEMENT_SIZE_UINT8 == STRUCTURED_ELEMENT_SIZE
-	#define STRUCTURED_BUFFER_ACCESS(BufferName, Index) BufferName##8x[(Index)]
-	FUint8 MakeUint8(uint InValue)
-	{
-		const FUint8 Uint8Value = {InValue,InValue,InValue,InValue,InValue,InValue,InValue,InValue };
-		return Uint8Value;
-	}
-	#define STRUCTURED_VALUE MakeUint8(Value)
 #endif
 
 #if RESOURCE_TYPE == RESOURCE_TYPE_FLOAT4_BUFFER
@@ -49,17 +40,14 @@ uint Float4sPerLine;
 	StructuredBuffer<uint>		UploadStructuredBuffer1x;
 	StructuredBuffer<uint2>		UploadStructuredBuffer2x;
 	StructuredBuffer<uint4>		UploadStructuredBuffer4x;
-	StructuredBuffer<FUint8>		UploadStructuredBuffer8x;
 
 	StructuredBuffer<uint>		SrcStructuredBuffer1x;
 	StructuredBuffer<uint2>		SrcStructuredBuffer2x;
 	StructuredBuffer<uint4>		SrcStructuredBuffer4x;
-	StructuredBuffer<FUint8>		SrcStructuredBuffer8x;
 
 	RWStructuredBuffer<uint>	DstStructuredBuffer1x;
 	RWStructuredBuffer<uint2>	DstStructuredBuffer2x;
 	RWStructuredBuffer<uint4>	DstStructuredBuffer4x;
-	RWStructuredBuffer<FUint8>	DstStructuredBuffer8x;
 	
 #elif RESOURCE_TYPE == RESOURCE_TYPE_FLOAT4_TEXTURE
 	StructuredBuffer<uint>			ScatterStructuredBuffer;
@@ -124,7 +112,7 @@ void MemcpyCS( uint ThreadId : SV_DispatchThreadID )
 		DstByteAddressBuffer.Store( DstIndex * 4, SrcData );
 	}
 #else
-	#error "Not implemented"
+	#error \"Not implemented\"
 #endif
 }
 "       

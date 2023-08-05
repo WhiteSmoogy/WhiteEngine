@@ -12,9 +12,9 @@ ShaderResourceView::ShaderResourceView(GraphicsBuffer* InBuffer, const D3D12_SHA
 	Initialize(InDesc, InBuffer, InBuffer->Location, InStride);
 }
 
-SRVRIRef Device::CreateShaderResourceView(platform::Render::GraphicsBuffer* InBuffer, EFormat format)
+SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format)
 {
-	auto Resource = static_cast<GraphicsBuffer*>(InBuffer);
+	auto Resource = static_cast<GraphicsBuffer*>(const_cast<platform::Render::GraphicsBuffer*>(InBuffer));
 	auto access = InBuffer->GetAccess();
 	auto usage = InBuffer->GetUsage();
 
@@ -157,10 +157,6 @@ SRVRIRef Device::CreateShaderResourceView(platform::Render::GraphicsBuffer* InBu
 				SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 				uint32 Stride = NumFormatBytes(Format);
-				uint32 MaxElements = static_cast<uint32>(Location.GetSize() / Stride);
-				StartOffsetBytes = std::min<uint32>(StartOffsetBytes, static_cast<uint32>(Location.GetSize()));
-				uint32 StartElement = StartOffsetBytes / Stride;
-
 				if (bByteAccessBuffer)
 				{
 					SRVDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
@@ -172,6 +168,11 @@ SRVRIRef Device::CreateShaderResourceView(platform::Render::GraphicsBuffer* InBu
 					SRVDesc.Buffer.StructureByteStride = Stride;
 					SRVDesc.Format = Convert(Format);
 				}
+
+				uint32 MaxElements = static_cast<uint32>(Location.GetSize() / Stride);
+				StartOffsetBytes = std::min<uint32>(StartOffsetBytes, static_cast<uint32>(Location.GetSize()));
+				uint32 StartElement = StartOffsetBytes / Stride;
+				
 
 				SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 				SRVDesc.Buffer.NumElements = std::min<uint32>(MaxElements - StartElement, NumElements);
@@ -185,9 +186,9 @@ SRVRIRef Device::CreateShaderResourceView(platform::Render::GraphicsBuffer* InBu
 	}
 }
 
-UAVRIRef Device::CreateUnorderedAccessView(platform::Render::GraphicsBuffer* InBuffer, EFormat format)
+UAVRIRef Device::CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format)
 {
-	auto Buffer = static_cast<GraphicsBuffer*>(InBuffer);
+	auto Buffer = static_cast<GraphicsBuffer*>(const_cast<platform::Render::GraphicsBuffer*>(InBuffer));
 	auto& Location = Buffer->Location;
 
 	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc{};

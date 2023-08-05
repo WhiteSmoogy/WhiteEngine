@@ -30,7 +30,6 @@ enum class ByteBufferStructuredSize
 	Uint1,
 	Uint2,
 	Uint4,
-	Uint8,
 	MAX
 };
 
@@ -90,9 +89,9 @@ public:
 IMPLEMENT_BUILTIN_SHADER(MemcpyCS, "ByteBuffer.wsl", "MemcpyCS", platform::Render::ComputeShader);
 
 template<>
-void platform::Render::MemcpyResource<GraphicsBuffer>(CommandList& cmdList, const GraphicsBuffer& DstBuffer, const GraphicsBuffer& SrcBuffer, const MemcpyResourceParams& Params)
+void platform::Render::MemcpyResource<std::shared_ptr<GraphicsBuffer>>(CommandList& cmdList, const std::shared_ptr<GraphicsBuffer>& DstBuffer, const std::shared_ptr<GraphicsBuffer>& SrcBuffer, const MemcpyResourceParams& Params)
 {
-	const uint32 Divisor = white::has_anyflags(DstBuffer.GetAccess(), EAccessHint::EA_Raw) ? 4 : 1;
+	const uint32 Divisor = white::has_anyflags(DstBuffer->GetAccess(), EAccessHint::EA_Raw) ? 4 : 1;
 
 	uint32 NumElementsProcessed = 0;
 
@@ -108,12 +107,12 @@ void platform::Render::MemcpyResource<GraphicsBuffer>(CommandList& cmdList, cons
 		Parameters.Common.SrcOffset = (Params.SrcOffset + NumElementsProcessed);
 		Parameters.Common.DstOffset = (Params.DstOffset + NumElementsProcessed);
 
-		if (white::has_anyflags(DstBuffer.GetAccess(), EAccessHint::EA_Raw))
+		if (white::has_anyflags(DstBuffer->GetAccess(), EAccessHint::EA_Raw))
 		{
 			ResourceTypeEnum = ByteBufferResourceType::Uint_Buffer;
 
-			Parameters.SrcByteAddressBuffer = nullptr;
-			Parameters.Common.DstByteAddressBuffer = nullptr;
+			Parameters.SrcByteAddressBuffer = cmdList.CreateShaderResourceView(SrcBuffer.get()).get();
+			Parameters.Common.DstByteAddressBuffer = cmdList.CreateUnorderedAccessView(DstBuffer.get()).get();;
 		}
 
 		MemcpyCS::PermutationDomain PermutationVector;
@@ -126,5 +125,6 @@ void platform::Render::MemcpyResource<GraphicsBuffer>(CommandList& cmdList, cons
 
 		NumElementsProcessed += NumElementsPerDispatch;
 	}
-
 }
+
+template void platform::Render::MemcpyResource<std::shared_ptr<GraphicsBuffer>>(CommandList& cmdList, const std::shared_ptr<GraphicsBuffer>& DstBuffer, const std::shared_ptr<GraphicsBuffer>& SrcBuffer, const MemcpyResourceParams& Params);

@@ -115,8 +115,8 @@ namespace platform_ex::Windows::D3D12 {
 
 		UnorderedAccessView* CreateUnorderedAccessView(platform::Render::Texture2D* InTexture) override;
 
-		SRVRIRef CreateShaderResourceView(platform::Render::GraphicsBuffer* InBuffer, EFormat format);
-		UAVRIRef CreateUnorderedAccessView(platform::Render::GraphicsBuffer* InBuffer, EFormat format);
+		SRVRIRef CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format);
+		UAVRIRef CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format);
 
 		platform::Render::Effect::CopyEffect& BiltEffect();
 

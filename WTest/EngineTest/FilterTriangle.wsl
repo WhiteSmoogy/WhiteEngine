@@ -1,0 +1,178 @@
+(effect
+    (include Common.h)
+    (shader
+"
+#define TRIANGLE_PER_CLUSTER 64
+
+struct FilterDispatchArgs
+{
+    uint IndexStart;
+    uint VertexStart;
+
+    uint DrawId;
+
+    uint IndexEnd;
+
+    uint OutpuIndexOffset;
+};
+
+ConstantBuffer<FilterDispatchArgs> Args;
+
+struct Matrixs
+{
+    float4x4 mvp;
+};
+
+struct ViewArgs
+{
+     Matrixs matrixs;
+};
+
+ConstantBuffer<ViewArgs> View; 
+
+ByteAddressBuffer IndexBuffer;
+ByteAddressBuffer PositionBuffer;
+
+RWByteAddressBuffer FliteredIndexBuffer;
+
+struct UncompactedDrawArguments
+{
+    uint startIndex;
+    uint numIndices;
+};
+
+RWStructuredBuffer<UncompactedDrawArguments> UncompactedDrawArgs;
+
+uint3 Load3(ByteAddressBuffer Buffer,uint Index)
+{
+    return Buffer.Load3(Index*4);
+}
+
+float4 LoadVertex(uint Index)
+{
+    return float4(as_float(PositionBuffer.Load4(Index*12)).xyz, 1);  
+}
+
+bool CullTriangle(float4 vertices[3])
+{
+#if CULL_BACKFACE
+    float3x3 m = float3x3(vertices[0].xyw, vertices[1].xyw, vertices[2].xyw);
+    // If the determinant is > 0, the triangle is backfacing.
+	// If the determinant is = 0, the triangle is being viewed edge-on or is degenerate, and has 0 screen-space area.
+	if (determinant(m) >= 0)
+		return true;    
+#endif
+
+#if CULL_FRUSTUM
+    int verticesInFrontOfNearPlane = 0;
+
+    for (uint i = 0; i < 3; i++)
+	{
+		if (vertices[i].w < 0)
+		{
+			++verticesInFrontOfNearPlane;
+
+			// Flip the w so that any triangle that straddles the plane won't be projected onto
+			// two sides of the screen
+			vertices[i].w *= (-1.0);
+		}
+		// Transform vertices[i].xy into the normalized 0..1 screen space
+		// this is for the following stages ...
+		vertices[i].xy /= vertices[i].w * 2;
+		vertices[i].xy += float2(0.5, 0.5);
+	}
+
+    if (verticesInFrontOfNearPlane == 3)
+		return true;
+
+    float minx = min(min(vertices[0].x, vertices[1].x), vertices[2].x);
+	float miny = min(min(vertices[0].y, vertices[1].y), vertices[2].y);
+	float maxx = max(max(vertices[0].x, vertices[1].x), vertices[2].x);
+	float maxy = max(max(vertices[0].y, vertices[1].y), vertices[2].y);
+
+	if ((maxx < 0) || (maxy < 0) || (minx > 1) || (miny > 1))
+		return true;
+#endif
+
+    return false;
+}
+
+group_shared uint  workGroupIndexCount;
+group_shared uint  workGroupOutputSlot;
+
+void StoreByte(RWByteAddressBuffer buffer,uint index,uint value)
+{
+    buffer.Store(index * 4, value);
+}
+
+[numthreads(TRIANGLE_PER_CLUSTER, 1, 1)]
+void FilterTriangleCS( uint ClusterId : SV_GroupID, uint TriId: SV_GroupIndex)
+{
+    uint ClusterOffsetIndex = Args.IndexStart + ClusterId * TRIANGLE_PER_CLUSTER * 3;
+    
+    uint IndexOffset = ClusterOffsetIndex + TriId * 3;
+
+    if(ClusterId == 0)
+    {
+        workGroupIndexCount = 0;
+    }
+
+    GroupMemoryBarrier();
+
+    uint threadOutputSlot = 0;
+
+    bool cull = true;
+    uint3 Indices = 0;
+
+    //last cluster's triangle count <= TRIANGLE_PER_CLUSTER
+    if(IndexOffset < Args.IndexEnd)
+    {
+        Indices = Load3(IndexBuffer, IndexOffset);
+
+        float4 v0 = LoadVertexArgs.VertexStart + Indices.x);
+        float4 v1 = LoadVertexArgs.VertexStart + Indices.y);
+        float4 v2 = LoadVertexArgs.VertexStart + Indices.z);
+
+        float4x4 mvp = View.matrixs.mvp;
+
+        float4 vertices[3] =
+	    {
+			mul(v0, mvp),
+			mul(v1, mvp),
+			mul(v2, mvp)
+		};
+
+        cull = CullTriangle(vertices);
+
+        if(!cull)
+        {
+            AtomicAdd(workGroupIndexCount, 3, threadOutputSlot);
+        }
+    }
+
+    GroupMemoryBarrier();
+
+    if (ClusterId == 0)
+    {
+        AtomicAdd(UncompactedDrawArgs[Args.DrawId].numIndices, workGroupIndexCount, workGroupOutputSlot)
+    }
+
+    AllMemoryBarrier();
+
+    if (!cull)
+    {
+        uint index = AtomicLoad(workGroupOutputSlot);
+        
+        StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 0, Indices.x);
+        StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 1, Indices.y);
+        StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 2, Indices.z);
+    }
+
+    if (ClusterId == 0 && TriId == 0)
+    {
+        UncompactedDrawArgs[Args.DrawId].startIndex = Args.OutpuIndexOffset;
+    }
+}
+"
+    )
+)

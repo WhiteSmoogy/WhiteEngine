@@ -42,6 +42,43 @@ namespace Trinf
 		}
 	};
 
+	struct GrowOnlySpanAllocator
+	{
+		int32 Allocate(int32 Num);
+
+		int32 GetMaxSize()
+		{
+			return MaxSize;
+		}
+
+		int32 SearchFreeList(int32 Num);
+
+	private:
+		struct LinearAlloc
+		{
+			LinearAlloc(int32 InStartOffset, int32 InNum) :
+				StartOffset(InStartOffset),
+				Num(InNum)
+			{}
+
+			int32 StartOffset;
+			int32 Num;
+
+			bool Contains(LinearAlloc Other)
+			{
+				return StartOffset <= Other.StartOffset && (StartOffset + Num) >= (Other.StartOffset + Other.Num);
+			}
+
+			bool operator<(const LinearAlloc& Other) const
+			{
+				return StartOffset < Other.StartOffset;
+			}
+		};
+
+		int32 MaxSize;
+		std::vector<LinearAlloc> FreeSpans;
+	};
+
 	class StreamingScene
 	{
 	public:
@@ -56,44 +93,7 @@ namespace Trinf
 		void EndAsyncUpdate(platform::Render::CommandList& cmdList);
 	private:
 		void ProcessNewResources(platform::Render::CommandList& cmdList);
-	private:
-		struct GrowOnlySpanAllocator
-		{
-			int32 Allocate(int32 Num);
-
-			int32 GetMaxSize()
-			{
-				return MaxSize;
-			}
-
-			int32 SearchFreeList(int32 Num);
-			
-		private:
-			struct LinearAlloc
-			{
-				LinearAlloc(int32 InStartOffset, int32 InNum) :
-					StartOffset(InStartOffset),
-					Num(InNum)
-				{}
-
-				int32 StartOffset;
-				int32 Num;
-
-				bool Contains(LinearAlloc Other)
-				{
-					return StartOffset <= Other.StartOffset && (StartOffset + Num) >= (Other.StartOffset + Other.Num);
-				}
-
-				bool operator<(const LinearAlloc& Other) const
-				{
-					return StartOffset < Other.StartOffset;
-				}
-			};
-
-			int32 MaxSize;
-			std::vector<LinearAlloc> FreeSpans;
-		};
-
+	public:
 		template<typename T>
 		struct TrinfBuffer
 		{
@@ -114,7 +114,7 @@ namespace Trinf
 		TrinfBuffer<uint32> Tangent;
 		TrinfBuffer<wm::float2> TexCoord;
 		TrinfBuffer<uint32> Index;
-
+	private:
 		struct TrinfKey
 		{
 			int32 Index;

@@ -12,7 +12,7 @@ using platform::Render::Context;
 
 std::unique_ptr<StreamingScene> Trinf::Scene;
 
-int32 StreamingScene::GrowOnlySpanAllocator::Allocate(int32 Num)
+int32 Trinf::GrowOnlySpanAllocator::Allocate(int32 Num)
 {
 	const int32 FoundIndex = SearchFreeList(Num);
 
@@ -42,7 +42,7 @@ int32 StreamingScene::GrowOnlySpanAllocator::Allocate(int32 Num)
 	return StartOffset;
 }
 
-int32 StreamingScene::GrowOnlySpanAllocator::SearchFreeList(int32 Num)
+int32 Trinf::GrowOnlySpanAllocator::SearchFreeList(int32 Num)
 {
 	// Search free list for first matching
 	for (int32 i = 0; i < FreeSpans.size(); i++)
@@ -57,7 +57,6 @@ int32 StreamingScene::GrowOnlySpanAllocator::SearchFreeList(int32 Num)
 
 	return white::INDEX_NONE;
 }
-
 
 StreamingScene::StreamingScene()
 	:storage_api(Context::Instance().GetDevice().GetDStorage())

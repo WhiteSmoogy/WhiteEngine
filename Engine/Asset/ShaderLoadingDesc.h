@@ -89,7 +89,12 @@ namespace platform::X
 
 		white::coroutine::Task<void> LoadNodeAsync(white::coroutine::IOScheduler& io)
 		{
-			shader_desc.data->term_node = *(co_await LoadNodeAsync(io, shader_desc.path)).begin();
+			auto node = co_await LoadNodeAsync(io, shader_desc.path);
+
+			if (node)
+				shader_desc.data->term_node = *node.begin();
+			else
+				throw std::invalid_argument(shader_desc.path.string() + "is invalid");
 		}
 
 		void ParseNode()

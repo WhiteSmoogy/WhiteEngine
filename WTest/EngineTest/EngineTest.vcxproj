@@ -175,6 +175,7 @@
     <ClCompile Include="Scene\SceneComponent.cpp" />
     <ClCompile Include="Scene\SceneSystem.cpp" />
     <ClCompile Include="TestFramework.cpp" />
+    <ClCompile Include="VisBuffer.cpp" />
     <ClCompile Include="wWinMain.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -213,6 +214,9 @@
     <ClInclude Include="VisBuffer.h" />
   </ItemGroup>
   <ItemGroup>
+    <CopyFileToFolders Include="FilterTriangle.wsl">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

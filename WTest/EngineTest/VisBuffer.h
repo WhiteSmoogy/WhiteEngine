@@ -3,7 +3,6 @@
 #define TEST_CODE 1
 
 #include "WFramework/Helper/ShellHelper.h"
-#include "WFramework/Helper/ShellHelper.h"
 
 #include "Asset/DStorageAsset.h"
 #include "Core/Coroutine/SyncWait.h"
@@ -56,6 +55,8 @@ private:
 		return false;
 	}
 
+	void RenderTrinf(platform::Render::CommandList& CmdList);
+
 	white::uint32 DoUpdate(white::uint32 pass) override {
 		auto& CmdList = render::CommandListExecutor::GetImmediateCommandList();
 
@@ -88,9 +89,11 @@ private:
 
 		auto viewproj = viewmatrix * projmatrix;
 
+		Trinf::Scene->AddResource(sponza_trinf);
+
 		Trinf::Scene->BeginAsyncUpdate(CmdList);
 
-
+		RenderTrinf(CmdList);
 
 		Trinf::Scene->EndAsyncUpdate(CmdList);
 

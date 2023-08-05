@@ -25,6 +25,7 @@
       <Filter>imgui</Filter>
     </ClCompile>
     <ClCompile Include="Entities.cpp" />
+    <ClCompile Include="VisBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TestFramework.h" />
@@ -81,5 +82,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="FilterTriangle.wsl" />
   </ItemGroup>
 </Project>

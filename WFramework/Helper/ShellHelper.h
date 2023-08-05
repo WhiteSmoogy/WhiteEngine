@@ -6,6 +6,7 @@
 #ifndef WFrameWork_Helper_ShellHelper_h
 #define WFrameWork_Helper_ShellHelper_h 1
 
+#include <WBase/wdef.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/stopwatch.h>
 namespace white {

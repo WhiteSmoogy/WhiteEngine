@@ -10,13 +10,19 @@ namespace platform::Render
 	ConstantBuffer* CreateConstantBuffer(const void* Contents, Buffer::Usage Usage, const ShaderParametersMetadata& Layout);
 
 	template<typename TBufferStruct>
-		requires requires{ TBufferStruct::TypeInfo::GetStructMetadata(); }
 	class GraphicsBufferRef
 	{
 	public:
 		static GraphicsBufferRef<TBufferStruct> CreateGraphicsBuffeImmediate(const TBufferStruct& Value, Buffer::Usage Usage)
 		{
-			return GraphicsBufferRef<TBufferStruct>(CreateConstantBuffer(&Value, Usage, *TBufferStruct::TypeInfo::GetStructMetadata()));
+			if constexpr (requires { TBufferStruct::TypeInfo::GetStructMetadata; })
+				return GraphicsBufferRef<TBufferStruct>(CreateConstantBuffer(&Value, Usage, *TBufferStruct::TypeInfo::GetStructMetadata()));
+			else
+			{
+				ShaderParametersMetadata Layout(sizeof(TBufferStruct), {});
+
+				return GraphicsBufferRef<TBufferStruct>(CreateConstantBuffer(&Value, Usage, Layout));
+			}
 		}
 
 		operator std::shared_ptr<ConstantBuffer>()
@@ -38,7 +44,6 @@ namespace platform::Render
 	};
 
 	template<typename TBufferStruct>
-		requires requires{ TBufferStruct::TypeInfo::GetStructMetadata(); }
 	GraphicsBufferRef<TBufferStruct> CreateGraphicsBuffeImmediate(const TBufferStruct& Value, Buffer::Usage Usage)
 	{
 		return GraphicsBufferRef<TBufferStruct>::CreateGraphicsBuffeImmediate(Value, Usage);

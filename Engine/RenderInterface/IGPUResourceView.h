@@ -10,6 +10,7 @@
 namespace platform {
 	namespace Render {
 		class FrameBuffer;
+		class GraphicsBuffer;
 
 		class ShaderResourceView :public RObject {
 		public:

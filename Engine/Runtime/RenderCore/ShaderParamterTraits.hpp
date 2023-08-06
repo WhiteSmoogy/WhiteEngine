@@ -16,6 +16,12 @@ namespace platform::Render
 		struct RWByteAddressBuffer {};
 		struct ByteAddressBuffer {};
 		struct RWTexture2D {};
+
+		template<typename Struct>
+		struct ConstantBuffer {};
+
+		template<typename Struct>
+		struct RWStructuredBuffer {};
 	}
 
 #define MS_ALIGN(n) __declspec(align(n))
@@ -141,6 +147,20 @@ namespace platform::Render
 		struct TShaderParameterTypeInfo<HLSLTraits::RWTexture2D> : TShaderParameterUAVType<SPT_rwtexture2D>
 		{
 		};
+
+		template<typename Struct>
+		struct TShaderParameterTypeInfo<HLSLTraits::ConstantBuffer<Struct>> : ShaderTypeInfo<SPT_ConstantBuffer>
+		{
+			using DeclType = platform::Render::GraphicsBuffer*;
+
+			template<std::size_t Boundary = 0>
+			static constexpr std::size_t Alignement = sizeof(DeclType);
+		};
+
+		template<typename Struct>
+		struct TShaderParameterTypeInfo<HLSLTraits::RWStructuredBuffer<Struct>> : TShaderParameterUAVType<SPT_rwstructured_buffer>
+		{
+		};
 		
 		template<typename TypeParameter>
 		struct TShaderTextureTypeInfo;
@@ -251,11 +271,30 @@ namespace platform::Render
  */
 #define SHADER_PARAMETER_SAMPLER(MemberType,MemberName) SHADER_PARAMETER(MemberType,MemberName)
 
+ /** Adds an unordered access view.
+  *
+  * Example:
+  *	SHADER_PARAMETER_UAV(RWTexture2D, MyUAV)
+  */
 #define SHADER_PARAMETER_UAV(MemberType,MemberName) \
 	INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>::ShaderType, platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>,MemberType,MemberName)
 
+  /** Adds a shader resource view.
+   *
+   * Example:
+   *	SHADER_PARAMETER_SRV(Texture2D, MySRV)
+   */
 #define SHADER_PARAMETER_SRV(MemberType,MemberName) \
 	INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>::ShaderType, platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>,MemberType,MemberName)
+
+   /** Adds a shader constant buffer.
+	  *
+	  * Example:
+	  *	SHADER_PARAMETER_CBUFFER(Struct, MyStruct)
+	  */
+#define SHADER_PARAMETER_CBUFFER(MemberType,MemberName) \
+	INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::SPT_ConstantBuffer, platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::ConstantBuffer<MemberType>>,MemberType,MemberName)
+
 
 /** Include a shader parameter structure into another one in shader code.
 *

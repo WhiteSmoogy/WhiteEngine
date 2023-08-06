@@ -59,8 +59,8 @@ public:
 		SHADER_PARAMETER_CBUFFER(ViewArgs, View)
 		SHADER_PARAMETER_SRV(ByteAddressBuffer, IndexBuffer)
 		SHADER_PARAMETER_SRV(ByteAddressBuffer, PositionBuffer)
-		SHADER_PARAMETER_UAV(RWByteAddressBuffer, PositionBuffer)
-		SHADER_PARAMETER_UAV(RWStructuredBuffer, UncompactedDrawArgs)
+		SHADER_PARAMETER_UAV(RWByteAddressBuffer, FliteredIndexBuffer)
+		SHADER_PARAMETER_UAV(RWStructuredBuffer<UncompactedDrawArguments>, UncompactedDrawArgs)
 		END_SHADER_PARAMETER_STRUCT()
 };
 

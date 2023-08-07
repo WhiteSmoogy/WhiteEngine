@@ -68,7 +68,7 @@ pr::GraphicsBuffer* CreateByteAddressBuffer(uint32 size, uint32 stride)
 
 	return device.CreateBuffer(pr::Buffer::Usage::Static, 
 		pr::EAccessHint::EA_GPURead | pr::EAccessHint::EA_GPUStructured |pr::EAccessHint::EA_Raw | pr::EAccessHint::EA_GPUUnordered | pr::EAccessHint::EA_GPUWrite,
-		sizeof(uint32), sizeof(uint32), nullptr);
+		size, sizeof(uint32), nullptr);
 }
 
 template<typename T>

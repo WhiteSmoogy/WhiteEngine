@@ -43,14 +43,14 @@ struct UncompactedDrawArguments
 
 RWStructuredBuffer<UncompactedDrawArguments> UncompactedDrawArgs;
 
-uint3 Load3(ByteAddressBuffer Buffer,uint Index)
+uint3 Load3(ByteAddressBuffer InputBuffer,uint Index)
 {
-    return Buffer.Load3(Index*4);
+    return InputBuffer.Load3(Index*4);
 }
 
 float4 LoadVertex(uint Index)
 {
-    return float4(as_float(PositionBuffer.Load4(Index*12)).xyz, 1);  
+    return float4(asfloat(PositionBuffer.Load4(Index*12)).xyz, 1);  
 }
 
 bool CullTriangle(float4 vertices[3])
@@ -97,8 +97,8 @@ bool CullTriangle(float4 vertices[3])
     return false;
 }
 
-group_shared uint  workGroupIndexCount;
-group_shared uint  workGroupOutputSlot;
+groupshared uint  workGroupIndexCount;
+groupshared uint  workGroupOutputSlot;
 
 void StoreByte(RWByteAddressBuffer buffer,uint index,uint value)
 {
@@ -129,9 +129,9 @@ void FilterTriangleCS( uint ClusterId : SV_GroupID, uint TriId: SV_GroupIndex)
     {
         Indices = Load3(IndexBuffer, IndexOffset);
 
-        float4 v0 = LoadVertexArgs.VertexStart + Indices.x);
-        float4 v1 = LoadVertexArgs.VertexStart + Indices.y);
-        float4 v2 = LoadVertexArgs.VertexStart + Indices.z);
+        float4 v0 = LoadVertex(Args.VertexStart + Indices.x);
+        float4 v1 = LoadVertex(Args.VertexStart + Indices.y);
+        float4 v2 = LoadVertex(Args.VertexStart + Indices.z);
 
         float4x4 mvp = View.matrixs.mvp;
 
@@ -146,7 +146,7 @@ void FilterTriangleCS( uint ClusterId : SV_GroupID, uint TriId: SV_GroupIndex)
 
         if(!cull)
         {
-            AtomicAdd(workGroupIndexCount, 3, threadOutputSlot);
+            InterlockedAdd(workGroupIndexCount, 3, threadOutputSlot);
         }
     }
 
@@ -154,14 +154,14 @@ void FilterTriangleCS( uint ClusterId : SV_GroupID, uint TriId: SV_GroupIndex)
 
     if (ClusterId == 0)
     {
-        AtomicAdd(UncompactedDrawArgs[Args.DrawId].numIndices, workGroupIndexCount, workGroupOutputSlot)
+        InterlockedAdd(UncompactedDrawArgs[Args.DrawId].numIndices, workGroupIndexCount, workGroupOutputSlot);
     }
 
     AllMemoryBarrier();
 
     if (!cull)
     {
-        uint index = AtomicLoad(workGroupOutputSlot);
+        uint index = workGroupOutputSlot;
         
         StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 0, Indices.x);
         StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 1, Indices.y);

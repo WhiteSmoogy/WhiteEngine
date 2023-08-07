@@ -19,7 +19,7 @@ namespace platform::Render
 				return GraphicsBufferRef<TBufferStruct>(CreateConstantBuffer(&Value, Usage, *TBufferStruct::TypeInfo::GetStructMetadata()));
 			else
 			{
-				ShaderParametersMetadata Layout(sizeof(TBufferStruct), {});
+				ShaderParametersMetadata Layout(white::Align<uint32>(sizeof(TBufferStruct),16), {});
 
 				return GraphicsBufferRef<TBufferStruct>(CreateConstantBuffer(&Value, Usage, Layout));
 			}

@@ -11,6 +11,7 @@ namespace platform {
 	namespace Render {
 		class FrameBuffer;
 		class GraphicsBuffer;
+		class ConstantBuffer;
 
 		class ShaderResourceView :public RObject {
 		public:

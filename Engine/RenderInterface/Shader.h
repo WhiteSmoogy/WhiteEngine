@@ -331,14 +331,19 @@ inline namespace Shader
 		const ShaderParametersMetadata* const RootParametersMetadata;
 	};
 
-	template <typename ParameterStruct>
-	inline void BindForLegacyShaderParameters(RenderShader* Shader, const ShaderParameterMap& ParameterMap)
+	template <typename ShaderClass>
+		requires requires
 	{
-		Shader->Bindings.BindForLegacyShaderParameters(Shader, ParameterMap, *ParameterStruct::TypeInfo::GetStructMetadata());
+		typename ShaderClass::Parameters;
+		ShaderClass::Parameters::TypeInfo::GetStructMetadata;
+	}
+	inline void BindForLegacyShaderParameters(ShaderClass* Shader, const ShaderParameterMap& ParameterMap)
+	{
+		Shader->Bindings.BindForLegacyShaderParameters(Shader, ParameterMap, *ShaderClass::Parameters::TypeInfo::GetStructMetadata());
 	}
 
-	template<>
-	inline void BindForLegacyShaderParameters<void>(RenderShader* Shader, const ShaderParameterMap& ParameterMap)
+	template <typename ShaderClass>
+	inline void BindForLegacyShaderParameters(ShaderClass* Shader, const ShaderParameterMap& ParameterMap)
 	{
 	}
 
@@ -500,16 +505,8 @@ public:\
 	using ShaderMapType = platform::Render::##ShaderMetaTypeShortcut##ShaderMap;\
 	static ShaderMetaType StaticType; \
 	EXPORTED_SHADER_VTABLE(ShaderClass)\
-	ShaderClass(const ShaderMetaType::CompiledShaderInitializer& Initializer) \
-		:DerivedType(Initializer)\
-	{\
-		if constexpr(ShaderClass::RootParameterStruct)\
-			platform::Render::BindForRootShaderParameters(this, Initializer.ParameterMap); \
-		else if constexpr(platform::Render::ShaderParametersType<ShaderClass>::HasParameters)\
-			platform::Render::BindForLegacyShaderParameters<platform::Render::ShaderParametersType_t<ShaderClass>>(this,Initializer.ParameterMap);\
-	}\
-	ShaderClass() \
-	{ }
+	ShaderClass(const ShaderMetaType::CompiledShaderInitializer& Initializer);\
+	ShaderClass();
 
 #define SHADER_VTABLE(ShaderClass) \
 	ShaderClass::PermutationDomain::PermutationCount,\

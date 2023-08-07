@@ -156,17 +156,17 @@ namespace platform::Render {
 			EF_R32 = MakeElementFormat1<EC_R, 32, ECT_UNorm>::value,
 			// 32-bit element format, 32 bits for signed red.
 			EF_SIGNED_R32 = MakeElementFormat1<EC_R, 32, ECT_SNorm>::value,
-			// 64-bit element format, 16 bits for red and green.
+			// 64-bit element format, 32 bits for red and green.
 			EF_GR32 = MakeElementFormat2<EC_G, EC_R, 32, 32, ECT_UNorm, ECT_UNorm>::value,
-			// 64-bit element format, 16 bits for signed red and green.
+			// 64-bit element format, 32 bits for signed red and green.
 			EF_SIGNED_GR32 = MakeElementFormat2<EC_G, EC_R, 32, 32, ECT_SNorm, ECT_SNorm>::value,
-			// 96-bit element format, 16 bits for alpha, blue, green and red.
+			// 96-bit element format, 32 bits for alpha, blue, green and red.
 			EF_BGR32 = MakeElementFormat3<EC_B, EC_G, EC_R, 32, 32, 32, ECT_UNorm, ECT_UNorm, ECT_UNorm>::value,
-			// 96-bit element format, 16 bits for signed_alpha, blue, green and red.
+			// 96-bit element format, 32 bits for signed_alpha, blue, green and red.
 			EF_SIGNED_BGR32 = MakeElementFormat3<EC_B, EC_G, EC_R, 32, 32, 32, ECT_SNorm, ECT_SNorm, ECT_SNorm>::value,
-			// 128-bit element format, 16 bits for alpha, blue, green and red.
+			// 128-bit element format, 32 bits for alpha, blue, green and red.
 			EF_ABGR32 = MakeElementFormat4<EC_A, EC_B, EC_G, EC_R, 32, 32, 32, 32, ECT_UNorm, ECT_UNorm, ECT_UNorm, ECT_UNorm>::value,
-			// 128-bit element format, 16 bits for signed alpha, blue, green and red.
+			// 128-bit element format, 32 bits for signed alpha, blue, green and red.
 			EF_SIGNED_ABGR32 = MakeElementFormat4<EC_A, EC_B, EC_G, EC_R, 32, 32, 32, 32, ECT_SNorm, ECT_SNorm, ECT_SNorm, ECT_SNorm>::value,
 
 			// 16-bit element format, 16 bits for red.
@@ -191,15 +191,15 @@ namespace platform::Render {
 			EF_R32I = MakeElementFormat1<EC_R, 32, ECT_SInt>::value,
 			// 64-bit element format, 16 bits for red and green.
 			EF_GR32UI = MakeElementFormat2<EC_G, EC_R, 32, 32, ECT_UInt, ECT_UInt>::value,
-			// 64-bit element format, 16 bits for signed red and green.
+			// 64-bit element format, 32 bits for signed red and green.
 			EF_GR32I = MakeElementFormat2<EC_G, EC_R, 32, 32, ECT_SInt, ECT_SInt>::value,
-			// 96-bit element format, 16 bits for alpha, blue, green and red.
+			// 96-bit element format, 32 bits for alpha, blue, green and red.
 			EF_BGR32UI = MakeElementFormat3<EC_B, EC_G, EC_R, 32, 32, 32, ECT_UInt, ECT_UInt, ECT_UInt>::value,
-			// 96-bit element format, 16 bits for signed_alpha, blue, green and red.
+			// 96-bit element format, 32 bits for signed_alpha, blue, green and red.
 			EF_BGR32I = MakeElementFormat3<EC_B, EC_G, EC_R, 32, 32, 32, ECT_SInt, ECT_SInt, ECT_SInt>::value,
-			// 128-bit element format, 16 bits for alpha, blue, green and red.
+			// 128-bit element format, 32 bits for alpha, blue, green and red.
 			EF_ABGR32UI = MakeElementFormat4<EC_A, EC_B, EC_G, EC_R, 32, 32, 32, 32, ECT_UInt, ECT_UInt, ECT_UInt, ECT_UInt>::value,
-			// 128-bit element format, 16 bits for signed alpha, blue, green and red.
+			// 128-bit element format, 32 bits for signed alpha, blue, green and red.
 			EF_ABGR32I = MakeElementFormat4<EC_A, EC_B, EC_G, EC_R, 32, 32, 32, 32, ECT_SInt, ECT_SInt, ECT_SInt, ECT_SInt>::value,
 
 			// 16-bit element format, 16 bits floating-point for red.
@@ -490,6 +490,8 @@ namespace platform::Render {
 			EA_DrawIndirect = 1U<<12,
 
 			EA_AccelerationStructure = 1U << 13,
+
+			EA_GPUReadWrite = EA_GPURead| EA_GPUWrite,
 		};
 
 		enum class ClearBinding

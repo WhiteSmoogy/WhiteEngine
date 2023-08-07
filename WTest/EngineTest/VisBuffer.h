@@ -40,6 +40,8 @@ public:
 	WhiteEngine::Core::Camera camera;
 	std::unique_ptr<WhiteEngine::Core::TrackballCameraManipulator> pCameraMainpulator;
 
+	wm::float4x4 projMatrix;
+
 	std::shared_ptr<Trinf::Resources> sponza_trinf;
 private:
 	bool SubWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override
@@ -72,22 +74,6 @@ private:
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 		ImGui::Render();
-
-		wm::float4x4 worldmatrix = {
-			{1,0,0,0},
-			{0,1,0,0},
-			{0,0,1,0},
-			{0,0,0,1}
-		};
-		float aspect = screen_tex->GetWidth(0);
-		aspect /= screen_tex->GetHeight(0);
-
-		float fov = atan(1 / aspect);
-
-		auto projmatrix = WhiteEngine::X::perspective_fov_lh(fov * 2, aspect, 1, 1000);
-		auto viewmatrix = camera.GetViewMatrix();
-
-		auto viewproj = viewmatrix * projmatrix;
 
 		Trinf::Scene->AddResource(sponza_trinf);
 
@@ -163,6 +149,13 @@ private:
 				pCameraMainpulator->Zoom(offset);
 			}
 			};
+
+		float aspect = 1280;
+		aspect /= 720;
+
+		float fov = atan(1 / aspect);
+
+		projMatrix = WhiteEngine::X::perspective_fov_lh(fov * 2, aspect, 1, 1000);
 	}
 };
 

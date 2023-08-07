@@ -1,6 +1,8 @@
 #include "VisBuffer.h"
 #include "RenderInterface/BuiltinShader.h"
 #include "Runtime/RenderCore/ShaderTextureTraits.hpp"
+#include "Runtime/RenderCore/UnifiedBuffer.h"
+#include "Runtime/RenderCore/Dispatch.h"
 
 using namespace platform::Render;
 
@@ -62,6 +64,7 @@ public:
 		SHADER_PARAMETER_UAV(RWByteAddressBuffer, FliteredIndexBuffer)
 		SHADER_PARAMETER_UAV(RWStructuredBuffer<UncompactedDrawArguments>, UncompactedDrawArgs)
 		END_SHADER_PARAMETER_STRUCT()
+
 };
 
 IMPLEMENT_BUILTIN_SHADER(FilterTriangleCS, "FilterTriangle.wsl", "FilterTriangleCS", platform::Render::ComputeShader);
@@ -69,5 +72,58 @@ IMPLEMENT_BUILTIN_SHADER(FilterTriangleCS, "FilterTriangle.wsl", "FilterTriangle
 
 void VisBufferTest::RenderTrinf(CommandList& CmdList)
 {
+	auto& device = Context::Instance().GetDevice();
 
+	FilterTriangleCS::ViewArgs view;
+
+	view.matrixs.mvp = wm::transpose(camera.GetViewMatrix() * projMatrix);
+
+	auto ViewCB = CreateGraphicsBuffeImmediate(view, Buffer::Usage::SingleFrame);
+
+	auto RWStructAccess = EAccessHint::EA_GPUReadWrite | EAccessHint::EA_GPUStructured  | EAccessHint::EA_GPUUnordered;
+
+	auto FliteredIndexBuffer = shared_raw_robject(device.CreateBuffer(Buffer::Usage::SingleFrame,
+		RWStructAccess | EAccessHint::EA_Raw,
+		Trinf::Scene->Index.Allocator.GetMaxSize()* Trinf::Scene->Index.kPageSize, sizeof(uint32), nullptr));
+
+	auto UncompactedDrawArgs = shared_raw_robject(device.CreateBuffer(Buffer::Usage::SingleFrame,
+		RWStructAccess,
+		sizeof(FilterTriangleCS::UncompactedDrawArguments) * sponza_trinf->Metadata->TrinfsCount, sizeof(FilterTriangleCS::UncompactedDrawArguments), nullptr));
+
+	FilterTriangleCS::Parameters Parameters;
+
+	Parameters.View = ViewCB.Get();
+	Parameters.IndexBuffer = CmdList.CreateShaderResourceView(Trinf::Scene->Index.DataBuffer.get()).get();
+	Parameters.PositionBuffer = CmdList.CreateShaderResourceView(Trinf::Scene->Position.DataBuffer.get()).get();
+	Parameters.FliteredIndexBuffer = CmdList.CreateUnorderedAccessView(FliteredIndexBuffer.get()).get();
+	Parameters.UncompactedDrawArgs = CmdList.CreateUnorderedAccessView(UncompactedDrawArgs.get(),EF_GR32I).get();
+
+	for (uint32 i = 0; i < sponza_trinf->Metadata->TrinfsCount; ++i)
+	{
+		auto& trinf = sponza_trinf->Metadata->Trinfs[i];
+
+		FilterTriangleCS::FilterDispatchArgs args;
+
+		auto& cluster_compact = trinf.ClusterCompacts[0];
+		auto& last_compact = trinf.ClusterCompacts[trinf.ClusterCount - 1];
+
+		args.DrawId = i;
+		args.IndexStart = cluster_compact.ClusterStart;
+		args.IndexEnd = args.IndexStart + (trinf.ClusterCount - 1) * 64 + last_compact.TriangleCount * 3;
+
+		args.VertexStart = 0;
+		args.OutpuIndexOffset = args.IndexStart;
+
+		auto ArgCB = CreateGraphicsBuffeImmediate(args, Buffer::Usage::SingleFrame);
+
+		Parameters.Args = ArgCB.Get();
+
+		FilterTriangleCS::PermutationDomain PermutationVector;
+		PermutationVector.Set<FilterTriangleCS::CullBackFaceDim >(true);
+		PermutationVector.Set<FilterTriangleCS::CullFrustumFaceDim>(true);
+
+		auto ComputeShader = GetBuiltInShaderMap()->GetShader<FilterTriangleCS>(PermutationVector);
+
+		platform::ComputeShaderUtils::Dispatch(CmdList, ComputeShader, Parameters, white::math::int3(trinf.ClusterCount, 1, 1));
+	}
 }

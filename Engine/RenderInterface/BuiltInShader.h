@@ -174,7 +174,17 @@ inline namespace Shader
 		sizeof(ShaderClass),\
 		ShaderClass::GetRootParametersMetadata(),\
 		ShaderClass::ConstructCompiledInstance\
-	)
+	);\
+	ShaderClass::ShaderClass(const ShaderMetaType::CompiledShaderInitializer& Initializer) \
+		:DerivedType(Initializer)\
+	{\
+		if constexpr (RootParameterStruct)\
+			platform::Render::BindForRootShaderParameters(this, Initializer.ParameterMap); \
+		else\
+			platform::Render::BindForLegacyShaderParameters(this, Initializer.ParameterMap); \
+	}\
+	ShaderClass::ShaderClass() \
+	{ }
 }
 PR_NAMESPACE_END
 

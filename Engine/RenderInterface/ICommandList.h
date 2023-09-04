@@ -163,18 +163,60 @@ namespace platform::Render {
 			new (AllocCommand(sizeof(Command<TCmd>), alignof(Command<TCmd>))) Command<TCmd> {TCmd(std::forward<Args>(args)...)};
 		}
 
-		void SetShaderSampler(ComputeHWShader* Shader, uint32 SamplerIndex, const TextureSampleDesc& Desc)
+		void SetShaderSampler(const ComputeHWShader* Shader, uint32 SamplerIndex, const TextureSampleDesc& Desc)
 		{
 			InsertCommand([=](CommandListBase& CmdList) {
 				CmdList.GetComputeContext().SetShaderSampler(Shader, SamplerIndex, Desc);
 			});
 		}
 
-		void SetShaderTexture(ComputeHWShader* Shader, uint32 TextureIndex, Texture* Texture)
+		void SetShaderTexture(const ComputeHWShader* Shader, uint32 TextureIndex, Texture* Texture)
 		{
 			InsertCommand([=](CommandListBase& CmdList) {
 				CmdList.GetComputeContext().SetShaderTexture(Shader, TextureIndex, Texture);
 			});
+		}
+
+		void SetShaderResourceView(const ComputeHWShader* Shader, uint32 TextureIndex, ShaderResourceView* Texture)
+		{
+			InsertCommand([=](CommandListBase& CmdList) {
+				CmdList.GetComputeContext().SetShaderResourceView(Shader, TextureIndex, Texture);
+				});
+		}
+
+		void SetShaderParameter(const ComputeHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue)
+		{
+			InsertCommand([=, UseValue = AllocBuffer(NumBytes, NewValue)](CommandListBase& CmdList) {
+				CmdList.GetComputeContext().SetShaderParameter(Shader, BufferIndex, BaseIndex, NumBytes, UseValue);
+				});
+		}
+
+		void SetUAVParameter(const ComputeHWShader* Shader, uint32 UAVIndex, UnorderedAccessView* UAV)
+		{
+			InsertCommand([=](CommandListBase& CmdList) {
+				CmdList.GetComputeContext().SetUAVParameter(Shader, UAVIndex, UAV);
+				});
+		}
+
+		void SetUAVParameter(const ComputeHWShader* Shader, uint32 UAVIndex, UnorderedAccessView* UAV, uint32 InitialCount)
+		{
+			InsertCommand([=](CommandListBase& CmdList) {
+				CmdList.GetComputeContext().SetUAVParameter(Shader, UAVIndex, UAV, InitialCount);
+				});
+		}
+
+		void SetComputeShader(ComputeHWShader* Shader)
+		{
+			InsertCommand([=](CommandListBase& CmdList) {
+				CmdList.GetComputeContext().SetComputeShader(Shader);
+				});
+		}
+
+		void DispatchComputeShader(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
+		{
+			InsertCommand([=](CommandListBase& CmdList) {
+				CmdList.GetComputeContext().DispatchComputeShader(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+				});
 		}
 	};
 
@@ -222,8 +264,8 @@ namespace platform::Render {
 				});
 		}
 
-		template<typename THardwareShader>
-		void SetShaderSampler(THardwareShader* Shader, uint32 SamplerIndex, const TextureSampleDesc& Desc)
+		template<THardwareShader T>
+		void SetShaderSampler(T* Shader, uint32 SamplerIndex, const TextureSampleDesc& Desc)
 		{
 			InsertCommand([=](CommandListBase& CmdList) {
 				CmdList.GetContext().SetShaderSampler(Shader, SamplerIndex, Desc);
@@ -232,8 +274,8 @@ namespace platform::Render {
 
 		using ComputeCommandList::SetShaderSampler;
 
-		template<typename THardwareShader>
-		void SetShaderTexture(THardwareShader* Shader, uint32 TextureIndex, Texture* Texture)
+		template<THardwareShader T>
+		void SetShaderTexture(T* Shader, uint32 TextureIndex, Texture* Texture)
 		{
 			InsertCommand([=](CommandListBase& CmdList) {
 				CmdList.GetContext().SetShaderTexture(Shader, TextureIndex, Texture);
@@ -242,16 +284,19 @@ namespace platform::Render {
 
 		using ComputeCommandList::SetShaderTexture;
 
-		template<typename THardwareShader>
-		void SetShaderResourceView(THardwareShader* Shader, uint32 TextureIndex, ShaderResourceView* SRV)
+		template<THardwareShader T>
+
+		void SetShaderResourceView(T* Shader, uint32 TextureIndex, ShaderResourceView* SRV)
 		{
 			InsertCommand([=](CommandListBase& CmdList) {
 				CmdList.GetContext().SetShaderResourceView(Shader, TextureIndex, SRV);
 				});
 		}
 
-		template<typename THardwareShader>
-		void SetShaderConstantBuffer(THardwareShader* Shader, uint32 BaseIndex, ConstantBuffer* Buffer)
+		using ComputeCommandList::SetShaderResourceView;
+
+		template<THardwareShader T>
+		void SetShaderConstantBuffer(T* Shader, uint32 BaseIndex, ConstantBuffer* Buffer)
 		{
 			InsertCommand([=](CommandListBase& CmdList) {
 				CmdList.GetContext().SetShaderConstantBuffer(Shader, BaseIndex, Buffer);
@@ -272,13 +317,15 @@ namespace platform::Render {
 				});
 		}
 
-		template<typename THardwareShader>
-		void SetShaderParameter(THardwareShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue)
+		template<THardwareShader T>
+		void SetShaderParameter(T* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue)
 		{
 			InsertCommand([=,UseValue=AllocBuffer(NumBytes,NewValue)](CommandListBase& CmdList) {
 				CmdList.GetContext().SetShaderParameter(Shader, BufferIndex, BaseIndex, NumBytes, UseValue);
 				});
 		}
+
+		using ComputeCommandList::SetShaderParameter;
 
 		void FillRenderTargetsInfo(GraphicsPipelineStateInitializer& GraphicsPSOInit)
 		{
@@ -308,34 +355,6 @@ namespace platform::Render {
 			{
 				GraphicsPSOInit.DepthStencilTargetFormat = EF_Unknown;
 			}
-		}
-
-		void SetUAVParameter(ComputeHWShader* Shader, uint32 UAVIndex, UnorderedAccessView* UAV)
-		{
-			InsertCommand([=](CommandListBase& CmdList) {
-				CmdList.GetComputeContext().SetUAVParameter(Shader, UAVIndex, UAV);
-				});
-		}
-
-		void SetUAVParameter(ComputeHWShader* Shader, uint32 UAVIndex, UnorderedAccessView* UAV, uint32 InitialCount)
-		{
-			InsertCommand([=](CommandListBase& CmdList) {
-				CmdList.GetComputeContext().SetUAVParameter(Shader, UAVIndex, UAV, InitialCount);
-				});
-		}
-
-		void SetComputeShader(ComputeHWShader* Shader)
-		{
-			InsertCommand([=](CommandListBase& CmdList) {
-				CmdList.GetComputeContext().SetComputeShader(Shader);
-				});
-		}
-
-		void DispatchComputeShader(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
-		{
-			InsertCommand([=](CommandListBase& CmdList) {
-				CmdList.GetComputeContext().DispatchComputeShader(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
-				});
 		}
 
 		//Ray-Tracing

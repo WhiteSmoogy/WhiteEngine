@@ -183,6 +183,11 @@ void CommandContext::SetShaderResourceView(platform::Render::PixelHWShader* Shad
 	StateCache.SetShaderResourceView<ShaderType::PixelShader>(static_cast<ShaderResourceView*>(SRV), TextureIndex);
 }
 
+void CommandContext::SetShaderResourceView(const platform::Render::ComputeHWShader* Shader, uint32 TextureIndex, platform::Render::ShaderResourceView* SRV)
+{
+	StateCache.SetShaderResourceView<ShaderType::ComputeShader>(static_cast<ShaderResourceView*>(SRV), TextureIndex);
+}
+
 void CommandContext::SetShaderConstantBuffer(platform::Render::VertexHWShader* Shader, uint32 BaseIndex, platform::Render::ConstantBuffer* IBuffer)
 {
 	auto Buffer = static_cast<ConstantBuffer*>(IBuffer);
@@ -215,7 +220,7 @@ void CommandContext::SetShaderParameter(platform::Render::PixelHWShader* Shader,
 	PSConstantBuffer.UpdateConstant(reinterpret_cast<const uint8*>(NewValue), BaseIndex, NumBytes);
 }
 
-void CommandContext::SetShaderParameter(platform::Render::ComputeHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue)
+void CommandContext::SetShaderParameter(const platform::Render::ComputeHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue)
 {
 	wconstraint(BufferIndex == 0);
 	CSConstantBuffer.UpdateConstant(reinterpret_cast<const uint8*>(NewValue), BaseIndex, NumBytes);
@@ -750,21 +755,21 @@ void CommandContext::DispatchComputeShader(uint32 ThreadGroupCountX, uint32 Thre
 	CommandListHandle->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 }
 
-void CommandContext::SetShaderTexture(platform::Render::ComputeHWShader* Shader, uint32 TextureIndex, platform::Render::Texture* ITexture)
+void CommandContext::SetShaderTexture(const platform::Render::ComputeHWShader* Shader, uint32 TextureIndex, platform::Render::Texture* ITexture)
 {
 	auto SRV = dynamic_cast_texture(ITexture)->RetriveShaderResourceView();
 
 	StateCache.SetShaderResourceView<ShaderType::ComputeShader>(SRV, TextureIndex);
 }
 
-void CommandContext::SetShaderSampler(platform::Render::ComputeHWShader* Shader, uint32 SamplerIndex, const platform::Render::TextureSampleDesc& Desc)
+void CommandContext::SetShaderSampler(const platform::Render::ComputeHWShader* Shader, uint32 SamplerIndex, const platform::Render::TextureSampleDesc& Desc)
 {
 	auto pSampler = GetParentDevice()->CreateSampler(Convert(Desc));
 
 	StateCache.SetSamplerState<ShaderType::ComputeShader>(pSampler.get(), SamplerIndex);
 }
 
-void CommandContext::SetUAVParameter(platform::Render::ComputeHWShader* Shader, uint32 UAVIndex, platform::Render::UnorderedAccessView* IUAV)
+void CommandContext::SetUAVParameter(const platform::Render::ComputeHWShader* Shader, uint32 UAVIndex, platform::Render::UnorderedAccessView* IUAV)
 {
 	auto UAV = static_cast<UnorderedAccessView*>(IUAV);
 
@@ -773,7 +778,7 @@ void CommandContext::SetUAVParameter(platform::Render::ComputeHWShader* Shader, 
 	StateCache.SetUAVs<ShaderType::ComputeShader>(UAVIndex, 1, &UAV, &InitialCount);
 }
 
-void CommandContext::SetUAVParameter(platform::Render::ComputeHWShader* Shader, uint32 UAVIndex, platform::Render::UnorderedAccessView* IUAV, uint32 InitialCount)
+void CommandContext::SetUAVParameter(const platform::Render::ComputeHWShader* Shader, uint32 UAVIndex, platform::Render::UnorderedAccessView* IUAV, uint32 InitialCount)
 {
 	auto UAV = static_cast<UnorderedAccessView*>(IUAV);
 

@@ -173,9 +173,7 @@ namespace platform::Render {
 
 		constexpr bool IsTextureReadType(ShaderParamType type)
 		{
-			auto base_type = GetBaseType(type);
-
-			return base_type == SBT_SRV && type <= SPT_textureCUBEArray;
+			return type <= SPT_textureCUBEArray && type >= SPT_texture1D;
 		}
 
 		constexpr uint8 GetNumRows(ShaderParamType type)

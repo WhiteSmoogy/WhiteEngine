@@ -16,15 +16,17 @@ namespace platform::Render {
 
 		virtual void DispatchComputeShader(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) = 0;
 
-		virtual void SetShaderTexture(ComputeHWShader* Shader, uint32 TextureIndex, Texture* Texture) = 0;
+		virtual void SetShaderTexture(const ComputeHWShader* Shader, uint32 TextureIndex, Texture* Texture) = 0;
 
-		virtual void SetShaderSampler(ComputeHWShader* Shader, uint32 SamplerIndex, const TextureSampleDesc& Desc) = 0;
+		virtual void SetShaderSampler(const ComputeHWShader* Shader, uint32 SamplerIndex, const TextureSampleDesc& Desc) = 0;
 
-		virtual void SetUAVParameter(ComputeHWShader* Shader, uint32 UAVIndex, UnorderedAccessView* UAV) = 0;
+		virtual void SetUAVParameter(const ComputeHWShader* Shader, uint32 UAVIndex, UnorderedAccessView* UAV) = 0;
 
-		virtual void SetUAVParameter(ComputeHWShader* Shader, uint32 UAVIndex, UnorderedAccessView* UAV, uint32 InitialCount) = 0;
+		virtual void SetUAVParameter(const ComputeHWShader* Shader, uint32 UAVIndex, UnorderedAccessView* UAV, uint32 InitialCount) = 0;
 
-		virtual void SetShaderParameter(ComputeHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue) = 0;
+		virtual void SetShaderParameter(const ComputeHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue) = 0;
+
+		virtual void SetShaderResourceView(const ComputeHWShader* Shader, uint32 TextureIndex, ShaderResourceView* SRV) = 0;
 
 		virtual void PushEvent(const char16_t* Name, platform::FColor Color) = 0;
 
@@ -60,7 +62,6 @@ namespace platform::Render {
 
 		virtual void SetShaderParameter(VertexHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue) = 0;
 		virtual void SetShaderParameter(PixelHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue) = 0;
-		virtual void SetShaderParameter(ComputeHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue) = 0;
 
 		virtual void DrawIndexedPrimitive(GraphicsBuffer* IndexBuffer, int32 BaseVertexIndex, uint32 FirstInstance, uint32 NumVertices, uint32 StartIndex, uint32 NumPrimitives, uint32 NumInstances) = 0;
 

@@ -56,23 +56,27 @@ struct ShaderParameterStructBinding
 				Bindings->Parameters.emplace_back(Parameter);
 			}
 
-			const bool bIsTextureType = IsTextureReadType(ShaderType);
+			RenderShaderParameterBindings::ResourceParameter Parameter;
+			Parameter.BaseIndex = BaseIndex;
+			Parameter.ByteOffset = ByteOffset;
+			const bool bIsSRVType = GetBaseType(ShaderType) == SBT_SRV;
 
-			if (bIsTextureType)
+			if (bIsSRVType)
 			{
-				RenderShaderParameterBindings::ResourceParameter Parameter;
-				Parameter.BaseIndex = BaseIndex;
-				Parameter.ByteOffset = ByteOffset;
+				const bool bIsTextureType = IsTextureReadType(ShaderType);
 
-				Bindings->Textures.emplace_back(Parameter);
+				if (bIsTextureType)
+				{
+					Bindings->Textures.emplace_back(Parameter);
+				}
+				else
+				{
+					Bindings->SRVs.emplace_back(Parameter);
+				}
 			}
 
 			if (ShaderType == SPT_sampler)
 			{
-				RenderShaderParameterBindings::ResourceParameter Parameter;
-				Parameter.BaseIndex = BaseIndex;
-				Parameter.ByteOffset = ByteOffset;
-
 				Bindings->Samplers.emplace_back(Parameter);
 			}
 
@@ -80,10 +84,6 @@ struct ShaderParameterStructBinding
 
 			if (bIsUAVType)
 			{
-				RenderShaderParameterBindings::ResourceParameter Parameter;
-				Parameter.BaseIndex = BaseIndex;
-				Parameter.ByteOffset = ByteOffset;
-
 				Bindings->UAVs.emplace_back(Parameter);
 			}
 		}

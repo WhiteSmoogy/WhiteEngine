@@ -32,15 +32,17 @@ namespace platform_ex::Windows::D3D12 {
 
 		void DispatchComputeShader(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) override;
 
-		void SetShaderTexture(platform::Render::ComputeHWShader* Shader, uint32 TextureIndex, platform::Render::Texture* Texture) override;
+		void SetShaderTexture(const platform::Render::ComputeHWShader* Shader, uint32 TextureIndex, platform::Render::Texture* Texture) override;
 
-		void SetShaderSampler(platform::Render::ComputeHWShader* Shader, uint32 SamplerIndex, const platform::Render::TextureSampleDesc& Desc) override;
+		void SetShaderSampler(const platform::Render::ComputeHWShader* Shader, uint32 SamplerIndex, const platform::Render::TextureSampleDesc& Desc) override;
 
-		void SetUAVParameter(platform::Render::ComputeHWShader* Shader, uint32 UAVIndex, platform::Render::UnorderedAccessView* UAV) override;
+		void SetUAVParameter(const platform::Render::ComputeHWShader* Shader, uint32 UAVIndex, platform::Render::UnorderedAccessView* UAV) override;
 
-		void SetUAVParameter(platform::Render::ComputeHWShader* Shader, uint32 UAVIndex, platform::Render::UnorderedAccessView* UAV, uint32 InitialCount) override;
+		void SetUAVParameter(const platform::Render::ComputeHWShader* Shader, uint32 UAVIndex, platform::Render::UnorderedAccessView* UAV, uint32 InitialCount) override;
 
-		void SetShaderParameter(platform::Render::ComputeHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue) override;
+		void SetShaderParameter(const platform::Render::ComputeHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue) override;
+
+		void SetShaderResourceView(const platform::Render::ComputeHWShader* Shader, uint32 TextureIndex, platform::Render::ShaderResourceView* SRV) override;
 
 		void SetComputePipelineState(platform::Render::ComputePipelineState* ComputeState) override;
 

@@ -78,6 +78,7 @@ inline namespace Shader
 		std::vector<ResourceParameter> Textures;
 		std::vector<ResourceParameter> Samplers;
 		std::vector<ResourceParameter> UAVs;
+		std::vector<ResourceParameter> SRVs;
 
 		static constexpr uint16 kInvalidBufferIndex = 0xFFFF;
 

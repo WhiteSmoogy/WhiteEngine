@@ -4,8 +4,8 @@
 #include "UnifiedBuffer.h"
 
 namespace platform::Render {
-	template<typename TCommandList,typename TShaderClass,typename THardwareShader>
-	inline void SetShaderParameters(TCommandList& cmdlist, const ShaderRef<TShaderClass>& Shader, THardwareShader* ShaderRHI, const typename TShaderClass::Parameters& Parameters)
+	template<typename TCommandList,typename TShaderClass, THardwareShader TShader>
+	inline void SetShaderParameters(TCommandList& cmdlist, const ShaderRef<TShaderClass>& Shader, TShader* ShaderRHI, const typename TShaderClass::Parameters& Parameters)
 	{
 		//ValidateShaderParameters
 
@@ -30,23 +30,20 @@ namespace platform::Render {
 			cmdlist.SetShaderTexture(ShaderRHI, TextureBinding.BaseIndex, ShaderParameterRef);
 		}
 
+		// SRV
+		for (auto& SRVBinding : Bindings.SRVs)
+		{
+			auto ShaderParameterRef = *(ShaderResourceView**)(Base + SRVBinding.ByteOffset);
+
+			cmdlist.SetShaderResourceView(ShaderRHI, SRVBinding.BaseIndex, ShaderParameterRef);
+		}
+
 		//Samplers
 		for (auto& SamplerBinding : Bindings.Samplers)
 		{
 			auto ShaderParameterRef = *(TextureSampleDesc*)(Base + SamplerBinding.ByteOffset);
 
 			cmdlist.SetShaderSampler(ShaderRHI, SamplerBinding.BaseIndex, ShaderParameterRef);
-		}
-
-		if constexpr (std::is_same_v<THardwareShader, ComputeHWShader>)
-		{
-			//UAVS
-			for (auto& UAVBinding : Bindings.UAVs)
-			{
-				auto ShaderParameterRef = *(UnorderedAccessView**)(Base + UAVBinding.ByteOffset);
-
-				cmdlist.SetUAVParameter(ShaderRHI, UAVBinding.BaseIndex, ShaderParameterRef);
-			}
 		}
 	}
 
@@ -94,5 +91,4 @@ namespace platform::Render {
 			RTBindingsWriter.SetGraphicsBuffer(Bindings.RootParameterBufferIndex, RTBindingsWriter.RootUniformBuffer.get());
 		}
 	}
-
 }

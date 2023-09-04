@@ -54,6 +54,9 @@ namespace platform::Render {
 	class ComputeHWShader : public HardwareShader
 	{};
 
+	template<typename T>
+	concept THardwareShader = std::is_base_of_v<HardwareShader, T>;
+
 
 	struct ShaderPassInput
 	{

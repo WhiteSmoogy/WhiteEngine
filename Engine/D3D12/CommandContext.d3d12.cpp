@@ -302,11 +302,12 @@ void CommandContext::OpenCommandList()
 	numDraws = 0;
 	numBarriers = 0;
 	numInitialResourceCopies = 0;
+	numDispatchs = 0;
 }
 
 void CommandContext::CloseCommandList()
 {
-	CommandListHandle.Close();
+	this->CommandListHandle.Close();
 }
 
 CommandListHandle CommandContext::FlushCommands(bool WaitForCompletion)
@@ -325,14 +326,14 @@ CommandListHandle CommandContext::FlushCommands(bool WaitForCompletion)
 		if (bHasPendingWork)
 		{
 			// Submit all pending command lists and the current command list
-			Device->PendingCommandLists.emplace_back(CommandListHandle);
+			Device->PendingCommandLists.emplace_back(this->CommandListHandle);
 			GetCommandListManager().ExecuteCommandLists(Device->PendingCommandLists, WaitForCompletion);
 			Device->PendingCommandLists.clear();
 		}
 		else
 		{
 			// Just submit the current command list
-			CommandListHandle.Execute(WaitForCompletion);
+			this->CommandListHandle.Execute(WaitForCompletion);
 		}
 
 		// Get a new command list to replace the one we submitted for execution. 
@@ -340,7 +341,7 @@ CommandListHandle CommandContext::FlushCommands(bool WaitForCompletion)
 		OpenCommandList();
 	}
 
-	return CommandListHandle;
+	return this->CommandListHandle;
 }
 
 void CommandContext::ConditionalFlushCommandList()
@@ -751,6 +752,8 @@ void CommandContext::SetComputeShader(platform::Render::ComputeHWShader* Compute
 
 void CommandContext::DispatchComputeShader(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
 {
+	++numDispatchs;
+
 	ComputeHWShader* ComputeShader = nullptr;
 	StateCache.GetComputeShader(&ComputeShader);
 

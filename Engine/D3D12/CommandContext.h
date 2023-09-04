@@ -134,10 +134,11 @@ namespace platform_ex::Windows::D3D12 {
 		uint32 numDraws;
 		uint32 numBarriers;
 		uint32 numInitialResourceCopies;
+		uint32 numDispatchs;
 
 		bool HasDoneWork() const
 		{
-			return (numDraws+ numBarriers + numInitialResourceCopies) > 0;
+			return (numDraws+ numBarriers + numInitialResourceCopies + numDispatchs) > 0;
 		}
 
 		/** Constant buffers for Set*ShaderParameter calls. */

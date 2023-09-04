@@ -80,6 +80,11 @@ struct ShaderParameterStructBinding
 				Bindings->Samplers.emplace_back(Parameter);
 			}
 
+			if (ShaderType == SPT_ConstantBuffer)
+			{
+				Bindings->Constants.emplace_back(Parameter);
+			}
+
 			const bool bIsUAVType = GetBaseType(ShaderType) == SBT_UAV;
 
 			if (bIsUAVType)

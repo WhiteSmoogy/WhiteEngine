@@ -212,6 +212,13 @@ namespace platform::Render {
 				});
 		}
 
+		void SetShaderConstantBuffer(const ComputeHWShader* Shader, uint32 BaseIndex, ConstantBuffer* Buffer)
+		{
+			InsertCommand([=](CommandListBase& CmdList) {
+				CmdList.GetComputeContext().SetShaderConstantBuffer(Shader, BaseIndex, Buffer);
+				});
+		}
+
 		void DispatchComputeShader(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
 		{
 			InsertCommand([=](CommandListBase& CmdList) {

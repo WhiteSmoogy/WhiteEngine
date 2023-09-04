@@ -44,6 +44,8 @@ namespace platform_ex::Windows::D3D12 {
 
 		void SetShaderResourceView(const platform::Render::ComputeHWShader* Shader, uint32 TextureIndex, platform::Render::ShaderResourceView* SRV) override;
 
+		void SetShaderConstantBuffer(const platform::Render::ComputeHWShader* Shader, uint32 BaseIndex, platform::Render::ConstantBuffer* Buffer) override;
+
 		void SetComputePipelineState(platform::Render::ComputePipelineState* ComputeState) override;
 
 		void BeginRenderPass(const platform::Render::RenderPassInfo& Info, const char* Name) override;

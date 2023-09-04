@@ -38,6 +38,14 @@ namespace platform::Render {
 			cmdlist.SetShaderResourceView(ShaderRHI, SRVBinding.BaseIndex, ShaderParameterRef);
 		}
 
+		// ConstantBuffer
+		for (auto& CBBinding : Bindings.Constants)
+		{
+			auto ShaderParameterRef = *(ConstantBuffer**)(Base + CBBinding.ByteOffset);
+
+			cmdlist.SetShaderConstantBuffer(ShaderRHI, CBBinding.BaseIndex, ShaderParameterRef);
+		}
+
 		//Samplers
 		for (auto& SamplerBinding : Bindings.Samplers)
 		{
@@ -46,7 +54,7 @@ namespace platform::Render {
 			cmdlist.SetShaderSampler(ShaderRHI, SamplerBinding.BaseIndex, ShaderParameterRef);
 		}
 
-		if constexpr (std::is_same_v<THardwareShader, ComputeHWShader>)
+		if constexpr (std::is_same_v<TShader, ComputeHWShader>)
 		{
 			//UAVS
 			for (auto& UAVBinding : Bindings.UAVs)

@@ -27,6 +27,8 @@ namespace platform::Render {
 		virtual void SetShaderParameter(const ComputeHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue) = 0;
 
 		virtual void SetShaderResourceView(const ComputeHWShader* Shader, uint32 TextureIndex, ShaderResourceView* SRV) = 0;
+		
+		virtual void SetShaderConstantBuffer(const ComputeHWShader* Shader, uint32 BaseIndex, ConstantBuffer* Buffer) = 0;
 
 		virtual void PushEvent(const char16_t* Name, platform::FColor Color) = 0;
 

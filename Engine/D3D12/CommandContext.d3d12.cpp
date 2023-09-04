@@ -208,6 +208,16 @@ void CommandContext::SetShaderConstantBuffer(platform::Render::PixelHWShader* Sh
 	DirtyConstantBuffers[ShaderType::PixelShader] |= (1 << BaseIndex);
 }
 
+void CommandContext::SetShaderConstantBuffer(const platform::Render::ComputeHWShader* Shader, uint32 BaseIndex, platform::Render::ConstantBuffer* IBuffer)
+{
+	auto Buffer = static_cast<ConstantBuffer*>(IBuffer);
+
+	StateCache.SetConstantsBuffer<ShaderType::ComputeShader>(BaseIndex, Buffer);
+
+	BoundConstantBuffers[ShaderType::ComputeShader][BaseIndex] = Buffer;
+	DirtyConstantBuffers[ShaderType::ComputeShader] |= (1 << BaseIndex);
+}
+
 void CommandContext::SetShaderParameter(platform::Render::VertexHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue)
 {
 	wconstraint(BufferIndex == 0);

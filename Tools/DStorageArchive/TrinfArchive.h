@@ -79,6 +79,8 @@ public:
         gridHeader.AdditioalVBCount = additionals.size();
 
         gridHeader.Trinfs.Offset = children_archive.Tell();
+        fixupHeader.FixOffset(&gridHeader, gridHeader.Trinfs);
+
         gridHeader.TrinfsCount = Trinfs.size();
 
         std::vector<DSFileFormat::TriinfMetadata> metadatas;

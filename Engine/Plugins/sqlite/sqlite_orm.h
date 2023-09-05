@@ -44,7 +44,7 @@ namespace std
        using base = std::formatter<const char*, CharT>;
 
        template <class FormatContext>
-       typename FormatContext::iterator format(const sqlite_orm::sqlite_error& Val, FormatContext& ctx)
+       typename FormatContext::iterator format(const sqlite_orm::sqlite_error& Val, FormatContext& ctx) const
        {
            return base::format(Val.what(), ctx);
        }

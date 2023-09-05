@@ -68,11 +68,20 @@ private:
 		render::Context::Instance().BeginFrame();
 		auto& screen_frame = render::Context::Instance().GetScreenFrame();
 		auto screen_tex = static_cast<render::Texture2D*>(screen_frame->Attached(render::FrameBuffer::Target0));
+		auto depth_tex = static_cast<render::Texture2D*>(screen_frame->Attached(render::FrameBuffer::DepthStencil));
+
+		{
+			platform::Render::RenderPassInfo ClearPass(
+				screen_tex, platform::Render::RenderTargetActions::Clear_Store,
+				depth_tex, platform::Render::DepthStencilTargetActions::ClearDepthStencil_StoreDepthStencil);
+			CmdList.BeginRenderPass(ClearPass, "Clear");
+		}
 
 		platform::imgui::Context_NewFrame();
 
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
+		OnGUI();
 		ImGui::Render();
 
 		Trinf::Scene->AddResource(sponza_trinf);
@@ -83,6 +92,7 @@ private:
 
 		Trinf::Scene->EndAsyncUpdate(CmdList);
 
+		OnDrawUI(CmdList, screen_tex);
 		CmdList.EndFrame();
 
 		CmdList.Present(&render::Context::Instance().GetDisplay());
@@ -156,6 +166,18 @@ private:
 		float fov = atan(1 / aspect);
 
 		projMatrix = WhiteEngine::X::perspective_fov_lh(fov * 2, aspect, 1, 1000);
+	}
+
+	void OnGUI();
+
+	void OnDrawUI(render::CommandList& CmdList, render::Texture* screenTex)
+	{
+		platform::Render::RenderPassInfo passInfo(screenTex, render::RenderTargetActions::Load_Store);
+
+		SCOPED_GPU_EVENT(CmdList, Imgui);
+		CmdList.BeginRenderPass(passInfo, "imguiPass");
+
+		platform::imgui::Context_RenderDrawData(CmdList, ImGui::GetDrawData());
 	}
 };
 

@@ -69,10 +69,20 @@ public:
 
 IMPLEMENT_BUILTIN_SHADER(FilterTriangleCS, "FilterTriangle.wsl", "FilterTriangleCS", platform::Render::ComputeShader);
 
+void VisBufferTest::OnGUI()
+{
+	if (sponza_trinf->State != Trinf::Resources::StreamingState::Resident)
+		ImGui::Text("Loading...");
+	else
+		ImGui::Text("Loaded");
+}
 
 void VisBufferTest::RenderTrinf(CommandList& CmdList)
 {
 	auto& device = Context::Instance().GetDevice();
+
+	if (sponza_trinf->State != Trinf::Resources::StreamingState::Resident)
+		return;
 
 	FilterTriangleCS::ViewArgs view;
 

@@ -6,6 +6,7 @@
 #define WE_RENDER_IFormat_hpp 1
 
 #include <WBase/winttype.hpp>
+#include <format>
 
 namespace platform::Render {
 
@@ -561,5 +562,13 @@ namespace platform::Render {
 	};
 }
 
+template<class CharT>
+struct std::formatter<platform::Render::EFormat, CharT> :std::formatter<std::underlying_type_t<platform::Render::EFormat>, CharT> {
+	using base = std::formatter<std::underlying_type_t<platform::Render::EFormat>, CharT>;
+	template<class FormatContext>
+	auto format(platform::Render::EFormat format, FormatContext& fc) {
+		return base::format((uint64)(format), fc);
+	}
+};
 
 #endif

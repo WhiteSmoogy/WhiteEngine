@@ -567,7 +567,7 @@ template<class CharT>
 struct std::formatter<platform::Render::EFormat, CharT> :std::formatter<std::underlying_type_t<platform::Render::EFormat>, CharT> {
 	using base = std::formatter<std::underlying_type_t<platform::Render::EFormat>, CharT>;
 	template<class FormatContext>
-	auto format(platform::Render::EFormat format, FormatContext& fc) {
+	auto format(platform::Render::EFormat format, FormatContext& fc) const {
 		return base::format(std::to_underlying(format), fc);
 	}
 };

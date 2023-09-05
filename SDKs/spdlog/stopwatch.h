@@ -48,21 +48,28 @@ public:
 } // namespace spdlog
 
 // Support for fmt formatting  (e.g. "{:012.9}" or just "{}")
-namespace
 #ifdef SPDLOG_USE_STD_FORMAT
-    std
-#else
-    fmt
-#endif
+template<class CharT>
+struct std::formatter<spdlog::stopwatch, CharT> : std::formatter<double, CharT>
 {
-
+    template<typename FormatContext>
+    auto format(const spdlog::stopwatch& sw, FormatContext& ctx) const
+    {
+        return std::formatter<double, CharT>::format(sw.elapsed().count(), ctx);
+    }
+};
+#else
+namespace fmt
+{
 template<>
 struct formatter<spdlog::stopwatch> : formatter<double>
 {
     template<typename FormatContext>
-    auto format(const spdlog::stopwatch &sw, FormatContext &ctx) -> decltype(ctx.out())
+    auto format(const spdlog::stopwatch& sw, FormatContext& ctx) -> decltype(ctx.out()) const
     {
         return formatter<double>::format(sw.elapsed().count(), ctx);
+
     }
 };
-} // namespace std
+}
+#endif

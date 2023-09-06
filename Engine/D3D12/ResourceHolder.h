@@ -80,10 +80,6 @@ namespace platform_ex::Windows {
 				return GPUVirtualAddress;
 			}
 
-			inline uint64 GetOffsetFromBaseOfResource() const { 
-				return Location.GetOffsetFromBaseOfResource(); 
-			}
-
 			void* GetResourceBaseAddress() const { wconstraint(ResourceBaseAddress); return ResourceBaseAddress; }
 
 			void SetName(const char* name);
@@ -530,6 +526,10 @@ namespace platform_ex::Windows {
 			D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
 			{
 				return Location.GetGPUVirtualAddress();
+			}
+
+			inline uint64 GetOffsetFromBaseOfResource() const { 
+				return Location.GetOffsetFromBaseOfResource(); 
 			}
 
 			const inline bool IsValid() const {

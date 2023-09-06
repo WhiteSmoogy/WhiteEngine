@@ -10,6 +10,8 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <dstorage.h>
+#include <format>
+#include "magic_enum.hpp"
 
 namespace platform_ex {
 	namespace Windows {
@@ -1142,6 +1144,16 @@ namespace platform_ex::Windows::D3D12 {
 
 	using UAVSlotMask = white::make_width_int<MAX_UAVS>::unsigned_type;
 }
+
+template<typename CharT>
+struct std::formatter<D3D12_HEAP_TYPE, CharT> : std::formatter<std::string_view, CharT>
+{
+	template <class FormatContext>
+	typename FormatContext::iterator format(D3D12_HEAP_TYPE heapType, FormatContext& ctx) const
+	{
+		return std::formatter<std::string_view, CharT>::format(magic_enum::enum_name(heapType), ctx);
+	}
+};
 
 #if WFL_Win64
 #ifndef USE_PIX

@@ -520,7 +520,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)Engine\Plugins;$(SolutionDir)Engine;$(SolutionDir)WBase;$(SolutionDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)SDKs\metis\5.1.0\include;$(SolutionDir)SDKs</IncludePath>
+    <IncludePath>$(SolutionDir)Engine\Plugins;$(SolutionDir)Engine;$(SolutionDir)WBase;$(SolutionDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)SDKs\metis\5.1.0\include;$(SolutionDir)SDKs;$(SolutionDir)SDKs\magic_enum\include</IncludePath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <TargetName>$(ProjectName)d</TargetName>
     <LibraryPath>$(SolutionDir);$(LibraryPath)</LibraryPath>
@@ -533,7 +533,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)Engine\Plugins;$(SolutionDir)Engine;$(SolutionDir);$(SolutionDir)WBase;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)SDKs;$(SolutionDir)SDKs\metis\5.1.0\include</IncludePath>
+    <IncludePath>$(SolutionDir)Engine\Plugins;$(SolutionDir)Engine;$(SolutionDir)WBase;$(SolutionDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)SDKs\metis\5.1.0\include;$(SolutionDir)SDKs;$(SolutionDir)SDKs\magic_enum\include</IncludePath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <LibraryPath>$(SolutionDir);$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)Inter\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>

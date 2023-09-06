@@ -65,18 +65,18 @@ namespace asset::X::Shader {
 
 		switch (type) {
 		case ShaderType::VertexShader:
-			return "vs_6_6";
+			return "vs_6_5";
 		case ShaderType::PixelShader:
-			return "ps_6_6";
+			return "ps_6_5";
 		case ShaderType::GeometryShader:
-			return "gs_6_6";
+			return "gs_6_5";
 		case ShaderType::ComputeShader:
-			return "cs_6_6";
+			return "cs_6_5";
 		case ShaderType::RayGen:
 		case ShaderType::RayMiss:
 		case ShaderType::RayHitGroup:
 		case ShaderType::RayCallable:
-			return "lib_6_6";
+			return "lib_6_5";
 		}
 
 		return "";

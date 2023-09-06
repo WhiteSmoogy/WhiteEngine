@@ -233,7 +233,7 @@ void DirectStorage::EnqueueRequest(const DStorageFile2GpuRequest& req)
 
 				request.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_BUFFER;
 				request.Destination.Buffer.Resource = Resouce->D3DResource();
-				request.Destination.Buffer.Offset = Resouce->Resource()->GetOffsetFromBaseOfResource() + Destination.Offset;
+				request.Destination.Buffer.Offset = Resouce->GetOffsetFromBaseOfResource() + Destination.Offset;
 				request.Destination.Buffer.Size = Destination.Size;
 			}
 		}, req.Destination);

@@ -80,6 +80,10 @@ namespace platform_ex::Windows {
 				return GPUVirtualAddress;
 			}
 
+			inline uint64 GetOffsetFromBaseOfResource() const { 
+				return Location.GetOffsetFromBaseOfResource(); 
+			}
+
 			void* GetResourceBaseAddress() const { wconstraint(ResourceBaseAddress); return ResourceBaseAddress; }
 
 			void SetName(const char* name);
@@ -89,9 +93,6 @@ namespace platform_ex::Windows {
 			}
 
 			bool IsDepthStencilResource() const { return bDepthStencil; }
-
-			//TODO
-			inline uint64 GetOffsetFromBaseOfResource() const { return 0; }
 
 			bool IsTransitionNeeded(D3D12_RESOURCE_STATES target_state)
 			{

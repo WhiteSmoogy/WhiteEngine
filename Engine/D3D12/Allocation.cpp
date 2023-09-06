@@ -21,10 +21,10 @@ constexpr uint32 READBACK_BUFFER_POOL_MAX_ALLOC_SIZE = (64 * 1024);
 const char* GetMemoryPoolDebugName(const AllocatorConfig& InConfig)
 {
 	if (white::has_anyflags(InConfig.InitialResourceState, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE))
-		return "Resource Allocator(MemoryPool) Underlying Buffer(ACCELERATION_STRUCTURE)";
+		return "/Resource Allocator(MemoryPool) Underlying Buffer(ACCELERATION_STRUCTURE)";
 	else if(white::has_anyflags(InConfig.InitialResourceState, D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
-		return "Resource Allocator(MemoryPool) Underlying Buffer(UNORDERED_ACCESS)";
-	return "Resource Allocator(MemoryPool) Underlying Buffer";
+		return "/Resource Allocator(MemoryPool) Underlying Buffer(UNORDERED_ACCESS)";
+	return "/Resource Allocator(MemoryPool) Underlying Buffer";
 }
 
 MemoryPool::MemoryPool(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, 
@@ -67,7 +67,7 @@ MemoryPool::MemoryPool(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
 		{
 			CheckHResult(Adapter->GetDevice()->CreateHeap(&Desc, IID_PPV_ARGS(&Heap)));
 		}
-		D3D::Debug(Heap, "LinkListAllocator Backing Heap");
+		D3D::Debug(Heap, (Name +"/LinkListAllocator Backing Heap").c_str());
 
 		BackingHeap = new HeapHolder(GetParentDevice(), GetVisibilityMask());
 		BackingHeap->SetHeap(Heap);
@@ -83,7 +83,7 @@ MemoryPool::MemoryPool(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
 			const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InitConfig.HeapType, GetGPUMask().GetNative(), GetVisibilityMask().GetNative());
 			CheckHResult(Adapter->CreateBuffer(HeapProps, GetGPUMask(), 
 				InitConfig.InitialResourceState, InitConfig.InitialResourceState, PoolSize, BackingResource.ReleaseAndGetAddress(), 
-				GetMemoryPoolDebugName(InitConfig), InitConfig.ResourceFlags));
+				(Name + GetMemoryPoolDebugName(InitConfig)).c_str(), InitConfig.ResourceFlags));
 		}
 
 		if (IsCPUAccessible(InitConfig.HeapType))
@@ -1375,7 +1375,7 @@ BufferPool* BufferAllocator::CreateBufferPool(D3D12_HEAP_TYPE InHeapType, D3D12_
 	auto Device = GetParentDevice();
 	auto Config = BufferPool::GetResourceAllocatorInitConfig(InHeapType, InResourceFlags, static_cast<EAccessHint>(InBufferAccess));
 
-	const std::string Name("D3D12 Pool Allocator");
+	const std::string Name= std::format("D3D12 Pool Allocator {}", DefaultBufferPools.size());
 	auto AllocationStrategy = IPoolAllocator::GetResourceAllocationStrategy(InResourceFlags, InResourceStateMode);
 	uint64 PoolSize = InHeapType == D3D12_HEAP_TYPE_READBACK ? READBACK_BUFFER_POOL_DEFAULT_POOL_SIZE : PoolAllocatorBufferPoolSize;
 	uint32 PoolAlignment = (AllocationStrategy == AllocationStrategy::kPlacedResource) ? MIN_PLACED_RESOURCE_SIZE : 256;

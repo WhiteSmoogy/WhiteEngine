@@ -17,16 +17,22 @@ struct PathSetStaticData
 
 		EngineDirectory = EngineRoot / "Engine";
 	}
-} StaticData;
+};
+
+const PathSetStaticData& GetStaticData()
+{
+	static PathSetStaticData  StaticData {};
+	return StaticData;
+}
 
 path WhiteEngine::PathSet::WorkingRoot()
 {
-	return StaticData.WorkingRoot;
+	return GetStaticData().WorkingRoot;
 }
 
 path WhiteEngine::PathSet::EngineDir()
 {
-	return StaticData.EngineDirectory;
+	return GetStaticData().EngineDirectory;
 
 }
 
@@ -43,7 +49,7 @@ struct PathSetStaticDataEx
 
 PathSetStaticDataEx& GetStaticDataEx()
 {
-	static PathSetStaticDataEx StaticDataEx{ StaticData.EngineRoot };
+	static PathSetStaticDataEx StaticDataEx{ GetStaticData().EngineRoot };
 	return StaticDataEx;
 }
 

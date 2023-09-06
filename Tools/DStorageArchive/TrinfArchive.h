@@ -240,7 +240,7 @@ public:
                     }
                 }
 
-                metadata.Compacts.emplace_back(clusterTriangleCount,clusterStart );
+                metadata.Compacts.emplace_back(clusterTriangleCount, static_cast<uint32>(clusterStart + IndexBuffer.size()));
                 metadata.Clusters.emplace_back(aabbMin, aabbMax);
             }
 

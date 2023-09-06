@@ -72,11 +72,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)SDKs;$(SolutionDir)Engine;$(SolutionDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)SDKs;$(SolutionDir)Engine;$(SolutionDir);$(IncludePath);$(SolutionDir)SDKs\magic_enum\include</IncludePath>
     <LibraryPath>$(SolutionDir)SDKs;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)SDKs;$(SolutionDir)Engine;$(SolutionDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)SDKs;$(SolutionDir)Engine;$(SolutionDir);$(IncludePath);$(SolutionDir)SDKs\magic_enum\include</IncludePath>
     <LibraryPath>$(SolutionDir);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -129,7 +129,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

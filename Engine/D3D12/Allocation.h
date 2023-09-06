@@ -375,7 +375,7 @@ namespace platform_ex::Windows::D3D12
 
 		std::vector<ConstantAllocator*> Allocators;
 
-		std::mutex CS;
+		std::shared_mutex CS;
 	};
 
 

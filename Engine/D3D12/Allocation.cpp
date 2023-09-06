@@ -734,19 +734,25 @@ MultiBuddyConstantUploadAllocator::MultiBuddyAllocator(NodeDevice* InParentDevic
 
 bool MultiBuddyConstantUploadAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
 {
-	std::unique_lock Lock{ CS };
-	for (auto& allocator : Allocators)
 	{
-		if (allocator->TryAllocate(SizeInBytes, Alignment, ResourceLocation))
-			return true;
-	}
+		std::shared_lock Lock{ CS };
 
+		for (auto& allocator : Allocators)
+		{
+			if (allocator->TryAllocate(SizeInBytes, Alignment, ResourceLocation))
+				return true;
+		}
+	}
+	
+	std::unique_lock Lock{ CS };
 	Allocators.push_back(CreateNewAllocator(SizeInBytes));
 	return Allocators.back()->TryAllocate(SizeInBytes, Alignment, ResourceLocation);
 }
 
 void MultiBuddyConstantUploadAllocator::CleanUpAllocations(uint64 InFrameLag)
 {
+	std::unique_lock Lock{ CS };
+
 	// Trim empty allocators if not used in last n frames
 	auto Adapter = GetParentDevice()->GetParentAdapter();
 	auto& FrameFence = Adapter->GetFrameFence();
@@ -896,7 +902,7 @@ void BuddyUploadAllocator::Initialize()
 
 			void* pStart = BackingResource->GetResourceBaseAddress();
 			FreeBlockArray = reinterpret_cast<FreeBlock**>(pStart);
-			//Ô¤ÏÈÇÐ·ÖBuddy
+			//Ô¤ï¿½ï¿½ï¿½Ð·ï¿½Buddy
 			for (uint32 i = 0; i < MaxOrder; ++i)
 			{
 				FreeBlockArray[i] = reinterpret_cast<FreeBlock*>((byte*)pStart + MinBlockSize * (1 << i));

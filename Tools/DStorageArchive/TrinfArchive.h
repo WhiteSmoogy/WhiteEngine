@@ -121,6 +121,7 @@ public:
 
     void WriteMeshesBuffer(const AssetsContainer& assets)
     {
+        int VertexWriteCount = 0;
         for (auto& asset : assets)
         {
             TriinfMetadata metadata;
@@ -245,8 +246,9 @@ public:
 
             for (auto& index : Indexs)
             {
-                index += mesh->GetVertexCount();
+                index += VertexWriteCount;
             }
+            VertexWriteCount += mesh->GetVertexCount();
             IndexBuffer.insert(IndexBuffer.end(), Indexs.begin(), Indexs.end());
 
 

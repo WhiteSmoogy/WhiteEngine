@@ -96,9 +96,16 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 		RWStructAccess | EAccessHint::EA_Raw,
 		Trinf::Scene->Index.Allocator.GetMaxSize()* Trinf::Scene->Index.kPageSize, sizeof(uint32), nullptr));
 
+	auto UncompactedDrawArgsSize = white::Align(sizeof(FilterTriangleCS::UncompactedDrawArguments) * sponza_trinf->Metadata->TrinfsCount,16);
 	auto UncompactedDrawArgs = shared_raw_robject(device.CreateBuffer(Buffer::Usage::SingleFrame,
 		RWStructAccess,
-		sizeof(FilterTriangleCS::UncompactedDrawArguments) * sponza_trinf->Metadata->TrinfsCount, sizeof(FilterTriangleCS::UncompactedDrawArguments), nullptr));
+		UncompactedDrawArgsSize, sizeof(FilterTriangleCS::UncompactedDrawArguments), nullptr));
+
+	MemsetResourceParams Params;
+	Params.Count = UncompactedDrawArgsSize;
+	Params.DstOffset = 0;
+	Params.Value = 1;
+	MemsetResource(CmdList, UncompactedDrawArgs, Params);
 
 	FilterTriangleCS::Parameters Parameters;
 
@@ -106,7 +113,7 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	Parameters.IndexBuffer = CmdList.CreateShaderResourceView(Trinf::Scene->Index.DataBuffer.get()).get();
 	Parameters.PositionBuffer = CmdList.CreateShaderResourceView(Trinf::Scene->Position.DataBuffer.get()).get();
 	Parameters.FliteredIndexBuffer = CmdList.CreateUnorderedAccessView(FliteredIndexBuffer.get()).get();
-	Parameters.UncompactedDrawArgs = CmdList.CreateUnorderedAccessView(UncompactedDrawArgs.get(),EF_GR32I).get();
+	Parameters.UncompactedDrawArgs = CmdList.CreateUnorderedAccessView(UncompactedDrawArgs.get()).get();
 
 	for (uint32 i = 0; i < sponza_trinf->Metadata->TrinfsCount; ++i)
 	{

@@ -19,7 +19,7 @@ namespace platform::Render
 				return GraphicsBufferRef<TBufferStruct>(CreateConstantBuffer(&Value, Usage, *TBufferStruct::TypeInfo::GetStructMetadata()));
 			else
 			{
-				ShaderParametersMetadata Layout(white::Align<uint32>(sizeof(TBufferStruct),16), {});
+				ShaderParametersMetadata Layout(white::Align<uint32>(sizeof(TBufferStruct), 16), {});
 
 				return GraphicsBufferRef<TBufferStruct>(CreateConstantBuffer(&Value, Usage, Layout));
 			}
@@ -56,6 +56,16 @@ namespace platform::Render
 		uint32 DstOffset;
 	};
 
+	struct MemsetResourceParams
+	{
+		uint32 Count;
+		uint32 DstOffset;
+		uint32 Value;
+	};
+
 	template<typename ResourceType>
 	void MemcpyResource(CommandList& cmdList, const ResourceType& DstBuffer, const ResourceType& SrcBuffer, const MemcpyResourceParams& Params);
+
+	template<typename ResourceType>
+	void MemsetResource(CommandList& cmdList, const ResourceType& DstBuffer, const MemsetResourceParams& Params);
 }

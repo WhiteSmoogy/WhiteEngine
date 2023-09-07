@@ -194,12 +194,20 @@ UAVRIRef Device::CreateUnorderedAccessView(const platform::Render::GraphicsBuffe
 	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc{};
 	UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
 
-	uint32 EffectiveStride;
-	if (white::has_anyflags(Buffer->GetAccess(), EAccessHint::EA_Raw))
+	uint32 EffectiveStride = Buffer->Stride;
+
+	const bool bByteAccessBuffer = white::has_anyflags(Buffer->GetAccess(), EAccessHint::EA_Raw);
+
+	if (bByteAccessBuffer)
 	{
 		UAVDesc.Format = DXGI_FORMAT_R32_TYPELESS;
 		UAVDesc.Buffer.Flags |= D3D12_BUFFER_UAV_FLAG_RAW;
 		EffectiveStride = 4;
+	}
+	else if (white::has_anyflags(Buffer->GetAccess(), EAccessHint::EA_GPUStructured))
+	{
+		UAVDesc.Format = DXGI_FORMAT_UNKNOWN;
+		EffectiveStride = Buffer->Stride;
 	}
 	else
 	{
@@ -209,6 +217,7 @@ UAVRIRef Device::CreateUnorderedAccessView(const platform::Render::GraphicsBuffe
 
 	UAVDesc.Buffer.FirstElement = Location.GetOffsetFromBaseOfResource() / EffectiveStride;
 	UAVDesc.Buffer.NumElements = Location.GetSize() / EffectiveStride;
+	UAVDesc.Buffer.StructureByteStride = !bByteAccessBuffer ? EffectiveStride : 0;
 
 	return shared_raw_robject(new UnorderedAccessView(Buffer->GetParentDevice(), UAVDesc, Buffer, nullptr));
 }

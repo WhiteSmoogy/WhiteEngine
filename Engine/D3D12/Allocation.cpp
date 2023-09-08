@@ -67,7 +67,7 @@ MemoryPool::MemoryPool(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
 		{
 			CheckHResult(Adapter->GetDevice()->CreateHeap(&Desc, IID_PPV_ARGS(&Heap)));
 		}
-		D3D::Debug(Heap, std::format("{}/{}/LinkListAllocator Backing Heap",Name,PoolIndex).c_str());
+		D3D::Debug(Heap, std::format("{}/LinkListAllocator Backing Heap",Name).c_str());
 
 		BackingHeap = new HeapHolder(GetParentDevice(), GetVisibilityMask());
 		BackingHeap->SetHeap(Heap);
@@ -83,7 +83,7 @@ MemoryPool::MemoryPool(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
 			const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InitConfig.HeapType, GetGPUMask().GetNative(), GetVisibilityMask().GetNative());
 			CheckHResult(Adapter->CreateBuffer(HeapProps, GetGPUMask(), 
 				InitConfig.InitialResourceState, InitConfig.InitialResourceState, PoolSize, BackingResource.ReleaseAndGetAddress(), 
-				std::format("{}/{}/{}", Name, PoolIndex, GetMemoryPoolDebugName(InitConfig)).c_str(), InitConfig.ResourceFlags));
+				std::format("{}/{}", Name, GetMemoryPoolDebugName(InitConfig)).c_str(), InitConfig.ResourceFlags));
 		}
 
 		if (IsCPUAccessible(InitConfig.HeapType))
@@ -300,7 +300,7 @@ PoolAllocator<Order, Defrag>::PoolAllocator(NodeDevice* InParentDevice, GPUMaskT
 	uint64 InDefaultPoolSize, uint32 InPoolAlignment, uint32 InMaxAllocationSize)
 	:DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), VisibleNodes),
 	DefaultPoolSize(InDefaultPoolSize), PoolAlignment(InPoolAlignment), MaxAllocationSize(InMaxAllocationSize),
-	InitConfig(InConfig), Name(InName), Strategy(InAllocationStrategy)
+	InitConfig(InConfig), Name(InName), Strategy(InAllocationStrategy), PoolNewCount(0)
 {
 }
 
@@ -625,7 +625,8 @@ MemoryPool* PoolAllocator<Order, Defrag>::CreateNewPool(int16 InPoolIndex, uint3
 	}
 
 	auto NewPool = new MemoryPool(GetParentDevice(), GetVisibilityMask(), InitConfig,
-		Name, Strategy, InPoolIndex, PoolSize, PoolAlignment, InAllocationResourceType, Order);
+		std::format("{}/{}", Name ,PoolNewCount), Strategy, InPoolIndex, PoolSize, PoolAlignment, InAllocationResourceType, Order);
+	++PoolNewCount;
 
 	return NewPool;
 }

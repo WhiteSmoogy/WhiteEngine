@@ -178,6 +178,8 @@ namespace platform_ex::Windows::D3D12
 
 		std::vector< PoolAllocatorPrivateData*> AllocationDataPool;
 
+		uint32 PoolNewCount;
+
 		PoolAllocatorPrivateData* GetNewAllocationData();
 		void ReleaseAllocationData(PoolAllocatorPrivateData* InData);
 

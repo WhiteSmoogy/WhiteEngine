@@ -104,7 +104,7 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	MemsetResourceParams Params;
 	Params.Count = UncompactedDrawArgsSize;
 	Params.DstOffset = 0;
-	Params.Value = 1;
+	Params.Value = 0;
 	MemsetResource(CmdList, UncompactedDrawArgs, Params);
 
 	FilterTriangleCS::Parameters Parameters;

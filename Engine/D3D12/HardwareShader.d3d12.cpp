@@ -21,7 +21,7 @@ D3D12HardwareShader::D3D12HardwareShader(const white::span<const uint8>& Code)
 	wassume(PackedResourceCounts);
 	ResourceCounts = *PackedResourceCounts;
 
-	auto GlobalUniformBufferUsed = reinterpret_cast<const bool*>(ShaderCode.FindOptionalData('u'));
+	auto GlobalUniformBufferUsed = reinterpret_cast<const bool*>(ShaderCode.FindOptionalData('b'));
 	wconstraint(GlobalUniformBufferUsed);
 
 	bGlobalUniformBufferUsed = *GlobalUniformBufferUsed;

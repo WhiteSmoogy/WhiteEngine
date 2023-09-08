@@ -843,7 +843,8 @@ void MultiBuddyConstantUploadAllocator::ConstantAllocator::CreateBackingResource
 
 	const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD, GetGPUMask().GetNative(), GetVisibilityMask().GetNative());
 
-	Adapter->CreateBuffer(HeapProps, GetGPUMask(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_GENERIC_READ, BlockSize, &BackingResource, "FastConstantPageAllocator::ConstantAllocator", D3D12_RESOURCE_FLAG_NONE);
+	auto Name = std::format("ConstantAllocator_{:x}", (intptr_t)this);
+	Adapter->CreateBuffer(HeapProps, GetGPUMask(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_GENERIC_READ, BlockSize, &BackingResource, Name.c_str(), D3D12_RESOURCE_FLAG_NONE);
 
 	BackingResource->Map();
 }

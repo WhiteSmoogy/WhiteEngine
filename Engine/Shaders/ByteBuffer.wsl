@@ -1,5 +1,4 @@
 (effect
-    (include Common.h)
     (shader
 "
 #define RESOURCE_TYPE_FLOAT4_BUFFER				(0)

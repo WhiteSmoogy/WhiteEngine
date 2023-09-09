@@ -85,5 +85,6 @@
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="FilterTriangle.wsl" />
+    <CopyFileToFolders Include="BatchCompaction.wsl" />
   </ItemGroup>
 </Project>

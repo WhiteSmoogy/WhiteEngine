@@ -40,6 +40,9 @@ public:
 		uint OutpuIndexOffset;
 
 		uint ClusterId;
+
+		uint Pad0;
+		uint Pad1;
 	};
 
 	struct Matrixs
@@ -132,9 +135,9 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 
 			if (dispatchCount > 0)
 			{
-				auto ArgCB = CreateGraphicsBuffeImmediate(BatchTrinfArgs, Buffer::Usage::SingleFrame);
+				auto ArgCB = CreateConstantBuffer(BatchTrinfArgs, Buffer::Usage::SingleFrame);
 
-				Parameters.DispatchArgs = ArgCB.Get();
+				Parameters.DispatchArgs = ArgCB.get();
 
 				platform::ComputeShaderUtils::Dispatch(CmdList, ComputeShader, Parameters, white::math::int3(dispatchCount, 1, 1));
 

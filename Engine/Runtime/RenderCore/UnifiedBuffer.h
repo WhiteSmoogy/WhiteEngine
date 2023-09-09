@@ -9,6 +9,15 @@ namespace platform::Render
 {
 	ConstantBuffer* CreateConstantBuffer(const void* Contents, Buffer::Usage Usage, const ShaderParametersMetadata& Layout);
 
+	template<typename TStruct>
+	std::shared_ptr<ConstantBuffer> CreateConstantBuffer(const std::vector<TStruct>& Contents, Buffer::Usage Usage)
+	{
+		static_assert(white::IsAligned(sizeof(TStruct), 16));
+		ShaderParametersMetadata Layout(static_cast<uint32>(Contents.size() * sizeof(TStruct)), {});
+		return shared_raw_robject(CreateConstantBuffer(Contents.data(), Usage, Layout));
+	}
+
+
 	template<typename TBufferStruct>
 	class GraphicsBufferRef
 	{

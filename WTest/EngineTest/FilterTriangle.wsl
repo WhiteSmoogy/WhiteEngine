@@ -16,6 +16,9 @@ struct FilterDispatchArgs
     uint OutpuIndexOffset;
 
 	uint ClusterId;
+
+    uint pading0;
+    uint pading1;
 };
 
 struct BatchArgs

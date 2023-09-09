@@ -263,6 +263,7 @@ namespace platform_ex::Windows::D3D12 {
 	ConstantBuffer * Device::CreateConstantBuffer(Buffer::Usage usage, uint32 size_in_byte,const void* init_data)
 	{
 		wconstraint(size_in_byte > 0);
+		wconstraint(size_in_byte <= 65536);
 		wconstraint(Align(size_in_byte,16) == size_in_byte);
 		usage = white::enum_and(usage ,Buffer::Usage::LifeTimeMask);
 		auto buffer = new ConstantBuffer(GetNodeDevice(0), usage, size_in_byte);

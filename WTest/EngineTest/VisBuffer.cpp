@@ -38,6 +38,8 @@ public:
 		uint DrawId;
 		uint IndexEnd;
 		uint OutpuIndexOffset;
+
+		uint ClusterId;
 	};
 
 	struct Matrixs
@@ -57,7 +59,7 @@ public:
 	};
 
 	BEGIN_SHADER_PARAMETER_STRUCT(Parameters)
-		SHADER_PARAMETER_CBUFFER(FilterDispatchArgs, Args)
+		SHADER_PARAMETER_CBUFFER(FilterDispatchArgs[4096], DispatchArgs)
 		SHADER_PARAMETER_CBUFFER(ViewArgs, View)
 		SHADER_PARAMETER_SRV(ByteAddressBuffer, IndexBuffer)
 		SHADER_PARAMETER_SRV(ByteAddressBuffer, PositionBuffer)
@@ -115,32 +117,69 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	Parameters.FliteredIndexBuffer = CmdList.CreateUnorderedAccessView(FliteredIndexBuffer.get()).get();
 	Parameters.UncompactedDrawArgs = CmdList.CreateUnorderedAccessView(UncompactedDrawArgs.get()).get();
 
+	std::vector<FilterTriangleCS::FilterDispatchArgs> BatchTrinfArgs;
+	BatchTrinfArgs.reserve(Caps.MaxDispatchThreadGroupsPerDimension.x);
+	const int MaxDispatchCount = 2048;
+
+	FilterTriangleCS::PermutationDomain PermutationVector;
+	PermutationVector.Set<FilterTriangleCS::CullBackFaceDim >(true);
+	PermutationVector.Set<FilterTriangleCS::CullFrustumFaceDim>(true);
+	auto ComputeShader = GetBuiltInShaderMap()->GetShader<FilterTriangleCS>(PermutationVector);
+
+	auto DipstachBatch = [&]()
+		{
+			int dispatchCount = static_cast<int>(BatchTrinfArgs.size());
+
+			if (dispatchCount > 0)
+			{
+				auto ArgCB = CreateGraphicsBuffeImmediate(BatchTrinfArgs, Buffer::Usage::SingleFrame);
+
+				Parameters.DispatchArgs = ArgCB.Get();
+
+				platform::ComputeShaderUtils::Dispatch(CmdList, ComputeShader, Parameters, white::math::int3(dispatchCount, 1, 1));
+
+				BatchTrinfArgs.clear();
+			}
+		};
+
+	auto AddBatch = [&](int drawId, const platform_ex::DSFileFormat::TriinfMetadata& trinf)
+		{
+			FilterTriangleCS::FilterDispatchArgs args;
+
+			auto& cluster_compact = trinf.ClusterCompacts[0];
+			auto& last_compact = trinf.ClusterCompacts[trinf.ClusterCount - 1];
+
+			args.DrawId = drawId;
+			args.IndexStart = cluster_compact.ClusterStart;
+			args.IndexEnd = args.IndexStart + (trinf.ClusterCount - 1) * 64 + last_compact.TriangleCount * 3;
+
+			args.VertexStart = 0;
+			args.OutpuIndexOffset = args.IndexStart;
+
+			for (uint32 clusterIndex = 0; clusterIndex < trinf.ClusterCount; ++clusterIndex)
+			{
+				args.ClusterId = clusterIndex;
+				BatchTrinfArgs.push_back(args);
+
+				if (BatchTrinfArgs.size() >= MaxDispatchCount)
+					DipstachBatch();
+			}
+		};
+
 	for (uint32 i = 0; i < sponza_trinf->Metadata->TrinfsCount; ++i)
 	{
 		auto& trinf = sponza_trinf->Metadata->Trinfs[i];
 
-		FilterTriangleCS::FilterDispatchArgs args;
-
-		auto& cluster_compact = trinf.ClusterCompacts[0];
-		auto& last_compact = trinf.ClusterCompacts[trinf.ClusterCount - 1];
-
-		args.DrawId = i;
-		args.IndexStart = cluster_compact.ClusterStart;
-		args.IndexEnd = args.IndexStart + (trinf.ClusterCount - 1) * 64 + last_compact.TriangleCount * 3;
-
-		args.VertexStart = 0;
-		args.OutpuIndexOffset = args.IndexStart;
-
-		auto ArgCB = CreateGraphicsBuffeImmediate(args, Buffer::Usage::SingleFrame);
-
-		Parameters.Args = ArgCB.Get();
-
-		FilterTriangleCS::PermutationDomain PermutationVector;
-		PermutationVector.Set<FilterTriangleCS::CullBackFaceDim >(true);
-		PermutationVector.Set<FilterTriangleCS::CullFrustumFaceDim>(true);
-
-		auto ComputeShader = GetBuiltInShaderMap()->GetShader<FilterTriangleCS>(PermutationVector);
-
-		platform::ComputeShaderUtils::Dispatch(CmdList, ComputeShader, Parameters, white::math::int3(trinf.ClusterCount, 1, 1));
+		if (BatchTrinfArgs.size() + trinf.ClusterCount > MaxDispatchCount)
+		{
+			DipstachBatch();
+			AddBatch(i, trinf);
+		}
+		else
+		{
+			AddBatch(i, trinf);
+		}
 	}
+
+	DipstachBatch();
 }

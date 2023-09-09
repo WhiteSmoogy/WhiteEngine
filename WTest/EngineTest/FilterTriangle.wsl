@@ -14,9 +14,16 @@ struct FilterDispatchArgs
     uint IndexEnd;
 
     uint OutpuIndexOffset;
+
+	uint ClusterId;
 };
 
-ConstantBuffer<FilterDispatchArgs> Args;
+struct BatchArgs
+{
+    FilterDispatchArgs Args[2048];
+};
+
+ConstantBuffer<BatchArgs> DispatchArgs;
 
 struct Matrixs
 {
@@ -106,9 +113,11 @@ void StoreByte(RWByteAddressBuffer buffer,uint index,uint value)
 }
 
 [numthreads(TRIANGLE_PER_CLUSTER, 1, 1)]
-void FilterTriangleCS( uint ClusterId : SV_GroupID, uint3 TriId: SV_GroupThreadID)
+void FilterTriangleCS( uint BatchIndex : SV_GroupID, uint3 TriId: SV_GroupThreadID)
 {
-    uint ClusterOffsetIndex = Args.IndexStart + ClusterId * TRIANGLE_PER_CLUSTER * 3;
+    FilterDispatchArgs Args = DispatchArgs.Args[BatchIndex];
+
+    uint ClusterOffsetIndex = Args.IndexStart + Args.ClusterId * TRIANGLE_PER_CLUSTER * 3;
     
     uint IndexOffset = ClusterOffsetIndex + TriId.x * 3;
 
@@ -168,7 +177,7 @@ void FilterTriangleCS( uint ClusterId : SV_GroupID, uint3 TriId: SV_GroupThreadI
         StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 2, Indices.z);
     }
 
-    if (TriId.x == 0)
+    if (TriId.x == 0 && Args.ClusterId == 0)
     {
         UncompactedDrawArgs[Args.DrawId].startIndex = Args.OutpuIndexOffset;
     }

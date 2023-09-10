@@ -180,18 +180,22 @@ void D3D12::QuantizeBoundShaderState(QuantizedBoundShaderState& QBSS, const plat
 {
 	std::memset(&QBSS, 0, sizeof(QBSS));
 
-	QBSS.AllowIAInputLayout = !initializer.ShaderPass.VertexDeclaration.empty();
-
 	auto Tier = GetDevice().GetResourceBindingTier();
-
 	auto VertexShader = static_cast<VertexHWShader*>(initializer.ShaderPass.VertexShader);
 	auto PixelShader = static_cast<PixelHWShader*>(initializer.ShaderPass.PixelShader);
 	auto HullShader = static_cast<HullHWShader*>(initializer.ShaderPass.HullShader);
 	auto DomainShader = static_cast<DomainHWShader*>(initializer.ShaderPass.DomainShader);
 	auto GeometryShader = static_cast<GeometryHWShader*>(initializer.ShaderPass.GeometryShader);
 
+	wassume(VertexShader || initializer.ShaderPass.VertexDeclaration.empty());
 	if (VertexShader)
+	{
+		QBSS.AllowIAInputLayout = VertexShader->InputSignature.has_value();
+
+		wassume(!QBSS.AllowIAInputLayout || initializer.ShaderPass.VertexDeclaration.size() > 0);
+
 		QuantizedBoundShaderState::InitShaderRegisterCounts(Tier, VertexShader->ResourceCounts, QBSS.RegisterCounts[ShaderType::VertexShader]);
+	}
 	if (PixelShader)
 		QuantizedBoundShaderState::InitShaderRegisterCounts(Tier, PixelShader->ResourceCounts, QBSS.RegisterCounts[ShaderType::PixelShader]);
 	if (HullShader)

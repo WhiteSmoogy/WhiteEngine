@@ -325,9 +325,15 @@ namespace platform::Render::Shader
 			MemoryWriter UniformBufferNameWriter(UniformBufferNameBytes);
 			UniformBufferNameWriter >> UniformBufferNames;
 
-			Output.ShaderCode.AddOptionalData('u', UniformBufferNameBytes.data(), static_cast<uint32>(UniformBufferNameBytes.size()));
-			Output.ShaderCode.AddOptionalData('b', reinterpret_cast<uint8*>(&bGlobalUniformBufferUsed), sizeof(bool));
-			Output.ShaderCode.AddOptionalData('t',reinterpret_cast<const uint8*>(&initializer.pInfo->Type), sizeof(initializer.pInfo->Type));
+			Output.ShaderCode.AddOptionalData(OptionalDataKey::UniformBufferName, UniformBufferNameBytes.data(), static_cast<uint32>(UniformBufferNameBytes.size()));
+			Output.ShaderCode.AddOptionalData(OptionalDataKey::HasGlobalUniformBuffer, reinterpret_cast<uint8*>(&bGlobalUniformBufferUsed), sizeof(bool));
+			Output.ShaderCode.AddOptionalData(OptionalDataKey::ShaderType, reinterpret_cast<const uint8*>(&initializer.pInfo->Type), sizeof(initializer.pInfo->Type));
+
+			if (initializer.pInfo->InputSignature)
+			{
+				auto value = initializer.pInfo->InputSignature.value();
+				Output.ShaderCode.AddOptionalData(OptionalDataKey::InputSignature, reinterpret_cast<uint8*>(&value), sizeof(value));
+			}
 		}
 
 		FillParameterMapByShaderInfo(Output.ParameterMap, *initializer.pInfo);

@@ -21,7 +21,7 @@ D3D12HardwareShader::D3D12HardwareShader(const white::span<const uint8>& Code)
 	wassume(PackedResourceCounts);
 	ResourceCounts = *PackedResourceCounts;
 
-	auto GlobalUniformBufferUsed = reinterpret_cast<const bool*>(ShaderCode.FindOptionalData('b'));
+	auto GlobalUniformBufferUsed = reinterpret_cast<const bool*>(ShaderCode.FindOptionalData(OptionalDataKey::HasGlobalUniformBuffer));
 	wconstraint(GlobalUniformBufferUsed);
 
 	bGlobalUniformBufferUsed = *GlobalUniformBufferUsed;
@@ -32,3 +32,13 @@ D3D12HardwareShader::D3D12HardwareShader(const white::span<const uint8>& Code)
 D3D12HardwareShader::D3D12HardwareShader()
 	:bGlobalUniformBufferUsed(false)
 {}
+
+
+VertexHWShader::VertexHWShader(const white::span<const uint8>& Code)
+	:D3D12HardwareShader(Code), InputSignature(std::nullopt)
+{
+	ShaderCodeReader ShaderCode(Code);
+
+	if (auto pInputSignature = ShaderCode.FindOptionalData<size_t>(OptionalDataKey::InputSignature))
+		InputSignature = *pInputSignature;
+}

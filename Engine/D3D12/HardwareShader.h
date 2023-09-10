@@ -40,7 +40,9 @@ namespace platform_ex::Windows::D3D12 {
 	class VertexHWShader :public platform::Render::VertexHWShader,public D3D12HardwareShader
 	{
 	public:
-		using D3D12HardwareShader::D3D12HardwareShader;
+		VertexHWShader(const white::span<const uint8>& Code);
+
+		std::optional<size_t> InputSignature;
 	};
 
 	class PixelHWShader :public platform::Render::PixelHWShader, public D3D12HardwareShader

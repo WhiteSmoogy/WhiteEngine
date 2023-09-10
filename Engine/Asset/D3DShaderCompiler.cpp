@@ -212,14 +212,17 @@ void FillD3D12Reflect(ID3D1xShaderReflection* pReflection, ShaderInfo* pInfo, Sh
 				byte signature_data[sizeof(D3D12_SIGNATURE_PARAMETER_DESC)];
 			} s2d;
 
-			size_t signature = 0;
-			for (UINT i = 0; i != desc.InputParameters; ++i) {
-				pReflection->GetInputParameterDesc(i, &s2d.signature_desc);
-				auto seed = white::hash(s2d.signature_data);
-				white::hash_combine(signature, seed);
-			}
+			if (desc.InputParameters > 0)
+			{
+				size_t signature = 0;
+				for (UINT i = 0; i != desc.InputParameters; ++i) {
+					pReflection->GetInputParameterDesc(i, &s2d.signature_desc);
+					auto seed = white::hash(s2d.signature_data);
+					white::hash_combine(signature, seed);
+				}
 
-			pInfo->InputSignature = signature;
+				pInfo->InputSignature = signature;
+			}
 		}
 
 		if (type == ShaderType::ComputeShader) {

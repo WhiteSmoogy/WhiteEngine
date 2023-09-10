@@ -85,7 +85,7 @@ RayTracingShader::RayTracingShader(const white::span<const uint8>& Code)
 	wassume(PackedResourceCounts);
 	ResourceCounts = *PackedResourceCounts;
 
-	auto Type = reinterpret_cast<const platform::Render::ShaderType*>(ShaderCode.FindOptionalData('t'));
+	auto Type = reinterpret_cast<const platform::Render::ShaderType*>(ShaderCode.FindOptionalData(OptionalDataKey::ShaderType));
 	wconstraint(Type);
 
 	auto& Device = Context::Instance().GetDevice();

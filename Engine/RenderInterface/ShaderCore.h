@@ -40,10 +40,19 @@ namespace platform::Render {
 		using white::uint8;
 		using white::byte;
 
+		enum class OptionalDataKey :white::uint8
+		{
+			ShaderCodeResourceCounts = 'p',
+			UniformBufferName = 'u',
+			HasGlobalUniformBuffer = 'b',
+			ShaderType = 't',
+			InputSignature = 'i',
+		};
+
 		struct ShaderCodeResourceCounts
 		{
 			// for FindOptionalData() and AddOptionalData()
-			static const uint8 Key = 'p';
+			constexpr static OptionalDataKey Key = OptionalDataKey::ShaderCodeResourceCounts;
 
 			uint16 NumSamplers = 0;
 			uint16 NumSRVs = 0;
@@ -340,12 +349,20 @@ namespace platform::Render {
 				return (const T*)FindOptionalData(T::Key, sizeof(T));
 			}
 
+			template <class T>
+			const T* FindOptionalData(OptionalDataKey KeyEnum) const
+			{
+				return (const T*)FindOptionalData(KeyEnum, sizeof(T));
+			}
+
 
 			// @param InKey e.g. FShaderCodePackedResourceCounts::Key
 			// @return 0 if not found
-			const uint8* FindOptionalData(uint8 InKey, uint8 ValueSize) const
+			const uint8* FindOptionalData(OptionalDataKey KeyEnum, uint8 ValueSize) const
 			{
 				wassume(ValueSize);
+
+				uint8 FindKey = std::to_underlying(KeyEnum);
 
 				const uint8* End = &ShaderCode[0] + ShaderCode.size();
 
@@ -362,7 +379,7 @@ namespace platform::Render {
 					uint32 Size = *((const unaligned_uint32*)Current);
 					Current += sizeof(Size);
 
-					if (Key == InKey && Size == ValueSize)
+					if (Key == FindKey && Size == ValueSize)
 					{
 						return Current;
 					}
@@ -373,9 +390,10 @@ namespace platform::Render {
 				return 0;
 			}
 
-			const char* FindOptionalData(uint8 InKey) const
+			const char* FindOptionalData(OptionalDataKey KeyEnum) const
 			{
 				wassume(ShaderCode.size() >= 4);
+				uint8 FindKey = std::to_underlying(KeyEnum);
 
 				const uint8* End = &ShaderCode[0] + ShaderCode.size();
 
@@ -392,7 +410,7 @@ namespace platform::Render {
 					uint32 Size = *((const unaligned_uint32*)Current);
 					Current += sizeof(Size);
 
-					if (Key == InKey)
+					if (Key == FindKey)
 					{
 						return (char*)Current;
 					}
@@ -557,14 +575,14 @@ namespace platform::Render {
 			// can be called after the non optional data was stored in ShaderData
 			// @param Key uint8 to save memory so max 255, e.g. FShaderCodePackedResourceCounts::Key
 			// @param Size >0, only restriction is that sum of all optional data values must be < 4GB
-			void AddOptionalData(uint8 Key, const uint8* ValuePtr, uint32 ValueSize)
+			void AddOptionalData(OptionalDataKey Key, const uint8* ValuePtr, uint32 ValueSize)
 			{
 				wconstraint(ValuePtr);
 
 				// don't add after Finalize happened
 				wconstraint(OptionalDataSize >= 0);
 
-				ShaderCodeWithOptionalData.emplace_back(Key);
+				ShaderCodeWithOptionalData.emplace_back(std::to_underlying(Key));
 				ShaderCodeWithOptionalData.insert(ShaderCodeWithOptionalData.end(),(const uint8*)&ValueSize, (const uint8*)&ValueSize+sizeof(ValueSize));
 				ShaderCodeWithOptionalData.insert(ShaderCodeWithOptionalData.end(),ValuePtr, ValuePtr+ValueSize);
 				OptionalDataSize += sizeof(uint8) + sizeof(ValueSize) + (uint32)ValueSize;
@@ -573,7 +591,7 @@ namespace platform::Render {
 			// Note: we don't hash the optional attachments in GenerateOutputHash() as they would prevent sharing (e.g. many material share the save VS)
 			// convenience, silently drops the data if string is too long
 			// @param e.g. 'n' for the ShaderSourceFileName
-			void AddOptionalData(uint8 Key, const char* InString)
+			void AddOptionalData(OptionalDataKey Key, const char* InString)
 			{
 				uint32 Size =static_cast<uint32>(std::char_traits<char>::length(InString)) + 1;
 				AddOptionalData(Key, (uint8*)InString, Size);

@@ -592,9 +592,9 @@ namespace platform_ex::Windows::D3D12 {
 			}
 		}
 
-		void SetComputeShader(ComputeHWShader* Shader);
+		void SetComputeShader(const ComputeHWShader* Shader);
 
-		void GetComputeShader(ComputeHWShader** ComputeShader) const
+		void GetComputeShader(const ComputeHWShader** ComputeShader) const
 		{
 			*ComputeShader = PipelineState.Compute.CurrentPipelineStateObject ? PipelineState.Compute.CurrentPipelineStateObject->ComputeShader : nullptr;
 		}

@@ -28,8 +28,6 @@ namespace platform_ex::Windows::D3D12 {
 	public:
 		virtual void SetAsyncComputeBudgetInternal(platform::Render::AsyncComputeBudget Budget) {}
 
-		void SetComputeShader(platform::Render::ComputeHWShader* ComputeShader) override;
-
 		void DispatchComputeShader(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) override;
 
 		void SetShaderTexture(const platform::Render::ComputeHWShader* Shader, uint32 TextureIndex, platform::Render::Texture* Texture) override;
@@ -107,7 +105,7 @@ namespace platform_ex::Windows::D3D12 {
 		void CommitNonComputeShaderConstants();
 
 		void CommitComputeShaderConstants();
-		void CommitComputeResourceTables(ComputeHWShader* ComputeShader);
+		void CommitComputeResourceTables(const ComputeHWShader* ComputeShader);
 
 		CommandListManager& GetCommandListManager();
 

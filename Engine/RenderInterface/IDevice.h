@@ -164,6 +164,7 @@ namespace platform::Render {
 		virtual UnorderedAccessView* CreateUnorderedAccessView(Texture2D* InTexture) =0;
 
 		virtual GraphicsPipelineState* CreateGraphicsPipelineState(const GraphicsPipelineStateInitializer& initializer) =0;
+		virtual ComputePipelineState* CreateComputePipelineState(const platform::Render::ComputeHWShader* ComputeShader) = 0;
 
 		virtual HardwareShader* CreateVertexShader(const white::span<const uint8>& Code) = 0;
 		virtual HardwareShader* CreatePixelShader(const white::span<const uint8>& Code) = 0;

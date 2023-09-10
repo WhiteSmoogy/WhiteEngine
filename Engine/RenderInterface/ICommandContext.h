@@ -10,8 +10,6 @@ namespace platform::Render {
 		/**
 		*Sets the current compute shader.
 		*/
-		virtual void SetComputeShader(ComputeHWShader* ComputeShader) = 0;
-
 		virtual void SetComputePipelineState(ComputePipelineState* ComputeState) = 0;
 
 		virtual void DispatchComputeShader(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) = 0;

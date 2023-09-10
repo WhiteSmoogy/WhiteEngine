@@ -743,18 +743,11 @@ void CommandContext::ClearMRT(bool bClearColor, int32 NumClearColors, const whit
 	}
 }
 
-void CommandContext::SetComputeShader(platform::Render::ComputeHWShader* ComputeShader)
-{
-	auto ComputePipelineState = GetParentAdapter()->CreateComputePipelineState(ComputeShader);
-
-	SetComputePipelineState(ComputePipelineState);
-}
-
 void CommandContext::DispatchComputeShader(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
 {
 	++numDispatchs;
 
-	ComputeHWShader* ComputeShader = nullptr;
+	const ComputeHWShader* ComputeShader = nullptr;
 	StateCache.GetComputeShader(&ComputeShader);
 
 	if (ComputeShader->bGlobalUniformBufferUsed)
@@ -816,7 +809,7 @@ void CommandContext::CommitComputeShaderConstants()
 }
 
 
-void CommandContext::CommitComputeResourceTables(ComputeHWShader* ComputeShader)
+void CommandContext::CommitComputeResourceTables(const ComputeHWShader* ComputeShader)
 {
 	//don't support UE4 ShaderResourceTable
 }

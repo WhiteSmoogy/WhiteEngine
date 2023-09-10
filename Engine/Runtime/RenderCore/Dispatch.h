@@ -1,7 +1,8 @@
 #pragma once
-#include <RenderInterface/ICommandList.h>
+#include "RenderInterface/ICommandList.h"
 #include "Core/Math/PlatformMath.h"
 #include "ShaderParameterStruct.h"
+#include "RenderInterface/PipelineStateUtility.h"
 
 namespace platform
 {
@@ -17,7 +18,7 @@ namespace platform
 		static void Dispatch(Render::ComputeCommandList& CmdList, const Render::ShaderRef<TShaderClass>& ComputeShader, const typename TShaderClass::Parameters& Parameters, white::math::int3 GroupCount)
 		{
 			auto ShaderRHI = ComputeShader.GetComputeShader();
-			CmdList.SetComputeShader(ShaderRHI);
+			SetComputePipelineState(CmdList , ShaderRHI);
 			Render::SetShaderParameters(CmdList, ComputeShader, ShaderRHI, Parameters);
 			CmdList.DispatchComputeShader(GroupCount.x, GroupCount.y, GroupCount.z);
 		}

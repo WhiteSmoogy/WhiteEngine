@@ -73,9 +73,9 @@ void CommandContextStateCache::SetStencilRef(uint32 StencilRef)
 	}
 }
 
-void CommandContextStateCache::SetComputeShader(ComputeHWShader* Shader)
+void CommandContextStateCache::SetComputeShader(const ComputeHWShader* Shader)
 {
-	ComputeHWShader* CurrentShader = nullptr;
+	const ComputeHWShader* CurrentShader = nullptr;
 	GetComputeShader(&CurrentShader);
 	if (CurrentShader != Shader)
 	{

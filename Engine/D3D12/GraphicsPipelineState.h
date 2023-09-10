@@ -236,12 +236,12 @@ namespace platform_ex::Windows::D3D12
 	class ComputePipelineState :public platform::Render::ComputePipelineState
 	{
 	public:
-		ComputePipelineState(ComputeHWShader* InComputeShader, D3DPipelineState* InPipelineState)
+		ComputePipelineState(const ComputeHWShader* InComputeShader, D3DPipelineState* InPipelineState)
 			:ComputeShader(InComputeShader), PipelineState(InPipelineState)
 		{
 		}
 	public:
-		ComputeHWShader* ComputeShader;
+		const ComputeHWShader* ComputeShader;
 		D3DPipelineState* const PipelineState;
 	};
 
@@ -325,11 +325,11 @@ namespace platform_ex::Windows::D3D12
 		GraphicsPipelineState* FindInLoadedCache(const platform::Render::GraphicsPipelineStateInitializer& Initializer, const RootSignature* RootSignature, KeyGraphicsPipelineStateDesc& OutLowLevelDesc);
 		GraphicsPipelineState* CreateAndAdd(const platform::Render::GraphicsPipelineStateInitializer& Initializer, const RootSignature* RootSignature, const KeyGraphicsPipelineStateDesc& LowLevelDesc);
 
-		ComputePipelineState* FindInLoadedCache(ComputeHWShader* ComputeShader, KeyComputePipelineStateDesc& OutLowLevelDesc);
+		ComputePipelineState* FindInLoadedCache(const ComputeHWShader* ComputeShader, KeyComputePipelineStateDesc& OutLowLevelDesc);
 
 		D3DPipelineState* FindInLowLevelCache(const KeyComputePipelineStateDesc& Desc);
 
-		ComputePipelineState* CreateAndAdd(ComputeHWShader* ComputeShader,const KeyComputePipelineStateDesc& LowLevelDesc);
+		ComputePipelineState* CreateAndAdd(const ComputeHWShader* ComputeShader,const KeyComputePipelineStateDesc& LowLevelDesc);
 
 		D3DPipelineState* CreateAndAddToLowLevelCache(const KeyComputePipelineStateDesc& Desc);
 

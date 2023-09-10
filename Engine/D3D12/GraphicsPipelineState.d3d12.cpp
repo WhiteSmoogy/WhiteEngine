@@ -460,7 +460,7 @@ GraphicsPipelineState* D3DPipelineStateCacheBase::FindInLoadedCache(
 	return nullptr;
 }
 
-ComputePipelineState* D3DPipelineStateCacheBase::FindInLoadedCache(ComputeHWShader* ComputeShader, KeyComputePipelineStateDesc& OutLowLevelDesc)
+ComputePipelineState* D3DPipelineStateCacheBase::FindInLoadedCache(const ComputeHWShader* ComputeShader, KeyComputePipelineStateDesc& OutLowLevelDesc)
 {
 	OutLowLevelDesc = GetKeyComputePipelineStateDesc(ComputeShader);
 	OutLowLevelDesc.Desc.NodeMask = 0;
@@ -492,7 +492,7 @@ GraphicsPipelineState* D3DPipelineStateCacheBase::CreateAndAdd(
 	return nullptr;
 }
 
-ComputePipelineState* platform_ex::Windows::D3D12::D3DPipelineStateCacheBase::CreateAndAdd(ComputeHWShader* ComputeShader, const KeyComputePipelineStateDesc& LowLevelDesc)
+ComputePipelineState* platform_ex::Windows::D3D12::D3DPipelineStateCacheBase::CreateAndAdd(const ComputeHWShader* ComputeShader, const KeyComputePipelineStateDesc& LowLevelDesc)
 {
 	auto const PipelineState = CreateAndAddToLowLevelCache(LowLevelDesc);
 

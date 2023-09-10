@@ -205,10 +205,10 @@ namespace platform::Render {
 				});
 		}
 
-		void SetComputeShader(ComputeHWShader* Shader)
+		void SetComputePipelineState(ComputePipelineState* pso)
 		{
 			InsertCommand([=](CommandListBase& CmdList) {
-				CmdList.GetComputeContext().SetComputeShader(Shader);
+				CmdList.GetComputeContext().SetComputePipelineState(pso);
 				});
 		}
 

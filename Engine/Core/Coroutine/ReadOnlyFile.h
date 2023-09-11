@@ -3,6 +3,7 @@
 #include "readable_file.h"
 #include "filemode.h"
 #include "Task.h"
+#include "WBase/winttype.hpp"
 #include <filesystem>
 
 namespace white::coroutine {
@@ -44,5 +45,15 @@ namespace white::coroutine {
 	protected:
 		ReadOnlyFile(win32::handle_t&& fileHandle) noexcept;
 	};
+
+	inline Task<std::vector<white::byte>> LoadFileAsync(ReadOnlyFile& file)
+	{
+		const size_t bufferSize = file.size();
+		std::vector<white::byte> buffer (bufferSize);
+
+		const auto bytesRead = co_await file.read(0, buffer.data(), bufferSize);
+
+		co_return std::move(buffer);
+	}
 
 }

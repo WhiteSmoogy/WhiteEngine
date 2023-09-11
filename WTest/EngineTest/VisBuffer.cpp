@@ -72,7 +72,7 @@ public:
 
 };
 
-IMPLEMENT_BUILTIN_SHADER(FilterTriangleCS, "FilterTriangle.wsl", "FilterTriangleCS", platform::Render::ComputeShader);
+IMPLEMENT_BUILTIN_SHADER(FilterTriangleCS, "FilterTriangle.hlsl", "FilterTriangleCS", platform::Render::ComputeShader);
 
 void VisBufferTest::OnGUI()
 {

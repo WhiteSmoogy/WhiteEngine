@@ -1,6 +1,3 @@
-(effect
-    (shader
-"
 #define TRIANGLE_PER_CLUSTER 64
 
 struct FilterDispatchArgs
@@ -117,73 +114,70 @@ void StoreByte(RWByteAddressBuffer buffer,uint index,uint value)
 [numthreads(TRIANGLE_PER_CLUSTER, 1, 1)]
 void FilterTriangleCS( uint BatchIndex : SV_GroupID, uint3 TriId: SV_GroupThreadID)
 {
-    FilterDispatchArgs Args = DispatchArgs.Args[BatchIndex];
+	FilterDispatchArgs Args = DispatchArgs.Args[BatchIndex];
 
-    uint ClusterOffsetIndex = Args.IndexStart + Args.ClusterId * TRIANGLE_PER_CLUSTER * 3;
+	uint ClusterOffsetIndex = Args.IndexStart + Args.ClusterId * TRIANGLE_PER_CLUSTER * 3;
     
-    uint IndexOffset = ClusterOffsetIndex + TriId.x * 3;
+	uint IndexOffset = ClusterOffsetIndex + TriId.x * 3;
 
-    if(TriId.x == 0)
-    {
-        workGroupIndexCount = 0;
-    }
+	if (TriId.x == 0)
+	{
+		workGroupIndexCount = 0;
+	}
 
-    GroupMemoryBarrier();
+	GroupMemoryBarrier();
 
-    uint threadOutputSlot = 0;
+	uint threadOutputSlot = 0;
 
-    bool cull = true;
-    uint3 Indices = 0;
+	bool cull = true;
+	uint3 Indices = 0;
 
     //last cluster's triangle count <= TRIANGLE_PER_CLUSTER
-    if(IndexOffset < Args.IndexEnd)
-    {
-        Indices = Load3(IndexBuffer, IndexOffset);
+	if (IndexOffset < Args.IndexEnd)
+	{
+		Indices = Load3(IndexBuffer, IndexOffset);
 
-        float4 v0 = LoadVertex(Args.VertexStart + Indices.x);
-        float4 v1 = LoadVertex(Args.VertexStart + Indices.y);
-        float4 v2 = LoadVertex(Args.VertexStart + Indices.z);
+		float4 v0 = LoadVertex(Args.VertexStart + Indices.x);
+		float4 v1 = LoadVertex(Args.VertexStart + Indices.y);
+		float4 v2 = LoadVertex(Args.VertexStart + Indices.z);
 
-        float4x4 mvp = View.matrixs.mvp;
+		float4x4 mvp = View.matrixs.mvp;
 
-        float4 vertices[3] =
-	    {
+		float4 vertices[3] =
+		{
 			mul(v0, mvp),
 			mul(v1, mvp),
 			mul(v2, mvp)
 		};
 
-        cull = CullTriangle(vertices);
+		cull = CullTriangle(vertices);
 
-        if(!cull)
-        {
-            InterlockedAdd(workGroupIndexCount, 3, threadOutputSlot);
-        }
-    }
+		if (!cull)
+		{
+			InterlockedAdd(workGroupIndexCount, 3, threadOutputSlot);
+		}
+	}
 
-    GroupMemoryBarrier();
+	GroupMemoryBarrier();
 
-    if (TriId.x == 0)
-    {
-        InterlockedAdd(UncompactedDrawArgs[Args.DrawId].numIndices, workGroupIndexCount, workGroupOutputSlot);
-    }
+	if (TriId.x == 0)
+	{
+		InterlockedAdd(UncompactedDrawArgs[Args.DrawId].numIndices, workGroupIndexCount, workGroupOutputSlot);
+	}
 
-    AllMemoryBarrier();
+	AllMemoryBarrier();
 
-    if (!cull)
-    {
-        uint index = workGroupOutputSlot;
+	if (!cull)
+	{
+		uint index = workGroupOutputSlot;
         
-        StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 0, Indices.x);
-        StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 1, Indices.y);
-        StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 2, Indices.z);
-    }
+		StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 0, Indices.x);
+		StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 1, Indices.y);
+		StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 2, Indices.z);
+	}
 
-    if (TriId.x == 0 && Args.ClusterId == 0)
-    {
-        UncompactedDrawArgs[Args.DrawId].startIndex = Args.OutpuIndexOffset;
-    }
+	if (TriId.x == 0 && Args.ClusterId == 0)
+	{
+		UncompactedDrawArgs[Args.DrawId].startIndex = Args.OutpuIndexOffset;
+	}
 }
-"
-    )
-)

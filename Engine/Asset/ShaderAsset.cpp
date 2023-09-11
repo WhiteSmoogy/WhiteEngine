@@ -522,6 +522,18 @@ public:
 
 	white::coroutine::Task<std::shared_ptr<HLSLAsset>> GetAwaiter()
 	{
+		if (Path().extension() == ".hlsl")
+		{
+			shader_desc.asset = std::make_shared<AssetType>();
+
+			auto file = white::coroutine::ReadOnlyFile::open(Environment->Scheduler->GetIOScheduler(), Path(Path()).string());
+
+			auto buffer = co_await LoadFileAsync(file);
+
+			GetAsset()->Code = std::string(reinterpret_cast<const char*>(buffer.data()),buffer.size());
+			co_return ReturnValue();
+		}
+
 		PreCreate();
 
 		{

@@ -84,7 +84,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="FilterTriangle.wsl" />
-    <CopyFileToFolders Include="BatchCompaction.wsl" />
+    <CopyFileToFolders Include="FilterTriangle.hlsl" />
+    <CopyFileToFolders Include="BatchCompaction.hlsl" />
   </ItemGroup>
 </Project>

@@ -1,9 +1,5 @@
-(effect
-    (shader
-"
-#define COMPACTION_THREADS 256
 
-#define INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS 4
+#define COMPACTION_THREADS 256
 
 RWBuffer<uint> IndrectDrawArgsBuffer;
 RWBuffer<uint> IndrectMaterialsBuffer;
@@ -36,7 +32,3 @@ void BatchCompactionCS(uint3 DrawId: SV_DispatchThreadID)
     IndrectDrawArgsBuffer[slot * INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS + 1] =  UncompactedDrawArgs[DrwaId.x].startIndex;
     IndrectMaterialsBuffer[slot] = 0;
 }
-
-"
-)
-)

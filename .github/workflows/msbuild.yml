@@ -33,7 +33,7 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.1
       with:
-        vs-prerelease:true
+        vs-prerelease: true
 
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}

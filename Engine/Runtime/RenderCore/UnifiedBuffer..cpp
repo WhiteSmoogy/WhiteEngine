@@ -88,7 +88,7 @@ public:
 		END_SHADER_PARAMETER_STRUCT()
 };
 
-IMPLEMENT_BUILTIN_SHADER(MemcpyCS, "ByteBuffer.wsl", "MemcpyCS", platform::Render::ComputeShader);
+IMPLEMENT_BUILTIN_SHADER(MemcpyCS, "ByteBuffer.hlsl", "MemcpyCS", platform::Render::ComputeShader);
 
 template<>
 void platform::Render::MemcpyResource<std::shared_ptr<GraphicsBuffer>>(CommandList& cmdList, const std::shared_ptr<GraphicsBuffer>& DstBuffer, const std::shared_ptr<GraphicsBuffer>& SrcBuffer, const MemcpyResourceParams& Params)
@@ -141,7 +141,7 @@ public:
 		END_SHADER_PARAMETER_STRUCT()
 };
 
-IMPLEMENT_BUILTIN_SHADER(MemsetCS, "ByteBuffer.wsl", "MemsetCS", platform::Render::ComputeShader);
+IMPLEMENT_BUILTIN_SHADER(MemsetCS, "ByteBuffer.hlsl", "MemsetCS", platform::Render::ComputeShader);
 
 template<>
 void platform::Render::MemsetResource<std::shared_ptr<GraphicsBuffer>>(CommandList& cmdList, const std::shared_ptr<GraphicsBuffer>& DstBuffer, const MemsetResourceParams& Params)

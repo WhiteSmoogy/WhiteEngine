@@ -25,6 +25,9 @@ namespace platform::Render
 
 		template<typename Struct>
 		struct RWBuffer {};
+
+		template<typename Struct>
+		struct StructuredBuffer {};
 	}
 
 #define MS_ALIGN(n) __declspec(align(n))
@@ -167,6 +170,11 @@ namespace platform::Render
 
 		template<typename Struct>
 		struct TShaderParameterTypeInfo<HLSLTraits::RWBuffer<Struct>> : TShaderParameterUAVType<SPT_rwbuffer>
+		{
+		};
+
+		template<typename Struct>
+		struct TShaderParameterTypeInfo<HLSLTraits::StructuredBuffer<Struct>> : TShaderParameterSRVType<SPT_StructuredBuffer>
 		{
 		};
 		

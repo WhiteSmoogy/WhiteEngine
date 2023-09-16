@@ -1368,7 +1368,7 @@
       <Filter>RenderInterface</Filter>
     </None>
     <None Include="packages.config" />
-    <None Include="Shaders\ByteBuffer.wsl">
+    <None Include="Shaders\ByteBuffer.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

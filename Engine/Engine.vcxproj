@@ -435,7 +435,7 @@
     <None Include="RenderInterface\Effect\PreZ.wsl" />
     <None Include="RenderInterface\Material\FPDS.mat.wsl" />
     <None Include="Shaders\ACES.h" />
-    <None Include="Shaders\ByteBuffer.wsl" />
+    <None Include="Shaders\ByteBuffer.hlsl" />
     <None Include="Shaders\Common.h" />
     <None Include="Shaders\GammaCorrectionCommon.h" />
     <None Include="Shaders\GizmosElementsVertexShader.wsl" />

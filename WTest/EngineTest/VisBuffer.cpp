@@ -74,6 +74,35 @@ public:
 
 IMPLEMENT_BUILTIN_SHADER(FilterTriangleCS, "FilterTriangle.hlsl", "FilterTriangleCS", platform::Render::ComputeShader);
 
+
+class BatchCompactionCS : public BuiltInShader
+{
+public:
+	EXPORTED_BUILTIN_SHADER(BatchCompactionCS);
+
+	constexpr static const uint32 DrawIndexArgumentNumElements = sizeof(DrawIndexArguments) / sizeof(uint32);
+
+	class DrawArgumentDim : SHADER_PERMUTATION_SPARSE_INT("INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS" , DrawIndexArgumentNumElements);
+
+	using PermutationDomain = TShaderPermutationDomain<DrawArgumentDim>;
+
+
+	static bool ShouldCompilePermutation(const FBuiltInShaderPermutationParameters& Parameters)
+	{
+		PermutationDomain PermutationVector(Parameters.PermutationId);
+
+		return true;
+	}
+
+	BEGIN_SHADER_PARAMETER_STRUCT(Parameters)
+		SHADER_PARAMETER_SRV(StructuredBuffer<FilterTriangleCS::UncompactedDrawArguments>, UncompactedDrawArgs)
+		SHADER_PARAMETER_UAV(RWStructuredBuffer<uint32>, IndrectDrawArgsBuffer)
+		SHADER_PARAMETER(uint32, MaxDraws)
+		END_SHADER_PARAMETER_STRUCT()
+};
+
+IMPLEMENT_BUILTIN_SHADER(BatchCompactionCS, "BatchCompaction.hlsl", "BatchCompactionCS", platform::Render::ComputeShader);
+
 void VisBufferTest::OnGUI()
 {
 	if (sponza_trinf->State != Trinf::Resources::StreamingState::Resident)
@@ -105,6 +134,8 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	auto UncompactedDrawArgs = shared_raw_robject(device.CreateBuffer(Buffer::Usage::SingleFrame,
 		RWStructAccess,
 		UncompactedDrawArgsSize, sizeof(FilterTriangleCS::UncompactedDrawArguments), nullptr));
+	auto UncompactedDrawArgsUAV = CmdList.CreateUnorderedAccessView(FliteredIndexBuffer.get());
+	auto UncompactedDrawArgsSRV = CmdList.CreateShaderResourceView(FliteredIndexBuffer.get());
 
 	MemsetResourceParams Params;
 	Params.Count = UncompactedDrawArgsSize;
@@ -117,7 +148,7 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	Parameters.View = ViewCB.Get();
 	Parameters.IndexBuffer = CmdList.CreateShaderResourceView(Trinf::Scene->Index.DataBuffer.get()).get();
 	Parameters.PositionBuffer = CmdList.CreateShaderResourceView(Trinf::Scene->Position.DataBuffer.get()).get();
-	Parameters.FliteredIndexBuffer = CmdList.CreateUnorderedAccessView(FliteredIndexBuffer.get()).get();
+	Parameters.FliteredIndexBuffer = UncompactedDrawArgsUAV.get();
 	Parameters.UncompactedDrawArgs = CmdList.CreateUnorderedAccessView(UncompactedDrawArgs.get()).get();
 
 	std::vector<FilterTriangleCS::FilterDispatchArgs> BatchTrinfArgs;
@@ -185,4 +216,31 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	}
 
 	DipstachBatch();
+
+	auto CompactedDrawArgsSize = white::Align(sizeof(DrawIndexArguments) * (sponza_trinf->Metadata->TrinfsCount + 1), 16);
+	auto CompactedDrawArgs = shared_raw_robject(device.CreateBuffer(Buffer::Usage::SingleFrame,
+		RWStructAccess | EAccessHint::EA_DrawIndirect | EAccessHint::EA_Raw,
+		CompactedDrawArgsSize, sizeof(uint), nullptr));
+	Params.Count = white::Align(sizeof(DrawIndexArguments),4);
+	Params.DstOffset = 0;
+	Params.Value = 0;
+	MemsetResource(CmdList, CompactedDrawArgs, Params);
+
+	auto CompactedDrawArgsUAV = CmdList.CreateUnorderedAccessView(CompactedDrawArgs.get());
+
+	{
+		BatchCompactionCS::Parameters compactionPars{};
+		compactionPars.IndrectDrawArgsBuffer = CompactedDrawArgsUAV.get();
+		compactionPars.MaxDraws = sponza_trinf->Metadata->TrinfsCount;
+		compactionPars.UncompactedDrawArgs = UncompactedDrawArgsSRV.get();
+
+		BatchCompactionCS::PermutationDomain compactPV;
+
+		compactPV.Set<BatchCompactionCS::DrawArgumentDim >(BatchCompactionCS::DrawIndexArgumentNumElements);
+		auto compactCS = GetBuiltInShaderMap()->GetShader<BatchCompactionCS>(compactPV);
+
+		int dispatchCount = static_cast<int>((sponza_trinf->Metadata->TrinfsCount + 255) / 256);
+
+		platform::ComputeShaderUtils::Dispatch(CmdList, compactCS, compactionPars, white::math::int3(dispatchCount, 1, 1));
+	}
 }

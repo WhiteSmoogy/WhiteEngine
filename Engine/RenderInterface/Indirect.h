@@ -39,6 +39,26 @@ namespace platform::Render
 	public:
 		virtual ~CommandSignature();
 	};
+
+	using uint = white::uint32;
+
+
+	struct DrawArguments
+	{
+		uint VertexCountPerInstance;
+		uint InstanceCount;
+		uint StartVertexLocation;
+		uint StartInstanceLocation;
+	};
+
+	struct DrawIndexArguments
+	{
+		uint IndexCountPerInstance;
+		uint InstanceCount;
+		uint StartIndexLocation;
+		int  BaseVertexLocation;
+		uint StartInstanceLocation;
+	};
 }
 
 namespace platform_ex::Windows::D3D12

@@ -221,7 +221,7 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	auto CompactedDrawArgs = shared_raw_robject(device.CreateBuffer(Buffer::Usage::SingleFrame,
 		RWStructAccess | EAccessHint::EA_DrawIndirect | EAccessHint::EA_Raw,
 		CompactedDrawArgsSize, sizeof(uint), nullptr));
-	Params.Count = white::Align(sizeof(DrawIndexArguments),4);
+	Params.Count = white::Align(sizeof(DrawIndexArguments),16);
 	Params.DstOffset = 0;
 	Params.Value = 0;
 	MemsetResource(CmdList, CompactedDrawArgs, Params);

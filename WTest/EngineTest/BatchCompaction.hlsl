@@ -18,7 +18,8 @@ void BatchCompactionCS(uint3 DrawId: SV_DispatchThreadID)
     if (DrawId.x >= MaxDraws)
         return;
 
-    uint numIndices = UncompactedDrawArgs[DrawId.x].numIndices;
+    UncompactedDrawArguments DrawArg = UncompactedDrawArgs[DrawId.x];
+    uint numIndices = DrawArg.numIndices;
 
     if (numIndices == 0)
         return;
@@ -29,7 +30,7 @@ void BatchCompactionCS(uint3 DrawId: SV_DispatchThreadID)
 
     IndrectDrawArgsBuffer[(slot + 1) * INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS + 0] = numIndices;
     IndrectDrawArgsBuffer[(slot + 1) * INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS + 1] = 1;
-    IndrectDrawArgsBuffer[(slot + 1) * INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS + 2] = UncompactedDrawArgs[DrawId.x].startIndex;
+    IndrectDrawArgsBuffer[(slot + 1) * INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS + 2] = DrawArg.startIndex;
     IndrectDrawArgsBuffer[(slot + 1) * INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS + 3] = 0;
     IndrectDrawArgsBuffer[(slot + 1) * INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS + 4] = 0;
 

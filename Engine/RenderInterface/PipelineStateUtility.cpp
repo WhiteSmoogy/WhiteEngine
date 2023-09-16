@@ -5,6 +5,10 @@
 #include <shared_mutex>
 using namespace platform::Render;
 
+RootSignature::~RootSignature() = default;
+PipelineStateObject::~PipelineStateObject() = default;
+CommandSignature::~CommandSignature() = default;
+
 namespace platform::Render::PipelineStateCache
 {
 	class FGraphicsPipelineState

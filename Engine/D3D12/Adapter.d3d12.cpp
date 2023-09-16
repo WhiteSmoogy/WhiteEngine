@@ -917,4 +917,12 @@ namespace platform_ex::Windows::D3D12 {
 	{
 		return *dstorage;
 	}
+
+	platform::Render::CommandSignature* D3D12::Device::CreateCommandSignature(const platform::Render::CommandSignatureDesc& desc)
+	{
+		auto pCommandSignature = new D3DCommandSignature(GetDefaultNodeDevice(), desc);
+
+		return pCommandSignature;
+	}
+
 }

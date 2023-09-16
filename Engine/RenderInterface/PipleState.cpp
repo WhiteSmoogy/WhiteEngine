@@ -2,10 +2,6 @@
 #include "IGraphicsPipelineState.h"
 
 namespace platform::Render {
-
-	RootSignature::~RootSignature() = default;
-	PipelineStateObject::~PipelineStateObject() = default;
-
 	RasterizerDesc::RasterizerDesc()
 		: mode(RasterizerMode::Face),
 		cull(CullMode::Back),

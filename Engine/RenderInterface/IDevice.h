@@ -135,6 +135,8 @@ namespace platform::Render {
 		virtual SRVRIRef CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format = EF_Unknown) = 0;
 		virtual UAVRIRef CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format = EF_Unknown) = 0;
 
+		virtual CommandSignature* CreateCommandSignature(const CommandSignatureDesc& desc) = 0;
+
 		virtual DStorage& GetDStorage() = 0;
 	};
 }

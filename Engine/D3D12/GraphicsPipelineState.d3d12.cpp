@@ -5,10 +5,13 @@
 #include "ShaderCompose.h"
 #include "VertexDeclaration.h"
 #include "Context.h"
+#include "NodeDevice.h"
 #include <mutex>
 
 using namespace platform_ex::Windows;
 using namespace platform_ex::Windows::D3D12;
+
+using IndirectBasicAT = platform::Render::IndirectArgumentType;
 
 using platform::Render::GraphicsPipelineStateInitializer;
 
@@ -97,7 +100,7 @@ static void TranslateRenderTargetFormats(
 );
 
 KeyGraphicsPipelineStateDesc D3D12::GetKeyGraphicsPipelineStateDesc(
-	const platform::Render::GraphicsPipelineStateInitializer& initializer,const RootSignature* RootSignature)
+	const platform::Render::GraphicsPipelineStateInitializer& initializer, const RootSignature* RootSignature)
 {
 	KeyGraphicsPipelineStateDesc Desc;
 	std::memset(&Desc, 0, sizeof(Desc));
@@ -106,7 +109,7 @@ KeyGraphicsPipelineStateDesc D3D12::GetKeyGraphicsPipelineStateDesc(
 	Desc.Desc.pRootSignature = RootSignature->GetSignature();
 
 	Desc.Desc.BlendState = Convert(initializer.BlendState);
-	Desc.Desc.SampleMask =initializer.BlendState.sample_mask;
+	Desc.Desc.SampleMask = initializer.BlendState.sample_mask;
 	Desc.Desc.RasterizerState = Convert(initializer.RasterizerState);
 	Desc.Desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC1(Convert(initializer.DepthStencilState));
 
@@ -144,13 +147,13 @@ KeyGraphicsPipelineStateDesc D3D12::GetKeyGraphicsPipelineStateDesc(
 	COPY_SHADER(P, Pixel);
 	COPY_SHADER(D, Domain);
 	COPY_SHADER(H, Hull);
-	COPY_SHADER(G,Geometry)
+	COPY_SHADER(G, Geometry)
 #undef COPY_SHADER
-	
 
-	//don't support stream output
 
-	return Desc;
+		//don't support stream output
+
+		return Desc;
 }
 
 KeyComputePipelineStateDesc GetKeyComputePipelineStateDesc(const ComputeHWShader* ComputeShader)
@@ -177,7 +180,7 @@ static void TranslateRenderTargetFormats(
 	for (uint32 RTIdx = 0; RTIdx < PsoInit.RenderTargetsEnabled; ++RTIdx)
 	{
 		DXGI_FORMAT PlatformFormat = PsoInit.RenderTargetFormats[RTIdx] != platform::Render::EF_Unknown ? Convert(PsoInit.RenderTargetFormats[RTIdx]) : DXGI_FORMAT_UNKNOWN;
-	
+
 		RTFormatArray.RTFormats[RTIdx] = PlatformFormat;
 	}
 
@@ -262,7 +265,7 @@ uint64 D3DPipelineStateCacheBase::HashPSODesc(const KeyGraphicsPipelineStateDesc
 	const size_t TotalDataSize = GraphicsPSODataSize + RenderTargetDataSize;
 
 	char Data[GraphicsPSODataSize + 8 * sizeof(RenderTargetData)];
-	std::memset(Data,0,TotalDataSize);
+	std::memset(Data, 0, TotalDataSize);
 
 	GraphicsPSOData* PSOData = (GraphicsPSOData*)Data;
 	RenderTargetData* RTData = (RenderTargetData*)(Data + GraphicsPSODataSize);
@@ -304,7 +307,7 @@ uint64 D3DPipelineStateCacheBase::HashPSODesc(const KeyComputePipelineStateDesc&
 		D3D12_PIPELINE_STATE_FLAGS Flags;
 	};
 	ComputePSOData Data;
-	std::memset(&Data,0,sizeof(Data));
+	std::memset(&Data, 0, sizeof(Data));
 	Data.CSHash = Desc.CSHash;
 	Data.NodeMask = Desc.Desc.NodeMask;
 	Data.Flags = Desc.Desc.Flags;
@@ -556,8 +559,8 @@ void D3DPipelineStateCache::Close()
 }
 
 void D3D12::D3DPipelineStateCache::Init(
-	const std::string& GraphicsCacheFilename, 
-	const std::string& ComputeCacheFilename, 
+	const std::string& GraphicsCacheFilename,
+	const std::string& ComputeCacheFilename,
 	const std::string& DriverBlobFilename)
 {
 	//Not using driver-optimized pipeline state disk cache
@@ -665,4 +668,67 @@ void D3D12::D3DPipelineState::Create(const ComputePipelineCreationArgs& InCreati
 void D3D12::D3DPipelineState::CreateAsync(const ComputePipelineCreationArgs& InCreationArgs)
 {
 	return Create(InCreationArgs);
+}
+
+void D3D12::D3DCommandSignature::Init(const platform::Render::CommandSignatureDesc& desc)
+{
+	bool needRootSignature = false;
+	// calculate size through arguement types
+	uint32_t commandStride = 0;
+	IndirectBasicAT drawType = IndirectBasicAT::INDIRECT_DRAW;
+
+	std::vector<D3D12_INDIRECT_ARGUMENT_DESC> argumentDescs;
+
+	for (auto& argdesc : desc.ArgDescs)
+	{
+		//TODO:rootsignature
+		if (argdesc.mType > IndirectBasicAT::INDIRECT_DISPATCH)
+		{
+			throw white::unimplemented();
+		}
+
+		switch (argdesc.mType)
+		{
+		case IndirectBasicAT::INDIRECT_DRAW:
+		{
+			auto d3dDesc = argumentDescs.emplace_back();
+			d3dDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;
+			commandStride += sizeof(D3D12_DRAW_ARGUMENTS);
+			drawType = argdesc.mType;
+			break;
+		}
+		case IndirectBasicAT::INDIRECT_DRAW_INDEX:
+		{
+			auto d3dDesc = argumentDescs.emplace_back();
+			d3dDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
+			commandStride += sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
+			drawType = argdesc.mType;
+			break;
+		}
+		case IndirectBasicAT::INDIRECT_DISPATCH:
+		{
+			auto d3dDesc = argumentDescs.emplace_back();
+			d3dDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
+			commandStride += sizeof(D3D12_DISPATCH_ARGUMENTS);
+			drawType = argdesc.mType;
+			break;
+		}
+		}
+	}
+
+
+	D3D12_COMMAND_SIGNATURE_DESC commandSignatureDesc = {};
+	commandSignatureDesc.pArgumentDescs = argumentDescs.data();
+	commandSignatureDesc.NumArgumentDescs = argumentDescs.size();
+	commandSignatureDesc.ByteStride = commandStride;
+	commandSignatureDesc.NodeMask = GetParentDevice()->GetGPUMask().GetNative();
+
+	uint32_t alignedStride = white::Align<uint32>(commandStride, 16u);
+	if (!desc.mPacked && alignedStride != commandStride)
+	{
+		commandSignatureDesc.ByteStride += (alignedStride - commandStride);
+	}
+
+	CheckHResult(GetParentDevice()->GetDevice()->CreateCommandSignature(
+		&commandSignatureDesc, needRootSignature ? static_cast<const RootSignature*>(desc.pRootSignature)->GetSignature() : NULL, COMPtr_RefParam(CommandSignature, IID_ID3D12CommandSignature)));
 }

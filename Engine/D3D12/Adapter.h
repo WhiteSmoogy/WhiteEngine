@@ -101,6 +101,9 @@ namespace platform_ex::Windows::D3D12 {
 		platform::Render::HardwareShader* CreateGeometryShader(const white::span<const uint8>& Code) override;
 		platform::Render::HardwareShader* CreateComputeShader(const white::span<const uint8>& Code)  override;
 
+		platform::Render::CommandSignature* CreateCommandSignature(const platform::Render::CommandSignatureDesc& desc) override;
+
+
 		platform_ex::DirectStorage& GetDStorage() override;
 
 		white::observer_ptr<RootSignature> CreateRootSignature(const QuantizedBoundShaderState& QBSS);

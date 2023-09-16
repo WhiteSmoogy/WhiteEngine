@@ -4,6 +4,7 @@
 #include "RenderInterface/IGraphicsPipelineState.h"
 #include "RenderInterface/IDevice.h"
 #include "RenderInterface/ShaderCore.h"
+#include "RenderInterface/Indirect.h"
 #include "d3d12_dxgi.h"
 #include "Common.h"
 #include "Utility.h"
@@ -388,4 +389,19 @@ namespace platform_ex::Windows::D3D12
 		virtual ~D3DPipelineStateCache();
 	};
 
+	class D3DCommandSignature : public platform::Render::CommandSignature,public DeviceChild
+	{
+	public:
+		D3DCommandSignature(NodeDevice* device, const platform::Render::CommandSignatureDesc& desc)
+			:DeviceChild(device),CommandSignature()
+		{
+			Init(desc);
+		}
+
+	private:
+		void Init(const platform::Render::CommandSignatureDesc& desc);
+
+	private:
+		COMPtr<ID3D12CommandSignature> CommandSignature;
+	};
 }

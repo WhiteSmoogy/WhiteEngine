@@ -14,6 +14,7 @@
 #include "PipleState.h"
 #include "Shader.h"
 #include "IGraphicsPipelineState.h"
+#include "Indirect.h"
 #include "IShaderCompose.h"
 #include "RenderObject.h"
 #include "DStorage.h"
@@ -30,46 +31,6 @@ namespace platform::Render::Effect {
 }
 
 namespace platform::Render {
-
-	class HardwareShader : public RObject
-	{
-	public:
-		virtual ~HardwareShader() = 0;
-
-		void SetHash(Digest::SHAHash InHash) { Hash = InHash; }
-		Digest::SHAHash GetHash() const { return Hash; }
-	private:
-		Digest::SHAHash Hash;
-	};
-
-	class VertexHWShader : public HardwareShader
-	{};
-
-	class PixelHWShader : public HardwareShader
-	{};
-
-	class GeometryHWShader : public HardwareShader
-	{};
-
-	class ComputeHWShader : public HardwareShader
-	{};
-
-	template<typename T>
-	concept THardwareShader = std::is_base_of_v<HardwareShader, T>;
-
-
-	struct ShaderPassInput
-	{
-		VertexDeclarationElements VertexDeclaration;
-
-		VertexHWShader* VertexShader = nullptr;
-		PixelHWShader* PixelShader = nullptr;
-		GeometryHWShader* GeometryShader = nullptr;
-
-		HardwareShader* HullShader = nullptr;
-		HardwareShader* DomainShader = nullptr;
-	};
-
 	class GraphicsPipelineStateInitializer
 	{
 	public:

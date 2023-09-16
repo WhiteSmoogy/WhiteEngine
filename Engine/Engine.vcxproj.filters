@@ -1159,6 +1159,12 @@
     <ClInclude Include="Runtime\RenderCore\Dispatch.h">
       <Filter>Runtime\RuntimeCore</Filter>
     </ClInclude>
+    <ClInclude Include="RenderInterface\Indirect.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInterface\VertexDecl.h">
+      <Filter>RenderInterface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Asset">

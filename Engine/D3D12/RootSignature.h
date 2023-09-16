@@ -6,6 +6,7 @@
 #include <WBase/wmemory.hpp>
 
 #include "RenderInterface/Shader.h"
+#include "RenderInterface/IGraphicsPipelineState.h"
 #include "d3d12_dxgi.h"
 #include <mutex>
 
@@ -88,7 +89,7 @@ namespace platform_ex::Windows::D3D12 {
 		RPK_RootParameterKeyCount,
 	};
 
-	class RootSignature
+	class RootSignature :public platform::Render::RootSignature
 	{
 	private:
 		// Struct for all the useful info we want per shader stage.

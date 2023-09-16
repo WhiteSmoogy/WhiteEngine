@@ -80,6 +80,16 @@ GraphicsPipelineState::GraphicsPipelineState(const platform::Render::GraphicsPip
 	bShaderNeedsGlobalConstantBuffer[ShaderType::GeometryShader] = GetGeometryShader() && GetGeometryShader()->bGlobalUniformBufferUsed;
 }
 
+const platform::Render::RootSignature* GraphicsPipelineState::GetRootSignature() const
+{
+	return RootSignature;
+}
+
+const platform::Render::RootSignature* ComputePipelineState::GetRootSignature() const
+{
+	return ComputeShader->pRootSignature;
+}
+
 static void TranslateRenderTargetFormats(
 	const platform::Render::GraphicsPipelineStateInitializer& PsoInit,
 	D3D12_RT_FORMAT_ARRAY& RTFormatArray,

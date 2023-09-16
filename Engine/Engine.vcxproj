@@ -336,6 +336,7 @@
     <ClInclude Include="RenderInterface\IGPUResourceView.h" />
     <ClInclude Include="RenderInterface\IGraphicsBuffer.hpp" />
     <ClInclude Include="RenderInterface\IGraphicsPipelineState.h" />
+    <ClInclude Include="RenderInterface\Indirect.h" />
     <ClInclude Include="RenderInterface\InputLayout.hpp" />
     <ClInclude Include="RenderInterface\IRayContext.h" />
     <ClInclude Include="RenderInterface\IRayDevice.h" />
@@ -356,6 +357,7 @@
     <ClInclude Include="RenderInterface\ShaderPermutation.h" />
     <ClInclude Include="RenderInterface\SyncPoint.h" />
     <ClInclude Include="RenderInterface\TextureSampleDesc.h" />
+    <ClInclude Include="RenderInterface\VertexDecl.h" />
     <ClInclude Include="RenderInterface\ViewPort.h" />
     <ClInclude Include="Runtime\AssetResourceScheduler.h" />
     <ClInclude Include="Runtime\Camera.h" />

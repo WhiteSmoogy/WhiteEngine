@@ -4,7 +4,6 @@
 #include <WBase/smart_ptr.hpp>
 #include <WBase/winttype.hpp>
 #include <atomic>
-#include <stack>
 
 namespace platform::Render {
 	class RObject

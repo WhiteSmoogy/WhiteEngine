@@ -215,6 +215,9 @@ namespace platform_ex::Windows::D3D12
 		{
 			return PipelineState->GetPipelineState();
 		}
+
+		const platform::Render::RootSignature* GetRootSignature() const override;
+
 	public:
 		const platform::Render::GraphicsPipelineStateInitializer PipelineStateInitializer;
 		const RootSignature* RootSignature;
@@ -240,6 +243,9 @@ namespace platform_ex::Windows::D3D12
 			:ComputeShader(InComputeShader), PipelineState(InPipelineState)
 		{
 		}
+
+		const platform::Render::RootSignature* GetRootSignature() const override;
+
 	public:
 		const ComputeHWShader* ComputeShader;
 		D3DPipelineState* const PipelineState;

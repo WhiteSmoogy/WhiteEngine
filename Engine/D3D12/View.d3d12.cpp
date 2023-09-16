@@ -156,29 +156,30 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 				D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
 				SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-				uint32 Stride = NumFormatBytes(Format);
+				uint32 EffectiveStride = StructuredBuffer->Stride;
+				SRVDesc.Format = DXGI_FORMAT_UNKNOWN;
+
 				if (bByteAccessBuffer)
 				{
 					SRVDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+					EffectiveStride = 4;
 					SRVDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-					Stride = 4;
 				}
 				else
 				{
-					SRVDesc.Buffer.StructureByteStride = Stride;
-					SRVDesc.Format = Convert(Format);
+					SRVDesc.Buffer.StructureByteStride = EffectiveStride;
 				}
 
-				uint32 MaxElements = static_cast<uint32>(Location.GetSize() / Stride);
+				uint32 MaxElements = static_cast<uint32>(Location.GetSize() / EffectiveStride);
 				StartOffsetBytes = std::min<uint32>(StartOffsetBytes, static_cast<uint32>(Location.GetSize()));
-				uint32 StartElement = StartOffsetBytes / Stride;
+				uint32 StartElement = StartOffsetBytes / EffectiveStride;
 				
 
 				SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 				SRVDesc.Buffer.NumElements = std::min<uint32>(MaxElements - StartElement, NumElements);
-				SRVDesc.Buffer.FirstElement = Offset / Stride + StartElement;
+				SRVDesc.Buffer.FirstElement = Offset / EffectiveStride + StartElement;
 
-				SRV->Initialize(SRVDesc, StructuredBuffer, Stride);
+				SRV->Initialize(SRVDesc, StructuredBuffer, EffectiveStride);
 			}
 		};
 

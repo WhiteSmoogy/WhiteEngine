@@ -134,8 +134,8 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	auto UncompactedDrawArgs = shared_raw_robject(device.CreateBuffer(Buffer::Usage::SingleFrame,
 		RWStructAccess,
 		UncompactedDrawArgsSize, sizeof(FilterTriangleCS::UncompactedDrawArguments), nullptr));
-	auto UncompactedDrawArgsUAV = CmdList.CreateUnorderedAccessView(FliteredIndexBuffer.get());
-	auto UncompactedDrawArgsSRV = CmdList.CreateShaderResourceView(FliteredIndexBuffer.get());
+	auto UncompactedDrawArgsUAV = CmdList.CreateUnorderedAccessView(UncompactedDrawArgs.get());
+	auto UncompactedDrawArgsSRV = CmdList.CreateShaderResourceView(UncompactedDrawArgs.get());
 
 	MemsetResourceParams Params;
 	Params.Count = UncompactedDrawArgsSize;
@@ -148,8 +148,8 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	Parameters.View = ViewCB.Get();
 	Parameters.IndexBuffer = CmdList.CreateShaderResourceView(Trinf::Scene->Index.DataBuffer.get()).get();
 	Parameters.PositionBuffer = CmdList.CreateShaderResourceView(Trinf::Scene->Position.DataBuffer.get()).get();
-	Parameters.FliteredIndexBuffer = UncompactedDrawArgsUAV.get();
-	Parameters.UncompactedDrawArgs = CmdList.CreateUnorderedAccessView(UncompactedDrawArgs.get()).get();
+	Parameters.FliteredIndexBuffer = CmdList.CreateUnorderedAccessView(FliteredIndexBuffer.get()).get();
+	Parameters.UncompactedDrawArgs = UncompactedDrawArgsUAV.get();
 
 	std::vector<FilterTriangleCS::FilterDispatchArgs> BatchTrinfArgs;
 	BatchTrinfArgs.reserve(Caps.MaxDispatchThreadGroupsPerDimension.x);

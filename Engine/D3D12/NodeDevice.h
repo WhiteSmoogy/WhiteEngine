@@ -82,7 +82,7 @@ namespace platform_ex::Windows::D3D12
 
 		std::shared_ptr<SamplerState> CreateSampler(const D3D12_SAMPLER_DESC& Desc);
 
-		inline GlobalOnlineHeap& GetGlobalSamplerHeap() { return GlobalSamplerHeap; }
+		inline GlobalOnlineSamplerHeap& GetGlobalSamplerHeap() { return GlobalSamplerHeap; }
 
 		FastAllocator& GetDefaultFastAllocator() {
 			return DefaultFastAllocator;
@@ -112,8 +112,7 @@ namespace platform_ex::Windows::D3D12
 		std::unordered_map<D3D12_SAMPLER_DESC, std::shared_ptr<SamplerState>, SamplerDescHash> SamplerMap;
 		uint32 SamplerID;
 
-		GlobalOnlineHeap GlobalSamplerHeap;
-		GlobalOnlineHeap GlobalViewHeap;
+		GlobalOnlineSamplerHeap GlobalSamplerHeap;
 
 		FastAllocator DefaultFastAllocator;
 		BufferAllocator DefaultBufferAllocator;

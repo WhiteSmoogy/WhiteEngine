@@ -411,10 +411,7 @@ namespace platform_ex::Windows::D3D12 {
 	class SubAllocatedOnlineHeap : public OnlineHeap
 	{
 	public:
-		SubAllocatedOnlineHeap(DescriptorCache& Cache, CommandContext& InContext) :
-			OnlineHeap(InContext.GetParentDevice(), false),
-			Context(InContext)
-		{};
+		SubAllocatedOnlineHeap(DescriptorCache& Cache, CommandContext& InContext);
 
 		// Specializations
 		bool RollOver();
@@ -435,12 +432,7 @@ namespace platform_ex::Windows::D3D12 {
 	class LocalOnlineHeap :public OnlineHeap
 	{
 	public:
-		LocalOnlineHeap(DescriptorCache& InCache, CommandContext& InContext)
-			: OnlineHeap(InContext.GetParentDevice(), true)
-			, Cache(InCache)
-			, Context(Context)
-		{ 
-		}
+		LocalOnlineHeap(DescriptorCache& InCache, CommandContext& InContext);
 
 		bool RollOver();
 
@@ -563,9 +555,14 @@ namespace platform_ex::Windows::D3D12 {
 		void HeapLoopedAround(D3D12_DESCRIPTOR_HEAP_TYPE Type);
 		void Init( uint32 InNumLocalViewDescriptors, uint32 InNumSamplerDescriptors);
 		void Clear();
-		void BeginFrame();
-		void EndFrame();
+
 		void GatherUniqueSamplerTables();
+
+		// Notify the descriptor cache every time you start recording a command list.
+		// This sets descriptor heaps on the command list and indicates the current fence value which allows
+		// us to avoid querying DX12 for that value thousands of times per frame, which can be costly.
+		void OpenCommandList();
+		void CloseCommandList();
 
 		bool SwitchToContextLocalViewHeap(CommandListHandle& CommandListHandle);
 		bool SwitchToContextLocalSamplerHeap();

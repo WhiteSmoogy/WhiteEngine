@@ -66,4 +66,13 @@ namespace platform::Render {
 	{
 	public:
 	};
+
+	enum class DescriptorHeapType : uint8
+	{
+		Standard,
+		Sampler,
+		RenderTarget,
+		DepthStencil,
+		Count,
+	};
 }

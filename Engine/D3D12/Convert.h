@@ -9,6 +9,7 @@
 #include "RenderInterface/IFormat.hpp"
 #include "RenderInterface/PipleState.h"
 #include "RenderInterface/InputLayout.hpp"
+#include "RenderInterface/IGraphicsPipelineState.h"
 #include <dxgiformat.h>
 #include "d3d12_dxgi.h"
 
@@ -42,6 +43,19 @@ namespace platform_ex {
 			D3D12_CULL_MODE Convert(platform::Render::CullMode mode);
 
 			D3D12_STENCIL_OP Convert(platform::Render::StencilOp op);
+
+			inline D3D12_DESCRIPTOR_HEAP_TYPE Convert(platform::Render::DescriptorHeapType InHeapType)
+			{
+				switch (InHeapType)
+				{
+				case platform::Render::DescriptorHeapType::Standard:     return D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+				case platform::Render::DescriptorHeapType::RenderTarget: return D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+				case platform::Render::DescriptorHeapType::DepthStencil: return D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+				case platform::Render::DescriptorHeapType::Sampler:      return D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+				}
+
+				return D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES;
+			}
 		}
 	}
 }

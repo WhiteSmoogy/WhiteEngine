@@ -272,6 +272,7 @@
     <ClInclude Include="D3D12\d3d12_dxgi.h" />
     <ClInclude Include="D3D12\D3DCommandList.h" />
     <ClInclude Include="D3D12\DescriptorCache.h" />
+    <ClInclude Include="D3D12\Descriptors.h" />
     <ClInclude Include="D3D12\DirectStorage.h" />
     <ClInclude Include="D3D12\Display.h" />
     <ClInclude Include="D3D12\DXGIAdapter.h" />

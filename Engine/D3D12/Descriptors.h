@@ -98,12 +98,14 @@ namespace platform_ex::Windows::D3D12 {
 	class DescriptorAllocator
 	{
 	public:
-		DescriptorAllocator();
+		DescriptorAllocator()
+		{}
 		DescriptorAllocator(uint32 InNumDescriptors)
 		{
 			Init(InNumDescriptors);
 		}
-		 ~DescriptorAllocator();
+		 ~DescriptorAllocator()
+		 {}
 
 		 void Init(uint32 InNumDescriptors)
 		 {
@@ -320,7 +322,7 @@ namespace platform_ex::Windows::D3D12 {
 	{
 	public:
 		DescriptorManager() = delete;
-		DescriptorManager(Device* Device, DescriptorHeap* InHeap);
+		DescriptorManager(NodeDevice* Device, DescriptorHeap* InHeap);
 		~DescriptorManager();
 
 		void UpdateImmediately(DescriptorHandle InHandle, D3D12_CPU_DESCRIPTOR_HANDLE InSourceCpuHandle);
@@ -343,7 +345,7 @@ namespace platform_ex::Windows::D3D12 {
 	};
 
 	/** Heap sub block of an online heap */
-	struct OnlineDescriptorBlock
+	struct OnlineDescriptorBlock : platform::Render::RObject
 	{
 		OnlineDescriptorBlock(uint32 InBaseSlot, uint32 InSize)
 			: BaseSlot(InBaseSlot)
@@ -376,7 +378,6 @@ namespace platform_ex::Windows::D3D12 {
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCPUSlotHandle(OnlineDescriptorBlock* InBlock) const { return Heap->GetCPUSlotHandle(InBlock->BaseSlot); }
 		D3D12_GPU_DESCRIPTOR_HANDLE GetGPUSlotHandle(OnlineDescriptorBlock* InBlock) const { return Heap->GetGPUSlotHandle(InBlock->BaseSlot); }
 
-		// Called by the EOP task to recycle blocks
 		void Recycle(OnlineDescriptorBlock* Block);
 
 	private:
@@ -427,7 +428,7 @@ namespace platform_ex::Windows::D3D12 {
 	{
 	public:
 		OfflineDescriptorManager() = delete;
-		OfflineDescriptorManager(Device* InDevice, DescriptorHeapType InHeapType);
+		OfflineDescriptorManager(NodeDevice* InDevice, DescriptorHeapType InHeapType);
 		~OfflineDescriptorManager();
 
 		inline DescriptorHeapType GetHeapType() const { return HeapType; }
@@ -453,7 +454,7 @@ namespace platform_ex::Windows::D3D12 {
 	class DescriptorHeapManager : public DeviceChild
 	{
 	public:
-		DescriptorHeapManager(Device* InDevice);
+		DescriptorHeapManager(NodeDevice* InDevice);
 		~DescriptorHeapManager();
 
 		void Init(uint32 InNumGlobalResourceDescriptors, uint32 InNumGlobalSamplerDescriptors);
@@ -467,4 +468,6 @@ namespace platform_ex::Windows::D3D12 {
 		std::vector<DescriptorManager> GlobalHeaps;
 	};
 
+
+	void CopyDescriptor(NodeDevice* Device, DescriptorHeap* TargetHeap, DescriptorHandle Handle, D3D12_CPU_DESCRIPTOR_HANDLE SourceCpuHandle);
 }

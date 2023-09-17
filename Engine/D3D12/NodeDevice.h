@@ -91,6 +91,9 @@ namespace platform_ex::Windows::D3D12
 		BufferAllocator& GetDefaultBufferAllocator() {
 			return DefaultBufferAllocator;
 		}
+
+		inline DescriptorHeapManager& GetDescriptorHeapManager() { return NormalDescriptorHeapManager; }
+
 	private:
 		void SetupAfterDeviceCreation();
 	protected:
@@ -113,6 +116,8 @@ namespace platform_ex::Windows::D3D12
 		uint32 SamplerID;
 
 		GlobalOnlineSamplerHeap GlobalSamplerHeap;
+
+		DescriptorHeapManager NormalDescriptorHeapManager;
 
 		FastAllocator DefaultFastAllocator;
 		BufferAllocator DefaultBufferAllocator;

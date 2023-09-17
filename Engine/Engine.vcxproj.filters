@@ -443,6 +443,9 @@
     <ClCompile Include="Runtime\RenderCore\UnifiedBuffer..cpp">
       <Filter>Runtime\RuntimeCore</Filter>
     </ClCompile>
+    <ClCompile Include="D3D12\Descriptors.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">

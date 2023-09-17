@@ -72,6 +72,7 @@
     <ClCompile Include="D3D12\D3D12RayTracing.cpp" />
     <ClCompile Include="D3D12\d3d12_dxgi.cpp" />
     <ClCompile Include="D3D12\DescriptorCache.d3d12.cpp" />
+    <ClCompile Include="D3D12\Descriptors.cpp" />
     <ClCompile Include="D3D12\DirectStorage.cpp" />
     <ClCompile Include="D3D12\Display.d3d12.cpp" />
     <ClCompile Include="D3D12\DXGIAdapter.d3d12.cpp" />

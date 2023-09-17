@@ -228,7 +228,7 @@ namespace platform_ex::Windows::D3D12 {
 	class CommandContextStateCache : public DeviceChild, public SingleNodeGPUObject
 	{
 	protected:
-		CommandContext* CmdContext;
+		CommandContext& CmdContext;
 
 		bool bNeedSetVB;
 		bool bNeedSetIB;
@@ -682,9 +682,7 @@ namespace platform_ex::Windows::D3D12 {
 			*PrimitiveTopology = PipelineState.Graphics.CurrentPrimitiveTopology;
 		}
 
-		CommandContextStateCache(GPUMaskType Node);
-
-		void Init(NodeDevice* InParent, CommandContext* InCmdContext, const CommandContextStateCache* AncestralState,SubAllocatedOnlineHeap::SubAllocationDesc& SubHeapDesc);
+		CommandContextStateCache(CommandContext& Context ,GPUMaskType Node);
 
 		virtual ~CommandContextStateCache()
 		{

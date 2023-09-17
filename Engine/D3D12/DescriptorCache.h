@@ -307,10 +307,10 @@ namespace platform_ex::Windows::D3D12 {
 	};
 
 
-	class OnlineHeap : public DeviceChild,public SingleNodeGPUObject
+	class OnlineHeap : public DeviceChild
 	{
 	public:
-		OnlineHeap(NodeDevice* Device, GPUMaskType Node, bool CanLoopAround, DescriptorCache* _Parent = nullptr);
+		OnlineHeap(NodeDevice* Device, bool CanLoopAround);
 		virtual ~OnlineHeap() { }
 
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCPUSlotHandle(uint32 Slot) const { return{ CPUBase.ptr + Slot * DescriptorSize }; }
@@ -335,8 +335,6 @@ namespace platform_ex::Windows::D3D12 {
 			return Heap.Get();
 		}
 
-		void SetParent(DescriptorCache* InParent) { Parent = InParent; }
-
 		// Roll over behavior depends on the heap type
 		virtual bool RollOver() = 0;
 		virtual void NotifyCurrentCommandList(CommandListHandle& CommandListHandle);
@@ -348,7 +346,6 @@ namespace platform_ex::Windows::D3D12 {
 
 		static const uint32 HeapExhaustedValue = uint32(-1);
 	protected:
-		DescriptorCache* Parent;
 
 		CommandListHandle CurrentCommandList;
 
@@ -373,11 +370,11 @@ namespace platform_ex::Windows::D3D12 {
 		const bool bCanLoopAround;
 	};
 
-	class GlobalOnlineHeap : public OnlineHeap
+	class GlobalOnlineSamplerHeap : public OnlineHeap
 	{
 	public:
-		GlobalOnlineHeap(NodeDevice* Device, GPUMaskType Node)
-			: OnlineHeap(Device, Node, false,nullptr)
+		GlobalOnlineSamplerHeap(NodeDevice* Device)
+			: OnlineHeap(Device, false)
 			, bUniqueDescriptorTablesAreDirty(false)
 		{ }
 
@@ -414,21 +411,10 @@ namespace platform_ex::Windows::D3D12 {
 	class SubAllocatedOnlineHeap : public OnlineHeap
 	{
 	public:
-		struct SubAllocationDesc
-		{
-			SubAllocationDesc() :ParentHeap(nullptr), BaseSlot(0), Size(0) {};
-			SubAllocationDesc(GlobalOnlineHeap* _ParentHeap, uint32 _BaseSlot, uint32 _Size) :
-				ParentHeap(_ParentHeap), BaseSlot(_BaseSlot), Size(_Size) {};
-
-			GlobalOnlineHeap* ParentHeap;
-			uint32 BaseSlot;
-			uint32 Size;
-		};
-
-		SubAllocatedOnlineHeap(NodeDevice* Device, GPUMaskType Node, DescriptorCache* Parent) :
-			OnlineHeap(Device, Node,false, Parent) {};
-
-		void Init(SubAllocationDesc _Desc);
+		SubAllocatedOnlineHeap(DescriptorCache& Cache, CommandContext& InContext) :
+			OnlineHeap(InContext.GetParentDevice(), false),
+			Context(InContext)
+		{};
 
 		// Specializations
 		bool RollOver();
@@ -441,17 +427,20 @@ namespace platform_ex::Windows::D3D12 {
 	private:
 
 		std::queue<OnlineHeapBlock> DescriptorBlockPool;
-		SubAllocationDesc SubDesc;
 
 		OnlineHeapBlock CurrentSubAllocation;
+		CommandContext& Context;
 	};
 
-	class ThreadLocalOnlineHeap :public OnlineHeap
+	class LocalOnlineHeap :public OnlineHeap
 	{
 	public:
-		ThreadLocalOnlineHeap(NodeDevice* Device, GPUMaskType Node, DescriptorCache* _Parent)
-			: OnlineHeap(Device, Node, true, _Parent)
-		{ }
+		LocalOnlineHeap(DescriptorCache& InCache, CommandContext& InContext)
+			: OnlineHeap(InContext.GetParentDevice(), true)
+			, Cache(InCache)
+			, Context(Context)
+		{ 
+		}
 
 		bool RollOver();
 
@@ -501,17 +490,21 @@ namespace platform_ex::Windows::D3D12 {
 		};
 		PoolEntry Entry;
 		std::queue<PoolEntry> ReclaimPool;
+
+		DescriptorCache& Cache;
+		CommandContext& Context;
 	};
 
 	class DescriptorCache : public DeviceChild,public SingleNodeGPUObject
 	{
 	protected:
-		CommandContext* CmdContext;
+		CommandContext& Context;
 	public:
 		OnlineHeap* GetCurrentViewHeap() { return CurrentViewHeap; }
 		OnlineHeap* GetCurrentSamplerHeap() { return CurrentSamplerHeap; }
 
-		DescriptorCache(GPUMaskType Node);
+		~DescriptorCache() = delete;
+		DescriptorCache(CommandContext& Context, GPUMaskType Node);
 
 		~DescriptorCache()
 		{
@@ -568,7 +561,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		bool HeapRolledOver(D3D12_DESCRIPTOR_HEAP_TYPE Type);
 		void HeapLoopedAround(D3D12_DESCRIPTOR_HEAP_TYPE Type);
-		void Init(NodeDevice* InParent, CommandContext* InCmdContext, uint32 InNumLocalViewDescriptors, uint32 InNumSamplerDescriptors, SubAllocatedOnlineHeap::SubAllocationDesc& SubHeapDesc);
+		void Init( uint32 InNumLocalViewDescriptors, uint32 InNumSamplerDescriptors);
 		void Clear();
 		void BeginFrame();
 		void EndFrame();
@@ -595,8 +588,8 @@ namespace platform_ex::Windows::D3D12 {
 		OnlineHeap* CurrentViewHeap;
 		OnlineHeap* CurrentSamplerHeap;
 
-		ThreadLocalOnlineHeap* LocalViewHeap;
-		ThreadLocalOnlineHeap LocalSamplerHeap;
+		LocalOnlineHeap* LocalViewHeap;
+		LocalOnlineHeap LocalSamplerHeap;
 		SubAllocatedOnlineHeap SubAllocatedViewHeap;
 
 		SamplerMap SamplerMap;

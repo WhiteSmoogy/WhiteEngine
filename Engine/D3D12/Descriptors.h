@@ -8,13 +8,13 @@
 namespace platform_ex::Windows::D3D12 {
 	using platform::Render::DescriptorHeapType;
 
-	struct DescriptorHeap : public DeviceChild, public RefCountBase
+	struct DescriptorHeap : public DeviceChild, public platform::Render::RObject
 	{
 	public:
 		DescriptorHeap() = delete;
 
 		// Heap created with its own D3D heap object.
-		DescriptorHeap(NodeDevice* InDevice, ID3D12DescriptorHeap* InHeap, uint32 InNumDescriptors, DescriptorHeapType InType, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags, bool bInIsGlobal);
+		DescriptorHeap(NodeDevice* InDevice, COMPtr<ID3D12DescriptorHeap> InHeap, uint32 InNumDescriptors, DescriptorHeapType InType, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags, bool bInIsGlobal);
 
 		// Heap created as a suballocation of another heap.
 		DescriptorHeap(DescriptorHeap* SubAllocateSourceHeap, uint32 InOffset, uint32 InNumDescriptors);
@@ -139,7 +139,7 @@ namespace platform_ex::Windows::D3D12 {
 		 {
 			 std::unique_lock Lock{ Mutex };
 
-			 if (const uint32 NumRanges = Ranges.size(); NumRanges > 0)
+			 if (const uint32 NumRanges = static_cast<uint32>(Ranges.size()); NumRanges > 0)
 			 {
 				 uint32 Index = 0;
 				 do
@@ -181,7 +181,7 @@ namespace platform_ex::Windows::D3D12 {
 			 const uint32 End = Offset + NumDescriptors;
 			 // Binary search of the range list
 			 uint32 Index0 = 0;
-			 uint32 Index1 = Ranges.size() - 1;
+			 uint32 Index1 = static_cast<uint32>(Ranges.size()) - 1;
 			 for (;;)
 			 {
 				 const uint32 Index = (Index0 + Index1) / 2;
@@ -460,8 +460,8 @@ namespace platform_ex::Windows::D3D12 {
 		void Init(uint32 InNumGlobalResourceDescriptors, uint32 InNumGlobalSamplerDescriptors);
 		void Destroy();
 
-		DescriptorHeap* AllocateIndependentHeap(const TCHAR* InDebugName, DescriptorHeapType InHeapType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InHeapFlags);
-		DescriptorHeap* AllocateHeap(const TCHAR* InDebugName, DescriptorHeapType InHeapType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InHeapFlags);
+		DescriptorHeap* AllocateIndependentHeap(const char* InDebugName, DescriptorHeapType InHeapType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InHeapFlags);
+		DescriptorHeap* AllocateHeap(const char* InDebugName, DescriptorHeapType InHeapType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InHeapFlags);
 		void DeferredFreeHeap(DescriptorHeap* InHeap);
 		void ImmediateFreeHeap(DescriptorHeap* InHeap);
 	private:

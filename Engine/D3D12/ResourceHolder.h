@@ -512,15 +512,15 @@ namespace platform_ex::Windows {
 				:Location(Parent)
 			{}
 
-			ResourceHolder* Resource() const { return Location.GetResource(); }
+			ResourceHolder* GetResource() const { return Location.GetResource(); }
 
 			ID3D12Resource* D3DResource() const {
-				return Resource()->Resource();
+				return GetResource()->Resource();
 			}
 
 			void SetName(const char* name)
 			{
-				Resource()->SetName(name);
+				GetResource()->SetName(name);
 			}
 
 			D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const

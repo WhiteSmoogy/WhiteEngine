@@ -62,13 +62,13 @@ namespace platform_ex::Windows::D3D12 {
 
 			case (D3D12_SRV_DIMENSION_TEXTURE2D):
 				Mip = { Desc.Texture2D.MostDetailedMip, Desc.Texture2D.MipLevels };
-				Plane = { Desc.Texture2D.PlaneSlice, 1 };
+				Plane = { Desc.Texture2D.PlaneSlice, 1u };
 				Array = { 0, 1 };
 				break;
 
 			case (D3D12_SRV_DIMENSION_TEXTURE2DARRAY):
 				Mip = { Desc.Texture2DArray.MostDetailedMip, Desc.Texture2DArray.MipLevels };
-				Plane = { Desc.Texture2DArray.PlaneSlice, 1 };
+				Plane = { Desc.Texture2DArray.PlaneSlice, 1u };
 				Array = { Desc.Texture2DArray.FirstArraySlice, Desc.Texture2DArray.ArraySize };
 				break;
 
@@ -125,19 +125,19 @@ namespace platform_ex::Windows::D3D12 {
 				break;
 
 			case D3D12_UAV_DIMENSION_TEXTURE2D:
-				Mip = { Desc.Texture2D.MipSlice  , 1 };
-				Plane = { Desc.Texture2D.PlaneSlice, 1 };
+				Mip = { Desc.Texture2D.MipSlice  , 1u };
+				Plane = { Desc.Texture2D.PlaneSlice, 1u };
 				Array = { 0, 1 };
 				break;
 
 			case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
-				Mip = { Desc.Texture2DArray.MipSlice  , 1 };
-				Plane = { Desc.Texture2DArray.PlaneSlice, 1 };
+				Mip = { Desc.Texture2DArray.MipSlice  , 1u };
+				Plane = { Desc.Texture2DArray.PlaneSlice, 1u };
 				Array = { Desc.Texture2DArray.FirstArraySlice, Desc.Texture2DArray.ArraySize };
 				break;
 
 			case D3D12_UAV_DIMENSION_TEXTURE3D:
-				Mip = { Desc.Texture3D.MipSlice, 1 };
+				Mip = { Desc.Texture3D.MipSlice, 1u };
 				Array = { 0, 1 };
 				break;
 			}
@@ -160,14 +160,14 @@ namespace platform_ex::Windows::D3D12 {
 				break;
 
 			case D3D12_RTV_DIMENSION_TEXTURE2D:
-				Mip = { Desc.Texture2D.MipSlice  , 1 };
-				Plane = { Desc.Texture2D.PlaneSlice, 1 };
+				Mip = { Desc.Texture2D.MipSlice  , 1u };
+				Plane = { Desc.Texture2D.PlaneSlice, 1u };
 				Array = { 0, 1 };
 				break;
 
 			case D3D12_RTV_DIMENSION_TEXTURE2DARRAY:
-				Mip = { Desc.Texture2DArray.MipSlice  , 1 };
-				Plane = { Desc.Texture2DArray.PlaneSlice, 1 };
+				Mip = { Desc.Texture2DArray.MipSlice  , 1u };
+				Plane = { Desc.Texture2DArray.PlaneSlice, 1u };
 				Array = { Desc.Texture2DArray.FirstArraySlice, Desc.Texture2DArray.ArraySize };
 				break;
 
@@ -182,7 +182,7 @@ namespace platform_ex::Windows::D3D12 {
 				break;
 
 			case D3D12_RTV_DIMENSION_TEXTURE3D:
-				Mip = { Desc.Texture3D.MipSlice, 1 };
+				Mip = { Desc.Texture3D.MipSlice, 1u };
 				Array = { 0, 1 };
 				break;
 			}
@@ -205,12 +205,12 @@ namespace platform_ex::Windows::D3D12 {
 				break;
 
 			case D3D12_DSV_DIMENSION_TEXTURE2D:
-				Mip = { Desc.Texture2D.MipSlice, 1 };
+				Mip = { Desc.Texture2D.MipSlice, 1u };
 				Array = { 0, 1 };
 				break;
 
 			case D3D12_DSV_DIMENSION_TEXTURE2DARRAY:
-				Mip = { Desc.Texture2DArray.MipSlice, 1 };
+				Mip = { Desc.Texture2DArray.MipSlice, 1u };
 				Array = { Desc.Texture2DArray.FirstArraySlice, Desc.Texture2DArray.ArraySize };
 				break;
 
@@ -245,7 +245,7 @@ namespace platform_ex::Windows::D3D12 {
 		ResourceLayout(const D3D12_RESOURCE_DESC& ResourceDesc)
 			:NumArraySlices(ResourceDesc.DepthOrArraySize)
 			, NumPlanes(GetPlaneCount(ResourceDesc.Format))
-			, NumMips(ResourceDesc.MipLevels)
+			, NumMips(static_cast<uint8>(ResourceDesc.MipLevels))
 		{}
 
 		uint16 NumArraySlices = 0;
@@ -374,7 +374,7 @@ namespace platform_ex::Windows::D3D12 {
 		SamplerState* DefaultSampler;
 	};
 
-	class D3DView : DeviceChild
+	class D3DView :public DeviceChild
 	{
 		typedef OfflineDescriptor D3DDefaultViews::* NullDescPtr;
 

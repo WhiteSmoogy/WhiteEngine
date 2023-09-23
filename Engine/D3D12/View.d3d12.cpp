@@ -2,14 +2,220 @@
 #include "GraphicsBuffer.hpp"
 #include "Adapter.h"
 #include "Convert.h"
+#include "NodeDevice.h"
 
 using namespace platform_ex::Windows::D3D12;
 using platform::Render::shared_raw_robject;
 
-ShaderResourceView::ShaderResourceView(GraphicsBuffer* InBuffer, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc, uint32 InStride)
-	:TView(InBuffer->GetParentDevice(), ViewSubresourceSubsetFlags_None)
+D3DView::D3DView(NodeDevice* InDevice, DescriptorHeapType InHeapType)
+	:DeviceChild(InDevice),
+	OfflineHandle(InDevice->GetOfflineDescriptorManager(InHeapType).AllocateHeapSlot())
+	, HeapType(InHeapType)
 {
-	Initialize(InDesc, InBuffer, InBuffer->Location, InStride);
+}
+
+D3DView::~D3DView()
+{
+	GetParentDevice()->GetOfflineDescriptorManager(HeapType).FreeHeapSlot(OfflineHandle);
+}
+
+void D3DView::CreateView(BaseShaderResource* InResource, NullDescPtr NullDescriptor)
+{
+	ShaderResource = InResource;
+	Resource = InResource->GetResource();
+	Location = &InResource->Location;
+
+	ViewSubset.Layout = Resource->GetDesc();
+	UpdateDescriptor();
+}
+
+void D3DView::CreateView(ResourceLocation* InResource, NullDescPtr NullDescriptor)
+{
+	ShaderResource = nullptr;
+	Resource = InResource->GetResource();
+	Location = InResource;
+
+	ViewSubset.Layout = Resource->GetDesc();
+	UpdateDescriptor();
+}
+
+RenderTargetView::RenderTargetView(NodeDevice* InDevice)
+	:TView(InDevice, DescriptorHeapType::RenderTarget)
+{
+}
+
+void RenderTargetView::UpdateDescriptor()
+{
+	GetParentDevice()->GetDevice()->CreateRenderTargetView(
+		Resource->Resource(),
+		&Desc,
+		OfflineHandle
+	);
+
+	OfflineHandle.IncrementVersion();
+}
+
+DepthStencilView::DepthStencilView(NodeDevice* InDevice)
+	:TView(InDevice, DescriptorHeapType::DepthStencil)
+{
+}
+
+void DepthStencilView::UpdateDescriptor()
+{
+	GetParentDevice()->GetDevice()->CreateDepthStencilView(
+		Resource->Resource(),
+		&Desc,
+		OfflineHandle
+	);
+
+	OfflineHandle.IncrementVersion();
+}
+
+ShaderResourceView::ShaderResourceView(NodeDevice* InDevice)
+	:TView(InDevice, DescriptorHeapType::Standard)
+{
+}
+
+
+
+template<typename TResource>
+void ShaderResourceView::CreateView(TResource InResource, D3D12_SHADER_RESOURCE_VIEW_DESC const& InD3DViewDesc, EFlags InFlags)
+{
+	OffsetInBytes = 0;
+	StrideInBytes = 0;
+	Flags = InFlags;
+
+	//
+	// Buffer / acceleration structure views can apply an offset in bytes from the start of the logical resource.
+	//
+	// Reconstruct this value and store it for later. We'll need it if the view is renamed, to determine where
+	// the view should exist within the bounds of the new resource location.
+	//
+	if (InD3DViewDesc.ViewDimension == D3D12_SRV_DIMENSION_BUFFER)
+	{
+		StrideInBytes = InD3DViewDesc.Format == DXGI_FORMAT_UNKNOWN
+			? InD3DViewDesc.Buffer.StructureByteStride
+			: GetFormatSizeInBytes(InD3DViewDesc.Format);
+
+		wassume(StrideInBytes > 0);
+
+		OffsetInBytes = (InD3DViewDesc.Buffer.FirstElement * StrideInBytes) - InResource->GetOffsetFromBaseOfResource();
+		wassume((OffsetInBytes % StrideInBytes) == 0);
+	}
+	else if (InD3DViewDesc.ViewDimension == D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE)
+	{
+		OffsetInBytes = InD3DViewDesc.RaytracingAccelerationStructure.Location - InResource->GetGPUVirtualAddress();
+		StrideInBytes = 1;
+	}
+
+	TView::CreateView(InD3DViewDesc, InResource);
+}
+
+template<>
+void ShaderResourceView::CreateView<BaseShaderResource*>(BaseShaderResource* InResource, D3D12_SHADER_RESOURCE_VIEW_DESC const& InD3DViewDesc, EFlags InFlags);
+template<>
+void ShaderResourceView::CreateView<ResourceLocation*>(ResourceLocation* InResource, D3D12_SHADER_RESOURCE_VIEW_DESC const& InD3DViewDesc, EFlags InFlags);
+
+void ShaderResourceView::UpdateMinLODClamp(float MinLODClamp)
+{
+	switch (Desc.ViewDimension)
+	{
+	default: throw white::unsupported(); return; // not supported
+	case D3D12_SRV_DIMENSION_TEXTURE2D: Desc.Texture2D.ResourceMinLODClamp = MinLODClamp; break;
+	case D3D12_SRV_DIMENSION_TEXTURE2DARRAY: Desc.Texture2DArray.ResourceMinLODClamp = MinLODClamp; break;
+	case D3D12_SRV_DIMENSION_TEXTURE3D: Desc.Texture3D.ResourceMinLODClamp = MinLODClamp; break;
+	case D3D12_SRV_DIMENSION_TEXTURECUBE: Desc.TextureCube.ResourceMinLODClamp = MinLODClamp; break;
+	case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY: Desc.TextureCubeArray.ResourceMinLODClamp = MinLODClamp; break;
+	}
+
+	UpdateDescriptor();
+}
+
+void ShaderResourceView::UpdateDescriptor()
+{
+	// NOTE (from D3D Debug runtime): pResource must be NULL for acceleration structures, since the resource location comes from a GPUVA in pDesc.
+	ID3D12Resource* TargetResource = Desc.ViewDimension != D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE
+		? GetResource()->Resource()
+		: nullptr;
+
+	GetParentDevice()->GetDevice()->CreateShaderResourceView(
+		TargetResource,
+		&Desc,
+		OfflineHandle
+	);
+
+	OfflineHandle.IncrementVersion();
+}
+
+UnorderedAccessView::UnorderedAccessView(NodeDevice* InDevice)
+	:TView(InDevice, DescriptorHeapType::Standard)
+{
+}
+
+template<typename TResource>
+void UnorderedAccessView::CreateView(TResource InResource, D3D12_UNORDERED_ACCESS_VIEW_DESC const& InD3DViewDesc, EFlags InFlags)
+{
+	OffsetInBytes = 0;
+	StrideInBytes = 0;
+
+	//
+	// Buffer views can apply an offset in bytes from the start of the logical resource.
+	//
+	// Reconstruct this value and store it for later. We'll need it if the view is renamed, 
+	// to determine where the view should exist within the bounds of the new resource location.
+	//
+	if (InD3DViewDesc.ViewDimension == D3D12_UAV_DIMENSION_BUFFER)
+	{
+		StrideInBytes = InD3DViewDesc.Format == DXGI_FORMAT_UNKNOWN
+			? InD3DViewDesc.Buffer.StructureByteStride
+			: GetFormatSizeInBytes(InD3DViewDesc.Format);
+
+		wassume(StrideInBytes > 0);
+
+		OffsetInBytes = (InD3DViewDesc.Buffer.FirstElement * StrideInBytes) - InResource->GetOffsetFromBaseOfResource();
+		wassume((OffsetInBytes % StrideInBytes) == 0);
+	}
+
+	//
+	// UAVs optionally support a hidden counter. D3D12 requires the user to allocate this as a buffer resource.
+	//
+	if (white::has_anyflags(InFlags, EFlags::NeedsCounter))
+	{
+		auto Device = GetParentDevice();
+		const auto Node = Device->GetGPUMask();
+
+		Device->GetParentAdapter()->CreateBuffer(
+			CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT, Node.GetNative(), Node.GetNative())
+			, Node
+			, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+			//, ResourceStateMode::Multi
+			, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+			, 4
+			, CounterResource.ReleaseAndGetAddress()
+			, "Counter"
+			, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+		);
+	}
+
+	TView::CreateView(InD3DViewDesc, InResource);
+}
+
+void UnorderedAccessView::UpdateDescriptor()
+{
+	ID3D12Resource* Resource = this->Resource->Resource();
+
+	ID3D12Resource* Counter = CounterResource
+		? CounterResource->Resource()
+		: nullptr;
+
+	GetParentDevice()->GetDevice()->CreateUnorderedAccessView(
+		Resource,
+		Counter,
+		&Desc,
+		OfflineHandle
+	);
+
+	OfflineHandle.IncrementVersion();
 }
 
 SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format)
@@ -35,7 +241,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 		}
 		else
 		{
-			CommandType Command{ Resource,srv,StartOffsetBytes,NumElements, format};
+			CommandType Command{ Resource,srv,StartOffsetBytes,NumElements, format };
 			Command.ExecuteNoCmdList();
 		}
 
@@ -52,7 +258,8 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 		SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		SRVDesc.RaytracingAccelerationStructure.Location = Resource->Location.GetGPUVirtualAddress() + StartOffsetBytes;
 
-		auto srv = new ShaderResourceView(Resource, SRVDesc, 4);
+		auto srv = new ShaderResourceView(GetNodeDevice(0));
+		srv->CreateView(Resource, SRVDesc, ShaderResourceView::EFlags::None);
 		return shared_raw_robject(srv);
 	}
 	if (!white::has_anyflags(access, EAccessHint::EA_GPUStructured))
@@ -66,7 +273,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 			DXGI_FORMAT Format;
 
 			D3D12InitializeBufferSRVCommand(GraphicsBuffer* InBuffer, ShaderResourceView* InSrv, uint32 InStartOffsetBytes, uint32 InNumElements, EFormat InFormat)
-				:Buffer(InBuffer), SRV(InSrv), StartOffsetBytes(InStartOffsetBytes), NumElements(InNumElements),Format(Buffer->GetFormat())
+				:Buffer(InBuffer), SRV(InSrv), StartOffsetBytes(InStartOffsetBytes), NumElements(InNumElements), Format(Buffer->GetFormat())
 			{}
 
 			void ExecuteAndDestruct(platform::Render::CommandListBase& CmdList, platform::Render::CommandListContext& Context)
@@ -118,7 +325,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 				SRVDesc.Buffer.FirstElement = (BufferOffset) / CreationStride;
 				SRVDesc.Buffer.NumElements = NumBytes / CreationStride;
 
-				SRV->Initialize(SRVDesc, Buffer, CreationStride);
+				SRV->CreateView(Buffer, SRVDesc, ShaderResourceView::EFlags::None);
 			}
 		};
 
@@ -173,13 +380,13 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 				uint32 MaxElements = static_cast<uint32>(Location.GetSize() / EffectiveStride);
 				StartOffsetBytes = std::min<uint32>(StartOffsetBytes, static_cast<uint32>(Location.GetSize()));
 				uint32 StartElement = StartOffsetBytes / EffectiveStride;
-				
+
 
 				SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 				SRVDesc.Buffer.NumElements = std::min<uint32>(MaxElements - StartElement, NumElements);
 				SRVDesc.Buffer.FirstElement = Offset / EffectiveStride + StartElement;
 
-				SRV->Initialize(SRVDesc, StructuredBuffer, EffectiveStride);
+				SRV->CreateView(StructuredBuffer, SRVDesc, ShaderResourceView::EFlags::None);
 			}
 		};
 
@@ -220,5 +427,9 @@ UAVRIRef Device::CreateUnorderedAccessView(const platform::Render::GraphicsBuffe
 	UAVDesc.Buffer.NumElements = Location.GetSize() / EffectiveStride;
 	UAVDesc.Buffer.StructureByteStride = !bByteAccessBuffer ? EffectiveStride : 0;
 
-	return shared_raw_robject(new UnorderedAccessView(Buffer->GetParentDevice(), UAVDesc, Buffer, nullptr));
+	auto uav = new UnorderedAccessView(Buffer->GetParentDevice());
+
+	uav->CreateView(Buffer, UAVDesc, UnorderedAccessView::EFlags::None);
+
+	return shared_raw_robject(uav);
 }

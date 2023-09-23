@@ -164,12 +164,9 @@ namespace platform_ex::Windows::D3D12 {
 		OnlineHeap(NodeDevice* Device, bool CanLoopAround);
 		virtual ~OnlineHeap() { }
 
-		D3D12_CPU_DESCRIPTOR_HANDLE GetCPUSlotHandle(uint32 Slot) const { return{ CPUBase.ptr + Slot * DescriptorSize }; }
-		D3D12_GPU_DESCRIPTOR_HANDLE GetGPUSlotHandle(uint32 Slot) const { return{ GPUBase.ptr + Slot * DescriptorSize }; }
+		D3D12_CPU_DESCRIPTOR_HANDLE GetCPUSlotHandle(uint32 Slot) const { return Heap->GetCPUSlotHandle(Slot); }
+		D3D12_GPU_DESCRIPTOR_HANDLE GetGPUSlotHandle(uint32 Slot) const { return Heap->GetGPUSlotHandle(Slot); }
 
-		inline const uint32 GetDescriptorSize() const { return DescriptorSize; }
-
-		const D3D12_DESCRIPTOR_HEAP_DESC& GetDesc() const { return Desc; }
 
 		// Call this to reserve descriptor heap slots for use by the command list you are currently recording. This will wait if
 		// necessary until slots are free (if they are currently in use by another command list.) If the reservation can be
@@ -183,40 +180,29 @@ namespace platform_ex::Windows::D3D12 {
 
 		ID3D12DescriptorHeap* GetHeap()
 		{
-			return Heap.Get();
+			return Heap->GetHeap();
 		}
 
 		// Roll over behavior depends on the heap type
 		virtual bool RollOver() = 0;
-		virtual void NotifyCurrentCommandList(CommandListHandle& CommandListHandle);
+		virtual void HeapLoopedAround() { }
+		virtual void OpenCommandList() { }
+		virtual void CloseCommandList() { }
 
 		virtual uint32 GetTotalSize()
 		{
-			return Desc.NumDescriptors;
+			return Heap->GetNumDescriptors();
 		}
 
 		static const uint32 HeapExhaustedValue = uint32(-1);
 	protected:
-
-		CommandListHandle CurrentCommandList;
-
-
-		// Handles for manipulation of the heap
-		uint32 DescriptorSize;
-		D3D12_CPU_DESCRIPTOR_HANDLE CPUBase;
-		D3D12_GPU_DESCRIPTOR_HANDLE GPUBase;
+		COMPtr<DescriptorHeap> Heap;
 
 		// This index indicate where the next set of descriptors should be placed *if* there's room
 		uint32 NextSlotIndex;
 
 		// Indicates the last free slot marked by the command list being finished
 		uint32 FirstUsedSlot;
-
-		// Keeping this ptr around is basically just for lifetime management
-		COMPtr<ID3D12DescriptorHeap> Heap;
-
-		// Desc contains the number of slots and allows for easy recreation
-		D3D12_DESCRIPTOR_HEAP_DESC Desc;
 
 		const bool bCanLoopAround;
 	};
@@ -244,39 +230,25 @@ namespace platform_ex::Windows::D3D12 {
 		std::mutex CriticalSection;
 	};
 
-	struct OnlineHeapBlock
-	{
-	public:
-		OnlineHeapBlock(uint32 _BaseSlot, uint32 _Size) :
-			BaseSlot(_BaseSlot), Size(_Size), SizeUsed(0), bFresh(true) {};
-		OnlineHeapBlock() : BaseSlot(0), Size(0), SizeUsed(0), bFresh(true) {}
-
-		CLSyncPoint SyncPoint;
-		uint32 BaseSlot;
-		uint32 Size;
-		uint32 SizeUsed;
-		// Indicates that this has never been used in a Command List before
-		bool bFresh;
-	};
-
 	class SubAllocatedOnlineHeap : public OnlineHeap
 	{
 	public:
 		SubAllocatedOnlineHeap(DescriptorCache& Cache, CommandContext& InContext);
 
 		// Specializations
-		bool RollOver();
-		void NotifyCurrentCommandList(CommandListHandle& CommandListHandle) override;
+		bool RollOver() final;
+		void OpenCommandList() final;
 
 		virtual uint32 GetTotalSize() final override
 		{
-			return CurrentSubAllocation.Size;
+			return CurrentBlock ? CurrentBlock->Size : 0;
 		}
 	private:
+		bool AllocateBlock();
 
-		std::queue<OnlineHeapBlock> DescriptorBlockPool;
+		OnlineDescriptorBlock * CurrentBlock = nullptr;
 
-		OnlineHeapBlock CurrentSubAllocation;
+		DescriptorCache& Cache;
 		CommandContext& Context;
 	};
 
@@ -285,11 +257,11 @@ namespace platform_ex::Windows::D3D12 {
 	public:
 		LocalOnlineHeap(DescriptorCache& InCache, CommandContext& InContext);
 
+		void Init(uint32 InNumDescriptors, DescriptorHeapType InHeapType);
+
 		bool RollOver();
-
-		void NotifyCurrentCommandList(CommandListHandle& CommandListHandle) override;
-
-		void Init(uint32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE Type);
+		void HeapLoopedAround() final;
+		void CloseCommandList() final;
 
 	private:
 		struct SyncPointEntry
@@ -315,7 +287,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		struct PoolEntry
 		{
-			COMPtr<ID3D12DescriptorHeap> Heap;
+			COMPtr<DescriptorHeap> Heap;
 			CLSyncPoint SyncPoint;
 
 			PoolEntry()
@@ -342,6 +314,8 @@ namespace platform_ex::Windows::D3D12 {
 	{
 	protected:
 		CommandContext& Context;
+		const D3DDefaultViews& DefaultViews;
+
 	public:
 		OnlineHeap* GetCurrentViewHeap() { return CurrentViewHeap; }
 		OnlineHeap* GetCurrentSamplerHeap() { return CurrentSamplerHeap; }
@@ -378,11 +352,6 @@ namespace platform_ex::Windows::D3D12 {
 		// ------------------------------------------------------
 		// end Descriptor Slot Reservation stuff
 
-		// null views
-		DescriptorHandleSRV* pNullSRV;
-		DescriptorHandleRTV* pNullRTV;
-		DescriptorHandleUAV* pNullUAV;
-
 		std::shared_ptr<SamplerState> pDefaultSampler;
 
 		void SetVertexBuffers(VertexBufferCache& Cache);
@@ -402,8 +371,8 @@ namespace platform_ex::Windows::D3D12 {
 
 		void SetStreamOutTargets(ResourceHolder** Buffers, uint32 Count, const uint32* Offsets);
 
-		bool HeapRolledOver(D3D12_DESCRIPTOR_HEAP_TYPE Type);
-		void HeapLoopedAround(D3D12_DESCRIPTOR_HEAP_TYPE Type);
+		bool HeapRolledOver(DescriptorHeapType Type);
+		void HeapLoopedAround(DescriptorHeapType Type);
 		void Init( uint32 InNumLocalViewDescriptors, uint32 InNumSamplerDescriptors);
 		void Clear();
 

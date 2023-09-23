@@ -412,7 +412,7 @@ public:
 	D3D12_GPU_VIRTUAL_ADDRESS GetShaderTableAddress() const
 	{
 		WAssert(!bIsDirty, "Shader table update is pending, therefore GPU address is not available. Use UploadToGPU() to upload data and acquire a valid GPU buffer address.");
-		return Buffer->Resource()->GetGPUVirtualAddress();
+		return Buffer->GetResource()->GetGPUVirtualAddress();
 	}
 
 

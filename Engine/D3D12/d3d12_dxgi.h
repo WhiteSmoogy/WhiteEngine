@@ -6,6 +6,7 @@
 
 #include <WBase/wdef.h>
 #include <WBase/winttype.hpp>
+#include <WBase/exception_type.h>
 #include <WFramework/Win32/WCLib/COM.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -1282,6 +1283,8 @@ namespace platform_ex::Windows::D3D12 {
 	using SamplerSlotMask = white::make_width_int<MAX_SAMPLERS>::unsigned_type;
 
 	using UAVSlotMask = white::make_width_int<MAX_UAVS>::unsigned_type;
+
+	constexpr D3D12_RESOURCE_STATES D3D12_RESOURCE_STATE_TBD = D3D12_RESOURCE_STATES(- 1 ^ (1 << 31));
 }
 
 template<typename CharT>

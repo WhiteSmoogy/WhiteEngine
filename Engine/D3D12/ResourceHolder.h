@@ -7,7 +7,7 @@
 #define WE_RENDER_D3D12_Resource_h 1
 
 #include "Common.h"
-#include "d3d12_dxgi.h"
+#include "Utility.h"
 #include <WBase/enum.hpp>
 
 namespace platform_ex::Windows {
@@ -51,6 +51,63 @@ namespace platform_ex::Windows {
 			Default,
 			Single,
 			Multi,
+		};
+
+		class CResourceState
+		{
+		public:
+			void Initialize(uint32 SubresourceCount);
+
+			bool AreAllSubresourcesSame() const;
+			bool CheckResourceState(D3D12_RESOURCE_STATES State) const;
+			bool CheckResourceStateInitalized() const;
+			D3D12_RESOURCE_STATES GetSubresourceState(uint32 SubresourceIndex) const;
+			bool CheckAllSubresourceSame();
+			void SetResourceState(D3D12_RESOURCE_STATES State);
+			void SetSubresourceState(uint32 SubresourceIndex, D3D12_RESOURCE_STATES State);
+
+			D3D12_RESOURCE_STATES GetUAVHiddenResourceState() const
+			{
+				return static_cast<D3D12_RESOURCE_STATES>(UAVHiddenResourceState);
+			}
+
+			void SetUAVHiddenResourceState(D3D12_RESOURCE_STATES InUAVHiddenResourceState)
+			{
+				// The hidden state can never include UAV
+				wassume(InUAVHiddenResourceState == D3D12_RESOURCE_STATE_TBD || !white::has_anyflags(InUAVHiddenResourceState, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+				wassume((InUAVHiddenResourceState & (1 << 31)) == 0);
+
+				UAVHiddenResourceState = (uint32)InUAVHiddenResourceState;
+			}
+
+			void SetHasInternalTransition()
+			{
+				bHasInternalTransition = 1;
+			}
+			bool HasInternalTransition() const
+			{
+				return bHasInternalTransition != 0;
+			}
+
+		private:
+			// Only used if m_AllSubresourcesSame is 1.
+			// Bits defining the state of the full resource, bits are from D3D12_RESOURCE_STATES
+			uint32 m_ResourceState : 31;
+
+			// Set to 1 if m_ResourceState is valid.  In this case, all subresources have the same state
+			// Set to 0 if m_SubresourceState is valid.  In this case, each subresources may have a different state (or may be unknown)
+			uint32 m_AllSubresourcesSame : 1;
+
+			// Special resource state to track previous state before resource transitioned to UAV when the resource
+			// has a UAV aliasing resource so correct previous state can be found (only single state allowed)
+			uint32 UAVHiddenResourceState : 31;
+
+			// Was the resource used for another transition than the pending transition
+			uint32 bHasInternalTransition : 1;
+
+			// Only used if m_AllSubresourcesSame is 0.
+			// The state of each subresources.  Bits are from D3D12_RESOURCE_STATES.
+			std::vector<D3D12_RESOURCE_STATES> m_SubresourceState;
 		};
 
 		class HeapHolder :public RefCountBase, public DeviceChild, public MultiNodeGPUObject
@@ -120,6 +177,14 @@ namespace platform_ex::Windows {
 			}
 
 			bool IsPlacedResource() const { return heap != nullptr; }
+
+			uint16 GetMipLevels() const { return desc.MipLevels; }
+			uint16 GetArraySize() const { return (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D) ? 1 : desc.DepthOrArraySize; }
+			uint16 GetPlaneCount() const { return  platform_ex::Windows::D3D12::GetPlaneCount(desc.Format); }
+
+			uint16 GetSubresourceCount() const {
+				return GetMipLevels() * GetArraySize() * GetPlaneCount();
+			}
 
 		protected:
 			ResourceHolder();

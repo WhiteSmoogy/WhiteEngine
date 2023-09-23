@@ -92,6 +92,9 @@ namespace platform_ex::Windows::D3D12
 			return OfflineDescriptorManagers[static_cast<int>(InType)];
 		}
 
+		const D3DDefaultViews& GetDefaultViews() const { return DefaultViews; }
+
+
 	private:
 		void SetupAfterDeviceCreation();
 	protected:
@@ -112,6 +115,8 @@ namespace platform_ex::Windows::D3D12
 		GlobalOnlineSamplerHeap GlobalSamplerHeap;
 
 		DescriptorHeapManager NormalDescriptorHeapManager;
+
+		D3DDefaultViews DefaultViews;
 
 		FastAllocator DefaultFastAllocator;
 		BufferAllocator DefaultBufferAllocator;

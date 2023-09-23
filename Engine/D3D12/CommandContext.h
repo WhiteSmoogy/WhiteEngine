@@ -24,7 +24,7 @@ namespace platform_ex::Windows::D3D12 {
 	class CommandContext final :public CommandContextBase,public DeviceChild
 	{
 	public:
-		CommandContext(NodeDevice* InParent, SubAllocatedOnlineHeap::SubAllocationDesc& SubHeapDesc, bool InIsDefaultContext, bool InIsAsyncComputeContext = false);
+		CommandContext(NodeDevice* InParent, bool InIsDefaultContext, bool InIsAsyncComputeContext = false);
 	public:
 		virtual void SetAsyncComputeBudgetInternal(platform::Render::AsyncComputeBudget Budget) {}
 
@@ -98,6 +98,23 @@ namespace platform_ex::Windows::D3D12 {
 		void BeginFrame();
 
 		void EndFrame();
+	public:
+		void TransitionResource(UnorderedAccessView* View, D3D12_RESOURCE_STATES after);
+
+		void TransitionResource(ShaderResourceView* View, D3D12_RESOURCE_STATES after);
+
+		bool TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after, const CViewSubset& subresourceSubset);
+		bool TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after, uint32 subresource);
+
+		void TransitionResource(DepthStencilView* View);
+
+
+		void TransitionResource(DepthStencilView* pView, D3D12_RESOURCE_STATES after);
+
+		void TransitionResource(RenderTargetView* pView, D3D12_RESOURCE_STATES after);
+
+		bool TransitionResource(ResourceHolder* InResource, CResourceState& ResourceState_OnCommandList, uint32 InSubresourceIndex, D3D12_RESOURCE_STATES InBeforeState, D3D12_RESOURCE_STATES InAfterState, bool bInForceAfterState);
+
 	private:
 		void ClearState();
 

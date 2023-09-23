@@ -627,7 +627,7 @@ namespace platform_ex::Windows::D3D12 {
 				{
 					if (PipelineState.Common.SRVCache.Views[i][j] && PipelineState.Common.SRVCache.Views[i][j]->GetResourceLocation())
 					{
-						if (PipelineState.Common.SRVCache.Views[i][j]->GetResourceLocation() == VertexBufferLocation)
+						if (PipelineState.Common.SRVCache.Views[i][j]->GetResource() == VertexBufferLocation)
 						{
 							return true;
 						}

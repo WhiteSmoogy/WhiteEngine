@@ -25,7 +25,7 @@ CommandContextBase::CommandContextBase(D3D12Adapter* InParent, GPUMaskType InGPU
 {
 }
 
-CommandContext::CommandContext(NodeDevice* InParent, SubAllocatedOnlineHeap::SubAllocationDesc& SubHeapDesc, bool InIsDefaultContext, bool InIsAsyncComputeContext)
+CommandContext::CommandContext(NodeDevice* InParent, bool InIsDefaultContext, bool InIsAsyncComputeContext)
 	:
 	CommandContextBase(InParent->GetParentAdapter(), InParent->GetGPUMask(),InIsDefaultContext, InIsAsyncComputeContext),
 	DeviceChild(InParent),
@@ -36,10 +36,9 @@ CommandContext::CommandContext(NodeDevice* InParent, SubAllocatedOnlineHeap::Sub
 	PSConstantBuffer(InParent, ConstantsAllocator),
 	GSConstantBuffer(InParent, ConstantsAllocator),
 	CSConstantBuffer(InParent, ConstantsAllocator),
-	StateCache(InParent->GetGPUMask()),
+	StateCache(*this ,InParent->GetGPUMask()),
 	CommandAllocatorManager(InParent, InIsAsyncComputeContext ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT)
 {
-	StateCache.Init(InParent, this, nullptr, SubHeapDesc);
 }
 
 void CommandContext::BeginRenderPass(const platform::Render::RenderPassInfo& Info, const char* Name)
@@ -293,7 +292,7 @@ void CommandContext::OpenCommandList()
 
 	// Notify the descriptor cache about the new command list
 	// This will set the descriptor cache's current heaps on the new command list.
-	StateCache.GetDescriptorCache()->NotifyCurrentCommandList(CommandListHandle);
+	StateCache.GetDescriptorCache()->OpenCommandList();
 
 	// Go through the state and find bits that differ from command list defaults.
 	// Mark state as dirty so next time ApplyState is called, it will set all state on this new command list
@@ -362,14 +361,9 @@ void CommandContext::BeginFrame()
 
 	if (SamplerHeap.DescriptorTablesDirty())
 	{
-		SamplerHeap.GetUniqueDescriptorTables().rehash(0);
+		SamplerHeap.GetUniqueDescriptorTables()->rehash(0);
 	}
 
-	const uint32 NumContexts = Device->GetNumContexts();
-	for (uint32 i = 0; i < NumContexts; ++i)
-	{
-		Device->GetCommandContext(i).StateCache.GetDescriptorCache()->BeginFrame();
-	}
 
 	Device->GetGlobalSamplerHeap().ToggleDescriptorTablesDirtyFlag(false);
 
@@ -390,17 +384,6 @@ void CommandContext::EndFrame()
 	DefaultContext.ClearState();
 	DefaultContext.FlushCommands();
 
-	const uint32 NumContexts = Device->GetNumContexts();
-	for (uint32 i = 0; i < NumContexts; ++i)
-	{
-		auto& CommandContext = Device->GetCommandContext(i);
-		CommandContext.StateCache.GetDescriptorCache()->EndFrame();
-
-		if (!CommandContext.IsDefaultContext())
-		{
-			CommandContext.ReleaseCommandAllocator();
-		}
-	}
 
 	uint64 BufferPoolDeletionFrameLag = 2;
 	Device->GetDefaultBufferAllocator().CleanUpAllocations(BufferPoolDeletionFrameLag);
@@ -678,7 +661,7 @@ void CommandContext::ClearMRT(bool bClearColor, int32 NumClearColors, const whit
 
 			if (View != nullptr)
 			{
-				TransitionResource(CommandListHandle, View, D3D12_RESOURCE_STATE_RENDER_TARGET);
+				TransitionResource(View, D3D12_RESOURCE_STATE_RENDER_TARGET);
 			}
 		}
 
@@ -702,19 +685,19 @@ void CommandContext::ClearMRT(bool bClearColor, int32 NumClearColors, const whit
 		{
 			// Transition the entire view (Both depth and stencil planes if applicable)
 			// Some DSVs don't have stencil bits.
-			TransitionResource(CommandListHandle, DSView, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+			TransitionResource(DSView, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		}
 		else
 		{
 			if (bClearDepth)
 			{
 				// Transition just the depth plane
-				TransitionResource(CommandListHandle, DSView->GetResourceLocation(), D3D12_RESOURCE_STATE_DEPTH_WRITE, DSView->GetDepthOnlyViewSubresourceSubset());
+				TransitionResource(DSView->GetResource(),D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_DEPTH_WRITE, DSView->GetDepthOnlySubset());
 			}
 			else
 			{
 				// Transition just the stencil plane
-				TransitionResource(CommandListHandle, DSView->GetResourceLocation(), D3D12_RESOURCE_STATE_DEPTH_WRITE, DSView->GetStencilOnlyViewSubresourceSubset());
+				TransitionResource(DSView->GetResource(), D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_DEPTH_WRITE, DSView->GetStencilOnlySubset());
 			}
 		}
 	}
@@ -731,14 +714,14 @@ void CommandContext::ClearMRT(bool bClearColor, int32 NumClearColors, const whit
 
 				if (RTView != nullptr)
 				{
-					CommandListHandle->ClearRenderTargetView(RTView->GetView(), (float*)&ColorArray[TargetIndex], ClearRectCount, pClearRects);
+					CommandListHandle->ClearRenderTargetView(RTView->GetOfflineCpuHandle(), (float*)&ColorArray[TargetIndex], ClearRectCount, pClearRects);
 				}
 			}
 		}
 
 		if (ClearDSV)
 		{
-			CommandListHandle->ClearDepthStencilView(DSView->GetView(), (D3D12_CLEAR_FLAGS)ClearFlags, Depth, Stencil, ClearRectCount, pClearRects);
+			CommandListHandle->ClearDepthStencilView(DSView->GetOfflineCpuHandle(), (D3D12_CLEAR_FLAGS)ClearFlags, Depth, Stencil, ClearRectCount, pClearRects);
 		}
 	}
 }

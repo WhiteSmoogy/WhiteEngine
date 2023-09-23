@@ -139,7 +139,9 @@ namespace platform_ex::Windows::D3D12 {
 			RTVDesc.Texture2D.MipSlice = 0;
 			RTVDesc.Texture2D.PlaneSlice = 0;
 
-			texture->SetRenderTargetViewIndex(new RenderTargetView(GetDefaultNodeDevice(), RTVDesc, texture.get()), RTVIndex);
+			auto rtv = new RenderTargetView(GetDefaultNodeDevice());
+			rtv->CreateView(RTVDesc, texture.get());
+			texture->SetRenderTargetViewIndex(rtv, RTVIndex);
 		}
 
 		if ((access & platform::Render::EA_DSV) == platform::Render::EA_DSV)
@@ -156,7 +158,9 @@ namespace platform_ex::Windows::D3D12 {
 			{
 				DSVDesc.Flags = D3D12_DSV_FLAG_NONE;
 
-				texture->SetDepthStencilView(new DepthStencilView(GetDefaultNodeDevice(), DSVDesc, texture.get(), HasStencil), AccessType);
+				auto dsv = new DepthStencilView(GetDefaultNodeDevice());
+				dsv->CreateView(DSVDesc, texture.get());
+				texture->SetDepthStencilView(dsv, AccessType);
 			}
 		}
 
@@ -184,7 +188,9 @@ namespace platform_ex::Windows::D3D12 {
 			RTVDesc.Texture3D.FirstWSlice = 0;
 			RTVDesc.Texture3D.WSize = Initializer.Depth;
 
-			texture->SetRenderTargetViewIndex(new RenderTargetView(GetDefaultNodeDevice(), RTVDesc, texture.get()),RTVIndex);
+			auto rtv = new RenderTargetView(GetDefaultNodeDevice());
+			rtv->CreateView(RTVDesc, texture.get());
+			texture->SetRenderTargetViewIndex(rtv, RTVIndex);
 		}
 
 		return texture.release();
@@ -257,7 +263,9 @@ namespace platform_ex::Windows::D3D12 {
 
 	UnorderedAccessView* Device::CreateUnorderedAccessView(platform::Render::Texture2D* InTexture)
 	{
-		return std::make_unique<UnorderedAccessView>(Devices[0],CreateUAVDesc(*InTexture, 0, InTexture->GetArraySize(), 0),static_cast<Texture2D*>(InTexture)).release();
+		auto uav = new UnorderedAccessView(Devices[0]);
+		uav->CreateView(InTexture, CreateUAVDesc(*InTexture, 0, InTexture->GetArraySize(),0),UnorderedAccessView::EFlags::None);
+		return uav;
 	}
 
 	ConstantBuffer * Device::CreateConstantBuffer(Buffer::Usage usage, uint32 size_in_byte,const void* init_data)

@@ -2,6 +2,7 @@
 
 #include "d3d12_dxgi.h"
 #include "Common.h"
+#include "Descriptors.h"
 
 namespace platform_ex::Windows::D3D12 {
 	class SamplerState : public DeviceChild

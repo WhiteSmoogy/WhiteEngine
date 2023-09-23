@@ -278,7 +278,7 @@ bool CommandContext::TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE
 	{
 		// Slow path. Want to transition the entire resource (with multiple subresources). But they aren't in the same state.
 
-		const uint8 SubresourceCount = Resource->GetSubresourceCount();
+		const uint16 SubresourceCount = Resource->GetSubresourceCount();
 		for (uint32 SubresourceIndex = 0; SubresourceIndex < SubresourceCount; SubresourceIndex++)
 		{
 			bool bForceInAfterState = true;
@@ -320,7 +320,7 @@ void CommandContext::TransitionResource(DepthStencilView* View)
 	}
 	if (bStencilIsWritable)
 	{
-		TransitionResource(pResource, D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_DEPTH_WRITE, View->GetDepthOnlySubset());
+		TransitionResource(pResource, D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_DEPTH_WRITE, View->GetStencilOnlySubset());
 	}
 }
 

@@ -131,7 +131,7 @@ void D12::RayContext::RayTraceShadow(R::RayTracingScene* InScene, const platform
 	ShaderTable.UploadToGPU(*command_context);
 
 	D3D12_DISPATCH_RAYS_DESC DispatchDesc = ShaderTable.GetDispatchRaysDesc(0, 0, 0);
-	auto desc = Resource->Resource()->GetDesc();
+	auto desc = Resource->GetResource()->GetDesc();
 	DispatchDesc.Width =static_cast<UINT>(desc.Width);
 	DispatchDesc.Height = static_cast<UINT>(desc.Height);
 	DispatchDesc.Depth = 1;

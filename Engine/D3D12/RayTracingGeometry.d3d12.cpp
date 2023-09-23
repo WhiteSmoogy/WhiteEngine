@@ -136,7 +136,7 @@ void D12::RayTracingGeometry::BuildAccelerationStructure(CommandContext& Command
 	CreateAccelerationStructureBuffers(AccelerationStructureBuffer,ScratchBuffer, Adapter, PrebuildInfo, PrebuildDescInputs.Type);
 
 	//scratch buffers should be created in UAV state from the start
-	TransitionResource(CommandContext.CommandListHandle, ScratchBuffer->Resource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 0);
+	CommandContext.TransitionResource(ScratchBuffer->GetResource(),D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 0);
 	//BuildRaytracingAccelerationStructure auto change resource state to UAV(is document?)
 	CommandContext.CommandListHandle.FlushResourceBarriers();
 

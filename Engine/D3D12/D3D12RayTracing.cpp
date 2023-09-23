@@ -45,7 +45,7 @@ void RayTracingShaderTable::UploadToGPU(D3D12::CommandContext& Context)
 		CreateInfo,nullptr
 	));
 
-	D3D12::TransitionResource(Context.CommandListHandle, Buffer->Resource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+	Context.TransitionResource(Buffer->GetResource(), D3D12::D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 	bIsDirty = false;
 }
@@ -567,7 +567,7 @@ static void SetRayTracingShaderResources(
 		if (Resource)
 		{
 			auto Texture =dynamic_cast<D3D12Texture*>(Resource);
-			LocalSRVs[SRVIndex] = Texture->RetriveShaderResourceView()->GetView();
+			LocalSRVs[SRVIndex] = Texture->RetriveShaderResourceView()->GetOfflineCpuHandle();
 			BoundSRVMask |= 1ull << SRVIndex;
 		}
 	}
@@ -578,7 +578,7 @@ static void SetRayTracingShaderResources(
 		if (Resource)
 		{
 			auto SRV = static_cast<D3D12ShaderResourceView*>(Resource);
-			LocalSRVs[SRVIndex] = SRV->GetView();
+			LocalSRVs[SRVIndex] = SRV->GetOfflineCpuHandle();
 			BoundSRVMask |= 1ull << SRVIndex;
 		}
 	}
@@ -611,7 +611,7 @@ static void SetRayTracingShaderResources(
 		if (Resource)
 		{
 			auto UAV = static_cast<D3D12UnorderedAccessView*>(Resource);
-			LocalUAVs[UAVIndex] = UAV->GetView();
+			LocalUAVs[UAVIndex] = UAV->GetOfflineCpuHandle();
 			BoundUAVMask |= 1ull << UAVIndex;
 		}
 	}

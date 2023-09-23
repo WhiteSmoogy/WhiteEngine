@@ -117,7 +117,7 @@ void platform_ex::Windows::D3D12::Display::SwapBuffers()
 
 		auto& DefaultContext = Device->GetDefaultCommandContext();
 
-		TransitionResource(DefaultContext.CommandListHandle, rt_tex->Resource(), D3D12_RESOURCE_STATE_PRESENT, 0);
+		DefaultContext.TransitionResource(rt_tex->GetResource(),D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_PRESENT, 0);
 
 		DefaultContext.CommandListHandle.FlushResourceBarriers();
 		DefaultContext.FlushCommands();
@@ -177,7 +177,8 @@ void Display::UpdateFramewBufferView()
 		rt_tex = make_shared<Texture2D>(pResources);
 		rt_tex->SetName(std::format("backbuffer {}", rt_tex_index).c_str());
 
-		render_target_views[rt_tex_index] = new RenderTargetView(GetDefaultNodeDevice(),rt_tex->CreateRTVDesc(0,1,0),rt_tex.get());
+		render_target_views[rt_tex_index] = new RenderTargetView(GetDefaultNodeDevice());
+		render_target_views[rt_tex_index]->CreateView(rt_tex->CreateRTVDesc(0, 1, 0), rt_tex.get());
 
 		rt_tex->SetNumRenderTargetViews(1);
 		rt_tex->SetRenderTargetViewIndex(render_target_views[rt_tex_index], 0);
@@ -207,7 +208,9 @@ void Display::UpdateFramewBufferView()
 			&initData
 		));
 
-		depth_stencil->SetDepthStencilView(new DepthStencilView(GetDefaultNodeDevice(), depth_stencil->CreateDSVDesc(0, 1, 0), depth_stencil.get(), IsStencilFormat(depth_stencil_format)), 0);
+		auto dsv = new DepthStencilView(GetDefaultNodeDevice());
+		dsv->CreateView(depth_stencil->CreateDSVDesc(0, 1, 0), depth_stencil.get());
+		depth_stencil->SetDepthStencilView(dsv, 0);
 	}
 
 	if (depth_stencil_format != EF_Unknown) {

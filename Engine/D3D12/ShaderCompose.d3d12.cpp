@@ -35,7 +35,7 @@ namespace {
 				auto& tex_subres = *pTexSubRes;
 
 				auto pTexture = D3D12::dynamic_cast_texture(tex_subres.tex.get());
-				*psrvsrc = std::make_tuple(pTexture->Resource(),
+				*psrvsrc = std::make_tuple(pTexture->GetResource(),
 					tex_subres.first_array_index * tex_subres.tex->GetNumMipMaps() + tex_subres.first_level,
 
 					tex_subres.num_items * tex_subres.num_levels);
@@ -58,7 +58,7 @@ namespace {
 				{
 					auto PrevDesc = psrv->GetDesc();
 
-					if (memcmp(&PrevDesc, &Desc, sizeof(Desc)) != 0 || pTexture->Resource() != psrv->GetResourceLocation())
+					if (memcmp(&PrevDesc, &Desc, sizeof(Desc)) != 0 || pTexture->GetResource() != psrv->GetResource())
 					{
 						bReset = true;
 					}
@@ -66,7 +66,9 @@ namespace {
 
 				if (bReset)
 				{
-					psrv.reset(new D3D12::ShaderResourceView(D3D12::GetDefaultNodeDevice(), Desc,pTexture));
+					psrv.reset(new D3D12::ShaderResourceView(D3D12::GetDefaultNodeDevice()));
+
+					psrv->CreateView(pTexture, Desc,D3D12::ShaderResourceView::EFlags::None);
 
 					*ppsrv = psrv.get();
 				}
@@ -97,7 +99,7 @@ namespace {
 			}
 			if (buffer) {
 				auto pBuffer = static_cast<D3D12::GraphicsBuffer*>(buffer.get());
-				*psrvsrc = std::make_tuple(pBuffer->Resource(), 0, 1);
+				*psrvsrc = std::make_tuple(pBuffer->GetResource(), 0, 1);
 				//*ppsrv = pBuffer->RetriveShaderResourceView();
 			}
 			else {
@@ -121,14 +123,16 @@ namespace {
 			param->Value(tex_subres);
 			if (tex_subres.tex) {
 				auto pTexture = dynamic_cast<D3D12::Texture*>(tex_subres.tex.get());
-				puavsrc->first = pTexture->Resource();
+				puavsrc->first = pTexture->GetResource();
 				puavsrc->second = nullptr;
 
 				auto Desc = D3D12::CreateUAVDesc(*tex_subres.tex, tex_subres.first_array_index, tex_subres.num_items,
 
 					tex_subres.first_level, tex_subres.num_levels);
 
-				puav.reset(new D3D12::UnorderedAccessView(D3D12::GetDefaultNodeDevice(), Desc, pTexture));
+				puav.reset(new D3D12::UnorderedAccessView(D3D12::GetDefaultNodeDevice()));
+
+				puav->CreateView(pTexture, Desc, D3D12::UnorderedAccessView::EFlags::None);
 
 				*ppuav = puav.get();
 			}
@@ -155,7 +159,7 @@ namespace {
 			param->Value(buffer);
 			if (buffer) {
 				auto pBuffer = static_cast<D3D12::GraphicsBuffer*>(buffer.get());
-				puavsrc->first = pBuffer->Resource();
+				puavsrc->first = pBuffer->GetResource();
 				puavsrc->second = pBuffer->UploadResource();
 
 				//*ppuav = pBuffer->RetriveUnorderedAccessView();

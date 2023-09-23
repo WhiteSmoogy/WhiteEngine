@@ -107,7 +107,9 @@ ShaderResourceView* Texture3D::RetriveShaderResourceView()
 {
 	if (!default_srv)
 	{
-		default_srv.reset(new ShaderResourceView(GetDefaultNodeDevice(), CreateSRVDesc(0, GetArraySize(), 0, GetNumMipMaps()), this));
+		auto srv = new ShaderResourceView(Location.GetParentDevice());
+		srv->CreateView(this, CreateSRVDesc(0, GetArraySize(), 0, GetNumMipMaps()), ShaderResourceView::EFlags::None);
+		default_srv.reset(srv);
 	}
 	return default_srv.get();
 }

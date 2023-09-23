@@ -454,7 +454,7 @@ void platform_ex::Windows::D3D12::Texture::DoHWBuildMipSubLevels(uint8 array_siz
 		auto & vb = static_cast<GraphicsBuffer&>(platform::Deref(rl.GetVertexStream(0).stream));
 
 		D3D12_VERTEX_BUFFER_VIEW vbv;
-		vbv.BufferLocation = vb.Resource()->GetGPUVirtualAddress();
+		vbv.BufferLocation = vb.GetResource()->GetGPUVirtualAddress();
 		vbv.SizeInBytes = vb.GetSize();
 		vbv.StrideInBytes = rl.GetVertexStream(0).vertex_size;
 
@@ -504,11 +504,13 @@ void platform_ex::Windows::D3D12::Texture::DoHWBuildMipSubLevels(uint8 array_siz
 					barrier_before[1].Transition.Subresource = CalcSubresource(level, index*facecount + face, 0, mipmap_size, array_size);
 					cmd_list->ResourceBarrier(2, barrier_before);
 
-					RenderTargetView rtv(Location.GetParentDevice(), CreateRTVDesc(ITexture, index* facecount + face, 1, level), this);
-					auto const rt_handle = rtv.GetView();
+					RenderTargetView rtv(Location.GetParentDevice());
+					rtv.CreateView(CreateRTVDesc(ITexture, index* facecount + face, 1, level), this);
+					auto const rt_handle = rtv.GetOfflineCpuHandle();
 
-					ShaderResourceView srv(Location.GetParentDevice(), CreateSRVDesc(ITexture, index* facecount + face, 1, level - 1, 1), this);
-					auto const sr_handle = srv.GetView();
+					ShaderResourceView srv(Location.GetParentDevice());
+					srv.CreateView(this, CreateSRVDesc(ITexture, index * facecount + face, 1, level - 1, 1), ShaderResourceView::EFlags::None);
+					auto const sr_handle = srv.GetOfflineCpuHandle();
 					device->CopyDescriptorsSimple(1, cpu_cbv_srv_uav_handle, sr_handle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 					cmd_list->OMSetRenderTargets(1, &rt_handle, false, nullptr);
@@ -553,8 +555,8 @@ void Texture::DoHWCopyToTexture(_type& src, _type & dst, ResourceStateTransition
 	barrier_target.Transition.StateBefore = dst_st.StateBefore;
 	barrier_src.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
 	barrier_target.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
-	barrier_src.Transition.pResource = src.Resource()->Resource();
-	barrier_target.Transition.pResource = dst.Resource()->Resource();
+	barrier_src.Transition.pResource = src.GetResource()->Resource();
+	barrier_target.Transition.pResource = dst.GetResource()->Resource();
 
 	D3D12_RESOURCE_BARRIER barriers[] = { barrier_src,barrier_target };
 	cmd_list->ResourceBarrier(2, barriers);
@@ -562,10 +564,10 @@ void Texture::DoHWCopyToTexture(_type& src, _type & dst, ResourceStateTransition
 	auto num_subres = src.GetArraySize() * src.GetNumMipMaps();
 	if ((src.GetSampleCount() > 1) && (1 == dst.GetSampleCount())) {
 		for (auto i = 0; i != num_subres; ++i)
-			cmd_list->ResolveSubresource(dst.Resource()->Resource(), i, src.Resource()->Resource(), i, src.GetDXGIFormat());
+			cmd_list->ResolveSubresource(dst.GetResource()->Resource(), i, src.GetResource()->Resource(), i, src.GetDXGIFormat());
 	}
 	else
-		cmd_list->CopyResource(dst.Resource()->Resource(), src.Resource()->Resource());
+		cmd_list->CopyResource(dst.GetResource()->Resource(), src.GetResource()->Resource());
 
 	barrier_src.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_SOURCE;
 	barrier_target.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
@@ -599,18 +601,18 @@ void Texture::DoHWCopyToSubTexture(_type & src, _type & target,
 	barrier_target.Transition.StateBefore = dst_st.StateBefore;
 	barrier_src.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
 	barrier_target.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
-	barrier_src.Transition.pResource = src.Resource()->Resource();
-	barrier_target.Transition.pResource = target.Resource()->Resource();
+	barrier_src.Transition.pResource = src.GetResource()->Resource();
+	barrier_target.Transition.pResource = target.GetResource()->Resource();
 
 	D3D12_RESOURCE_BARRIER barriers[] = { barrier_src,barrier_target };
 	cmd_list->ResourceBarrier(2, barriers);
 
 	D3D12_TEXTURE_COPY_LOCATION src_location = {
-		src.Resource()->Resource(),
+		src.GetResource()->Resource(),
 		D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
 		src_subres };
 	D3D12_TEXTURE_COPY_LOCATION dst_location = {
-		target.Resource()->Resource(),
+		target.GetResource()->Resource(),
 		D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
 		dst_subres };
 

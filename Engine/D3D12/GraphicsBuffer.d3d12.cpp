@@ -149,7 +149,7 @@ namespace platform_ex::Windows::D3D12 {
 				++CommandContext.numInitialResourceCopies;
 
 				//could have been suballocated from shared resource  - not very optimal and should be batched
-				D3D12::TransitionResource(hCommandList, Destination, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				CommandContext.TransitionResource(Destination,D3D12_RESOURCE_STATE_TBD,D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 				hCommandList.FlushResourceBarriers();
 				hCommandList->CopyBufferRegion(
@@ -365,7 +365,9 @@ namespace platform_ex::Windows::D3D12 {
 		desc.Buffer.FirstElement = 0;
 		desc.Buffer.NumElements = std::min<UINT>(width * height, GetSize() / NumFormatBytes(pf));
 
-		return rtv_maps->emplace(key, std::make_unique<RenderTargetView>(GetDefaultNodeDevice(), desc, this)).first->second.get();
+		auto rtv = new RenderTargetView(GetDefaultNodeDevice());
+		rtv->CreateView(desc, this);
+		return rtv_maps->emplace(key, unique_raw(rtv)).first->second.get();
 	}
 	
 	struct D3D12CommandRenameUploadBuffer final : platform::Render::CommandBase

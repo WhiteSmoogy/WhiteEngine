@@ -371,7 +371,7 @@ namespace platform_ex::Windows::D3D12 {
 		OfflineDescriptor NullCBV;
 		OfflineDescriptor NullDSV;
 
-		SamplerState* DefaultSampler;
+		std::shared_ptr<SamplerState> DefaultSampler;
 	};
 
 	class D3DView :public DeviceChild

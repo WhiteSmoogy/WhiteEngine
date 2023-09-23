@@ -440,6 +440,15 @@ namespace platform_ex::Windows::D3D12 {
 		OfflineDescriptor AllocateHeapSlot();
 		void FreeHeapSlot(OfflineDescriptor& Descriptor);
 
+		OfflineDescriptorManager(OfflineDescriptorManager&& Other) noexcept
+			:Heaps(std::move(Other.Heaps)),
+			FreeHeaps(std::move(Other.FreeHeaps)),
+			HeapType(Other.HeapType),
+			NumDescriptorsPerHeap(Other.NumDescriptorsPerHeap),
+			DescriptorSize(Other.DescriptorSize),
+			Mutex()
+		{}
+
 	private:
 		void AllocateHeap();
 

@@ -8,20 +8,18 @@ SamplerState::SamplerState(NodeDevice* InParent, const D3D12_SAMPLER_DESC& Desc,
 	:DeviceChild(InParent)
 	, ID(SamplerID)
 {
-	Descriptor.ptr = 0;
-	auto& DescriptorAllocator = GetParentDevice()->GetSamplerDescriptorAllocator();
-	Descriptor = DescriptorAllocator.AllocateHeapSlot(DescriptorHeapIndex);
+	auto& DescriptorAllocator = GetParentDevice()->GetOfflineDescriptorManager(DescriptorHeapType::Sampler);
+	Descriptor = DescriptorAllocator.AllocateHeapSlot();
 
 	GetParentDevice()->CreateSamplerInternal(Desc, Descriptor);
 }
 
 SamplerState::~SamplerState()
 {
-	if (Descriptor.ptr)
+	if (Descriptor)
 	{
-		auto& DescriptorAllocator = GetParentDevice()->GetSamplerDescriptorAllocator();
-		DescriptorAllocator.FreeHeapSlot(Descriptor, DescriptorHeapIndex);
-		Descriptor.ptr = 0;
+		auto& DescriptorAllocator = GetParentDevice()->GetOfflineDescriptorManager(DescriptorHeapType::Sampler);
+		DescriptorAllocator.FreeHeapSlot(Descriptor);
 	}
 }
 

@@ -39,7 +39,7 @@ namespace platform_ex::Windows::D3D12
 
 		void Initialize();
 
-		void CreateCommandContexts();
+		void CreateDefaultViews();
 
 		ID3D12Device* GetDevice();
 
@@ -50,17 +50,7 @@ namespace platform_ex::Windows::D3D12
 
 		CommandContext& GetDefaultCommandContext()
 		{
-			return *CommandContextArray[0];
-		}
-
-		uint32 GetNumContexts() const
-		{
-			return static_cast<uint32>(CommandContextArray.size());
-		}
-
-		CommandContext& GetCommandContext(int index)
-		{
-			return *CommandContextArray[index];
+			return *ImmediateCommandContext;
 		}
 
 		ID3D12CommandQueue* GetD3DCommandQueue(CommandQueueType InQueueType);
@@ -109,7 +99,7 @@ namespace platform_ex::Windows::D3D12
 		std::vector<OfflineDescriptorManager> OfflineDescriptorManagers;
 		OnlineDescriptorManager OnlineDescriptorManager;
 
-		std::vector<CommandContext*> CommandContextArray;
+		CommandContext* ImmediateCommandContext = nullptr;
 
 		std::unordered_map<D3D12_SAMPLER_DESC, std::shared_ptr<SamplerState>, SamplerDescHash> SamplerMap;
 		uint32 SamplerID;

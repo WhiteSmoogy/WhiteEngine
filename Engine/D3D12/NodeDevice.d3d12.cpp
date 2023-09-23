@@ -11,17 +11,18 @@ NodeDevice::NodeDevice(GPUMaskType InGPUMask, D3D12Adapter* InAdapter)
 	CommandListManager(nullptr),
 	CopyCommandListManager(nullptr),
 	AsyncCommandListManager(nullptr),
-	RTVAllocator(InGPUMask, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 256),
-	DSVAllocator(InGPUMask, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 256),
-	SRVAllocator(InGPUMask, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1024),
-	UAVAllocator(InGPUMask, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1024),
-	SamplerAllocator(InGPUMask, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 128)
-	, GlobalSamplerHeap(this, InGPUMask)
-	, GlobalViewHeap(this, InGPUMask)
+	OnlineDescriptorManager(this),
+	GlobalSamplerHeap(this),
+	NormalDescriptorHeapManager(this)
 	//it's similar UploadHeapAllocator/FastConstantAllocator(64k pagesize)
 	, DefaultFastAllocator(this,GPUMaskType::AllGPU(), D3D12_HEAP_TYPE_UPLOAD, 1024 * 1024 * 4)
 	,DefaultBufferAllocator(this, GPUMaskType::AllGPU())
 {
+	for (uint32 HeapType = 0; HeapType < (uint32)DescriptorHeapType::Count; ++HeapType)
+	{
+		OfflineDescriptorManagers.emplace_back(this, (DescriptorHeapType)HeapType);
+	}
+
 	CommandListManager = new D3D12CommandListManager(this, D3D12_COMMAND_LIST_TYPE_DIRECT, CommandQueueType::Default);
 	CopyCommandListManager = new D3D12CommandListManager(this, D3D12_COMMAND_LIST_TYPE_COPY, CommandQueueType::Copy);
 	AsyncCommandListManager = new D3D12CommandListManager(this, D3D12_COMMAND_LIST_TYPE_COMPUTE, CommandQueueType::Async);
@@ -47,13 +48,20 @@ void platform_ex::Windows::D3D12::NodeDevice::CreateSamplerInternal(const D3D12_
 	GetDevice()->CreateSampler(&Desc, Descriptor);
 }
 
+int32 GGlobalResourceDescriptorHeapSize = 1000 * 1000;
+int32 GGlobalSamplerDescriptorHeapSize = 2048;
 
+
+int32 GOnlineDescriptorHeapSize = 500 * 1000;
+int32 GOnlineDescriptorHeapBlockSize = 2000;
 
 void NodeDevice::SetupAfterDeviceCreation()
 {
 	ID3D12Device* Direct3DDevice = GetParentAdapter()->GetDevice();
 
-	GlobalSamplerHeap.Init(NUM_SAMPLER_DESCRIPTORS, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+	NormalDescriptorHeapManager.Init(GGlobalResourceDescriptorHeapSize, GGlobalSamplerDescriptorHeapSize);
+
+	GlobalSamplerHeap.Init(NUM_SAMPLER_DESCRIPTORS);
 
 	// This value can be tuned on a per app basis. I.e. most apps will never run into descriptor heap pressure so
 	// can make this global heap smaller
@@ -77,48 +85,89 @@ void NodeDevice::SetupAfterDeviceCreation()
 	}
 	wconstraint(NumGlobalViewDesc <= MaximumSupportedHeapSize);
 
-	// Init offline descriptor allocators
-	RTVAllocator.Init(Direct3DDevice);
-	DSVAllocator.Init(Direct3DDevice);
-	SRVAllocator.Init(Direct3DDevice);
-	UAVAllocator.Init(Direct3DDevice);
-	SamplerAllocator.Init(Direct3DDevice);
+	OnlineDescriptorManager.Init(GOnlineDescriptorHeapSize, GOnlineDescriptorHeapBlockSize);
 
-	GlobalViewHeap.Init(NumGlobalViewDesc, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	CreateDefaultViews();
 
 	CommandListManager->Create(white::sfmt("3D Queue %d", GetGPUIndex()));
 	CopyCommandListManager->Create(white::sfmt("Copy Queue %d", GetGPUIndex()));
 	AsyncCommandListManager->Create(white::sfmt("Compute Queue %d", GetGPUIndex()));
 
-	CreateCommandContexts();
+	ImmediateCommandContext = new CommandContext(this, true);
 }
 
-void NodeDevice::CreateCommandContexts()
+void NodeDevice::CreateDefaultViews()
 {
-	const uint32 NumContexts = 1;
-	const uint32 NumAsyncComputeContexts = 0;
-	const uint32 TotalContexts = NumContexts + NumAsyncComputeContexts;
-
-	const uint32 DescriptorSuballocationPerContext = GlobalViewHeap.GetTotalSize() / TotalContexts;
-	uint32 CurrentGlobalHeapOffset = 0;
-
-	for (uint32 i = 0; i < NumContexts; ++i)
 	{
-		SubAllocatedOnlineHeap::SubAllocationDesc SubHeapDesc(&GlobalViewHeap, CurrentGlobalHeapOffset, DescriptorSuballocationPerContext);
+		D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
+		SRVDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		SRVDesc.Texture2D.MipLevels = 1;
+		SRVDesc.Texture2D.MostDetailedMip = 0;
+		SRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
-		const bool bIsDefaultContext = (i == 0);
-
-		auto NewCmdContext = new CommandContext(this, SubHeapDesc, bIsDefaultContext);
-
-		CurrentGlobalHeapOffset += DescriptorSuballocationPerContext;
-
-		// without that the first RHIClear would get a scissor rect of (0,0)-(0,0) which means we get a draw call clear 
-		NewCmdContext->SetScissorRect(false, 0, 0, 0, 0);
-
-		CommandContextArray.push_back(NewCmdContext);
+		DefaultViews.NullSRV = GetOfflineDescriptorManager(DescriptorHeapType::Standard).AllocateHeapSlot();
+		GetDevice()->CreateShaderResourceView(nullptr, &SRVDesc, DefaultViews.NullSRV);
 	}
 
-	CommandContextArray[0]->OpenCommandList();
+	{
+		D3D12_RENDER_TARGET_VIEW_DESC RTVDesc{};
+		RTVDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		RTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+		RTVDesc.Texture2D.MipSlice = 0;
+
+		DefaultViews.NullRTV = GetOfflineDescriptorManager(DescriptorHeapType::RenderTarget).AllocateHeapSlot();
+		GetDevice()->CreateRenderTargetView(nullptr, &RTVDesc, DefaultViews.NullRTV);
+	}
+
+	{
+		D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc{};
+		UAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+		UAVDesc.Texture2D.MipSlice = 0;
+
+		DefaultViews.NullUAV = GetOfflineDescriptorManager(DescriptorHeapType::Standard).AllocateHeapSlot();
+		GetDevice()->CreateUnorderedAccessView(nullptr, nullptr, &UAVDesc, DefaultViews.NullUAV);
+	}
+
+	{
+		D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc{};
+		DSVDesc.Format = DXGI_FORMAT_D32_FLOAT;
+		DSVDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+		DSVDesc.Texture2D.MipSlice = 0;
+
+		DefaultViews.NullDSV = GetOfflineDescriptorManager(DescriptorHeapType::DepthStencil).AllocateHeapSlot();
+		GetDevice()->CreateDepthStencilView(nullptr, &DSVDesc, DefaultViews.NullDSV);
+	}
+
+	{
+		D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc{};
+
+		DefaultViews.NullCBV = GetOfflineDescriptorManager(DescriptorHeapType::Standard).AllocateHeapSlot();
+		GetDevice()->CreateConstantBufferView(&CBVDesc, DefaultViews.NullCBV);
+	}
+
+	{
+		D3D12_SAMPLER_DESC desc;
+		desc.AddressU = desc.AddressV = desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		desc.MipLODBias = 0;
+		desc.MaxAnisotropy = 1;
+		desc.MinLOD = 0;
+		desc.MaxLOD = FLT_MAX;
+		desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		desc.BorderColor[0] = 0;
+		desc.BorderColor[1] = 0;
+		desc.BorderColor[2] = 0;
+		desc.BorderColor[3] = 0;
+		desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+
+		DefaultViews.DefaultSampler = CreateSampler(desc);
+
+		// The default sampler must have ID=0
+		// FD3D12DescriptorCache::SetSamplers relies on this
+		wassume(DefaultViews.DefaultSampler->ID == 0);
+	}
 }
 
 ID3D12CommandQueue* NodeDevice::GetD3DCommandQueue(CommandQueueType InQueueType)
@@ -141,19 +190,3 @@ CommandListManager* NodeDevice::GetCommandListManager(CommandQueueType InQueueTy
 		return nullptr;
 	}
 }
-
-template void TViewDescriptorHandle<D3D12_SHADER_RESOURCE_VIEW_DESC>::AllocateDescriptorSlot();
-template void TViewDescriptorHandle<D3D12_RENDER_TARGET_VIEW_DESC>::AllocateDescriptorSlot();
-template void TViewDescriptorHandle<D3D12_DEPTH_STENCIL_VIEW_DESC>::AllocateDescriptorSlot();
-template void TViewDescriptorHandle<D3D12_UNORDERED_ACCESS_VIEW_DESC>::AllocateDescriptorSlot();
-
-template void TViewDescriptorHandle<D3D12_SHADER_RESOURCE_VIEW_DESC>::FreeDescriptorSlot();
-template void TViewDescriptorHandle<D3D12_RENDER_TARGET_VIEW_DESC>::FreeDescriptorSlot();
-template void TViewDescriptorHandle<D3D12_DEPTH_STENCIL_VIEW_DESC>::FreeDescriptorSlot();
-template void TViewDescriptorHandle<D3D12_UNORDERED_ACCESS_VIEW_DESC>::FreeDescriptorSlot();
-
-template void TViewDescriptorHandle<D3D12_SHADER_RESOURCE_VIEW_DESC>::CreateView(const D3D12_SHADER_RESOURCE_VIEW_DESC& Desc, ID3D12Resource* Resource);
-template void TViewDescriptorHandle<D3D12_RENDER_TARGET_VIEW_DESC>::CreateView(const D3D12_RENDER_TARGET_VIEW_DESC& Desc, ID3D12Resource* Resource);
-template void TViewDescriptorHandle<D3D12_DEPTH_STENCIL_VIEW_DESC>::CreateView(const D3D12_DEPTH_STENCIL_VIEW_DESC& Desc, ID3D12Resource* Resource);
-
-template void TViewDescriptorHandle<D3D12_UNORDERED_ACCESS_VIEW_DESC>::CreateViewWithCounter(const D3D12_UNORDERED_ACCESS_VIEW_DESC& Desc, ID3D12Resource* Resource, ID3D12Resource* CounterResource);

@@ -262,6 +262,7 @@ namespace platform_ex::Windows::D3D12 {
 		}
 
 		void AddTransitionBarrier(ResourceHolder* pResource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource);
+		void AddAliasingBarrier(ID3D12Resource* InResourceBefore, ID3D12Resource* pResource);
 
 		void AddUAVBarrier();
 

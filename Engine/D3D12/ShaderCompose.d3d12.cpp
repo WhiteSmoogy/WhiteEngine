@@ -355,6 +355,24 @@ void platform_ex::Windows::D3D12::ShaderCompose::CreateRootSignature()
 	sc_template->root_signature = Device.CreateRootSignature(QBSS);
 }
 
+bool UpdateResourceBarrier(D3D12_RESOURCE_BARRIER& barrier_before,D3D12::ResourceHolder* Holder, D3D12_RESOURCE_STATES target)
+{
+	if (Holder->GetDefaultResourceState() != (D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)) {
+
+		barrier_before.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier_before.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+
+		barrier_before.Transition.pResource = Holder->Resource();
+
+		barrier_before.Transition.StateBefore = Holder->GetDefaultResourceState();
+		barrier_before.Transition.StateAfter = (D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+		return true;
+	}
+
+	return false;
+}
+
 void platform_ex::Windows::D3D12::ShaderCompose::CreateBarriers()
 {
 	barriers.clear();
@@ -370,7 +388,7 @@ void platform_ex::Windows::D3D12::ShaderCompose::CreateBarriers()
 			for (auto subres = 0; subres != std::get<2>(SrvSrcs[st][j]); ++subres) {
 				auto pResourceHolder = std::get<0>(SrvSrcs[st][j]);
 				if (pResourceHolder != nullptr) {
-					if (pResourceHolder->UpdateResourceBarrier(barrier_before, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)) {
+					if (UpdateResourceBarrier(barrier_before, pResourceHolder, (D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE))) {
 						barriers.emplace_back(barrier_before);
 					}
 				}
@@ -383,7 +401,7 @@ void platform_ex::Windows::D3D12::ShaderCompose::CreateBarriers()
 			if (pResourceHolder != nullptr) {
 				WAssert(std::find_if(SrvSrcs[st].begin(), SrvSrcs[st].end(), [&](auto& tuple) {return std::get<0>(tuple) == pResourceHolder; }) == SrvSrcs[st].end(), "Resource Input&Ouput !!!");
 
-				if (pResourceHolder->UpdateResourceBarrier(barrier_before, D3D12_RESOURCE_STATE_UNORDERED_ACCESS)) {
+				if (UpdateResourceBarrier(barrier_before, pResourceHolder, D3D12_RESOURCE_STATE_UNORDERED_ACCESS)) {
 					barriers.emplace_back(barrier_before);
 				}
 			}

@@ -174,7 +174,11 @@ void Display::UpdateFramewBufferView()
 	for (auto& rt_tex : render_targets_texs) {
 		COMPtr<ID3D12Resource> pResources = nullptr;
 		swap_chain->GetBuffer(rt_tex_index, COMPtr_RefParam(pResources, IID_ID3D12Resource));
-		rt_tex = make_shared<Texture2D>(pResources);
+
+		D3D12_RESOURCE_DESC BackBufferDesc = pResources->GetDesc();
+
+		auto NewResourceWrapper = new ResourceHolder(pResources, D3D12_RESOURCE_STATE_COMMON, BackBufferDesc);
+		rt_tex = make_shared<Texture2D>(NewResourceWrapper);
 		rt_tex->SetName(std::format("backbuffer {}", rt_tex_index).c_str());
 
 		render_target_views[rt_tex_index] = new RenderTargetView(GetDefaultNodeDevice());

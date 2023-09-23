@@ -880,7 +880,7 @@ namespace platform_ex::Windows::D3D12 {
 		if (SUCCEEDED(CheckHResult(hr)))
 		{
 			// Set the output pointer
-			*ppOutResource = new ResourceHolder(pResource, InDefaultState, BufDesc, HeapProps.Type);
+			*ppOutResource = new ResourceHolder(pResource, InDefaultState, BufDesc, nullptr, HeapProps.Type);
 
 			// Set a default name (can override later).
 			(*ppOutResource)->SetName(Name);

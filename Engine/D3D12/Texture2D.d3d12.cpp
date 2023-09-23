@@ -53,8 +53,8 @@ static white::uint32 ResloveEAccessHint(const D3D12_RESOURCE_DESC& desc) {
 	return access;
 }
 
-platform_ex::Windows::D3D12::Texture2D::Texture2D(const COMPtr<ID3D12Resource>& pResource)
-	:Texture(GetDefaultNodeDevice(), pResource),
+platform_ex::Windows::D3D12::Texture2D::Texture2D(ResourceHolder* Resource)
+	:Texture(GetDefaultNodeDevice(), Resource),
 	BTexture(
 		static_cast<white::uint8>(Location.GetResource()->GetDesc().MipLevels),
 		static_cast<white::uint8>(Location.GetResource()->GetDesc().DepthOrArraySize),

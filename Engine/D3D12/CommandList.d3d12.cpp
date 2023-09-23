@@ -5,6 +5,9 @@
 
 using namespace platform_ex::Windows::D3D12;
 
+static int32 GD3D12ExtraDepthTransitions = 0;
+static int32 GD3D12BatchResourceBarriers = 1;
+
 CommandListHandle::CommandListData::CommandListData(NodeDevice* ParentDevice, D3D12_COMMAND_LIST_TYPE InCommandListType, CommandAllocator& CommandAllocator, D3D12::CommandListManager* InCommandListManager)
 	:DeviceChild(ParentDevice)
 	,SingleNodeGPUObject(ParentDevice->GetGPUMask())
@@ -195,6 +198,12 @@ void CommandListHandle::AddTransitionBarrier(ResourceHolder* pResource, D3D12_RE
 	}
 }
 
+void CommandListHandle::AddAliasingBarrier(ID3D12Resource* InResourceBefore, ID3D12Resource* pResource)
+{
+	CommandListData->ResourceBarrierBatcher.AddAliasingBarrier(InResourceBefore, pResource);
+}
+
+
 void platform_ex::Windows::D3D12::CommandListHandle::AddUAVBarrier()
 {
 	CommandListData->ResourceBarrierBatcher.AddUAV();
@@ -225,6 +234,42 @@ CommandAllocator::~CommandAllocator()
 void CommandAllocator::Init(ID3D12Device* InDevice, const D3D12_COMMAND_LIST_TYPE& InType)
 {
 	CheckHResult(InDevice->CreateCommandAllocator(InType, IID_PPV_ARGS(D3DCommandAllocator.ReleaseAndGetAddress())));
+}
+
+static inline bool IsTransitionNeeded(D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES& After)
+{
+	wassume(Before != D3D12_RESOURCE_STATE_CORRUPT && After != D3D12_RESOURCE_STATE_CORRUPT);
+	wassume(Before != D3D12_RESOURCE_STATE_TBD && After != D3D12_RESOURCE_STATE_TBD);
+
+	// Depth write is actually a suitable for read operations as a "normal" depth buffer.
+	if (Before == D3D12_RESOURCE_STATE_DEPTH_WRITE && After == D3D12_RESOURCE_STATE_DEPTH_READ)
+	{
+		if (GD3D12ExtraDepthTransitions)
+		{
+			After = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+		}
+		return false;
+	}
+
+	// COMMON is an oddball state that doesn't follow the RESOURE_STATE pattern of 
+	// having exactly one bit set so we need to special case these
+	if (After == D3D12_RESOURCE_STATE_COMMON)
+	{
+		// Before state should not have the common state otherwise it's invalid transition
+		wassume(Before != D3D12_RESOURCE_STATE_COMMON);
+		return true;
+	}
+
+	// We should avoid doing read-to-read state transitions. But when we do, we should avoid turning off already transitioned bits,
+	// e.g. VERTEX_BUFFER -> SHADER_RESOURCE is turned into VERTEX_BUFFER -> VERTEX_BUFFER | SHADER_RESOURCE.
+	// This reduces the number of resource transitions and ensures automatic states from resource bindings get properly combined.
+	D3D12_RESOURCE_STATES Combined = Before | After;
+	if ((Combined & (D3D12_RESOURCE_STATE_GENERIC_READ | D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT)) == Combined)
+	{
+		After = Combined;
+	}
+
+	return Before != After;
 }
 
 bool CommandContext::TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, const CViewSubset& ViewSubset)
@@ -324,7 +369,6 @@ void CommandContext::TransitionResource(DepthStencilView* View)
 	}
 }
 
-
 void CommandContext::TransitionResource(DepthStencilView* pView, D3D12_RESOURCE_STATES after)
 {
 	auto pResource = pView->GetResource();
@@ -389,5 +433,209 @@ void CommandContext::TransitionResource( RenderTargetView* pView, D3D12_RESOURCE
 	default:
 		wconstraint(false);	// Need to update this code to include the view type
 		break;
+	}
+}
+
+void CommandContext::TransitionResource(UnorderedAccessView* View, D3D12_RESOURCE_STATES After)
+{
+	auto* Resource = View->GetResource();
+
+	const D3D12_UNORDERED_ACCESS_VIEW_DESC& Desc = View->GetDesc();
+	switch (Desc.ViewDimension)
+	{
+	case D3D12_UAV_DIMENSION_BUFFER:
+		TransitionResource(Resource, D3D12_RESOURCE_STATE_TBD, After, 0);
+		break;
+
+	case D3D12_UAV_DIMENSION_TEXTURE2D:
+		// Only one subresource to transition
+		TransitionResource(Resource, D3D12_RESOURCE_STATE_TBD, After, Desc.Texture2D.MipSlice);
+		break;
+
+	case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
+		// Multiple subresources to transtion
+		TransitionResource(Resource, D3D12_RESOURCE_STATE_TBD, After, View->GetViewSubset());
+		break;
+
+	case D3D12_UAV_DIMENSION_TEXTURE3D:
+		// Multiple subresources to transtion
+		TransitionResource(Resource, D3D12_RESOURCE_STATE_TBD, After, View->GetViewSubset());
+		break;
+
+	default:
+		wconstraint(false);
+		break;
+	}
+}
+
+void CommandContext::TransitionResource(ShaderResourceView* View, D3D12_RESOURCE_STATES After)
+{
+	auto* Resource = View->GetResource();
+
+	// Early out if we never need to do state tracking, the resource should always be in an SRV state.
+	if (!Resource || !Resource->RequiresResourceStateTracking())
+		return;
+
+	const D3D12_RESOURCE_DESC& ResDesc = Resource->GetDesc();
+	const auto& ViewSubset = View->GetViewSubset();
+
+	const D3D12_SHADER_RESOURCE_VIEW_DESC& Desc = View->GetDesc();
+	switch (Desc.ViewDimension)
+	{
+	default:
+		// Transition the resource
+		TransitionResource(Resource, D3D12_RESOURCE_STATE_TBD, After, ViewSubset);
+		break;
+
+	case D3D12_SRV_DIMENSION_BUFFER:
+		if (Resource->GetHeapType() == D3D12_HEAP_TYPE_DEFAULT)
+		{
+			// Transition the resource
+			TransitionResource(Resource, D3D12_RESOURCE_STATE_TBD, After, ViewSubset);
+		}
+		break;
+	}
+}
+
+bool CommandContext::TransitionResource(ResourceHolder* InResource, CResourceState& ResourceState_OnCommandList, uint32 InSubresourceIndex, D3D12_RESOURCE_STATES InBeforeState, D3D12_RESOURCE_STATES InAfterState, bool bInForceAfterState)
+{
+	// Try and get the correct D3D before state for the transition
+	D3D12_RESOURCE_STATES const TrackedState = ResourceState_OnCommandList.GetSubresourceState(InSubresourceIndex);
+	D3D12_RESOURCE_STATES BeforeState = TrackedState != D3D12_RESOURCE_STATE_TBD ? TrackedState : InBeforeState;
+
+	// Make sure the before states match up or are unknown
+	wassume(InBeforeState == D3D12_RESOURCE_STATE_TBD || BeforeState == InBeforeState);
+
+	bool bRequireUAVBarrier = false;
+	if (BeforeState != D3D12_RESOURCE_STATE_TBD)
+	{
+		bool bApplyTransitionBarrier = true;
+
+		// Require UAV barrier when before and after are UAV
+		if (BeforeState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS && InAfterState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+		{
+			bRequireUAVBarrier = true;
+		}
+		// Special case for UAV access resources
+		else if (InResource->GetUAVAccessResource() && white::has_anyflags(BeforeState | InAfterState, D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
+		{
+			// inject an aliasing barrier
+			const bool bFromUAV = white::has_anyflags(BeforeState, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			const bool bToUAV = white::has_anyflags(InAfterState, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+			AddAliasingBarrier(
+				bFromUAV ? InResource->GetUAVAccessResource() : InResource->Resource(),
+				bToUAV ? InResource->GetUAVAccessResource() : InResource->Resource());
+
+			if (bToUAV)
+			{
+				ResourceState_OnCommandList.SetUAVHiddenResourceState(BeforeState);
+				bApplyTransitionBarrier = false;
+			}
+			else
+			{
+				D3D12_RESOURCE_STATES HiddenState = ResourceState_OnCommandList.GetUAVHiddenResourceState();
+
+				// Still unknown in this command list?
+				if (HiddenState == D3D12_RESOURCE_STATE_TBD)
+				{
+					AddPendingResourceBarrier(InResource, InAfterState, InSubresourceIndex, ResourceState_OnCommandList);
+					bApplyTransitionBarrier = false;
+				}
+				else
+				{
+					// Use the hidden state as the before state on the resource
+					BeforeState = HiddenState;
+				}
+			}
+		}
+
+		if (bApplyTransitionBarrier)
+		{
+			// We're not using IsTransitionNeeded() when bInForceAfterState is set because we do want to transition even if 'after' is a subset of 'before'
+			// This is so that we can ensure all subresources are in the same state, simplifying future barriers
+			// No state merging when using engine transitions - otherwise next before state might not match up anymore)
+			if ((bInForceAfterState && BeforeState != InAfterState) || IsTransitionNeeded(BeforeState, InAfterState))
+			{
+				AddTransitionBarrier(InResource, BeforeState, InAfterState, InSubresourceIndex, &ResourceState_OnCommandList);
+			}
+			else
+			{
+				// Ensure the command list tracking is up to date, even if we skipped an unnecessary transition.
+				ResourceState_OnCommandList.SetSubresourceState(InSubresourceIndex, InAfterState);
+			}
+		}
+	}
+	else
+	{
+		// BeforeState is TBD. We need a pending resource barrier.
+
+		// Special handling for UAVAccessResource and transition to UAV - don't want to enqueue pending resource to UAV because the actual resource won't transition
+		// Adding of patch up will only be done when transitioning to non UAV state
+		if (InResource->GetUAVAccessResource() && white::has_anyflags(InAfterState, D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
+		{
+			AddAliasingBarrier(InResource->Resource(), InResource->GetUAVAccessResource());
+			ResourceState_OnCommandList.SetUAVHiddenResourceState(D3D12_RESOURCE_STATE_TBD);
+		}
+		else
+		{
+			// We need a pending resource barrier so we can setup the state before this command list executes
+			AddPendingResourceBarrier(InResource, InAfterState, InSubresourceIndex, ResourceState_OnCommandList);
+		}
+	}
+
+	return bRequireUAVBarrier;
+}
+
+void CommandContext::AddAliasingBarrier(ID3D12Resource* InResourceBefore, ID3D12Resource* InResourceAfter)
+{
+	CommandListHandle.AddAliasingBarrier(InResourceBefore, InResourceAfter);
+
+	if (!GD3D12BatchResourceBarriers)
+	{
+		CommandListHandle.FlushResourceBarriers();
+	}
+}
+
+void CommandContext::AddPendingResourceBarrier(ResourceHolder* Resource, D3D12_RESOURCE_STATES After, uint32 SubResource, CResourceState& ResourceState_OnCommandList)
+{
+	wassume(After != D3D12_RESOURCE_STATE_TBD);
+	wassume(Resource->RequiresResourceStateTracking());
+	wassume(&CommandListHandle.GetResourceState_OnCommandList(Resource) == &ResourceState_OnCommandList);
+
+	CommandListHandle.State.PendingResourceBarriers.Emplace(Resource, After, SubResource);
+	ResourceState_OnCommandList.SetSubresourceState(SubResource, After);
+}
+
+void CommandContext::AddTransitionBarrier(ResourceHolder* pResource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource, CResourceState* ResourceState_OnCommandList)
+{
+	if (Before != After)
+	{
+		CommandListHandle.AddTransitionBarrier(pResource, Before, After, Subresource);
+
+		if (!GD3D12BatchResourceBarriers)
+		{
+			CommandListHandle.FlushResourceBarriers();
+		}
+	}
+	else
+	{
+		WAssert(false, "AddTransitionBarrier: Before == After");
+	}
+
+	if (pResource->RequiresResourceStateTracking())
+	{
+		if (!ResourceState_OnCommandList)
+		{
+			ResourceState_OnCommandList = &CommandListHandle.GetResourceState_OnCommandList(pResource);
+		}
+		else
+		{
+			// If a resource state was passed to avoid a repeat lookup, it must be the one we expected.
+			wassume(&CommandListHandle.GetResourceState_OnCommandList(pResource) == ResourceState_OnCommandList);
+		}
+
+		ResourceState_OnCommandList->SetSubresourceState(Subresource, After);
+		ResourceState_OnCommandList->SetHasInternalTransition();
 	}
 }

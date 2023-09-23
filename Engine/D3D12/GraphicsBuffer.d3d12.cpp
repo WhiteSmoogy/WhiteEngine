@@ -149,9 +149,13 @@ namespace platform_ex::Windows::D3D12 {
 				++CommandContext.numInitialResourceCopies;
 
 				//could have been suballocated from shared resource  - not very optimal and should be batched
-				CommandContext.TransitionResource(Destination,D3D12_RESOURCE_STATE_TBD,D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				if (!Destination->RequiresResourceStateTracking())
+				{
+					CommandContext.TransitionResource(Destination, Destination->GetDefaultResourceState(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+				}
 
 				hCommandList.FlushResourceBarriers();
+
 				hCommandList->CopyBufferRegion(
 					Destination->Resource(),
 					CurrentBuffer->Location.GetOffsetFromBaseOfResource(),
@@ -162,7 +166,6 @@ namespace platform_ex::Windows::D3D12 {
 				if (DestinationState != D3D12_RESOURCE_STATE_COPY_DEST)
 				{
 					hCommandList.AddTransitionBarrier(Destination, D3D12_RESOURCE_STATE_COPY_DEST, DestinationState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-					Destination->SetResourceState(DestinationState);
 				}
 
 				CommandContext.ConditionalFlushCommandList();

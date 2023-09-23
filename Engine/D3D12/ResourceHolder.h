@@ -8,10 +8,13 @@
 
 #include "Common.h"
 #include "Utility.h"
+#include "RenderInterface/IFormat.hpp"
 #include <WBase/enum.hpp>
 
 namespace platform_ex::Windows {
 	namespace D3D12 {
+		using ::platform::Render::EAccessHint;
+
 		class NodeDevice;
 
 		class ResourceLocation;
@@ -117,21 +120,94 @@ namespace platform_ex::Windows {
 			~HeapHolder();
 
 
-			ID3D12Heap* GetHeap() const{ return Heap.Get(); }
+			ID3D12Heap* GetHeap() const { return Heap.Get(); }
 			void SetHeap(ID3D12Heap* HeapIn) { Heap.GetRef() = HeapIn; }
 		private:
 			COMPtr<ID3D12Heap> Heap;
 		};
 
+		inline D3D12_RESOURCE_STATES GetD3D12ResourceState(EAccessHint InRHIAccess, bool InIsAsyncCompute)
+		{
+			// Add switch for common states (should cover all writeable states)
+			switch (InRHIAccess)
+			{
+				// all single write states
+			case EAccessHint::EA_RTV:					return D3D12_RESOURCE_STATE_RENDER_TARGET;
+			case EAccessHint::EA_GPUUnordered:			return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			case EAccessHint::EA_DSV:				return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+			case EAccessHint::EA_GPUWrite:				return D3D12_RESOURCE_STATE_COPY_DEST;
+			case EAccessHint::EA_Present:				return D3D12_RESOURCE_STATE_PRESENT;
+
+				// Generic read for mask read states
+			case EAccessHint::EA_GPURead:
+				return D3D12_RESOURCE_STATE_GENERIC_READ;
+			default:
+			{
+				// Special case for DSV read & write (Depth write allows depth read as well in D3D)
+				if (InRHIAccess == EAccessHint::EA_DSV)
+				{
+					return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+				}
+				else
+				{
+					D3D12_RESOURCE_STATES State = D3D12_RESOURCE_STATE_COMMON;
+
+					// Translate the requested after state to a D3D state
+					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_SRV) && !InIsAsyncCompute)
+					{
+						State |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+					}
+					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_Compute))
+					{
+						State |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+					}
+					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_VertexOrIndexBuffer))
+					{
+						State |= D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_INDEX_BUFFER;
+					}
+					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_CopySrc))
+					{
+						State |= D3D12_RESOURCE_STATE_COPY_SOURCE;
+					}
+					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_DrawIndirect))
+					{
+						State |= D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
+					}
+					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_ResolveSrc))
+					{
+						State |= D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
+					}
+					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_DSVRead))
+					{
+						State |= D3D12_RESOURCE_STATE_DEPTH_READ;
+					}
+					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_ShadingRateSource))
+					{
+						State |= D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
+					}
+
+					// Should have at least one valid state
+					wassume(State != D3D12_RESOURCE_STATE_COMMON);
+
+					return State;
+				}
+			}
+			}
+
+			// unreachable code
+			return D3D12_RESOURCE_STATE_COMMON;
+		}
+
+
 		class ResourceHolder :public RefCountBase {
 		public:
 			virtual ~ResourceHolder();
 
-			bool UpdateResourceBarrier(D3D12_RESOURCE_BARRIER& barrier, D3D12_RESOURCE_STATES target_state);
-
 			ID3D12Resource* Resource() const {
 				return resource.Get();
 			}
+
+			ID3D12Resource* GetUAVAccessResource() const { return nullptr; }
 
 			D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const {
 				return GPUVirtualAddress;
@@ -147,24 +223,9 @@ namespace platform_ex::Windows {
 
 			bool IsDepthStencilResource() const { return bDepthStencil; }
 
-			bool IsTransitionNeeded(D3D12_RESOURCE_STATES target_state)
-			{
-				return target_state != curr_state;
-			}
-
-			D3D12_RESOURCE_STATES GetResourceState() const
-			{
-				return curr_state;
-			}
-
 			D3D12_HEAP_TYPE GetHeapType() const
 			{
 				return heap_type;
-			}
-
-			void SetResourceState(D3D12_RESOURCE_STATES state)
-			{
-				curr_state = state;
 			}
 
 			inline void* Map(const D3D12_RANGE* ReadRange = nullptr)
@@ -182,39 +243,202 @@ namespace platform_ex::Windows {
 			uint16 GetArraySize() const { return (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D) ? 1 : desc.DepthOrArraySize; }
 			uint16 GetPlaneCount() const { return  platform_ex::Windows::D3D12::GetPlaneCount(desc.Format); }
 
-			uint16 GetSubresourceCount() const {
-				return GetMipLevels() * GetArraySize() * GetPlaneCount();
+			uint16 GetSubresourceCount() const {return SubresourceCount;}
+
+			bool RequiresResourceStateTracking() const { return bRequiresResourceStateTracking; }
+
+			CResourceState& GetResourceState_OnResource()
+			{
+				wassume(bRequiresResourceStateTracking);
+				// This state is used as the resource's "global" state between command lists. It's only needed for resources that
+				// require state tracking.
+				return ResourceState;
 			}
+			D3D12_RESOURCE_STATES GetDefaultResourceState() const { wassume(!bRequiresResourceStateTracking); return DefaultResourceState; }
+			D3D12_RESOURCE_STATES GetWritableState() const { return WritableState; }
+			D3D12_RESOURCE_STATES GetReadableState() const { return ReadableState; }
 
-		protected:
-			ResourceHolder();
+			struct ResourceTypeHelper
+			{
+				ResourceTypeHelper(const D3D12_RESOURCE_DESC& Desc, D3D12_HEAP_TYPE HeapType) :
+					bSRV(!white::has_anyflags(Desc.Flags, D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE)),
+					bDSV(white::has_anyflags(Desc.Flags, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)),
+					bRTV(white::has_anyflags(Desc.Flags, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)),
+					bUAV(white::has_anyflags(Desc.Flags, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)),
+					bWritable(bDSV || bRTV || bUAV),
+					bSRVOnly(bSRV && !bWritable),
+					bBuffer(Desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER),
+					bReadBackResource(HeapType == D3D12_HEAP_TYPE_READBACK)
+				{}
 
-			ResourceHolder(const COMPtr<ID3D12Resource>& pResource, D3D12_RESOURCE_STATES in_state = D3D12_RESOURCE_STATE_COMMON);
+				const D3D12_RESOURCE_STATES GetOptimalInitialState(EAccessHint InResourceState, bool bAccurateWriteableStates) const
+				{
+					// Ignore the requested resource state for non tracked resource because RHI will assume it's always in default resource 
+					// state then when a transition is required (will transition via scoped push/pop to requested state)
+					if (!bSRVOnly && InResourceState != 0 && InResourceState != EAccessHint::EA_Discard)
+					{
+						bool bAsyncCompute = false;
+						return GetD3D12ResourceState(InResourceState, bAsyncCompute);
+					}
+					else
+					{
+						if (bSRVOnly)
+						{
+							return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+						}
+						else if (bBuffer && !bUAV)
+						{
+							return (bReadBackResource) ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_GENERIC_READ;
+						}
+						else if (bWritable)
+						{
+							if (bAccurateWriteableStates)
+							{
+								if (bDSV)
+								{
+									return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+								}
+								else if (bRTV)
+								{
+									return D3D12_RESOURCE_STATE_RENDER_TARGET;
+								}
+								else if (bUAV)
+								{
+									return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+								}
+							}
+							else
+							{
+								// This things require tracking anyway
+								return D3D12_RESOURCE_STATE_COMMON;
+							}
+						}
 
-			ResourceHolder(const COMPtr<ID3D12Resource>& pResource, D3D12_RESOURCE_STATES in_state, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType = D3D12_HEAP_TYPE_DEFAULT);
+						return D3D12_RESOURCE_STATE_COMMON;
+					}
+				}
 
-			ResourceHolder(const COMPtr<ID3D12Resource>& pResource, D3D12_RESOURCE_STATES in_state, const D3D12_RESOURCE_DESC& InDesc, HeapHolder* InHeap, D3D12_HEAP_TYPE InHeapType);
+				const uint32 bSRV : 1;
+				const uint32 bDSV : 1;
+				const uint32 bRTV : 1;
+				const uint32 bUAV : 1;
+				const uint32 bWritable : 1;
+				const uint32 bSRVOnly : 1;
+				const uint32 bBuffer : 1;
+				const uint32 bReadBackResource : 1;
+			};
+		public:
+			ResourceHolder() = delete;
+
+			ResourceHolder(
+				const COMPtr<ID3D12Resource>& pResource,
+				D3D12_RESOURCE_STATES InInitialResourceState,
+				const D3D12_RESOURCE_DESC& InDesc,
+				HeapHolder* InHeap = nullptr, D3D12_HEAP_TYPE InHeapType = D3D12_HEAP_TYPE_DEFAULT);
+
+			ResourceHolder(
+				const COMPtr<ID3D12Resource>& pResource,
+				D3D12_RESOURCE_STATES InInitialResourceState, ResourceStateMode InResourceStateMode, D3D12_RESOURCE_STATES InDefaultResourceState,
+				const D3D12_RESOURCE_DESC& InDesc,
+				HeapHolder* InHeap = nullptr, D3D12_HEAP_TYPE InHeapType = D3D12_HEAP_TYPE_DEFAULT);
 
 			friend class Device;
 			friend struct BaseShaderResource;
 			friend class Texture;
 		protected:
-			D3D12_RESOURCE_STATES curr_state;
-
-			D3D12_HEAP_TYPE heap_type;
-
 			COMPtr<ID3D12Resource> resource;
 			COMPtr<HeapHolder> heap;
+			D3D12_HEAP_TYPE heap_type;
 
 			D3D12_RESOURCE_DESC desc;
 
-			bool bDepthStencil;
+			void* ResourceBaseAddress = nullptr;
+			D3D12_GPU_VIRTUAL_ADDRESS GPUVirtualAddress = 0;
 
-			void* ResourceBaseAddress;
-			D3D12_GPU_VIRTUAL_ADDRESS GPUVirtualAddress;
+			CResourceState ResourceState;
+			D3D12_RESOURCE_STATES DefaultResourceState{ D3D12_RESOURCE_STATE_TBD };
+			D3D12_RESOURCE_STATES ReadableState{ D3D12_RESOURCE_STATE_CORRUPT };
+			D3D12_RESOURCE_STATES WritableState{ D3D12_RESOURCE_STATE_CORRUPT };
+
+			bool bDepthStencil : 1;
+			bool bRequiresResourceStateTracking : 1;
+
+			uint16 SubresourceCount = 0;
+		private:
+			void InitalizeResourceState(D3D12_RESOURCE_STATES InInitialState, ResourceStateMode InResourceStateMode, D3D12_RESOURCE_STATES InDefaultState)
+			{
+				SubresourceCount = GetMipLevels() * GetArraySize() * GetPlaneCount();
+
+				if (InResourceStateMode == ResourceStateMode::Single)
+				{
+					// make sure a valid default state is set
+					DefaultResourceState = InDefaultState;
+					WritableState = D3D12_RESOURCE_STATE_CORRUPT;
+					ReadableState = D3D12_RESOURCE_STATE_CORRUPT;
+					bRequiresResourceStateTracking = false;
+				}
+				else
+				{
+					DetermineResourceStates(InDefaultState, InResourceStateMode);
+				}
+
+				if (bRequiresResourceStateTracking)
+				{
+					// No state tracking for acceleration structures because they can't have another state
+					wassume(InDefaultState != D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE && InInitialState != D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
+
+					// Only a few resources (~1%) actually need resource state tracking
+					ResourceState.Initialize(SubresourceCount);
+					ResourceState.SetResourceState(InInitialState);
+				}
+			}
+
+			void DetermineResourceStates(D3D12_RESOURCE_STATES InDefaultState, ResourceStateMode InResourceStateMode)
+			{
+				const ResourceTypeHelper Type(desc, heap_type);
+
+				bDepthStencil = Type.bDSV;
+
+				if (Type.bWritable || InResourceStateMode == ResourceStateMode::Multi)
+				{
+					// Determine the resource's write/read states.
+					if (Type.bRTV)
+					{
+						// Note: The resource could also be used as a UAV however we don't store that writable state. UAV's are handled in a separate RHITransitionResources() specially for UAVs so we know the writeable state in that case should be UAV.
+						wassume(!Type.bDSV && !Type.bBuffer);
+						WritableState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+						ReadableState = Type.bSRV ? D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_CORRUPT;
+					}
+					else if (Type.bDSV)
+					{
+						WritableState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+						ReadableState = Type.bSRV ? D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_DEPTH_READ;
+					}
+					else
+					{
+						WritableState = Type.bUAV ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS : D3D12_RESOURCE_STATE_CORRUPT;
+						ReadableState = Type.bSRV ? D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_CORRUPT;
+					}
+				}
+				else
+				{
+					bRequiresResourceStateTracking = false;
+
+					if (InDefaultState != D3D12_RESOURCE_STATE_TBD)
+					{
+						DefaultResourceState = InDefaultState;
+					}
+					else if (Type.bBuffer)
+					{
+						DefaultResourceState = (heap_type == D3D12_HEAP_TYPE_READBACK) ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_GENERIC_READ;
+					}
+					else
+					{
+						DefaultResourceState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+					}
+				}
+			}
 		};
-
-		
 
 		enum class AllocationStrategy
 		{
@@ -262,7 +486,7 @@ namespace platform_ex::Windows {
 			void InitAsHead(int16 InPoolIndex);
 			void InitAsFree(int16 InPoolIndex, uint32 InSize, uint32 InAlignment, uint32 InOffset);
 			void MarkFree(uint32 Alignment);
-			
+
 			void MoveFrom(PoolAllocatorPrivateData& InAllocated, bool InLocked)
 			{
 				wconstraint(InAllocated.IsAllocated());
@@ -298,9 +522,9 @@ namespace platform_ex::Windows {
 				PreviousAllocation = NextAllocation = nullptr;
 			}
 
-			bool IsAllocated() const {return Type == white::underlying(EAllocationType::Allocated);}
+			bool IsAllocated() const { return Type == white::underlying(EAllocationType::Allocated); }
 
-			bool IsFree() const{ return Type == white::underlying(EAllocationType::Free); }
+			bool IsFree() const { return Type == white::underlying(EAllocationType::Free); }
 
 			bool IsLocked() const { return (Locked == 1); }
 
@@ -332,7 +556,7 @@ namespace platform_ex::Windows {
 				return AlignedOffset;
 			}
 
-			PoolAllocatorPrivateData* GetPrev() const{ return PreviousAllocation; }
+			PoolAllocatorPrivateData* GetPrev() const { return PreviousAllocation; }
 			PoolAllocatorPrivateData* GetNext() const { return NextAllocation; }
 
 			void Merge(PoolAllocatorPrivateData* InOther)
@@ -381,9 +605,9 @@ namespace platform_ex::Windows {
 			uint32 Offset;
 
 
-			uint32 PoolIndex:16;
+			uint32 PoolIndex : 16;
 			uint32 Type : 4;
-			uint32 Locked:1;
+			uint32 Locked : 1;
 			uint32 Unused : 11;
 			PoolAllocatorPrivateData* PreviousAllocation;
 			PoolAllocatorPrivateData* NextAllocation;
@@ -419,7 +643,7 @@ namespace platform_ex::Windows {
 			}
 
 			virtual void Deallocate(ResourceLocation& ResourceLocation) = 0;
-			
+
 			virtual void TransferOwnership(ResourceLocation& Destination, ResourceLocation& Source) = 0;
 
 			virtual void CleanUpAllocations(uint64 InFrameLag) = 0;
@@ -593,8 +817,8 @@ namespace platform_ex::Windows {
 				return Location.GetGPUVirtualAddress();
 			}
 
-			inline uint64 GetOffsetFromBaseOfResource() const { 
-				return Location.GetOffsetFromBaseOfResource(); 
+			inline uint64 GetOffsetFromBaseOfResource() const {
+				return Location.GetOffsetFromBaseOfResource();
 			}
 
 			const inline bool IsValid() const {
@@ -671,6 +895,16 @@ namespace platform_ex::Windows {
 				Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
 				Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 				Barrier.Aliasing.pResourceBefore = NULL;
+				Barrier.Aliasing.pResourceAfter = pResource;
+			}
+
+			void AddAliasingBarrier(ID3D12Resource* InResourceBefore, ID3D12Resource* pResource)
+			{
+				Barriers.resize(Barriers.size() + 1);
+				D3D12_RESOURCE_BARRIER& Barrier = Barriers.back();
+				Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
+				Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+				Barrier.Aliasing.pResourceBefore = InResourceBefore;
 				Barrier.Aliasing.pResourceAfter = pResource;
 			}
 

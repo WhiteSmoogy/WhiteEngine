@@ -36,7 +36,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		virtual ShaderResourceView* RetriveShaderResourceView() = 0;
 	protected:
-		Texture(NodeDevice* Parent,const COMPtr<ID3D12Resource>& pResource);
+		Texture(NodeDevice* Parent, ResourceHolder* pResource);
 
 		std::string HWDescription() const;
 
@@ -196,7 +196,7 @@ namespace platform_ex::Windows::D3D12 {
 	public:
 		explicit Texture2D(uint16 width, uint16 height, uint8 numMipMaps, uint8 array_size, EFormat format, uint32 access_hint, platform::Render::SampleDesc sample_info);
 
-		explicit Texture2D(const COMPtr<ID3D12Resource>& pResource);
+		explicit Texture2D(ResourceHolder* Resource);
 	protected:
 		//\brief encode = UTF-8
 		std::string Description() const override;

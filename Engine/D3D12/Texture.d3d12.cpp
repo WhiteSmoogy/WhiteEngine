@@ -45,14 +45,12 @@ platform_ex::Windows::D3D12::Texture::Texture(NodeDevice* Parent,EFormat format)
 {
 }
 
-platform_ex::Windows::D3D12::Texture::Texture(NodeDevice* Parent,const COMPtr<ID3D12Resource>& pResource)
+platform_ex::Windows::D3D12::Texture::Texture(NodeDevice* Parent,ResourceHolder* pResource)
 	:BaseShaderResource(Parent)
 {
-	auto pHolder = new ResourceHolder(pResource);
+	dxgi_format = pResource->desc.Format;
 
-	dxgi_format = pHolder->desc.Format;
-
-	Location.AsStandAlone(pHolder, pHolder->desc.Width);
+	Location.AsStandAlone(pResource, pResource->desc.Width);
 }
 
 std::string  platform_ex::Windows::D3D12::Texture::HWDescription() const

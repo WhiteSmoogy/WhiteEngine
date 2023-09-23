@@ -1284,7 +1284,8 @@ namespace platform_ex::Windows::D3D12 {
 
 	using UAVSlotMask = white::make_width_int<MAX_UAVS>::unsigned_type;
 
-	constexpr D3D12_RESOURCE_STATES D3D12_RESOURCE_STATE_TBD = D3D12_RESOURCE_STATES(- 1 ^ (1 << 31));
+	constexpr D3D12_RESOURCE_STATES D3D12_RESOURCE_STATE_TBD = D3D12_RESOURCE_STATES(-1 ^ (1 << 31));
+	constexpr D3D12_RESOURCE_STATES D3D12_RESOURCE_STATE_CORRUPT = D3D12_RESOURCE_STATES(-2 ^ (1 << 31));
 }
 
 template<typename CharT>

@@ -483,17 +483,32 @@ namespace platform::Render {
 			EA_Immutable = 1U << 7,
 
 			//ByteAddressBuffer
-			EA_Raw = 1U <<8,
+			EA_Raw = 1U << 8,
 
 			EA_RTV = (1U << 9) | EA_GPUWrite,
 			EA_DSV = (1U << 10) | EA_GPUWrite,
 			EA_SRV = (1U << 11) | EA_GPURead,
 
-			EA_DrawIndirect = 1U<<12,
+			EA_DrawIndirect = 1U << 12,
 
 			EA_AccelerationStructure = 1U << 13,
 
-			EA_GPUReadWrite = EA_GPURead| EA_GPUWrite,
+			EA_GPUReadWrite = EA_GPURead | EA_GPUWrite,
+
+			EA_Present = 1u << 14,
+
+			EA_Compute = 1u << 15,
+
+			EA_VertexOrIndexBuffer = 1u << 16,
+
+			// Invalid released state (transient resources)
+			EA_Discard = 1 << 17,
+
+			EA_CopySrc = 1 << 18 | EA_GPURead,
+			EA_ResolveSrc = 1 << 19 | EA_GPURead,
+			EA_DSVRead = 1 << 20 |EA_GPURead,
+
+			EA_ShadingRateSource = 1 << 21,
 		};
 
 		enum class ClearBinding

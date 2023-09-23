@@ -227,9 +227,107 @@ void CommandAllocator::Init(ID3D12Device* InDevice, const D3D12_COMMAND_LIST_TYP
 	CheckHResult(InDevice->CreateCommandAllocator(InType, IID_PPV_ARGS(D3DCommandAllocator.ReleaseAndGetAddress())));
 }
 
-void platform_ex::Windows::D3D12::TransitionResource(CommandListHandle& hCommandList, DepthStencilView* pView, D3D12_RESOURCE_STATES after)
+bool CommandContext::TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, const CViewSubset& ViewSubset)
 {
-	auto pResource = pView->GetResourceLocation();
+	const bool bIsWholeResource = ViewSubset.IsWholeResource();
+
+	CResourceState& ResourceState = CommandListHandle.GetResourceState_OnCommandList(Resource);
+
+	bool bRequireUAVBarrier = false;
+
+	if (bIsWholeResource && ResourceState.AreAllSubresourcesSame())
+	{
+		// Fast path. Transition the entire resource from one state to another.
+		bool bForceInAfterState = false;
+		bRequireUAVBarrier = TransitionResource(Resource, ResourceState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, Before, After, bForceInAfterState);
+	}
+	else
+	{
+		// Slower path. Either the subresources are in more than 1 state, or the view only partially covers the resource.
+		// Either way, we'll need to loop over each subresource in the view...
+
+		bool bWholeResourceWasTransitionedToSameState = bIsWholeResource;
+		for (uint32 SubresourceIndex : ViewSubset)
+		{
+			bool bForceInAfterState = false;
+			bRequireUAVBarrier |= TransitionResource(Resource, ResourceState, SubresourceIndex, Before, After, bForceInAfterState);
+
+			// Subresource not in the same state, then whole resource is not in the same state anymore
+			if (ResourceState.GetSubresourceState(SubresourceIndex) != After)
+				bWholeResourceWasTransitionedToSameState = false;
+		}
+
+		// If we just transtioned every subresource to the same state, lets update it's tracking so it's on a per-resource level
+		if (bWholeResourceWasTransitionedToSameState)
+		{
+			// Sanity check to make sure all subresources are really in the 'after' state
+			wassume(ResourceState.CheckAllSubresourceSame());
+			wassume(white::has_anyflags(ResourceState.GetSubresourceState(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES), After));
+		}
+	}
+
+	return bRequireUAVBarrier;
+}
+
+bool CommandContext::TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource)
+{
+	bool bRequireUAVBarrier = false;
+
+	CResourceState& ResourceState = CommandListHandle.GetResourceState_OnCommandList(Resource);
+	if (Subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES && !ResourceState.AreAllSubresourcesSame())
+	{
+		// Slow path. Want to transition the entire resource (with multiple subresources). But they aren't in the same state.
+
+		const uint8 SubresourceCount = Resource->GetSubresourceCount();
+		for (uint32 SubresourceIndex = 0; SubresourceIndex < SubresourceCount; SubresourceIndex++)
+		{
+			bool bForceInAfterState = true;
+			bRequireUAVBarrier |= TransitionResource(Resource, ResourceState, SubresourceIndex, Before, After, bForceInAfterState);
+		}
+
+		// The entire resource should now be in the after state on this command list (even if all barriers are pending)
+		wassume(ResourceState.CheckAllSubresourceSame());
+		wassume(white::has_anyflags(ResourceState.GetSubresourceState(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES), After));
+	}
+	else
+	{
+		bool bForceInAfterState = false;
+		bRequireUAVBarrier = TransitionResource(Resource, ResourceState, Subresource, Before, After, bForceInAfterState);
+	}
+
+	return bRequireUAVBarrier;
+}
+
+void CommandContext::TransitionResource(DepthStencilView* View)
+{
+	// Determine the required subresource states from the view desc
+	const D3D12_DEPTH_STENCIL_VIEW_DESC& DSVDesc = View->GetDesc();
+	const bool bDSVDepthIsWritable = (DSVDesc.Flags & D3D12_DSV_FLAG_READ_ONLY_DEPTH) == 0;
+	const bool bDSVStencilIsWritable = (DSVDesc.Flags & D3D12_DSV_FLAG_READ_ONLY_STENCIL) == 0;
+	// TODO: Check if the PSO depth stencil is writable. When this is done, we need to transition in SetDepthStencilState too.
+
+	// This code assumes that the DSV always contains the depth plane
+	const bool bHasDepth = true;
+	const bool bHasStencil = View->HasStencil();
+	const bool bDepthIsWritable = bHasDepth && bDSVDepthIsWritable;
+	const bool bStencilIsWritable = bHasStencil && bDSVStencilIsWritable;
+
+	// DEPTH_WRITE is suitable for read operations when used as a normal depth/stencil buffer.
+	auto pResource = View->GetResource();
+	if (bDepthIsWritable)
+	{
+		TransitionResource(pResource, D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_DEPTH_WRITE, View->GetDepthOnlySubset());
+	}
+	if (bStencilIsWritable)
+	{
+		TransitionResource(pResource, D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_DEPTH_WRITE, View->GetDepthOnlySubset());
+	}
+}
+
+
+void CommandContext::TransitionResource(DepthStencilView* pView, D3D12_RESOURCE_STATES after)
+{
+	auto pResource = pView->GetResource();
 	auto ResourceDesc = pResource->GetDesc();
 
 	const D3D12_DEPTH_STENCIL_VIEW_DESC& desc = pView->GetDesc();
@@ -240,14 +338,14 @@ void platform_ex::Windows::D3D12::TransitionResource(CommandListHandle& hCommand
 		if (GetPlaneCount(ResourceDesc.Format) > 1)
 		{
 			// Multiple subresources to transtion
-			TransitionResource(hCommandList, pResource, after, pView->GetViewSubresourceSubset());
+			TransitionResource(pResource, D3D12_RESOURCE_STATE_TBD, after, pView->GetViewSubset());
 			break;
 		}
 		else
 		{
 			// Only one subresource to transition
 			wconstraint(GetPlaneCount(ResourceDesc.Format) == 1);
-			TransitionResource(hCommandList, pResource, after, desc.Texture2D.MipSlice);
+			TransitionResource(pResource, D3D12_RESOURCE_STATE_TBD, after, desc.Texture2D.MipSlice);
 		}
 		break;
 
@@ -255,7 +353,7 @@ void platform_ex::Windows::D3D12::TransitionResource(CommandListHandle& hCommand
 	case D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY:
 	{
 		// Multiple subresources to transtion
-		TransitionResource(hCommandList, pResource, after, pView->GetViewSubresourceSubset());
+		TransitionResource(pResource, D3D12_RESOURCE_STATE_TBD, after, pView->GetViewSubset());
 		break;
 	}
 
@@ -265,9 +363,9 @@ void platform_ex::Windows::D3D12::TransitionResource(CommandListHandle& hCommand
 	}
 }
 
-void platform_ex::Windows::D3D12::TransitionResource(CommandListHandle& hCommandList, RenderTargetView* pView, D3D12_RESOURCE_STATES after)
+void CommandContext::TransitionResource( RenderTargetView* pView, D3D12_RESOURCE_STATES after)
 {
-	auto pResource = pView->GetResourceLocation();
+	auto pResource = pView->GetResource();
 
 	const D3D12_RENDER_TARGET_VIEW_DESC& desc = pView->GetDesc();
 	switch (desc.ViewDimension)
@@ -278,13 +376,13 @@ void platform_ex::Windows::D3D12::TransitionResource(CommandListHandle& hCommand
 	case D3D12_RTV_DIMENSION_TEXTURE2D:
 	case D3D12_RTV_DIMENSION_TEXTURE2DMS:
 		// Only one subresource to transition
-		TransitionResource(hCommandList, pResource, after, desc.Texture2D.MipSlice);
+		TransitionResource(pResource, D3D12_RESOURCE_STATE_TBD,  after, desc.Texture2D.MipSlice);
 		break;
 
 	case D3D12_RTV_DIMENSION_TEXTURE2DARRAY:
 	{
 		// Multiple subresources to transition
-		TransitionResource(hCommandList, pResource, after, pView->GetViewSubresourceSubset());
+		TransitionResource(pResource, D3D12_RESOURCE_STATE_TBD, after, pView->GetViewSubset());
 		break;
 	}
 

@@ -285,6 +285,8 @@ namespace platform_ex::Windows::D3D12 {
 
 			return CommandListData->CommandList.Get();
 		}
+
+		CResourceState& GetResourceState_OnCommandList(ResourceHolder* Resource);
 	private:
 		CommandListHandle& operator*()
 		{
@@ -354,92 +356,7 @@ namespace platform_ex::Windows::D3D12 {
 		CommandListHandle CommandList;
 		uint64                  Generation;
 	};
-
-	//TODO SubresourceSubset
-	inline void TransitionResource(CommandListHandle& pCommandList, UnorderedAccessView* View, D3D12_RESOURCE_STATES after)
-	{
-		//TODO
-	}
-
-	inline void TransitionResource(CommandListHandle& pCommandList, ShaderResourceView* View, D3D12_RESOURCE_STATES after)
-	{
-		//TODO
-	}
-
-	inline void TransitionResource(CommandListHandle& hCommandList, ResourceHolder* Resource, D3D12_RESOURCE_STATES after, const CViewSubresourceSubset& subresourceSubset)
-	{
-		const bool bIsWholeResource = subresourceSubset.IsWholeResource();
-
-		if (bIsWholeResource) {
-			if (Resource->IsTransitionNeeded(after))
-			{
-				hCommandList.AddTransitionBarrier(Resource, Resource->GetResourceState(), after, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-				Resource->SetResourceState(after);
-			}
-		}
-		else
-		{
-			bool bWholeResourceWasTransitionedToSameState = true;
-
-			for (CViewSubresourceSubset::CViewSubresourceIterator it = subresourceSubset.begin(); it != subresourceSubset.end(); ++it)
-			{
-				for (uint32 SubresourceIndex = it.StartSubresource(); SubresourceIndex < it.EndSubresource(); SubresourceIndex++)
-				{
-					if (Resource->IsTransitionNeeded(after))
-					{
-						hCommandList.AddTransitionBarrier(Resource, Resource->GetResourceState(), after, SubresourceIndex);
-						Resource->SetResourceState(after);
-					}
-				}
-			}
-
-			// If we just transtioned every subresource to the same state, lets update it's tracking so it's on a per-resource level
-			if (bWholeResourceWasTransitionedToSameState)
-			{
-				Resource->SetResourceState(after);
-			}
-		}
-	}
-
-	inline void TransitionResource(CommandListHandle& pCommandList, DepthStencilView* View)
-	{
-		// Determine the required subresource states from the view desc
-		const D3D12_DEPTH_STENCIL_VIEW_DESC& DSVDesc = View->GetDesc();
-		const bool bDSVDepthIsWritable = (DSVDesc.Flags & D3D12_DSV_FLAG_READ_ONLY_DEPTH) == 0;
-		const bool bDSVStencilIsWritable = (DSVDesc.Flags & D3D12_DSV_FLAG_READ_ONLY_STENCIL) == 0;
-		// TODO: Check if the PSO depth stencil is writable. When this is done, we need to transition in SetDepthStencilState too.
-
-		// This code assumes that the DSV always contains the depth plane
-		const bool bHasDepth = true;
-		const bool bHasStencil = View->HasStencil();
-		const bool bDepthIsWritable = bHasDepth && bDSVDepthIsWritable;
-		const bool bStencilIsWritable = bHasStencil && bDSVStencilIsWritable;
-
-		// DEPTH_WRITE is suitable for read operations when used as a normal depth/stencil buffer.
-		auto pResource = View->GetResourceLocation();
-		if (bDepthIsWritable)
-		{
-			TransitionResource(pCommandList, pResource, D3D12_RESOURCE_STATE_DEPTH_WRITE, View->GetDepthOnlyViewSubresourceSubset());
-		}
-
-		if (bStencilIsWritable)
-		{
-			TransitionResource(pCommandList, pResource, D3D12_RESOURCE_STATE_DEPTH_WRITE, View->GetStencilOnlyViewSubresourceSubset());
-		}
-	}
-
 	
 
-	inline void TransitionResource(CommandListHandle& hCommandList, ResourceHolder* Resource, D3D12_RESOURCE_STATES after, uint32 subresource)
-	{
-		if (Resource->IsTransitionNeeded(after))
-		{
-			hCommandList.AddTransitionBarrier(Resource, Resource->GetResourceState(), after, subresource);
-			Resource->SetResourceState(after);
-		}
-	}
-
-	void TransitionResource(CommandListHandle& hCommandList, DepthStencilView* pView, D3D12_RESOURCE_STATES after);
-
-	void TransitionResource(CommandListHandle& hCommandList, RenderTargetView* pView, D3D12_RESOURCE_STATES after);
+	
 }

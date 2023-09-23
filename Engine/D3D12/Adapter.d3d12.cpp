@@ -264,7 +264,7 @@ namespace platform_ex::Windows::D3D12 {
 	UnorderedAccessView* Device::CreateUnorderedAccessView(platform::Render::Texture2D* InTexture)
 	{
 		auto uav = new UnorderedAccessView(Devices[0]);
-		uav->CreateView(InTexture, CreateUAVDesc(*InTexture, 0, InTexture->GetArraySize(),0),UnorderedAccessView::EFlags::None);
+		uav->CreateView(CreateUAVDesc(*InTexture, 0, InTexture->GetArraySize(),0),static_cast<Texture2D*>(InTexture), UnorderedAccessView::EFlags::None);
 		return uav;
 	}
 

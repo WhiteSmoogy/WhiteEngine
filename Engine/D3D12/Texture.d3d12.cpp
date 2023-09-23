@@ -509,7 +509,7 @@ void platform_ex::Windows::D3D12::Texture::DoHWBuildMipSubLevels(uint8 array_siz
 					auto const rt_handle = rtv.GetOfflineCpuHandle();
 
 					ShaderResourceView srv(Location.GetParentDevice());
-					srv.CreateView(this, CreateSRVDesc(ITexture, index * facecount + face, 1, level - 1, 1), ShaderResourceView::EFlags::None);
+					srv.CreateView(CreateSRVDesc(ITexture, index * facecount + face, 1, level - 1, 1),this, ShaderResourceView::EFlags::None);
 					auto const sr_handle = srv.GetOfflineCpuHandle();
 					device->CopyDescriptorsSimple(1, cpu_cbv_srv_uav_handle, sr_handle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 

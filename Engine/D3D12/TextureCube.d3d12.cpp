@@ -109,7 +109,7 @@ ShaderResourceView* TextureCube::RetriveShaderResourceView()
 	if (!default_srv)
 	{
 		auto srv = new ShaderResourceView(GetDefaultNodeDevice());
-		srv->CreateView(this, CreateSRVDesc(0, GetArraySize(), 0, GetNumMipMaps()), ShaderResourceView::EFlags::None);
+		srv->CreateView(CreateSRVDesc(0, GetArraySize(), 0, GetNumMipMaps()), this, ShaderResourceView::EFlags::None);
 		default_srv.reset(srv);
 	}
 	return default_srv.get();

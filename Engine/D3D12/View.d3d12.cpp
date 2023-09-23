@@ -19,23 +19,11 @@ D3DView::~D3DView()
 	GetParentDevice()->GetOfflineDescriptorManager(HeapType).FreeHeapSlot(OfflineHandle);
 }
 
-void D3DView::CreateView(BaseShaderResource* InResource, NullDescPtr NullDescriptor)
+void D3DView::CreateView(ResourceInfo InResourceInfo, NullDescPtr NullDescriptor)
 {
-	ShaderResource = InResource;
-	Resource = InResource->GetResource();
-	Location = &InResource->Location;
+	ResInfo = InResourceInfo;
 
-	ViewSubset.Layout = Resource->GetDesc();
-	UpdateDescriptor();
-}
-
-void D3DView::CreateView(ResourceLocation* InResource, NullDescPtr NullDescriptor)
-{
-	ShaderResource = nullptr;
-	Resource = InResource->GetResource();
-	Location = InResource;
-
-	ViewSubset.Layout = Resource->GetDesc();
+	ViewSubset.Layout = ResInfo.Resource->GetDesc();
 	UpdateDescriptor();
 }
 
@@ -47,7 +35,7 @@ RenderTargetView::RenderTargetView(NodeDevice* InDevice)
 void RenderTargetView::UpdateDescriptor()
 {
 	GetParentDevice()->GetDevice()->CreateRenderTargetView(
-		Resource->Resource(),
+		GetResource()->Resource(),
 		&Desc,
 		OfflineHandle
 	);
@@ -63,7 +51,7 @@ DepthStencilView::DepthStencilView(NodeDevice* InDevice)
 void DepthStencilView::UpdateDescriptor()
 {
 	GetParentDevice()->GetDevice()->CreateDepthStencilView(
-		Resource->Resource(),
+		GetResource()->Resource(),
 		&Desc,
 		OfflineHandle
 	);
@@ -76,10 +64,7 @@ ShaderResourceView::ShaderResourceView(NodeDevice* InDevice)
 {
 }
 
-
-
-template<typename TResource>
-void ShaderResourceView::CreateView(TResource InResource, D3D12_SHADER_RESOURCE_VIEW_DESC const& InD3DViewDesc, EFlags InFlags)
+void ShaderResourceView::CreateView(D3D12_SHADER_RESOURCE_VIEW_DESC const& InD3DViewDesc, ResourceInfo InResource, EFlags InFlags)
 {
 	OffsetInBytes = 0;
 	StrideInBytes = 0;
@@ -99,22 +84,17 @@ void ShaderResourceView::CreateView(TResource InResource, D3D12_SHADER_RESOURCE_
 
 		wassume(StrideInBytes > 0);
 
-		OffsetInBytes = (InD3DViewDesc.Buffer.FirstElement * StrideInBytes) - InResource->GetOffsetFromBaseOfResource();
+		OffsetInBytes = (InD3DViewDesc.Buffer.FirstElement * StrideInBytes) - InResource.Location->GetOffsetFromBaseOfResource();
 		wassume((OffsetInBytes % StrideInBytes) == 0);
 	}
 	else if (InD3DViewDesc.ViewDimension == D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE)
 	{
-		OffsetInBytes = InD3DViewDesc.RaytracingAccelerationStructure.Location - InResource->GetGPUVirtualAddress();
+		OffsetInBytes = InD3DViewDesc.RaytracingAccelerationStructure.Location - InResource.Location->GetGPUVirtualAddress();
 		StrideInBytes = 1;
 	}
 
 	TView::CreateView(InD3DViewDesc, InResource);
 }
-
-template<>
-void ShaderResourceView::CreateView<BaseShaderResource*>(BaseShaderResource* InResource, D3D12_SHADER_RESOURCE_VIEW_DESC const& InD3DViewDesc, EFlags InFlags);
-template<>
-void ShaderResourceView::CreateView<ResourceLocation*>(ResourceLocation* InResource, D3D12_SHADER_RESOURCE_VIEW_DESC const& InD3DViewDesc, EFlags InFlags);
 
 void ShaderResourceView::UpdateMinLODClamp(float MinLODClamp)
 {
@@ -152,8 +132,7 @@ UnorderedAccessView::UnorderedAccessView(NodeDevice* InDevice)
 {
 }
 
-template<typename TResource>
-void UnorderedAccessView::CreateView(TResource InResource, D3D12_UNORDERED_ACCESS_VIEW_DESC const& InD3DViewDesc, EFlags InFlags)
+void UnorderedAccessView::CreateView(D3D12_UNORDERED_ACCESS_VIEW_DESC const& InD3DViewDesc,ResourceInfo InResource, EFlags InFlags)
 {
 	OffsetInBytes = 0;
 	StrideInBytes = 0;
@@ -172,7 +151,7 @@ void UnorderedAccessView::CreateView(TResource InResource, D3D12_UNORDERED_ACCES
 
 		wassume(StrideInBytes > 0);
 
-		OffsetInBytes = (InD3DViewDesc.Buffer.FirstElement * StrideInBytes) - InResource->GetOffsetFromBaseOfResource();
+		OffsetInBytes = (InD3DViewDesc.Buffer.FirstElement * StrideInBytes) - InResource.Location->GetOffsetFromBaseOfResource();
 		wassume((OffsetInBytes % StrideInBytes) == 0);
 	}
 
@@ -202,7 +181,7 @@ void UnorderedAccessView::CreateView(TResource InResource, D3D12_UNORDERED_ACCES
 
 void UnorderedAccessView::UpdateDescriptor()
 {
-	ID3D12Resource* Resource = this->Resource->Resource();
+	ID3D12Resource* Resource = GetResource()->Resource();
 
 	ID3D12Resource* Counter = CounterResource
 		? CounterResource->Resource()
@@ -259,7 +238,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 		SRVDesc.RaytracingAccelerationStructure.Location = Resource->Location.GetGPUVirtualAddress() + StartOffsetBytes;
 
 		auto srv = new ShaderResourceView(GetNodeDevice(0));
-		srv->CreateView(Resource, SRVDesc, ShaderResourceView::EFlags::None);
+		srv->CreateView(SRVDesc, Resource, ShaderResourceView::EFlags::None);
 		return shared_raw_robject(srv);
 	}
 	if (!white::has_anyflags(access, EAccessHint::EA_GPUStructured))
@@ -325,7 +304,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 				SRVDesc.Buffer.FirstElement = (BufferOffset) / CreationStride;
 				SRVDesc.Buffer.NumElements = NumBytes / CreationStride;
 
-				SRV->CreateView(Buffer, SRVDesc, ShaderResourceView::EFlags::None);
+				SRV->CreateView(SRVDesc, Buffer, ShaderResourceView::EFlags::None);
 			}
 		};
 
@@ -386,7 +365,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 				SRVDesc.Buffer.NumElements = std::min<uint32>(MaxElements - StartElement, NumElements);
 				SRVDesc.Buffer.FirstElement = Offset / EffectiveStride + StartElement;
 
-				SRV->CreateView(StructuredBuffer, SRVDesc, ShaderResourceView::EFlags::None);
+				SRV->CreateView(SRVDesc, StructuredBuffer, ShaderResourceView::EFlags::None);
 			}
 		};
 
@@ -429,7 +408,7 @@ UAVRIRef Device::CreateUnorderedAccessView(const platform::Render::GraphicsBuffe
 
 	auto uav = new UnorderedAccessView(Buffer->GetParentDevice());
 
-	uav->CreateView(Buffer, UAVDesc, UnorderedAccessView::EFlags::None);
+	uav->CreateView(UAVDesc, Buffer, UnorderedAccessView::EFlags::None);
 
 	return shared_raw_robject(uav);
 }

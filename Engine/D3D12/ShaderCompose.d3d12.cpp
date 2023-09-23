@@ -68,7 +68,7 @@ namespace {
 				{
 					psrv.reset(new D3D12::ShaderResourceView(D3D12::GetDefaultNodeDevice()));
 
-					psrv->CreateView(pTexture, Desc,D3D12::ShaderResourceView::EFlags::None);
+					psrv->CreateView(Desc, pTexture , D3D12::ShaderResourceView::EFlags::None);
 
 					*ppsrv = psrv.get();
 				}
@@ -132,7 +132,7 @@ namespace {
 
 				puav.reset(new D3D12::UnorderedAccessView(D3D12::GetDefaultNodeDevice()));
 
-				puav->CreateView(pTexture, Desc, D3D12::UnorderedAccessView::EFlags::None);
+				puav->CreateView(Desc, pTexture, D3D12::UnorderedAccessView::EFlags::None);
 
 				*ppuav = puav.get();
 			}

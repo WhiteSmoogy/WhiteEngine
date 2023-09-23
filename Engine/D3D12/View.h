@@ -380,19 +380,41 @@ namespace platform_ex::Windows::D3D12 {
 
 	public:
 		inline OfflineDescriptor	GetOfflineCpuHandle()					const { return OfflineHandle; }
-		inline ResourceHolder* GetResource()				const { return Resource; }
-		inline ResourceLocation* GetResourceLocation()		const { return Location; }
+		inline ResourceHolder* GetResource()				const { return ResInfo.Resource; }
+		inline ResourceLocation* GetResourceLocation()		const { return ResInfo.Location; }
 		const CViewSubset& GetViewSubset()	const {
 			return ViewSubset;
 		}
+
+		struct ResourceInfo
+		{
+			ResourceInfo() = default;
+
+			// Constructor for renamable shader resources
+			ResourceInfo(BaseShaderResource* InBaseResource)
+				: BaseResource(InBaseResource)
+				, Location(InBaseResource ? &InBaseResource->Location : nullptr)
+				, Resource(InBaseResource ? InBaseResource->GetResource() : nullptr)
+			{}
+
+			// Constructor for manual views (does not automatically register for resource renames)
+			ResourceInfo(ResourceLocation* InResourceLocation)
+				: BaseResource(nullptr)
+				, Location(InResourceLocation)
+				, Resource(InResourceLocation ? InResourceLocation->GetResource() : nullptr)
+			{}
+
+			BaseShaderResource* BaseResource = nullptr;
+			ResourceLocation* Location = nullptr;
+			ResourceHolder* Resource = nullptr;
+		};
 
 	protected:
 		OfflineDescriptor OfflineHandle;
 
 		ViewSubresourceSubsetFlags Flags;
-		BaseShaderResource* ShaderResource;
-		ResourceLocation* Location;
-		ResourceHolder* Resource;
+		ResourceInfo ResInfo;
+
 		CViewSubset ViewSubset;
 
 		DescriptorHeapType HeapType;
@@ -402,8 +424,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		virtual void UpdateDescriptor() = 0;
 
-		void CreateView(BaseShaderResource* InResource, NullDescPtr NullDescriptor);
-		void CreateView(ResourceLocation* InResource, NullDescPtr NullDescriptor);
+		void CreateView(ResourceInfo, NullDescPtr NullDescriptor);
 	};
 
 	template <typename TParent, typename TDesc>
@@ -416,8 +437,7 @@ namespace platform_ex::Windows::D3D12 {
 			: D3DView(InParent, InHeapType)
 		{}
 		
-		template<typename TResource>
-		void CreateView(const TDesc& InD3DViewDesc, TResource InResource)
+		void CreateView(const TDesc& InD3DViewDesc, ResourceInfo InResource)
 		{
 			Desc = InD3DViewDesc;
 			ViewSubset.Range = InD3DViewDesc;
@@ -475,8 +495,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		ShaderResourceView(NodeDevice* InDevice);
 
-		template<typename TResource>
-		void CreateView(TResource InResource, D3D12_SHADER_RESOURCE_VIEW_DESC const& InD3DViewDesc, EFlags InFlags);
+		void CreateView(D3D12_SHADER_RESOURCE_VIEW_DESC const& InD3DViewDesc, ResourceInfo InResource, EFlags InFlags);
 
 		bool GetSkipFastClearFinalize() const { return white::has_anyflags(Flags, EFlags::SkipFastClearFinalize); }
 		void UpdateMinLODClamp(float MinLODClamp);
@@ -503,8 +522,7 @@ namespace platform_ex::Windows::D3D12 {
 		};
 
 		UnorderedAccessView(NodeDevice* InDevice);
-		template<typename TResource>
-		void CreateView(TResource InResource, D3D12_UNORDERED_ACCESS_VIEW_DESC const& InD3DViewDesc, EFlags InFlags);
+		void CreateView(D3D12_UNORDERED_ACCESS_VIEW_DESC const& InD3DViewDesc, ResourceInfo InResource, EFlags InFlags);
 
 		ResourceHolder* GetCounterResource() const
 		{

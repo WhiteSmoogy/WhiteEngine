@@ -85,15 +85,16 @@ namespace platform_ex::Windows::D3D12
 			return DefaultBufferAllocator;
 		}
 
-		inline DescriptorHeapManager& GetDescriptorHeapManager() { return NormalDescriptorHeapManager; }
+		DescriptorHeapManager& GetDescriptorHeapManager() { return NormalDescriptorHeapManager; }
 
-		inline OfflineDescriptorManager& GetOfflineDescriptorManager(DescriptorHeapType InType)
+		OnlineDescriptorManager& GetOnlineDescriptorManager() { return OnlineDescriptorManager; }
+
+		OfflineDescriptorManager& GetOfflineDescriptorManager(DescriptorHeapType InType)
 		{
 			return OfflineDescriptorManagers[static_cast<int>(InType)];
 		}
 
 		const D3DDefaultViews& GetDefaultViews() const { return DefaultViews; }
-
 
 	private:
 		void SetupAfterDeviceCreation();
@@ -106,6 +107,7 @@ namespace platform_ex::Windows::D3D12
 
 		// Must be before the StateCache so that destructor ordering is valid
 		std::vector<OfflineDescriptorManager> OfflineDescriptorManagers;
+		OnlineDescriptorManager OnlineDescriptorManager;
 
 		std::vector<CommandContext*> CommandContextArray;
 
@@ -115,7 +117,6 @@ namespace platform_ex::Windows::D3D12
 		GlobalOnlineSamplerHeap GlobalSamplerHeap;
 
 		DescriptorHeapManager NormalDescriptorHeapManager;
-
 		D3DDefaultViews DefaultViews;
 
 		FastAllocator DefaultFastAllocator;

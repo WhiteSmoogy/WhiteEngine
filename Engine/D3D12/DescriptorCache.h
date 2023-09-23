@@ -215,19 +215,22 @@ namespace platform_ex::Windows::D3D12 {
 			, bUniqueDescriptorTablesAreDirty(false)
 		{ }
 
-		void Init(uint32 TotalSize, D3D12_DESCRIPTOR_HEAP_TYPE Type);
+		void Init(uint32 TotalSize);
 
 		void ToggleDescriptorTablesDirtyFlag(bool Value) { bUniqueDescriptorTablesAreDirty = Value; }
 		bool DescriptorTablesDirty() { return bUniqueDescriptorTablesAreDirty; }
-		SamplerSet& GetUniqueDescriptorTables() { return UniqueDescriptorTables; }
-		std::mutex& GetCriticalSection() { return CriticalSection; }
+		std::mutex& GetCriticalSection() { return Mutex; }
+
+		void ConsolidateUniqueSamplerTables(white::span<UniqueSamplerTable> UniqueTables);
+
+		std::shared_ptr<SamplerSet> GetUniqueDescriptorTables() const { return UniqueDescriptorTables; }
 
 		bool RollOver();
 	private:
-		SamplerSet UniqueDescriptorTables;
+		std::shared_ptr<SamplerSet> UniqueDescriptorTables;
 		bool bUniqueDescriptorTablesAreDirty;
 
-		std::mutex CriticalSection;
+		std::mutex Mutex;
 	};
 
 	class SubAllocatedOnlineHeap : public OnlineHeap
@@ -344,15 +347,8 @@ namespace platform_ex::Windows::D3D12 {
 			return (pHeap == pPreviousViewHeap) || (pHeap == pPreviousSamplerHeap);
 		}
 
-		// Notify the descriptor cache every time you start recording a command list.
-		// This sets descriptor heaps on the command list and indicates the current fence value which allows
-		// us to avoid querying DX12 for that value thousands of times per frame, which can be costly.
-		void NotifyCurrentCommandList(CommandListHandle& CommandListHandle);
-
 		// ------------------------------------------------------
 		// end Descriptor Slot Reservation stuff
-
-		std::shared_ptr<SamplerState> pDefaultSampler;
 
 		void SetVertexBuffers(VertexBufferCache& Cache);
 		void SetRenderTargets(RenderTargetView** RenderTargetViewArray, uint32 Count, DepthStencilView* DepthStencilTarget);
@@ -376,22 +372,20 @@ namespace platform_ex::Windows::D3D12 {
 		void Init( uint32 InNumLocalViewDescriptors, uint32 InNumSamplerDescriptors);
 		void Clear();
 
-		void GatherUniqueSamplerTables();
-
 		// Notify the descriptor cache every time you start recording a command list.
 		// This sets descriptor heaps on the command list and indicates the current fence value which allows
 		// us to avoid querying DX12 for that value thousands of times per frame, which can be costly.
 		void OpenCommandList();
 		void CloseCommandList();
 
-		bool SwitchToContextLocalViewHeap(CommandListHandle& CommandListHandle);
+		bool SwitchToContextLocalViewHeap();
 		bool SwitchToContextLocalSamplerHeap();
-		bool SwitchToGlobalSamplerHeap();
+		void SwitchToGlobalSamplerHeap();
 
 		std::vector<UniqueSamplerTable>& GetUniqueTables() { return UniqueTables; }
 
 		inline bool UsingGlobalSamplerHeap() const { return bUsingGlobalSamplerHeap; }
-		SamplerSet& GetLocalSamplerSet() { return LocalSamplerSet; }
+		SamplerSet& GetLocalSamplerSet() { return *LocalSamplerSet; }
 
 	private:
 		// Sets the current descriptor tables on the command list and marks any descriptor tables as dirty if necessary.
@@ -413,7 +407,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		std::vector<UniqueSamplerTable> UniqueTables;
 
-		SamplerSet LocalSamplerSet;
+		std::shared_ptr<SamplerSet> LocalSamplerSet;
 		bool bUsingGlobalSamplerHeap;
 
 		uint32 NumLocalViewDescriptors;

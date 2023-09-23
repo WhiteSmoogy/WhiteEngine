@@ -9,163 +9,116 @@
 
 using namespace platform_ex::Windows::D3D12;
 
-DescriptorCache::DescriptorCache(GPUMaskType Node)
-	:DeviceChild(nullptr)
+DescriptorCache::DescriptorCache(CommandContext& InContext, GPUMaskType Node)
+	:DeviceChild(Context.GetParentDevice())
 	,SingleNodeGPUObject(Node)
-	, pNullSRV(nullptr)
-	, pNullRTV(nullptr)
-	, pNullUAV(nullptr)
-	, pDefaultSampler(nullptr)
 	, pPreviousViewHeap(nullptr)
 	, pPreviousSamplerHeap(nullptr)
 	, CurrentViewHeap(nullptr)
 	, CurrentSamplerHeap(nullptr)
 	, LocalViewHeap(nullptr)
-	, LocalSamplerHeap(nullptr, Node, this)
-	, SubAllocatedViewHeap(nullptr, Node, this)
+	, LocalSamplerHeap(*this, InContext)
+	, SubAllocatedViewHeap(*this, InContext)
 	, SamplerMap(271) // Prime numbers for better hashing
 	, bUsingGlobalSamplerHeap(false)
 	, NumLocalViewDescriptors(0)
-	,CmdContext(nullptr)
+	, Context(InContext)
+	, DefaultViews(InContext.GetParentDevice()->GetDefaultViews())
 {
 }
 
 
 
-void DescriptorCache::Init(NodeDevice* InParent, CommandContext* InCmdContext, uint32 InNumLocalViewDescriptors, uint32 InNumSamplerDescriptors, SubAllocatedOnlineHeap::SubAllocationDesc& SubHeapDesc)
+void DescriptorCache::Init(uint32 InNumLocalViewDescriptors, uint32 InNumSamplerDescriptors)
 {
-	Parent = InParent;
-	CmdContext = InCmdContext;
-
-	SubAllocatedViewHeap.SetParent(this);
-	LocalSamplerHeap.SetParent(this);
-
-	SubAllocatedViewHeap.SetParentDevice(InParent);
-	LocalSamplerHeap.SetParentDevice(InParent);
-
-	SubAllocatedViewHeap.Init(SubHeapDesc);
-	
 	// Always Init a local sampler heap as the high level cache will always miss initialy
 	// so we need something to fall back on (The view heap never rolls over so we init that one
 	// lazily as a backup to save memory)
-	LocalSamplerHeap.Init(InNumSamplerDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+	LocalSamplerHeap.Init(InNumSamplerDescriptors, DescriptorHeapType::Sampler);
 
 	NumLocalViewDescriptors = InNumLocalViewDescriptors;
 
 	CurrentViewHeap = &SubAllocatedViewHeap; //Begin with the global heap
 	CurrentSamplerHeap = &LocalSamplerHeap;
 	bUsingGlobalSamplerHeap = false;
-
-	// Create default views
-	D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
-	SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	SRVDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	SRVDesc.Texture2D.MipLevels = 1;
-	SRVDesc.Texture2D.MostDetailedMip = 0;
-	SRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-	pNullSRV = new DescriptorHandleSRV(GetParentDevice());
-	pNullSRV->CreateView(SRVDesc, nullptr);
-
-	D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};
-	RTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-	RTVDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	RTVDesc.Texture2D.MipSlice = 0;
-	pNullRTV = new DescriptorHandleRTV(GetParentDevice());
-	pNullRTV->CreateView(RTVDesc, nullptr);
-
-	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
-	UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-	UAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	UAVDesc.Texture2D.MipSlice = 0;
-	pNullUAV = new DescriptorHandleUAV(GetParentDevice());
-	pNullUAV->CreateViewWithCounter(UAVDesc, nullptr, nullptr);
-
-	platform::Render::TextureSampleDesc SamplerDesc;
-	SamplerDesc.address_mode_u = SamplerDesc.address_mode_v = SamplerDesc.address_mode_w = platform::Render::TexAddressingMode::Clamp;
-	SamplerDesc.filtering = platform::Render::TexFilterOp::Min_Mag_Mip_Linear;
-	SamplerDesc.max_anisotropy = 0;
-
-	pDefaultSampler = InParent->CreateSampler(Convert(SamplerDesc));
 }
 
 void DescriptorCache::Clear()
 {
-	delete pNullRTV;
-	delete pNullSRV;
-	delete pNullUAV;
-
-	pNullRTV = nullptr;
-	pNullSRV = nullptr;
-	pNullUAV = nullptr;
 }
 
-void DescriptorCache::BeginFrame()
+void DescriptorCache::OpenCommandList()
 {
-	auto& DeviceSamplerHeap = GetParentDevice()->GetGlobalSamplerHeap();
+	// Clear the previous heap pointers (since it's a new command list) and then set the current descriptor heaps.
+	pPreviousViewHeap = nullptr;
+	pPreviousSamplerHeap = nullptr;
 
-	{
-		std::unique_lock Lock(DeviceSamplerHeap.GetCriticalSection());
-		if (DeviceSamplerHeap.DescriptorTablesDirty())
-		{
-			LocalSamplerSet = DeviceSamplerHeap.GetUniqueDescriptorTables();
-		}
-	}
+	LocalSamplerHeap.OpenCommandList();
+
+	CurrentViewHeap->OpenCommandList();
 
 	SwitchToGlobalSamplerHeap();
+
+	// Make sure the heaps are set
+	SetDescriptorHeaps();
+
+	wassume(IsHeapSet(GetParentDevice()->GetGlobalSamplerHeap().GetHeap()));
 }
 
-void DescriptorCache::EndFrame()
+void DescriptorCache::CloseCommandList()
 {
-	if (!UniqueTables.empty())
-	{
-		GatherUniqueSamplerTables();
-	}
+	CurrentViewHeap->CloseCommandList();
+
+
+	LocalSamplerHeap.CloseCommandList();
+
+	GetParentDevice()->GetGlobalSamplerHeap().ConsolidateUniqueSamplerTables(white::make_span(UniqueTables));
+	UniqueTables.clear();
 }
 
-void DescriptorCache::GatherUniqueSamplerTables()
+void GlobalOnlineSamplerHeap::ConsolidateUniqueSamplerTables(white::span<UniqueSamplerTable> UniqueTables)
 {
-	auto& DeviceSamplerHeap = GetParentDevice()->GetGlobalSamplerHeap();
+	std::unique_lock Lock(Mutex);
 
-	std::unique_lock Lock(DeviceSamplerHeap.GetCriticalSection());
-
-	auto& TableSet = DeviceSamplerHeap.GetUniqueDescriptorTables();
+	bool bModified = false;
 
 	for (auto& Table : UniqueTables)
 	{
-		if (TableSet.count(Table) == 0)
+		if (UniqueDescriptorTables->count(Table) == 0)
 		{
-			if (DeviceSamplerHeap.CanReserveSlots(Table.Key.Count))
+			if (CanReserveSlots(Table.Key.Count))
 			{
-				uint32 HeapSlot = DeviceSamplerHeap.ReserveSlots(Table.Key.Count);
-
-				if (HeapSlot != GlobalOnlineHeap::HeapExhaustedValue)
+				if (!bModified)
 				{
-					D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor = DeviceSamplerHeap.GetCPUSlotHandle(HeapSlot);
+					// Replace with a new copy, to avoid modifying the copy used by other threads.
+					UniqueDescriptorTables = std::make_shared<SamplerSet>(*UniqueDescriptorTables);
+					bModified = true;
+				}
+
+				uint32 HeapSlot = ReserveSlots(Table.Key.Count);
+				if (HeapSlot != OnlineHeap::HeapExhaustedValue)
+				{
+					D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor = GetCPUSlotHandle(HeapSlot);
 
 					GetParentDevice()->GetDevice()->CopyDescriptors(
 						1, &DestDescriptor, &Table.Key.Count,
 						Table.Key.Count, Table.CPUTable, nullptr /* sizes */,
 						D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
-					Table.GPUHandle = DeviceSamplerHeap.GetGPUSlotHandle(HeapSlot);
-					TableSet.emplace(Table);
-
-					DeviceSamplerHeap.ToggleDescriptorTablesDirtyFlag(true);
+					Table.GPUHandle = GetGPUSlotHandle(HeapSlot);
+					UniqueDescriptorTables->emplace(Table);
 				}
 			}
 		}
 	}
-
-	// Reset the tables as the next frame should inherit them from the global heap
-	UniqueTables.clear();
 }
+
 
 bool DescriptorCache::SetDescriptorHeaps()
 {
 	// Sometimes there is no underlying command list for the context.
 	// In that case, there is nothing to do and that's ok since we'll call this function again later when a command list is opened.
-	if (CmdContext->CommandListHandle == nullptr)
+	if (Context.CommandListHandle == nullptr)
 	{
 		return false;
 	}
@@ -177,7 +130,7 @@ bool DescriptorCache::SetDescriptorHeaps()
 	{
 		// The view heap changed, so dirty the descriptor tables.
 		bHeapChanged = true;
-		CmdContext->StateCache.DirtyViewDescriptorTables();
+		Context.StateCache.DirtyViewDescriptorTables();
 	}
 
 	ID3D12DescriptorHeap* const pCurrentSamplerHeap = CurrentSamplerHeap->GetHeap();
@@ -185,7 +138,7 @@ bool DescriptorCache::SetDescriptorHeaps()
 	{
 		// The sampler heap changed, so dirty the descriptor tables.
 		bHeapChanged = true;
-		CmdContext->StateCache.DirtySamplerDescriptorTables();
+		Context.StateCache.DirtySamplerDescriptorTables();
 
 		// Reset the sampler map since it will have invalid entries for the new heap.
 		SamplerMap.Reset();
@@ -195,7 +148,7 @@ bool DescriptorCache::SetDescriptorHeaps()
 	if (bHeapChanged)
 	{
 		ID3D12DescriptorHeap* /*const*/ ppHeaps[] = { pCurrentViewHeap, pCurrentSamplerHeap };
-		CmdContext->CommandListHandle->SetDescriptorHeaps(white::size(ppHeaps), ppHeaps);
+		Context.CommandListHandle->SetDescriptorHeaps(white::size(ppHeaps), ppHeaps);
 
 		pPreviousViewHeap = pCurrentViewHeap;
 		pPreviousSamplerHeap = pCurrentSamplerHeap;
@@ -206,19 +159,6 @@ bool DescriptorCache::SetDescriptorHeaps()
 	return bHeapChanged;
 }
 
-void DescriptorCache::NotifyCurrentCommandList(CommandListHandle& CommandListHandle)
-{
-	// Clear the previous heap pointers (since it's a new command list) and then set the current descriptor heaps.
-	pPreviousViewHeap = nullptr;
-	pPreviousSamplerHeap = nullptr;
-	SetDescriptorHeaps();
-
-	CurrentViewHeap->NotifyCurrentCommandList(CommandListHandle);
-
-	// The global sampler heap doesn't care about the current command list
-	LocalSamplerHeap.NotifyCurrentCommandList(CommandListHandle);
-}
-
 void DescriptorCache::SetVertexBuffers(VertexBufferCache& Cache)
 {
 	const uint32 Count = Cache.MaxBoundVertexBufferIndex + 1;
@@ -227,7 +167,7 @@ void DescriptorCache::SetVertexBuffers(VertexBufferCache& Cache)
 		return; // No-op
 	}
 
-	CmdContext->CommandListHandle->IASetVertexBuffers(0, Count, Cache.CurrentVertexBufferViews);
+	Context.CommandListHandle->IASetVertexBuffers(0, Count, Cache.CurrentVertexBufferViews);
 }
 
 
@@ -239,33 +179,31 @@ void DescriptorCache::SetRenderTargets(RenderTargetView** RenderTargetViewArray,
 
 	D3D12_CPU_DESCRIPTOR_HANDLE RTVDescriptors[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT];
 
-	auto& CommandList = CmdContext->CommandListHandle;
-
 	// Fill heap slots
 	for (uint32 i = 0; i < Count; i++)
 	{
 		if (RenderTargetViewArray[i] != NULL)
 		{
 			// RTV should already be in the correct state. It is transitioned in RHISetRenderTargets.
-			TransitionResource(CommandList, RenderTargetViewArray[i], D3D12_RESOURCE_STATE_RENDER_TARGET);
-			RTVDescriptors[i] = RenderTargetViewArray[i]->GetView();
+			Context.TransitionResource( RenderTargetViewArray[i], D3D12_RESOURCE_STATE_RENDER_TARGET);
+			RTVDescriptors[i] = RenderTargetViewArray[i]->GetOfflineCpuHandle();
 		}
 		else
 		{
-			RTVDescriptors[i] = pNullRTV->GetHandle();
+			RTVDescriptors[i] = DefaultViews.NullRTV;
 		}
 	}
 
 	if (DepthStencilTarget != nullptr)
 	{
-		TransitionResource(CommandList, DepthStencilTarget);
+		Context.TransitionResource(DepthStencilTarget);
 
-		const D3D12_CPU_DESCRIPTOR_HANDLE DSVDescriptor = DepthStencilTarget->GetView();
-		CommandList->OMSetRenderTargets(Count, RTVDescriptors, 0, &DSVDescriptor);
+		const D3D12_CPU_DESCRIPTOR_HANDLE DSVDescriptor = DepthStencilTarget->GetOfflineCpuHandle();
+		Context.CommandListHandle->OMSetRenderTargets(Count, RTVDescriptors, 0, &DSVDescriptor);
 	}
 	else
 	{
-		CommandList->OMSetRenderTargets(Count, RTVDescriptors, 0, nullptr);
+		Context.CommandListHandle->OMSetRenderTargets(Count, RTVDescriptors, 0, nullptr);
 	}
 }
 
@@ -290,7 +228,7 @@ void DescriptorCache::SetUAVs(const RootSignature* RootSignature, UnorderedAcces
 	CD3DX12_GPU_DESCRIPTOR_HANDLE BindDescriptor(CurrentViewHeap->GetGPUSlotHandle(FirstSlotIndex));
 	CD3DX12_CPU_DESCRIPTOR_HANDLE SrcDescriptors[MAX_UAVS];
 
-	auto& CommandList = CmdContext->CommandListHandle;
+	auto& CommandList = Context.CommandListHandle;
 
 	const uint32 UAVStartSlot = Cache.StartSlot[ShaderStage];
 	auto& UAVs = Cache.Views[ShaderStage];
@@ -300,13 +238,13 @@ void DescriptorCache::SetUAVs(const RootSignature* RootSignature, UnorderedAcces
 	{
 		if ((SlotIndex < UAVStartSlot) || (UAVs[SlotIndex] == nullptr))
 		{
-			SrcDescriptors[SlotIndex] = pNullUAV->GetHandle();
+			SrcDescriptors[SlotIndex] =  DefaultViews.NullUAV;
 		}
 		else
 		{
-			SrcDescriptors[SlotIndex] = UAVs[SlotIndex]->GetView();
+			SrcDescriptors[SlotIndex] = UAVs[SlotIndex]->GetOfflineCpuHandle();
 
-			TransitionResource(CommandList, UAVs[SlotIndex], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			Context.TransitionResource(UAVs[SlotIndex], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		}
 	}
 	UnorderedAccessViewCache::CleanSlots(CurrentDirtySlotMask, SlotsNeeded);
@@ -351,7 +289,7 @@ void DescriptorCache::SetSRVs(const RootSignature* RootSignature, ShaderResource
 	wconstraint(SlotsNeededMask != 0);		// All dirty slots for the current shader stage AND used by the current shader stage.
 	wconstraint(SlotsNeeded != 0);
 
-	auto& CommandList = CmdContext->CommandListHandle;
+	auto& CommandList = Context.CommandListHandle;
 
 	auto& SRVs = Cache.Views[ShaderStage];
 
@@ -366,24 +304,24 @@ void DescriptorCache::SetSRVs(const RootSignature* RootSignature, ShaderResource
 	{
 		if (SRVs[SlotIndex] != nullptr)
 		{
-			SrcDescriptors[SlotIndex] = SRVs[SlotIndex]->GetView();
+			SrcDescriptors[SlotIndex] = SRVs[SlotIndex]->GetOfflineCpuHandle();
 
-			if (SRVs[SlotIndex]->IsDepthStencilResource())
+			if (SRVs[SlotIndex]->GetResource()->IsDepthStencilResource())
 			{
-				TransitionResource(CommandList, SRVs[SlotIndex], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_DEPTH_READ);
+				Context.TransitionResource(SRVs[SlotIndex], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_DEPTH_READ);
 			}
 			/*else if (SRVs[SlotIndex]->GetSkipFastClearFinalize())
 			{
-				TransitionResource(CommandList, SRVs[SlotIndex], CmdContext->SkipFastClearEliminateState);
+				TransitionResource(CommandList, SRVs[SlotIndex], Context.SkipFastClearEliminateState);
 			}*/
 			else
 			{
-				TransitionResource(CommandList, SRVs[SlotIndex], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+				Context.TransitionResource(SRVs[SlotIndex], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 			}
 		}
 		else
 		{
-			SrcDescriptors[SlotIndex] = pNullSRV->GetHandle();
+			SrcDescriptors[SlotIndex] = DefaultViews.NullSRV;
 		}
 		wconstraint(SrcDescriptors[SlotIndex].ptr != 0);
 	}
@@ -431,7 +369,7 @@ void DescriptorCache::SetConstantBuffers(const RootSignature* RootSignature, Con
 	wconstraint(CurrentDirtySlotMask != 0);	// All dirty slots for the current shader stage.
 	wconstraint(SlotsNeededMask != 0);		// All dirty slots for the current shader stage AND used by the current shader stage.
 
-	auto& CommandList = CmdContext->CommandListHandle;
+	auto& CommandList = Context.CommandListHandle;
 	ID3D12Device* Device = GetParentDevice()->GetDevice();
 
 	// Process root CBV
@@ -543,7 +481,7 @@ void DescriptorCache::SetSamplers(const RootSignature* RootSignature, SamplerSta
 			}
 			else
 			{
-				SrcDescriptors[SlotIndex] = pDefaultSampler->Descriptor;
+				SrcDescriptors[SlotIndex] = DefaultViews.DefaultSampler->Descriptor;
 			}
 		}
 		SamplerStateCache::CleanSlots(CurrentDirtySlotMask, SlotsNeeded);
@@ -562,7 +500,7 @@ void DescriptorCache::SetSamplers(const RootSignature* RootSignature, SamplerSta
 		}
 	}
 
-	auto& CommandList = CmdContext->CommandListHandle;
+	auto& CommandList = Context.CommandListHandle;
 
 	if (ShaderStage == ShaderType::ComputeShader)
 	{
@@ -609,7 +547,7 @@ void DescriptorCache::SetStreamOutTargets(ResourceHolder** Buffers, uint32 Count
 
 	D3D12_STREAM_OUTPUT_BUFFER_VIEW SOViews[D3D12_SO_BUFFER_SLOT_COUNT] = { };
 
-	auto& CommandList = CmdContext->CommandListHandle;
+	auto& CommandList = Context.CommandListHandle;
 
 	// Fill heap slots
 	for (uint32 i = 0; i < SlotsNeeded; i++)
@@ -628,39 +566,39 @@ void DescriptorCache::SetStreamOutTargets(ResourceHolder** Buffers, uint32 Count
 
 		if (Buffers[i] != nullptr)
 		{
-			TransitionResource(CommandList, Buffers[i], D3D12_RESOURCE_STATE_STREAM_OUT, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+			Context.TransitionResource(Buffers[i], D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_STREAM_OUT, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 		}
 	}
 
 	CommandList->SOSetTargets(0, SlotsNeeded, SOViews);
 }
 
-bool DescriptorCache::HeapRolledOver(D3D12_DESCRIPTOR_HEAP_TYPE Type)
+bool DescriptorCache::HeapRolledOver(DescriptorHeapType Type)
 {
 	// A heap rolled over, so set the descriptor heaps again and return if the heaps actually changed.
 	return SetDescriptorHeaps();
 }
 
-void DescriptorCache::HeapLoopedAround(D3D12_DESCRIPTOR_HEAP_TYPE Type)
+void DescriptorCache::HeapLoopedAround(DescriptorHeapType Type)
 {
-	if (Type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
+	if (Type == DescriptorHeapType::Standard)
 	{
 		SamplerMap.Reset();
 	}
 }
 
-bool DescriptorCache::SwitchToContextLocalViewHeap(CommandListHandle& CommandListHandle)
+bool DescriptorCache::SwitchToContextLocalViewHeap()
 {
 	if (LocalViewHeap == nullptr)
 	{
 		WF_Trace(platform::Descriptions::Informative,"This should only happen in the Editor where it doesn't matter as much. If it happens in game you should increase the device global heap size!");
 
 		// Allocate the heap lazily
-		LocalViewHeap = new ThreadLocalOnlineHeap(GetParentDevice(),GetGPUMask(), this);
+		LocalViewHeap = new LocalOnlineHeap(*this, Context);
 		if (LocalViewHeap)
 		{
 			wconstraint(NumLocalViewDescriptors);
-			LocalViewHeap->Init(NumLocalViewDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			LocalViewHeap->Init(NumLocalViewDescriptors, DescriptorHeapType::Standard);
 		}
 		else
 		{
@@ -669,8 +607,10 @@ bool DescriptorCache::SwitchToContextLocalViewHeap(CommandListHandle& CommandLis
 		}
 	}
 
-	LocalViewHeap->NotifyCurrentCommandList(CommandListHandle);
+	CurrentViewHeap->CloseCommandList();
 	CurrentViewHeap = LocalViewHeap;
+	CurrentViewHeap->OpenCommandList();
+
 	const bool bDescriptorHeapsChanged = SetDescriptorHeaps();
 
 	wconstraint(IsHeapSet(LocalViewHeap->GetHeap()));
@@ -691,124 +631,21 @@ bool DescriptorCache::SwitchToContextLocalSamplerHeap()
 	return bDescriptorHeapsChanged;
 }
 
-bool DescriptorCache::SwitchToGlobalSamplerHeap()
+void DescriptorCache::SwitchToGlobalSamplerHeap()
 {
-	bool bDescriptorHeapsChanged = false;
 	if (!UsingGlobalSamplerHeap())
 	{
 		bUsingGlobalSamplerHeap = true;
+		auto& GlobalSamplerHeap = GetParentDevice()->GetGlobalSamplerHeap();
+		LocalSamplerSet = GlobalSamplerHeap.GetUniqueDescriptorTables();
 		CurrentSamplerHeap = &GetParentDevice()->GetGlobalSamplerHeap();
-		bDescriptorHeapsChanged = SetDescriptorHeaps();
-	}
-
-	// Sometimes this is called when there is no underlying command list.
-	// This is OK, as the desriptor heaps will be set when a command list is opened.
-	wconstraint((CmdContext->CommandListHandle == nullptr) || IsHeapSet(GetParentDevice()->GetGlobalSamplerHeap().GetHeap()));
-	return bDescriptorHeapsChanged;
-}
-
-void ThreadLocalOnlineHeap::Init(uint32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE Type)
-{
-	Desc = {};
-	Desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	Desc.Type = Type;
-	Desc.NumDescriptors = NumDescriptors;
-	Desc.NodeMask = GPUIndex;
-
-	//LLM_SCOPE(ELLMTag::DescriptorCache);
-	CheckHResult(GetParentDevice()->GetDevice()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap.ReleaseAndGetRef())));
-	D3D::Debug(Heap, Desc.Type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV ? "Thread Local - Online View Heap" : "Thread Local - Online Sampler Heap");
-
-	Entry.Heap = Heap;
-
-	CPUBase = Heap->GetCPUDescriptorHandleForHeapStart();
-	GPUBase = Heap->GetGPUDescriptorHandleForHeapStart();
-	DescriptorSize = GetParentDevice()->GetDevice()->GetDescriptorHandleIncrementSize(Type);
-
-	if (Desc.Type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
-	{
-	}
-	else
-	{
 	}
 }
 
-bool ThreadLocalOnlineHeap::RollOver()
-{
-	// Enqueue the current entry
-	WAssert(CurrentCommandList != nullptr, "Would have set up a sync point with a null commandlist.");
-	Entry.SyncPoint = CurrentCommandList;
-	ReclaimPool.push(Entry);
-
-	if (!ReclaimPool.empty() && !!(Entry = ReclaimPool.front()).SyncPoint && Entry.SyncPoint.IsComplete())
-	{
-		ReclaimPool.pop();
-
-		Heap = Entry.Heap;
-	}
-	else
-	{
-		WF_Trace(platform::Descriptions::Informative, "OnlineHeap RollOver Detected. Increase the heap size to prevent creation of additional heaps");
-
-		//LLM_SCOPE(ELLMTag::DescriptorCache);
-
-		CheckHResult(GetParentDevice()->GetDevice()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap.ReleaseAndGetRef())));
-		D3D::Debug(Heap, Desc.Type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV ? "Thread Local - Online View Heap" : "Thread Local - Online Sampler Heap");
-
-		if (Desc.Type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
-		{
-		}
-		else
-		{
-		}
-
-		Entry.Heap = Heap;
-	}
-
-	NextSlotIndex = 0;
-	FirstUsedSlot = 0;
-
-	// Notify other layers of heap change
-	CPUBase = Heap->GetCPUDescriptorHandleForHeapStart();
-	GPUBase = Heap->GetGPUDescriptorHandleForHeapStart();
-	return Parent->HeapRolledOver(Desc.Type);
-}
-
-void ThreadLocalOnlineHeap::NotifyCurrentCommandList(CommandListHandle& CommandListHandle)
-{
-	if (CurrentCommandList != nullptr && NextSlotIndex > 0)
-	{
-		// Track the previous command list
-		SyncPointEntry SyncPoint;
-		SyncPoint.SyncPoint = CommandListHandle;
-		SyncPoint.LastSlotInUse = NextSlotIndex - 1;
-		SyncPoints.push(SyncPoint);
-
-		Entry.SyncPoint = CommandListHandle;
-
-		// Free up slots for finished command lists
-		while (!SyncPoints.empty() && !!(SyncPoint = SyncPoints.front()).SyncPoint && SyncPoint.SyncPoint.IsComplete())
-		{
-			SyncPoints.pop();
-			FirstUsedSlot = SyncPoint.LastSlotInUse + 1;
-		}
-	}
-
-	// Update the current command list
-	CurrentCommandList = CommandListHandle;
-}
-
-
-
-OnlineHeap::OnlineHeap(NodeDevice* Device, GPUMaskType Node, bool CanLoopAround, DescriptorCache* _Parent)
+OnlineHeap::OnlineHeap(NodeDevice* Device, bool CanLoopAround)
 	:DeviceChild(Device)
-	,SingleNodeGPUObject(Node)
-	, Parent(_Parent)
-	, CurrentCommandList()
-	, DescriptorSize(0)
 	, NextSlotIndex(0)
 	, FirstUsedSlot(0)
-	, Desc({})
 	, bCanLoopAround(CanLoopAround)
 {
 }
@@ -826,10 +663,7 @@ bool OnlineHeap::CanReserveSlots(uint32 NumSlots)
 	}
 	if (NumSlots > HeapSize)
 	{
-#if !defined(_HAS_EXCEPTIONS) || _HAS_EXCEPTIONS == 1
 		throw E_OUTOFMEMORY;
-#else
-#endif
 	}
 	uint32 FirstRequestedSlot = NextSlotIndex;
 	uint32 SlotAfterReservation = NextSlotIndex + NumSlots;
@@ -872,13 +706,14 @@ uint32 OnlineHeap::ReserveSlots(uint32 NumSlotsRequested)
 
 		FirstUsedSlot = SlotAfterReservation;
 
-		Parent->HeapLoopedAround(Desc.Type);
+		// Notify the derived class that the heap has been looped around
+		HeapLoopedAround();
 	}
 
 	// Note where to start looking next time
 	NextSlotIndex = SlotAfterReservation;
 
-	if (Desc.Type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+	if (Heap->GetType() == DescriptorHeapType::Standard)
 	{
 	}
 	else
@@ -897,118 +732,200 @@ void OnlineHeap::SetNextSlot(uint32 NextSlot)
 	// This is used to correct for the actual number of heap slots used
 	wconstraint(NextSlot <= NextSlotIndex);
 
-	wconstraint(Desc.Type != D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	wconstraint(Heap->GetType() != DescriptorHeapType::Standard);
 
 	NextSlotIndex = NextSlot;
 }
 
 
-void OnlineHeap::NotifyCurrentCommandList(CommandListHandle& CommandListHandle)
+void GlobalOnlineSamplerHeap::Init(uint32 TotalSize)
 {
-	//Specialization should be called
-	wconstraint(false);
+	Heap = GetParentDevice()->GetDescriptorHeapManager().AllocateHeap(
+		"Device Global - Online Sampler Heap",
+		DescriptorHeapType::Sampler,
+		TotalSize,
+		D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
+	);
 }
 
-void GlobalOnlineHeap::Init(uint32 TotalSize, D3D12_DESCRIPTOR_HEAP_TYPE Type)
-{
-	D3D12_DESCRIPTOR_HEAP_FLAGS HeapFlags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-
-	Desc = {};
-	Desc.Flags = HeapFlags;
-	Desc.Type = Type;
-	Desc.NumDescriptors = TotalSize;
-	Desc.NodeMask = GPUIndex;
-
-	//LLM_SCOPE(ELLMTag::DescriptorCache);
-
-	CheckHResult(GetParentDevice()->GetDevice()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap.ReleaseAndGetRef())));
-	D3D::Debug(Heap, Desc.Type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV ? "Device Global - Online View Heap" : "Device Global - Online Sampler Heap");
-
-	CPUBase = Heap->GetCPUDescriptorHandleForHeapStart();
-	GPUBase = Heap->GetGPUDescriptorHandleForHeapStart();
-	DescriptorSize = GetParentDevice()->GetDevice()->GetDescriptorHandleIncrementSize(Desc.Type);
-
-	if (Desc.Type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
-	{
-		// Reserve the whole heap for sub allocation
-		ReserveSlots(TotalSize);
-	}
-	else
-	{
-	}
-}
-
-bool GlobalOnlineHeap::RollOver()
+bool GlobalOnlineSamplerHeap::RollOver()
 {
 	wconstraint(false);
 	WF_Trace(platform::Descriptions::Alert, "Global Descriptor heaps can't roll over!");
 	return false;
 }
 
-void SubAllocatedOnlineHeap::Init(SubAllocationDesc _Desc)
-{
-	SubDesc = _Desc;
-
-	const uint32 Blocks = SubDesc.Size / DESCRIPTOR_HEAP_BLOCK_SIZE;
-	wconstraint(Blocks > 0);
-	wconstraint(SubDesc.Size >= DESCRIPTOR_HEAP_BLOCK_SIZE);
-
-	uint32 BaseSlot = SubDesc.BaseSlot;
-	for (uint32 i = 0; i < Blocks; i++)
-	{
-		DescriptorBlockPool.push(OnlineHeapBlock(BaseSlot, DESCRIPTOR_HEAP_BLOCK_SIZE));
-		wconstraint(BaseSlot + DESCRIPTOR_HEAP_BLOCK_SIZE <= SubDesc.ParentHeap->GetTotalSize());
-		BaseSlot += DESCRIPTOR_HEAP_BLOCK_SIZE;
-	}
-
-	Heap = SubDesc.ParentHeap->GetHeap();
-
-	DescriptorSize = SubDesc.ParentHeap->GetDescriptorSize();
-	Desc = SubDesc.ParentHeap->GetDesc();
-
-	CurrentSubAllocation = DescriptorBlockPool.front();
-	DescriptorBlockPool.pop();
-
-	CPUBase = SubDesc.ParentHeap->GetCPUSlotHandle(CurrentSubAllocation.BaseSlot);
-	GPUBase = SubDesc.ParentHeap->GetGPUSlotHandle(CurrentSubAllocation.BaseSlot);
-}
+SubAllocatedOnlineHeap::SubAllocatedOnlineHeap(DescriptorCache& Cache, CommandContext& InContext) :
+	OnlineHeap(InContext.GetParentDevice(), false),
+	Cache(Cache),
+	Context(InContext)
+{};
 
 bool SubAllocatedOnlineHeap::RollOver()
 {
-	// Enqueue the current entry
-	CurrentSubAllocation.SyncPoint = CurrentCommandList;
-	CurrentSubAllocation.bFresh = false;
-	DescriptorBlockPool.push(CurrentSubAllocation);
+	AllocateBlock();
 
-	if (!DescriptorBlockPool.empty() && (CurrentSubAllocation = DescriptorBlockPool.front(),
-		(CurrentSubAllocation.bFresh || CurrentSubAllocation.SyncPoint.IsComplete())))
+	return CurrentBlock == nullptr;
+}
+
+void SubAllocatedOnlineHeap::OpenCommandList()
+{
+	// Allocate a new block if we don't have one yet
+	if (CurrentBlock == nullptr)
 	{
-		DescriptorBlockPool.pop();
+		AllocateBlock();
+	}
+}
+
+bool SubAllocatedOnlineHeap::AllocateBlock()
+{
+	auto& OnlineManager = GetParentDevice()->GetOnlineDescriptorManager();
+
+	// If we still have a block, then free it first
+	if (CurrentBlock)
+	{
+		// Update actual used size
+		wassume(FirstUsedSlot == 0);
+		CurrentBlock->SizeUsed = NextSlotIndex;
+
+		OnlineManager.FreeHeapBlock(CurrentBlock);
+		CurrentBlock = nullptr;
+	}
+
+	// Try and allocate from the global heap
+	CurrentBlock = OnlineManager.AllocateHeapBlock();
+
+	// Reset counters
+	NextSlotIndex = 0;
+	FirstUsedSlot = 0;
+	Heap.ReleaseAndGetRef();
+
+	// Extract global heap data
+	if (CurrentBlock)
+	{
+		Heap = new DescriptorHeap(OnlineManager.GetDescriptorHeap(), CurrentBlock->BaseSlot, CurrentBlock->Size);
 	}
 	else
 	{
 		// Notify parent that we have run out of sub allocations
 		// This should *never* happen but we will handle it and revert to local heaps to be safe
-		WF_Trace(platform::Descriptions::Informative,"Descriptor cache ran out of sub allocated descriptor blocks! Moving to Context local View heap strategy");
-		return Parent->SwitchToContextLocalViewHeap(CurrentCommandList);
+		spdlog::warn("Descriptor cache ran out of sub allocated descriptor blocks! Moving to Context local View heap strategy");
+		Cache.SwitchToContextLocalViewHeap();
 	}
 
-	NextSlotIndex = 0;
-	FirstUsedSlot = 0;
-
-	// Notify other layers of heap change
-	CPUBase = SubDesc.ParentHeap->GetCPUSlotHandle(CurrentSubAllocation.BaseSlot);
-	GPUBase = SubDesc.ParentHeap->GetGPUSlotHandle(CurrentSubAllocation.BaseSlot);
-	return false;	// Sub-allocated descriptor heaps don't change, so no need to set descriptor heaps.
-}
-
-void SubAllocatedOnlineHeap::NotifyCurrentCommandList(CommandListHandle& CommandListHandle)
-{
-	// Update the current command list
-	CurrentCommandList = CommandListHandle;
+	// Allocation succeeded?
+	return (CurrentBlock != nullptr);
 }
 
 uint32  platform_ex::Windows::D3D12::GetTypeHash(const SamplerArrayDesc& Key)
 {
 	return static_cast<uint32>(CityHash64((char*)Key.SamplerID,static_cast<white::uint32>(Key.Count * sizeof(Key.SamplerID[0]))));
 }
+
+LocalOnlineHeap::LocalOnlineHeap(DescriptorCache& InCache, CommandContext& InContext)
+	: OnlineHeap(InContext.GetParentDevice(), true)
+	, Cache(InCache)
+	, Context(Context)
+{
+}
+
+void LocalOnlineHeap::Init(uint32 InNumDescriptors, DescriptorHeapType InHeapType)
+{
+	if (InNumDescriptors > 0)
+	{
+		const char* DebugName = InHeapType == DescriptorHeapType::Standard ? "Thread Local - Online View Heap" : "Thread Local - Online Sampler Heap";
+		Heap = GetParentDevice()->GetDescriptorHeapManager().AllocateHeap(
+			DebugName,
+			InHeapType,
+			InNumDescriptors,
+			D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
+		);
+
+		Entry.Heap = Heap;
+
+		if (InHeapType == DescriptorHeapType::Standard)
+		{
+		}
+		else
+		{
+		}
+	}
+	else
+	{
+		Heap = nullptr;
+		Entry.Heap = nullptr;
+	}
+}
+
+
+bool LocalOnlineHeap::RollOver()
+{
+	// Enqueue the current entry
+	Entry.SyncPoint = Context.CommandListHandle;
+	ReclaimPool.emplace(Entry);
+
+	if (ReclaimPool.front().SyncPoint.IsComplete())
+	{
+		Entry = ReclaimPool.front();
+		ReclaimPool.pop();
+
+		Heap = Entry.Heap;
+	}
+	else
+	{
+		spdlog::info("OnlineHeap RollOver Detected. Increase the heap size to prevent creation of additional heaps");
+
+		const auto HeapType = Heap->GetType();
+		const uint32 NumDescriptors = Heap->GetNumDescriptors();
+
+		const char* DebugName = HeapType == DescriptorHeapType::Standard ? "Thread Local - Online View Heap" : "Thread Local - Online Sampler Heap";
+		Heap = GetParentDevice()->GetDescriptorHeapManager().AllocateHeap(
+			DebugName,
+			HeapType,
+			NumDescriptors,
+			D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
+		);
+
+		if (HeapType == DescriptorHeapType::Standard)
+		{
+		}
+		else
+		{
+		}
+
+		Entry.Heap = Heap;
+	}
+
+	NextSlotIndex = 0;
+	FirstUsedSlot = 0;
+
+	return Cache.HeapRolledOver(Heap->GetType());
+}
+
+void LocalOnlineHeap::HeapLoopedAround()
+{
+	Cache.HeapLoopedAround(Heap->GetType());
+}
+
+void LocalOnlineHeap::CloseCommandList()
+{
+	if (NextSlotIndex > 0)
+	{
+		// Track the previous command list
+		SyncPointEntry SyncPoint;
+		SyncPoint.SyncPoint = Context.CommandListHandle;
+		SyncPoint.LastSlotInUse = NextSlotIndex - 1;
+		SyncPoints.push(SyncPoint);
+
+		Entry.SyncPoint = Context.CommandListHandle;
+
+		// Free up slots for finished command lists
+		while (!SyncPoints.empty() && !!(SyncPoint = SyncPoints.front()).SyncPoint && SyncPoint.SyncPoint.IsComplete())
+		{
+			SyncPoints.pop();
+			FirstUsedSlot = SyncPoint.LastSlotInUse + 1;
+		}
+	}
+}
+
+

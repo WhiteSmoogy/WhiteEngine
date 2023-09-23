@@ -286,6 +286,8 @@ namespace platform_ex::Windows::D3D12 {
 			 Type(InType)
 		 {}
 
+		 HeapDescriptorAllocator(HeapDescriptorAllocator&&) = default;
+
 		 DescriptorHandle Allocate()
 		 {
 			 return DescriptorAllocator::Allocate(Type);
@@ -324,6 +326,8 @@ namespace platform_ex::Windows::D3D12 {
 		DescriptorManager() = delete;
 		DescriptorManager(NodeDevice* Device, DescriptorHeap* InHeap);
 		~DescriptorManager();
+
+		DescriptorManager(DescriptorManager&& Other) = default;
 
 		void UpdateImmediately(DescriptorHandle InHandle, D3D12_CPU_DESCRIPTOR_HANDLE InSourceCpuHandle);
 
@@ -465,7 +469,7 @@ namespace platform_ex::Windows::D3D12 {
 		void DeferredFreeHeap(DescriptorHeap* InHeap);
 		void ImmediateFreeHeap(DescriptorHeap* InHeap);
 	private:
-		std::vector<DescriptorManager> GlobalHeaps;
+		std::list<DescriptorManager> GlobalHeaps;
 	};
 
 

@@ -134,7 +134,7 @@ void OfflineDescriptorManager::AllocateHeap()
 	wassume(HeapBase.ptr != 0);
 
 	// Allocate and initialize a single new entry in the map
-	const uint32 NewHeapIndex = Heaps.size();
+	const uint32 NewHeapIndex = static_cast<uint32>(Heaps.size());
 
 	Heaps.emplace_back(Heap.Get(), HeapBase, NumDescriptorsPerHeap * DescriptorSize);
 	FreeHeaps.emplace_back(NewHeapIndex);

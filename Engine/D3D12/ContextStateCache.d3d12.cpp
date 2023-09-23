@@ -21,17 +21,13 @@ int32 GLocalViewHeapSize = 500 * 1000;
 // This should be tweaked for each title as heaps require VRAM. The default value of 512k takes up ~16MB
 int32 GGlobalViewHeapSize = 500 * 1000;
 
-CommandContextStateCache::CommandContextStateCache(GPUMaskType Node)
-	:SingleNodeGPUObject(Node),
-	DescriptorCache(Node)
+CommandContextStateCache::CommandContextStateCache(CommandContext& Context ,GPUMaskType Node)
+	:
+	CmdContext(Context),
+	DeviceChild(Context.GetParentDevice()),
+	SingleNodeGPUObject(Node),
+	DescriptorCache(Context,Node)
 {
-}
-
-void CommandContextStateCache::Init(NodeDevice* InParent, CommandContext* InCmdContext, const CommandContextStateCache* AncestralState, SubAllocatedOnlineHeap::SubAllocationDesc& SubHeapDesc)
-{
-	Parent = InParent;
-	CmdContext = InCmdContext;
-
 	// Cache the resource binding tier
 	ResourceBindingTier = Parent->GetParentAdapter()->GetResourceBindingTier();
 
@@ -43,16 +39,10 @@ void CommandContextStateCache::Init(NodeDevice* InParent, CommandContext* InCmdC
 	wconstraint(GGlobalViewHeapSize <= (int32)MaxDescriptorsForTier);
 
 	const uint32 NumSamplerDescriptors = NUM_SAMPLER_DESCRIPTORS;
-	DescriptorCache.Init(InParent, InCmdContext, GLocalViewHeapSize, NumSamplerDescriptors, SubHeapDesc);
 
-	if (AncestralState)
-	{
-		InheritState(*AncestralState);
-	}
-	else
-	{
-		ClearState();
-	}
+	DescriptorCache.Init(GLocalViewHeapSize, NumSamplerDescriptors);
+
+	ClearState();
 }
 
 void CommandContextStateCache::SetBlendFactor(const float BlendFactor[4])
@@ -93,13 +83,13 @@ void CommandContextStateCache::SetComputeShader(const ComputeHWShader* Shader)
 		PipelineState.Common.CurrentShaderUAVCounts[ShaderType::ComputeShader] = (Shader) ? Shader->ResourceCounts.NumUAVs : 0;
 
 		// Shader changed so its resource table is dirty
-		CmdContext->DirtyConstantBuffers[ShaderType::ComputeShader] = 0xffff;
+		CmdContext.DirtyConstantBuffers[ShaderType::ComputeShader] = 0xffff;
 	}
 }
 
 void CommandContextStateCache::InternalSetIndexBuffer(ResourceHolder* Resource)
 {
-	auto& CommandList = CmdContext->CommandListHandle;
+	auto& CommandList = CmdContext.CommandListHandle;
 
 	CommandList->IASetIndexBuffer(&PipelineState.Graphics.IBCache.CurrentIndexBufferView);
 
@@ -381,7 +371,7 @@ void CommandContextStateCache::ApplySamplers(const RootSignature* const pRootSig
 	if (DescriptorCache.UsingGlobalSamplerHeap())
 	{
 		auto& GlobalSamplerSet = DescriptorCache.GetLocalSamplerSet();
-		auto& CommandList = CmdContext->CommandListHandle;
+		auto& CommandList = CmdContext.CommandListHandle;
 
 		for (uint32 Stage = StartStage; Stage < EndStage; Stage++)
 		{
@@ -577,7 +567,7 @@ bool CommandContextStateCache::AssertResourceStates(CachePipelineType PipelineTy
 #ifdef NDEBUG
 	return true;
 #else
-	ID3D12CommandList* pCommandList = CmdContext->CommandListHandle.CommandList();
+	ID3D12CommandList* pCommandList = CmdContext.CommandListHandle.CommandList();
 	COMPtr<ID3D12DebugCommandList> pDebugCommandList;
 	CheckHResult(pCommandList->QueryInterface(&pDebugCommandList.ReleaseAndGetRef()));
 
@@ -639,7 +629,7 @@ void CommandContextStateCache::ClearUAVs()
 template<CachePipelineType PipelineType>
 void CommandContextStateCache::ApplyState()
 {
-	auto& CommandList = CmdContext->CommandListHandle;
+	auto& CommandList = CmdContext.CommandListHandle;
 
 	const RootSignature* pRootSignature = nullptr;
 
@@ -684,7 +674,7 @@ void CommandContextStateCache::ApplyState()
 	// Need to cache compute budget, as we need to reset after PSO changes
 	if (PipelineType == CPT_Compute && CommandList->GetType() == D3D12_COMMAND_LIST_TYPE_COMPUTE)
 	{
-		CmdContext->SetAsyncComputeBudgetInternal(PipelineState.Compute.ComputeBudget);
+		CmdContext.SetAsyncComputeBudgetInternal(PipelineState.Compute.ComputeBudget);
 	}
 
 	if (PipelineType == CPT_Graphics)
@@ -903,7 +893,7 @@ void CommandContextStateCache::SetShader(TShader* Shader)
 		PipelineState.Common.CurrentShaderUAVCounts[Traits::Frequency] = (Shader) ? Shader->ResourceCounts.NumUAVs : 0;
 
 		// Shader changed so its resource table is dirty
-		this->CmdContext->DirtyConstantBuffers[Traits::Frequency] = 0xffff;
+		this->CmdContext.DirtyConstantBuffers[Traits::Frequency] = 0xffff;
 	}
 }
 
@@ -931,7 +921,7 @@ void CommandContextStateCache::InternalSetPipelineState()
 	// Set the PSO on the command list if necessary.
 	if (bNeedSetPSO)
 	{
-		this->CmdContext->CommandListHandle->SetPipelineState(CurrentPSO);
+		this->CmdContext.CommandListHandle->SetPipelineState(CurrentPSO);
 		PipelineState.Common.bNeedSetPSO = false;
 	}
 }

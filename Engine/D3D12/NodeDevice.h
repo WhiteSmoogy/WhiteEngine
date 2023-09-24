@@ -55,12 +55,6 @@ namespace platform_ex::Windows::D3D12
 
 		ID3D12CommandQueue* GetD3DCommandQueue(CommandQueueType InQueueType);
 
-		CommandListManager* GetCommandListManager(CommandQueueType InQueueType);
-
-		CommandListManager& GetCommandListManager() const { return *CommandListManager; }
-
-		std::vector<CommandListHandle> PendingCommandLists;
-
 		void CreateSamplerInternal(const D3D12_SAMPLER_DESC& Desc, D3D12_CPU_DESCRIPTOR_HANDLE Descriptor);
 
 		std::shared_ptr<SamplerState> CreateSampler(const D3D12_SAMPLER_DESC& Desc);
@@ -89,12 +83,6 @@ namespace platform_ex::Windows::D3D12
 	private:
 		void SetupAfterDeviceCreation();
 	protected:
-		using D3D12CommandListManager = CommandListManager;
-		/** A pool of command lists we can cycle through for the global D3D device */
-		D3D12CommandListManager* CommandListManager;
-		D3D12CommandListManager* CopyCommandListManager;
-		D3D12CommandListManager* AsyncCommandListManager;
-
 		// Must be before the StateCache so that destructor ordering is valid
 		std::vector<OfflineDescriptorManager> OfflineDescriptorManagers;
 		OnlineDescriptorManager OnlineDescriptorManager;

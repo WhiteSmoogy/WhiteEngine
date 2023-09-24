@@ -7,7 +7,7 @@
 
 #include "d3d12_dxgi.h"
 #include "Common.h"
-#include "D3DCommandList.h"
+#include "Submission.h"
 #include <unordered_set>
 #include <mutex>
 #include <queue>
@@ -269,7 +269,7 @@ namespace platform_ex::Windows::D3D12 {
 	private:
 		struct SyncPointEntry
 		{
-			CLSyncPoint SyncPoint;
+			SyncPointRef SyncPoint;
 			uint32 LastSlotInUse;
 
 			SyncPointEntry() : LastSlotInUse(0)
@@ -291,7 +291,7 @@ namespace platform_ex::Windows::D3D12 {
 		struct PoolEntry
 		{
 			COMPtr<DescriptorHeap> Heap;
-			CLSyncPoint SyncPoint;
+			SyncPointRef SyncPoint;
 
 			PoolEntry()
 			{}

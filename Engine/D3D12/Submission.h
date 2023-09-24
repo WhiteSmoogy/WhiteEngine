@@ -34,7 +34,7 @@ namespace platform_ex::Windows::D3D12 {
 
 	using SyncPointRef = COMPtr<SyncPoint>;
 
-	class SyncPoint :RefCountBase
+	class SyncPoint :public RefCountBase
 	{
 		SyncPoint(SyncPoint const&) = delete;
 		SyncPoint(SyncPoint&&) = delete;
@@ -58,6 +58,7 @@ namespace platform_ex::Windows::D3D12 {
 		void Wait() const;
 	};
 
+	//GPU breadcrumbs for crash debugging
 	struct BreadcrumbStack
 	{
 		struct FScope

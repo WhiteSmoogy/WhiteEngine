@@ -19,7 +19,6 @@ namespace platform_ex::Windows::D3D12 {
 	class ResourceHolder;
 
 	class CommandContext;
-	class CommandListManager;
 
 	enum class QueueType;
 
@@ -49,6 +48,7 @@ namespace platform_ex::Windows::D3D12 {
 		friend NodeDevice;
 		friend CommandContext;
 		friend ResourceBarrierBatcher;
+		friend class ContextCommon;
 
 		CommandList(CommandList const&) = delete;
 		CommandList(CommandList&&) = delete;
@@ -163,7 +163,7 @@ namespace platform_ex::Windows::D3D12 {
 			ListState(CommandAllocator* CommandAllocator);
 
 			// The allocator currently assigned to this command list.
-			CommandAllocator* CommandAllocator;
+			CommandAllocator* CmdAllocator;
 
 			// Array of resources whose state needs to be synced between submits.
 			std::vector<PendingResourceBarrier> PendingResourceBarriers;

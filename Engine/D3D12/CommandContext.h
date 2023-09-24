@@ -3,28 +3,156 @@
 #include "RenderInterface/ICommandContext.h"
 #include "RenderInterface/Color_T.hpp"
 #include "ContextStateCache.h"
-#include "CommandListManager.h"
+#include "Submission.h"
 
 namespace platform_ex::Windows::D3D12 {
 	class CommandListManager;
 
 	class Texture;
-
-	class CommandContextBase :public platform::Render::CommandContext, public AdapterChild
+	//
+	// Base class that manages the recording of FD3D12FinalizedCommands instances.
+	// Manages the logic for creating and recycling command lists and allocators.
+	//
+	class ContextCommon
 	{
 	public:
-		CommandContextBase(D3D12Adapter* InParent, GPUMaskType InGPUMask, bool InIsDefaultContext, bool InIsAsyncComputeContext);
+		ContextCommon(NodeDevice* InParent, QueueType Type, bool bIsDefaultContext);
+
+		virtual ~ContextCommon();
 
 		bool IsDefaultContext() const { return bIsDefaultContext; }
+		bool IsAsyncComputeContext() const { return Type == QueueType::Async; }
+
+		enum class ClearStateMode
+		{
+			TransientOnly,
+			All
+		};
+
+		virtual void ClearState(ClearStateMode ClearStateMode = ClearStateMode::All) {}
+
+		// Inserts a command to signal the specified sync point
+		void SignalSyncPoint(SyncPoint* SyncPoint);
+
+		// Inserts a command that blocks the GPU queue until the specified sync point is signaled.
+		void WaitSyncPoint(SyncPoint* SyncPoint);
+
+		// Inserts a command that signals the specified D3D12 fence object.
+		void SignalManualFence(ID3D12Fence* Fence, uint64 Value);
+
+		// Inserts a command that waits the specified D3D12 fence object.
+		void WaitManualFence(ID3D12Fence* Fence, uint64 Value);
+
+		// Complete recording of the current command list set, and appends the resulting
+		// payloads to the given array. Resets the context so new commands can be recorded.
+		void Finalize(std::vector<D3D12Payload*>& OutPayloads);
+
+		bool IsOpen() const { return CommandList != nullptr; }
+
+		// Returns unique identity that can be used to distinguish between command lists even after they were recycled.
+		uint64 GetCommandListID() { return GetCommandList().State.CommandListID; }
+
+		// Returns the current command list (or creates a new one if the command list was not open).
+		CommandList& GetCommandList()
+		{
+			if (!CommandList)
+			{
+				OpenCommandList();
+			}
+
+			return *CommandList;
+		}
+
+		void TransitionResource(UnorderedAccessView* View, D3D12_RESOURCE_STATES after);
+
+		void TransitionResource(ShaderResourceView* View, D3D12_RESOURCE_STATES after);
+
+		bool TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after, const CViewSubset& subresourceSubset);
+		bool TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after, uint32 subresource);
+
+		void TransitionResource(DepthStencilView* View);
+
+
+		void TransitionResource(DepthStencilView* pView, D3D12_RESOURCE_STATES after);
+
+		void TransitionResource(RenderTargetView* pView, D3D12_RESOURCE_STATES after);
+
+		bool TransitionResource(ResourceHolder* InResource, CResourceState& ResourceState_OnCommandList, uint32 InSubresourceIndex, D3D12_RESOURCE_STATES InBeforeState, D3D12_RESOURCE_STATES InAfterState, bool bInForceAfterState);
+
+		void AddAliasingBarrier(ID3D12Resource* InResourceBefore, ID3D12Resource* InResourceAfter);
+		void AddPendingResourceBarrier(ResourceHolder* Resource, D3D12_RESOURCE_STATES After, uint32 SubResource, CResourceState& ResourceState_OnCommandList);
+		void AddTransitionBarrier(ResourceHolder* pResource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource, CResourceState* ResourceState_OnCommandList);
+
+		void FlushResourceBarriers();
+
+		SyncPoint* GetContextSyncPoint()
+		{
+			if (!ContextSyncPoint)
+			{
+				ContextSyncPoint = SyncPoint::Create(SyncPointType::GPUAndCPU);
+				BatchedSyncPoints.ToSignal.emplace_back(ContextSyncPoint);
+			}
+
+			return ContextSyncPoint.Get();
+		}
 	protected:
+		virtual void OpenCommandList();
+		virtual void CloseCommandList();
+
+		void WriteGPUEventStackToBreadCrumbData(const TCHAR* Name, int32 CRC);
+		void WriteGPUEventToBreadCrumbData(BreadcrumbStack* Breadcrumbs, uint32 MarkerIndex, bool bBeginEvent);
+		[[nodiscard]] bool InitPayloadBreadcrumbs();
+		void PopGPUEventStackFromBreadCrumbData();
+
+		enum class Phase
+		{
+			Wait,
+			Execute,
+			Signal
+		} CurrentPhase = Phase::Wait;
+
+		D3D12Payload* GetPayload(Phase Phase)
+		{
+			if (Payloads.size() == 0 || Phase < CurrentPhase)
+				Payloads.emplace_back(new D3D12Payload(Device, Type));
+
+			CurrentPhase = Phase;
+			return Payloads.back();
+		}
+
+		uint32 ActiveQueries = 0;
+	protected:
+		NodeDevice* const Device;
+		QueueType const Type;
+
 		const bool bIsDefaultContext;
-		const bool  bIsAsyncComputeContext;
+
+		// Sync points which are waited at the start / signaled at the end 
+		// of the whole batch of command lists this context recorded.
+		struct
+		{
+			std::vector<SyncPointRef> ToWait;
+			std::vector<SyncPointRef> ToSignal;
+		} BatchedSyncPoints;
+
+		// The allocator is reused for each new command list until the context is finalized.
+		CommandAllocator* CommandAllocator = nullptr;
+		CommandList* CommandList = nullptr;
+		SyncPointRef ContextSyncPoint;
+
+		// The array of recorded payloads the submission thread will process.
+		// These are returned when the context is finalized.
+		std::vector<D3D12Payload*> Payloads;
+
+		std::shared_ptr<BreadcrumbStack> BreadcrumbStack;
+
+		ResourceBarrierBatcher ResourceBarrierBatcher;
 	};
 
-	class CommandContext final :public CommandContextBase,public DeviceChild
+	class CommandContext final :public ContextCommon,public DeviceChild,public platform::Render::CommandContext
 	{
 	public:
-		CommandContext(NodeDevice* InParent, bool InIsDefaultContext, bool InIsAsyncComputeContext = false);
+		CommandContext(NodeDevice* InParent, QueueType Type, bool InIsDefaultContext);
 	public:
 		virtual void SetAsyncComputeBudgetInternal(platform::Render::AsyncComputeBudget Budget) {}
 
@@ -91,34 +219,13 @@ namespace platform_ex::Windows::D3D12 {
 		void OpenCommandList();
 		void CloseCommandList();
 
-		CommandListHandle FlushCommands(bool WaitForCompletion = false);
-
 		void ConditionalFlushCommandList();
 
 		void BeginFrame();
 
 		void EndFrame();
 	public:
-		void TransitionResource(UnorderedAccessView* View, D3D12_RESOURCE_STATES after);
-
-		void TransitionResource(ShaderResourceView* View, D3D12_RESOURCE_STATES after);
-
-		bool TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after, const CViewSubset& subresourceSubset);
-		bool TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after, uint32 subresource);
-
-		void TransitionResource(DepthStencilView* View);
-
-
-		void TransitionResource(DepthStencilView* pView, D3D12_RESOURCE_STATES after);
-
-		void TransitionResource(RenderTargetView* pView, D3D12_RESOURCE_STATES after);
-
-		bool TransitionResource(ResourceHolder* InResource, CResourceState& ResourceState_OnCommandList, uint32 InSubresourceIndex, D3D12_RESOURCE_STATES InBeforeState, D3D12_RESOURCE_STATES InAfterState, bool bInForceAfterState);
-
-		void AddAliasingBarrier(ID3D12Resource* InResourceBefore, ID3D12Resource* InResourceAfter);
-		void AddPendingResourceBarrier(ResourceHolder* Resource, D3D12_RESOURCE_STATES After, uint32 SubResource, CResourceState& ResourceState_OnCommandList);
-		void AddTransitionBarrier(ResourceHolder* pResource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource, CResourceState* ResourceState_OnCommandList);
-	private:
+		private:
 		void ClearState();
 
 		void CommitGraphicsResourceTables();
@@ -136,11 +243,6 @@ namespace platform_ex::Windows::D3D12 {
 	public:
 		FastConstantAllocator ConstantsAllocator;
 
-		// Handles to the command list and direct command allocator this context owns (granted by the command list manager/command allocator manager), and a direct pointer to the D3D command list/command allocator.
-		CommandListHandle CommandListHandle;
-		CommandAllocator* CommandAllocator;
-		CommandAllocatorManager CommandAllocatorManager;
-
 		CommandContextStateCache StateCache;
 
 		// Tracks the currently set state blocks.
@@ -148,16 +250,6 @@ namespace platform_ex::Windows::D3D12 {
 		DepthStencilView* CurrentDepthStencilTarget;
 		Texture* CurrentDepthTexture;
 		uint32 NumSimultaneousRenderTargets;
-
-		uint32 numDraws;
-		uint32 numBarriers;
-		uint32 numInitialResourceCopies;
-		uint32 numDispatchs;
-
-		bool HasDoneWork() const
-		{
-			return (numDraws+ numBarriers + numInitialResourceCopies + numDispatchs) > 0;
-		}
 
 		/** Constant buffers for Set*ShaderParameter calls. */
 		FastConstantBuffer VSConstantBuffer;

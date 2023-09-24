@@ -151,7 +151,7 @@ void OfflineDescriptorManager::AllocateHeap()
 	// Allocate and initialize a single new entry in the map
 	const uint32 NewHeapIndex = static_cast<uint32>(Heaps.size());
 
-	Heaps.emplace_back(Heap.Get(), HeapBase, NumDescriptorsPerHeap * DescriptorSize);
+	Heaps.emplace_back(Heap, HeapBase, NumDescriptorsPerHeap * DescriptorSize);
 	FreeHeaps.emplace_back(NewHeapIndex);
 }
 
@@ -183,6 +183,8 @@ OfflineDescriptor OfflineDescriptorManager::AllocateHeapSlot()
 			FreeHeaps.erase(Head);
 		}
 	}
+
+	wassume(Result.ptr <= HeapEntry.Heap->GetCPUSlotHandle(HeapEntry.Heap->GetNumDescriptors()).ptr);
 
 	return Result;
 }

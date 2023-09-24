@@ -400,7 +400,7 @@ namespace platform_ex::Windows::D3D12 {
 
 	struct OfflineHeapEntry
 	{
-		OfflineHeapEntry(DescriptorHeap* InHeap, const D3D12_CPU_DESCRIPTOR_HANDLE& InHeapBase, size_t InSize)
+		OfflineHeapEntry(COMPtr<DescriptorHeap> InHeap, const D3D12_CPU_DESCRIPTOR_HANDLE& InHeapBase, size_t InSize)
 			: Heap(InHeap)
 		{
 			FreeList.emplace_back(InHeapBase.ptr, InHeapBase.ptr + InSize );

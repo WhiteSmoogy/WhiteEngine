@@ -51,7 +51,7 @@ namespace platform_ex::Windows::D3D12 {
 		{
 			if (Type == SyncPointType::GPUAndCPU)
 			{
-				CompletionEvent.reset();
+				CompletionEvent = std::make_shared<SubmissionEvent>();
 			}
 		}
 	public:

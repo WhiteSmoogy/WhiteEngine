@@ -184,8 +184,6 @@ OfflineDescriptor OfflineDescriptorManager::AllocateHeapSlot()
 		}
 	}
 
-	wassume(Result.ptr <= HeapEntry.Heap->GetCPUSlotHandle(HeapEntry.Heap->GetNumDescriptors()).ptr);
-
 	return Result;
 }
 

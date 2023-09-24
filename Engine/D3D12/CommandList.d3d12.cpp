@@ -1,239 +1,28 @@
 #include "NodeDevice.h"
 #include "D3DCommandList.h"
-#include "CommandListManager.h"
 #include "CommandContext.h"
+#include "Queue.h"
 
 using namespace platform_ex::Windows::D3D12;
 
 static int32 GD3D12ExtraDepthTransitions = 0;
 static int32 GD3D12BatchResourceBarriers = 1;
 
-CommandListHandle::CommandListData::CommandListData(NodeDevice* ParentDevice, D3D12_COMMAND_LIST_TYPE InCommandListType, CommandAllocator& CommandAllocator, D3D12::CommandListManager* InCommandListManager)
-	:DeviceChild(ParentDevice)
-	,SingleNodeGPUObject(ParentDevice->GetGPUMask())
-	,NumRefs(1)
-	,CommandListManager(InCommandListManager)
-	,CurrentOwningContext(nullptr)
-	,CommandListType(InCommandListType)
-	,CurrentGeneration(1)
-	,LastCompleteGeneration(0)
-	,IsClosed(false)
+CommandList::ListState::ListState(CommandAllocator* InCommandAllocator)
+	:CmdAllocator(InCommandAllocator)
 {
-	CheckHResult(ParentDevice->GetDevice()->CreateCommandList(GetGPUMask().GetNative(), CommandListType, CommandAllocator, nullptr, IID_PPV_ARGS(CommandList.ReleaseAndGetAddress())));
-
-	// Optionally obtain the ID3D12GraphicsCommandList1 & ID3D12GraphicsCommandList2 interface, we don't check the HRESULT.
-	CommandList->QueryInterface(IID_PPV_ARGS(CommandList1.ReleaseAndGetAddress()));
-	CommandList->QueryInterface(IID_PPV_ARGS(CommandList2.ReleaseAndGetAddress()));
-
-	CommandList->QueryInterface(IID_PPV_ARGS(RayTracingCommandList.ReleaseAndGetAddress()));
-
-	auto name = white::sfmt("CommandListHandle (GPU %u)",ParentDevice->GetGPUIndex());
-
-	D3D::Debug(CommandList, name.c_str());
-
-
-#if ENABLE_AFTER_MATH
-	AftermathHandle = nullptr;
-	if (GEnableNvidaiAfterMath)
-	{
-		GFSDK_Aftermath_Result Result = GFSDK_Aftermath_DX12_CreateContextHandle(CommandList.Get(), &AftermathHandle);
-
-		wconstraint(Result == GFSDK_Aftermath_Result_Success);
-	}
-#endif
-
-	Close();
-
-}
-
-CommandListHandle::CommandListData::~CommandListData()
-{
-	CommandList = nullptr;
-}
-
-void CommandListHandle::CommandListData::Close()
-{
-	if (!IsClosed)
-	{
-		FlushResourceBarriers();
-
-		CheckHResult(CommandList->Close());
-
-		IsClosed = true;
-	}
-}
-
-void CommandListHandle::CommandListData::FlushResourceBarriers()
-{
-	ResourceBarrierBatcher.Flush(CommandList.Get());
-}
-
-void CommandListHandle::CommandListData::Reset(CommandAllocator& Allocator, bool bTrackExecTime)
-{
-	CheckHResult(CommandList->Reset(Allocator, nullptr));
-
-	CurrentCommandAllocator = &Allocator;
-	IsClosed = false;
-
-	// Indicate this command allocator is being used.
-	CurrentCommandAllocator->IncrementPendingCommandLists();
-
-	CleanupActiveGenerations();
-}
-
-bool CommandListHandle::CommandListData::IsComplete(uint64 Generation)
-{
-	if (Generation >= CurrentGeneration)
-	{
-		// Have not submitted this generation for execution yet.
-		return false;
-	}
-
-	wconstraint(Generation < CurrentGeneration);
-	if (Generation > LastCompleteGeneration)
-	{
-		std::unique_lock Lock(ActiveGenerationsCS);
-		if (!ActiveGenerations.empty())
-		{
-			GenerationSyncPointPair GenerationSyncPoint = ActiveGenerations.front();
-
-			if (Generation < GenerationSyncPoint.first)
-			{
-				// The requested generation is older than the oldest tracked generation, so it must be complete.
-				return true;
-			}
-			else
-			{
-				if (GenerationSyncPoint.second.IsComplete())
-				{
-					// Oldest tracked generation is done so clean the queue and try again.
-					CleanupActiveGenerations();
-					return IsComplete(Generation);
-				}
-				else
-				{
-					// The requested generation is newer than the older track generation but the old one isn't done.
-					return false;
-				}
-			}
-		}
-	}
-
-	return true;
-}
-
-void CommandListHandle::CommandListData::WaitForCompletion(uint64 Generation)
-{
-	if (Generation > LastCompleteGeneration)
-	{
-		CleanupActiveGenerations();
-		if (Generation > LastCompleteGeneration)
-		{
-			std::unique_lock Lock(ActiveGenerationsCS);
-			WAssert(Generation < CurrentGeneration, "You can't wait for an unsubmitted command list to complete.  Kick first!");
-			GenerationSyncPointPair GenerationSyncPoint;
-			while (!ActiveGenerations.empty()  && (Generation > LastCompleteGeneration))
-			{
-				wconstraint(Generation >= GenerationSyncPoint.first);
-				GenerationSyncPoint = ActiveGenerations.front();
-				ActiveGenerations.pop();
-
-				// Unblock other threads while we wait for the command list to complete
-				ActiveGenerationsCS.unlock();
-
-				GenerationSyncPoint.second.WaitForCompletion();
-
-				ActiveGenerationsCS.lock();
-				LastCompleteGeneration = std::max(LastCompleteGeneration, GenerationSyncPoint.first);
-			}
-		}
-	}
-}
-
-void CommandListHandle::CommandListData::SetSyncPoint(const SyncPoint& InSyncPoint)
-{
-	{
-		std::unique_lock Lock(ActiveGenerationsCS);
-
-		// Only valid sync points should be set otherwise we might not wait on the GPU correctly.
-		wconstraint(InSyncPoint.IsValid());
-
-		// Track when this command list generation is completed on the GPU.
-		GenerationSyncPointPair CurrentGenerationSyncPoint;
-		CurrentGenerationSyncPoint.first = CurrentGeneration;
-		CurrentGenerationSyncPoint.second = InSyncPoint;
-		ActiveGenerations.push(CurrentGenerationSyncPoint);
-
-		// Move to the next generation of the command list.
-		CurrentGeneration++;
-	}
-
-	// Update the associated command allocator's sync point so it's not reset until the GPU is done with all command lists using it.
-	CurrentCommandAllocator->SetSyncPoint(InSyncPoint);
-}
-
-void CommandListHandle::CommandListData::CleanupActiveGenerations()
-{
-	std::unique_lock Lock(ActiveGenerationsCS);
-
-	// Cleanup the queue of active command list generations.
-	// Only remove them from the queue when the GPU has completed them.
-	while (!ActiveGenerations.empty() && ActiveGenerations.front().second.IsComplete())
-	{
-		// The GPU is done with the work associated with this generation, remove it from the queue.
-		auto GenerationSyncPoint = ActiveGenerations.front();
-		ActiveGenerations.pop();
-
-		wconstraint(GenerationSyncPoint.first > LastCompleteGeneration);
-		LastCompleteGeneration = GenerationSyncPoint.first;
-	}
-}
-
-void CommandListHandle::AddTransitionBarrier(ResourceHolder* pResource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource)
-{
-	if (Before != After)
-	{
-		int32 NumAdded = CommandListData->ResourceBarrierBatcher.AddTransition(pResource->Resource(), Before, After, Subresource);
-		CommandListData->CurrentOwningContext->numBarriers += NumAdded;
-	}
-}
-
-void CommandListHandle::AddAliasingBarrier(ID3D12Resource* InResourceBefore, ID3D12Resource* pResource)
-{
-	CommandListData->ResourceBarrierBatcher.AddAliasingBarrier(InResourceBefore, pResource);
 }
 
 
-void platform_ex::Windows::D3D12::CommandListHandle::AddUAVBarrier()
+CommandAllocator::CommandAllocator(NodeDevice* InDevice, QueueType InType)
+	:Device(InDevice),Type(InType)
 {
-	CommandListData->ResourceBarrierBatcher.AddUAV();
-	++CommandListData->CurrentOwningContext->numBarriers;
-}
-
-void CommandListHandle::Create(NodeDevice* InParent, D3D12_COMMAND_LIST_TYPE InCommandType, CommandAllocator& InAllocator, CommandListManager* InManager)
-{
-	CommandListData = new D3D12CommandListData(InParent, InCommandType, InAllocator, InManager);
-}
-
-void CommandListHandle::Execute(bool WaitForCompletion)
-{
-	CommandListData->CommandListManager->ExecuteCommandList(*this, WaitForCompletion);
-}
-
-CommandAllocator::CommandAllocator(ID3D12Device* InDevice, const D3D12_COMMAND_LIST_TYPE& InType)
-	:PendingCommandListCount(0)
-{
-	Init(InDevice, InType);
+	CheckHResult(Device->GetDevice()->CreateCommandAllocator(GetD3DCommandListType(Type), COMPtr_RefParam(D3DCommandAllocator, IID_ID3D12CommandAllocator)));
 }
 
 CommandAllocator::~CommandAllocator()
 {
 	D3DCommandAllocator = nullptr;
-}
-
-void CommandAllocator::Init(ID3D12Device* InDevice, const D3D12_COMMAND_LIST_TYPE& InType)
-{
-	CheckHResult(InDevice->CreateCommandAllocator(InType, IID_PPV_ARGS(D3DCommandAllocator.ReleaseAndGetAddress())));
 }
 
 static inline bool IsTransitionNeeded(D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES& After)
@@ -272,11 +61,11 @@ static inline bool IsTransitionNeeded(D3D12_RESOURCE_STATES Before, D3D12_RESOUR
 	return Before != After;
 }
 
-bool CommandContext::TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, const CViewSubset& ViewSubset)
+bool ContextCommon::TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, const CViewSubset& ViewSubset)
 {
 	const bool bIsWholeResource = ViewSubset.IsWholeResource();
 
-	CResourceState& ResourceState = CommandListHandle.GetResourceState_OnCommandList(Resource);
+	CResourceState& ResourceState = GetCommandList().GetResourceState_OnCommandList(Resource);
 
 	bool bRequireUAVBarrier = false;
 
@@ -314,11 +103,11 @@ bool CommandContext::TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE
 	return bRequireUAVBarrier;
 }
 
-bool CommandContext::TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource)
+bool ContextCommon::TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource)
 {
 	bool bRequireUAVBarrier = false;
 
-	CResourceState& ResourceState = CommandListHandle.GetResourceState_OnCommandList(Resource);
+	CResourceState& ResourceState = GetCommandList().GetResourceState_OnCommandList(Resource);
 	if (Subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES && !ResourceState.AreAllSubresourcesSame())
 	{
 		// Slow path. Want to transition the entire resource (with multiple subresources). But they aren't in the same state.
@@ -343,7 +132,7 @@ bool CommandContext::TransitionResource(ResourceHolder* Resource, D3D12_RESOURCE
 	return bRequireUAVBarrier;
 }
 
-void CommandContext::TransitionResource(DepthStencilView* View)
+void ContextCommon::TransitionResource(DepthStencilView* View)
 {
 	// Determine the required subresource states from the view desc
 	const D3D12_DEPTH_STENCIL_VIEW_DESC& DSVDesc = View->GetDesc();
@@ -369,7 +158,7 @@ void CommandContext::TransitionResource(DepthStencilView* View)
 	}
 }
 
-void CommandContext::TransitionResource(DepthStencilView* pView, D3D12_RESOURCE_STATES after)
+void ContextCommon::TransitionResource(DepthStencilView* pView, D3D12_RESOURCE_STATES after)
 {
 	auto pResource = pView->GetResource();
 	auto ResourceDesc = pResource->GetDesc();
@@ -407,7 +196,7 @@ void CommandContext::TransitionResource(DepthStencilView* pView, D3D12_RESOURCE_
 	}
 }
 
-void CommandContext::TransitionResource( RenderTargetView* pView, D3D12_RESOURCE_STATES after)
+void ContextCommon::TransitionResource( RenderTargetView* pView, D3D12_RESOURCE_STATES after)
 {
 	auto pResource = pView->GetResource();
 
@@ -436,7 +225,7 @@ void CommandContext::TransitionResource( RenderTargetView* pView, D3D12_RESOURCE
 	}
 }
 
-void CommandContext::TransitionResource(UnorderedAccessView* View, D3D12_RESOURCE_STATES After)
+void ContextCommon::TransitionResource(UnorderedAccessView* View, D3D12_RESOURCE_STATES After)
 {
 	auto* Resource = View->GetResource();
 
@@ -468,7 +257,7 @@ void CommandContext::TransitionResource(UnorderedAccessView* View, D3D12_RESOURC
 	}
 }
 
-void CommandContext::TransitionResource(ShaderResourceView* View, D3D12_RESOURCE_STATES After)
+void ContextCommon::TransitionResource(ShaderResourceView* View, D3D12_RESOURCE_STATES After)
 {
 	auto* Resource = View->GetResource();
 
@@ -497,7 +286,7 @@ void CommandContext::TransitionResource(ShaderResourceView* View, D3D12_RESOURCE
 	}
 }
 
-bool CommandContext::TransitionResource(ResourceHolder* InResource, CResourceState& ResourceState_OnCommandList, uint32 InSubresourceIndex, D3D12_RESOURCE_STATES InBeforeState, D3D12_RESOURCE_STATES InAfterState, bool bInForceAfterState)
+bool ContextCommon::TransitionResource(ResourceHolder* InResource, CResourceState& ResourceState_OnCommandList, uint32 InSubresourceIndex, D3D12_RESOURCE_STATES InBeforeState, D3D12_RESOURCE_STATES InAfterState, bool bInForceAfterState)
 {
 	// Try and get the correct D3D before state for the transition
 	D3D12_RESOURCE_STATES const TrackedState = ResourceState_OnCommandList.GetSubresourceState(InSubresourceIndex);
@@ -587,35 +376,35 @@ bool CommandContext::TransitionResource(ResourceHolder* InResource, CResourceSta
 	return bRequireUAVBarrier;
 }
 
-void CommandContext::AddAliasingBarrier(ID3D12Resource* InResourceBefore, ID3D12Resource* InResourceAfter)
+void ContextCommon::AddAliasingBarrier(ID3D12Resource* InResourceBefore, ID3D12Resource* InResourceAfter)
 {
-	CommandListHandle.AddAliasingBarrier(InResourceBefore, InResourceAfter);
+	ResourceBarrierBatcher.AddAliasingBarrier(InResourceBefore, InResourceAfter);
 
 	if (!GD3D12BatchResourceBarriers)
 	{
-		CommandListHandle.FlushResourceBarriers();
+		FlushResourceBarriers();
 	}
 }
 
-void CommandContext::AddPendingResourceBarrier(ResourceHolder* Resource, D3D12_RESOURCE_STATES After, uint32 SubResource, CResourceState& ResourceState_OnCommandList)
+void ContextCommon::AddPendingResourceBarrier(ResourceHolder* Resource, D3D12_RESOURCE_STATES After, uint32 SubResource, CResourceState& ResourceState_OnCommandList)
 {
 	wassume(After != D3D12_RESOURCE_STATE_TBD);
 	wassume(Resource->RequiresResourceStateTracking());
-	wassume(&CommandListHandle.GetResourceState_OnCommandList(Resource) == &ResourceState_OnCommandList);
+	wassume(&GetCommandList().GetResourceState_OnCommandList(Resource) == &ResourceState_OnCommandList);
 
-	CommandListHandle.State.PendingResourceBarriers.Emplace(Resource, After, SubResource);
+	GetCommandList().State.PendingResourceBarriers.emplace_back(Resource, After, SubResource);
 	ResourceState_OnCommandList.SetSubresourceState(SubResource, After);
 }
 
-void CommandContext::AddTransitionBarrier(ResourceHolder* pResource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource, CResourceState* ResourceState_OnCommandList)
+void ContextCommon::AddTransitionBarrier(ResourceHolder* pResource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource, CResourceState* ResourceState_OnCommandList)
 {
 	if (Before != After)
 	{
-		CommandListHandle.AddTransitionBarrier(pResource, Before, After, Subresource);
+		ResourceBarrierBatcher.AddTransition(pResource, Before, After, Subresource);
 
 		if (!GD3D12BatchResourceBarriers)
 		{
-			CommandListHandle.FlushResourceBarriers();
+			FlushResourceBarriers();
 		}
 	}
 	else
@@ -627,12 +416,12 @@ void CommandContext::AddTransitionBarrier(ResourceHolder* pResource, D3D12_RESOU
 	{
 		if (!ResourceState_OnCommandList)
 		{
-			ResourceState_OnCommandList = &CommandListHandle.GetResourceState_OnCommandList(pResource);
+			ResourceState_OnCommandList = &GetCommandList().GetResourceState_OnCommandList(pResource);
 		}
 		else
 		{
 			// If a resource state was passed to avoid a repeat lookup, it must be the one we expected.
-			wassume(&CommandListHandle.GetResourceState_OnCommandList(pResource) == ResourceState_OnCommandList);
+			wassume(&GetCommandList().GetResourceState_OnCommandList(pResource) == ResourceState_OnCommandList);
 		}
 
 		ResourceState_OnCommandList->SetSubresourceState(Subresource, After);

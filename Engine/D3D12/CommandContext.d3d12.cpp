@@ -2,7 +2,6 @@
 #include "Texture.h"
 #include "NodeDevice.h"
 #include "Adapter.h"
-#include "CommandListManager.h"
 
 #if USE_PIX
 #include <WinPixEventRuntime/pix3.h>
@@ -18,17 +17,24 @@ constexpr auto MaxSimultaneousRenderTargets = platform::Render::MaxSimultaneousR
 int32 MaxInitialResourceCopiesPerCommandList = 10000;
 
 
-CommandContextBase::CommandContextBase(D3D12Adapter* InParent, GPUMaskType InGPUMask, bool InIsDefaultContext, bool InIsAsyncComputeContext)
-	:AdapterChild(InParent)
-	,bIsDefaultContext(InIsDefaultContext)
-	,bIsAsyncComputeContext(InIsAsyncComputeContext)
+ContextCommon::ContextCommon(NodeDevice* InParent, QueueType Type, bool bIsDefaultContext)
+	:Device(InParent)
+	, Type(Type)
+	,bIsDefaultContext(bIsDefaultContext)
 {
 }
 
-CommandContext::CommandContext(NodeDevice* InParent, bool InIsDefaultContext, bool InIsAsyncComputeContext)
+CommandContextBase::CommandContextBase(D3D12Adapter* InParent, GPUMaskType InGpuMask)
+	:AdapterChild(InParent)
+	,GPUMask(InGpuMask)
+{
+}
+
+CommandContext::CommandContext(NodeDevice* InParent, QueueType Type, bool InIsDefaultContext)
 	:
-	CommandContextBase(InParent->GetParentAdapter(), InParent->GetGPUMask(),InIsDefaultContext, InIsAsyncComputeContext),
+	ContextCommon(InParent, Type ,InIsDefaultContext),
 	DeviceChild(InParent),
+	CommandContextBase(InParent->GetParentAdapter(), InParent->GetGPUMask()),
 	ConstantsAllocator(InParent,InParent->GetGPUMask()),
 	VSConstantBuffer(InParent, ConstantsAllocator),
 	HSConstantBuffer(InParent, ConstantsAllocator),
@@ -36,8 +42,7 @@ CommandContext::CommandContext(NodeDevice* InParent, bool InIsDefaultContext, bo
 	PSConstantBuffer(InParent, ConstantsAllocator),
 	GSConstantBuffer(InParent, ConstantsAllocator),
 	CSConstantBuffer(InParent, ConstantsAllocator),
-	StateCache(*this ,InParent->GetGPUMask()),
-	CommandAllocatorManager(InParent, InIsAsyncComputeContext ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT)
+	StateCache(*this ,InParent->GetGPUMask())
 {
 }
 
@@ -283,91 +288,59 @@ void CommandContext::CommitNonComputeShaderConstants()
 	bDiscardSharedConstants = false;
 }
 
+void ContextCommon::OpenCommandList()
+{
+	WAssert(!IsOpen(), "Command list is already open.");
+
+	if (CommandAllocator == nullptr)
+	{
+		// Obtain a command allocator if the context doesn't already have one.
+		CommandAllocator = Device->ObtainCommandAllocator(Type);
+	}
+
+	// Get a new command list
+	CmdList = Device->ObtainCommandList(CommandAllocator);
+	GetPayload(Phase::Execute)->CommandListsToExecute.emplace_back(CmdList);
+}
+
 void CommandContext::OpenCommandList()
 {
-	ConditionalObtainCommandAllocator();
-
-	CommandListHandle = GetCommandListManager().ObtainCommandList(*CommandAllocator);
-	CommandListHandle.SetCurrentOwningContext(this);
+	ContextCommon::OpenCommandList();
 
 	// Notify the descriptor cache about the new command list
 	// This will set the descriptor cache's current heaps on the new command list.
 	StateCache.GetDescriptorCache()->OpenCommandList();
+}
 
-	// Go through the state and find bits that differ from command list defaults.
-	// Mark state as dirty so next time ApplyState is called, it will set all state on this new command list
-	StateCache.DirtyStateForNewCommandList();
+void ContextCommon::CloseCommandList()
+{
+	WAssert(IsOpen(), "Command list is not open.");
+	WAssert(Payloads.size() && CurrentPhase == Phase::Execute, "Expected the current payload to be in the execute phase.");
 
-	numDraws = 0;
-	numBarriers = 0;
-	numInitialResourceCopies = 0;
-	numDispatchs = 0;
+	WAssert(ActiveQueries == 0, "All queries must be completed before the command list is closed.");
+
+	auto* Payload = GetPayload(Phase::Execute);
+
+	// Do this before we insert the final timestamp to ensure we're timing all the work on the command list.
+	FlushResourceBarriers();
+
+	CmdList->Close();
+	CmdList = nullptr;
 }
 
 void CommandContext::CloseCommandList()
 {
-	this->CommandListHandle.Close();
+	StateCache.GetDescriptorCache()->CloseCommandList();
+	ContextCommon::CloseCommandList();
+	// Mark state as dirty now, because ApplyState may be called before OpenCommandList(), and it needs to know that the state has
+	// become invalid, so it can set it up again (which opens a new command list if necessary).
+	StateCache.DirtyStateForNewCommandList();
 }
 
-CommandListHandle CommandContext::FlushCommands(bool WaitForCompletion)
-{
-	auto Device = GetParentDevice();
-	const bool bHasPendingWork = Device->PendingCommandLists.size() > 0;
-	const bool bHasDoneWork = HasDoneWork() || bHasPendingWork;
-	const bool bOpenNewCmdList = WaitForCompletion || bHasDoneWork;
-
-	// Only submit a command list if it does meaningful work or the flush is expected to wait for completion.
-	if (bOpenNewCmdList)
-	{
-		// Close the current command list
-		CloseCommandList();
-
-		if (bHasPendingWork)
-		{
-			// Submit all pending command lists and the current command list
-			Device->PendingCommandLists.emplace_back(this->CommandListHandle);
-			GetCommandListManager().ExecuteCommandLists(Device->PendingCommandLists, WaitForCompletion);
-			Device->PendingCommandLists.clear();
-		}
-		else
-		{
-			// Just submit the current command list
-			this->CommandListHandle.Execute(WaitForCompletion);
-		}
-
-		// Get a new command list to replace the one we submitted for execution. 
-		// Restore the state from the previous command list.
-		OpenCommandList();
-	}
-
-	return this->CommandListHandle;
-}
-
-void CommandContext::ConditionalFlushCommandList()
-{
-	if (MaxInitialResourceCopiesPerCommandList > 0 && numInitialResourceCopies > (uint32)MaxInitialResourceCopiesPerCommandList)
-	{
-		FlushCommands();
-	}
-}
 
 void CommandContext::BeginFrame()
 {
-	auto GPUIndex = 0;
-
-	auto Device = ParentAdapter->GetNodeDevice(GPUIndex);
-
-	auto& SamplerHeap = Device->GetGlobalSamplerHeap();
-
-	if (SamplerHeap.DescriptorTablesDirty())
-	{
-		SamplerHeap.GetUniqueDescriptorTables()->rehash(0);
-	}
-
-
-	Device->GetGlobalSamplerHeap().ToggleDescriptorTablesDirtyFlag(false);
-
-	//TODO GPUProfiler
+	//Device->GetDefaultBufferAllocator().BeginFrame();
 }
 
 void CommandContext::EndFrame()
@@ -378,12 +351,10 @@ void CommandContext::EndFrame()
 
 	auto Device = ParentAdapter->GetNodeDevice(GPUIndex);
 	auto& DefaultContext = Device->GetDefaultCommandContext();
-	DefaultContext.CommandListHandle.FlushResourceBarriers();
+	DefaultContext.FlushResourceBarriers();
 
-	DefaultContext.ReleaseCommandAllocator();
 	DefaultContext.ClearState();
 	DefaultContext.FlushCommands();
-
 
 	uint64 BufferPoolDeletionFrameLag = 2;
 	Device->GetDefaultBufferAllocator().CleanUpAllocations(BufferPoolDeletionFrameLag);
@@ -400,36 +371,6 @@ void CommandContext::ClearState()
 
 	std::memset(BoundConstantBuffers, 0, sizeof(BoundConstantBuffers));
 	std::memset(DirtyConstantBuffers, 0, sizeof(DirtyConstantBuffers));
-
-	if (!bIsAsyncComputeContext)
-	{
-
-	}
-}
-
-CommandListManager& CommandContext::GetCommandListManager()
-{
-	return GetParentDevice()->GetCommandListManager();
-}
-
-void CommandContext::ConditionalObtainCommandAllocator()
-{
-	if (CommandAllocator == nullptr)
-	{
-		// Obtain a command allocator if the context doesn't already have one.
-		// This will check necessary fence values to ensure the returned command allocator isn't being used by the GPU, then reset it.
-		CommandAllocator = CommandAllocatorManager.ObtainCommandAllocator();
-	}
-}
-
-void CommandContext::ReleaseCommandAllocator()
-{
-	if (CommandAllocator != nullptr)
-	{
-		// Release the command allocator so it can be reused.
-		CommandAllocatorManager.ReleaseCommandAllocator(CommandAllocator);
-		CommandAllocator = nullptr;
-	}
 }
 
 static uint32 GetIndexCount(platform::Render::PrimtivteType type,uint32 NumPrimitives)
@@ -447,7 +388,6 @@ void CommandContext::DrawIndexedPrimitive(platform::Render::GraphicsBuffer* IInd
 	wconstraint(NumPrimitives > 0);
 
 	NumInstances = std::max<uint32>(1, NumInstances);
-	numDraws++;
 
 	CommitGraphicsResourceTables();
 	CommitNonComputeShaderConstants();
@@ -459,13 +399,12 @@ void CommandContext::DrawIndexedPrimitive(platform::Render::GraphicsBuffer* IInd
 	StateCache.SetIndexBuffer(IndexBuffer->Location, Format, 0);
 	StateCache.ApplyState<CPT_Graphics>();
 
-	CommandListHandle->DrawIndexedInstanced(IndexCount, NumInstances, StartIndex, BaseVertexIndex, FirstInstance);
+	GraphicsCommandList()->DrawIndexedInstanced(IndexCount, NumInstances, StartIndex, BaseVertexIndex, FirstInstance);
 }
 
 void CommandContext::DrawPrimitive(uint32 BaseVertexIndex, uint32 FirstInstance, uint32 NumPrimitives, uint32 NumInstances)
 {
 	NumInstances = std::max<uint32>(1, NumInstances);
-	numDraws++;
 
 	CommitGraphicsResourceTables();
 	CommitNonComputeShaderConstants();
@@ -473,7 +412,7 @@ void CommandContext::DrawPrimitive(uint32 BaseVertexIndex, uint32 FirstInstance,
 	uint32 VertexCount = GetIndexCount(StateCache.GetPrimtivteType(), NumPrimitives);
 
 	StateCache.ApplyState<CPT_Graphics>();
-	CommandListHandle->DrawInstanced(VertexCount, NumInstances, BaseVertexIndex, FirstInstance);
+	GraphicsCommandList()->DrawInstanced(VertexCount, NumInstances, BaseVertexIndex, FirstInstance);
 }
 
 struct FRTVDesc
@@ -704,7 +643,7 @@ void CommandContext::ClearMRT(bool bClearColor, int32 NumClearColors, const whit
 
 	if (ClearRTV || ClearDSV)
 	{
-		CommandListHandle.FlushResourceBarriers();
+		FlushResourceBarriers();
 
 		if (ClearRTV)
 		{
@@ -714,22 +653,20 @@ void CommandContext::ClearMRT(bool bClearColor, int32 NumClearColors, const whit
 
 				if (RTView != nullptr)
 				{
-					CommandListHandle->ClearRenderTargetView(RTView->GetOfflineCpuHandle(), (float*)&ColorArray[TargetIndex], ClearRectCount, pClearRects);
+					GraphicsCommandList()->ClearRenderTargetView(RTView->GetOfflineCpuHandle(), (float*)&ColorArray[TargetIndex], ClearRectCount, pClearRects);
 				}
 			}
 		}
 
 		if (ClearDSV)
 		{
-			CommandListHandle->ClearDepthStencilView(DSView->GetOfflineCpuHandle(), (D3D12_CLEAR_FLAGS)ClearFlags, Depth, Stencil, ClearRectCount, pClearRects);
+			GraphicsCommandList()->ClearDepthStencilView(DSView->GetOfflineCpuHandle(), (D3D12_CLEAR_FLAGS)ClearFlags, Depth, Stencil, ClearRectCount, pClearRects);
 		}
 	}
 }
 
 void CommandContext::DispatchComputeShader(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
 {
-	++numDispatchs;
-
 	const ComputeHWShader* ComputeShader = nullptr;
 	StateCache.GetComputeShader(&ComputeShader);
 
@@ -741,7 +678,7 @@ void CommandContext::DispatchComputeShader(uint32 ThreadGroupCountX, uint32 Thre
 	CommitComputeResourceTables(ComputeShader);
 	StateCache.ApplyState<CPT_Compute>();
 
-	CommandListHandle->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+	GraphicsCommandList()->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 }
 
 void CommandContext::SetShaderTexture(const platform::Render::ComputeHWShader* Shader, uint32 TextureIndex, platform::Render::Texture* ITexture)
@@ -800,13 +737,13 @@ void CommandContext::CommitComputeResourceTables(const ComputeHWShader* ComputeS
 void CommandContext::PushEvent(const char16_t* Name, platform::FColor Color)
 {
 #if USE_PIX
-	PIXBeginEvent(CommandListHandle.GraphicsCommandList(), PIX_COLOR(Color.R, Color.G, Color.B), reinterpret_cast<const wchar_t*>(Name));
+	PIXBeginEvent(GraphicsCommandList().GetNoRefCount(), PIX_COLOR(Color.R, Color.G, Color.B), reinterpret_cast<const wchar_t*>(Name));
 #endif
 }
 
 void CommandContext::PopEvent()
 {
 #if USE_PIX
-	PIXEndEvent(CommandListHandle.GraphicsCommandList());
+	PIXEndEvent(GraphicsCommandList().GetNoRefCount());
 #endif
 }

@@ -4,11 +4,24 @@
 #include "RenderInterface/Color_T.hpp"
 #include "ContextStateCache.h"
 #include "Submission.h"
+#include "D3DCommandList.h"
 
 namespace platform_ex::Windows::D3D12 {
 	class CommandListManager;
 
 	class Texture;
+
+	enum class D3DFlushFlags
+	{
+		None = 0,
+
+		// Block the calling thread until the submission thread has dispatched all work.
+		WaitForSubmission = 1,
+
+		// Both the calling thread until the GPU has signaled completion of all dispatched work.
+		WaitForCompletion = 2
+	};
+
 	//
 	// Base class that manages the recording of FD3D12FinalizedCommands instances.
 	// Manages the logic for creating and recycling command lists and allocators.
@@ -47,7 +60,7 @@ namespace platform_ex::Windows::D3D12 {
 		// payloads to the given array. Resets the context so new commands can be recorded.
 		void Finalize(std::vector<D3D12Payload*>& OutPayloads);
 
-		bool IsOpen() const { return CommandList != nullptr; }
+		bool IsOpen() const { return CmdList != nullptr; }
 
 		// Returns unique identity that can be used to distinguish between command lists even after they were recycled.
 		uint64 GetCommandListID() { return GetCommandList().State.CommandListID; }
@@ -55,12 +68,12 @@ namespace platform_ex::Windows::D3D12 {
 		// Returns the current command list (or creates a new one if the command list was not open).
 		CommandList& GetCommandList()
 		{
-			if (!CommandList)
+			if (!CmdList)
 			{
 				OpenCommandList();
 			}
 
-			return *CommandList;
+			return *CmdList;
 		}
 
 		void TransitionResource(UnorderedAccessView* View, D3D12_RESOURCE_STATES after);
@@ -95,6 +108,17 @@ namespace platform_ex::Windows::D3D12 {
 
 			return ContextSyncPoint.Get();
 		}
+
+		// Flushes any pending commands in this context to the GPU.
+		void FlushCommands(D3DFlushFlags FlushFlags = D3DFlushFlags::None);
+
+		// Closes the current command list if the number of enqueued commands exceeds
+		// the threshold defined by the "D3D12.MaxCommandsPerCommandList" cvar.
+		void ConditionalSplitCommandList();
+
+		auto BaseCommandList() { return GetCommandList().BaseCommandList(); }
+		auto CopyCommandList() { return GetCommandList().CopyCommandList(); }
+		auto GraphicsCommandList() { return GetCommandList().GraphicsCommandList(); }
 	protected:
 		virtual void OpenCommandList();
 		virtual void CloseCommandList();
@@ -137,7 +161,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		// The allocator is reused for each new command list until the context is finalized.
 		CommandAllocator* CommandAllocator = nullptr;
-		CommandList* CommandList = nullptr;
+		CommandList* CmdList = nullptr;
 		SyncPointRef ContextSyncPoint;
 
 		// The array of recorded payloads the submission thread will process.
@@ -149,7 +173,16 @@ namespace platform_ex::Windows::D3D12 {
 		ResourceBarrierBatcher ResourceBarrierBatcher;
 	};
 
-	class CommandContext final :public ContextCommon,public DeviceChild,public platform::Render::CommandContext
+	class CommandContextBase : public platform::Render::CommandContext, public AdapterChild
+	{
+	public:
+		CommandContextBase(D3D12Adapter* InParent, GPUMaskType InGpuMask);
+
+	protected:
+		GPUMaskType GPUMask;
+	};
+
+	class CommandContext final :public ContextCommon,public DeviceChild,public CommandContextBase
 	{
 	public:
 		CommandContext(NodeDevice* InParent, QueueType Type, bool InIsDefaultContext);
@@ -219,13 +252,10 @@ namespace platform_ex::Windows::D3D12 {
 		void OpenCommandList();
 		void CloseCommandList();
 
-		void ConditionalFlushCommandList();
-
 		void BeginFrame();
 
 		void EndFrame();
-	public:
-		private:
+	private:
 		void ClearState();
 
 		void CommitGraphicsResourceTables();
@@ -233,13 +263,6 @@ namespace platform_ex::Windows::D3D12 {
 
 		void CommitComputeShaderConstants();
 		void CommitComputeResourceTables(const ComputeHWShader* ComputeShader);
-
-		CommandListManager& GetCommandListManager();
-
-		void ConditionalObtainCommandAllocator();
-
-		void ReleaseCommandAllocator();
-
 	public:
 		FastConstantAllocator ConstantsAllocator;
 

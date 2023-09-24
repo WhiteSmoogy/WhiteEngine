@@ -59,6 +59,9 @@ namespace platform_ex {
 				void ExecuteUAVBarrier();
 
 				void CommitCommandList(Device::CommandType);
+
+				void SubmitPayloads(white::span<D3D12Payload*> Payloads);
+
 				friend class Device;
 
 				enum  InnerReourceType{

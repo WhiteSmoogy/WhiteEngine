@@ -412,6 +412,8 @@ namespace platform_ex::Windows {
 			}
 		};
 
+		class CommandList;
+
 		class PendingResourceBarrier
 		{
 		public:
@@ -900,17 +902,7 @@ namespace platform_ex::Windows {
 			}
 
 			// Flush the batch to the specified command list then reset.
-			void Flush(ID3D12GraphicsCommandList* pCommandList)
-			{
-				if (!Barriers.empty())
-				{
-					wconstraint(pCommandList);
-					{
-						pCommandList->ResourceBarrier(static_cast<UINT>(Barriers.size()), Barriers.data());
-					}
-					Reset();
-				}
-			}
+			void Flush(CommandList& pCommandList);
 
 			// Clears the batch.
 			void Reset()
@@ -921,6 +913,11 @@ namespace platform_ex::Windows {
 			const std::vector<D3D12_RESOURCE_BARRIER>& GetBarriers() const
 			{
 				return Barriers;
+			}
+
+			bool IsEmpty()
+			{
+				return Barriers.empty();
 			}
 
 		private:

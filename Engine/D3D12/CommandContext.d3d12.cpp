@@ -2,6 +2,7 @@
 #include "Texture.h"
 #include "NodeDevice.h"
 #include "Adapter.h"
+#include "Context.h"
 
 #if USE_PIX
 #include <WinPixEventRuntime/pix3.h>
@@ -15,6 +16,7 @@ using namespace platform_ex::Windows::D3D12;
 constexpr auto MaxSimultaneousRenderTargets = platform::Render::MaxSimultaneousRenderTargets;
 
 int32 MaxInitialResourceCopiesPerCommandList = 10000;
+int32 GD3D12MaxCommandsPerCommandList = 10000;
 
 
 ContextCommon::ContextCommon(NodeDevice* InParent, QueueType Type, bool bIsDefaultContext)
@@ -731,7 +733,7 @@ void CommandContext::CommitComputeShaderConstants()
 
 void CommandContext::CommitComputeResourceTables(const ComputeHWShader* ComputeShader)
 {
-	//don't support UE4 ShaderResourceTable
+	//don't support Unreal ShaderResourceTable
 }
 
 void CommandContext::PushEvent(const char16_t* Name, platform::FColor Color)
@@ -746,4 +748,142 @@ void CommandContext::PopEvent()
 #if USE_PIX
 	PIXEndEvent(GraphicsCommandList().GetNoRefCount());
 #endif
+}
+
+void ContextCommon::FlushCommands(D3DFlushFlags FlushFlags)
+{
+	SyncPointRef SyncPoint;
+	SubmissionEventRef SubmissionEvent;
+
+	if (white::has_anyflags(FlushFlags, D3DFlushFlags::WaitForCompletion))
+	{
+		SyncPoint = SyncPoint::Create(SyncPointType::GPUAndCPU);
+		SignalSyncPoint(SyncPoint.Get());
+	}
+
+	if (white::has_anyflags(FlushFlags, D3DFlushFlags::WaitForSubmission))
+	{
+		SubmissionEvent = std::make_shared<D3D12::SubmissionEvent>();
+		GetPayload(Phase::Signal)->SubmissionEvent = SubmissionEvent;
+	}
+
+	{
+		std::vector<D3D12Payload*> LocalPayloads;
+		Finalize(LocalPayloads);
+		Context::Instance().SubmitPayloads(white::make_span(LocalPayloads));
+	}
+
+	if (SyncPoint)
+	{
+		SyncPoint->Wait();
+	}
+
+	if (SubmissionEvent && !SubmissionEvent->ready())
+	{
+		SubmissionEvent->wait();
+	}
+}
+
+ContextCommon::~ContextCommon() = default;
+
+void ContextCommon::SignalSyncPoint(SyncPoint* SyncPoint)
+{
+	if (IsOpen())
+	{
+		CloseCommandList();
+	}
+
+	GetPayload(Phase::Signal)->SyncPointsToSignal.emplace_back(SyncPoint);
+}
+
+void ContextCommon::WaitSyncPoint(SyncPoint* SyncPoint)
+{
+	if (IsOpen())
+	{
+		CloseCommandList();
+	}
+
+	GetPayload(Phase::Wait)->SyncPointsToWait.emplace_back(SyncPoint);
+}
+
+void ContextCommon::SignalManualFence(ID3D12Fence* Fence, uint64 Value)
+{
+	if (IsOpen())
+	{
+		CloseCommandList();
+	}
+
+	GetPayload(Phase::Signal)->FencesToSignal.emplace_back(Fence, Value);
+}
+
+void ContextCommon::WaitManualFence(ID3D12Fence* Fence, uint64 Value)
+{
+	if (IsOpen())
+	{
+		CloseCommandList();
+	}
+
+	GetPayload(Phase::Wait)->FencesToWait.emplace_back(Fence, Value);
+}
+
+void ContextCommon::Finalize(std::vector<D3D12Payload*>& OutPayloads)
+{
+	if (IsOpen())
+	{
+		CloseCommandList();
+	}
+
+	// Collect the context's batch of sync points to wait/signal
+	if (!BatchedSyncPoints.ToWait.empty())
+	{
+		auto* Payload = Payloads.size()
+			? Payloads[0]
+			: GetPayload(Phase::Wait);
+
+		Payload->SyncPointsToWait.insert_range(Payload->SyncPointsToWait.end(), BatchedSyncPoints.ToWait);
+		BatchedSyncPoints.ToWait.clear();
+	}
+
+	if (!BatchedSyncPoints.ToSignal.empty())
+	{
+		GetPayload(Phase::Signal)->SyncPointsToSignal.insert_range(GetPayload(Phase::Signal)->SyncPointsToSignal.end(), BatchedSyncPoints.ToSignal);
+		BatchedSyncPoints.ToSignal.clear();
+	}
+
+	// Attach the command allocator and query heaps to the last payload.
+	// The interrupt thread will release these back to the device object pool.
+	if (CommandAllocator)
+	{
+		GetPayload(Phase::Signal)->AllocatorsToRelease.emplace_back(CommandAllocator);
+		CommandAllocator = nullptr;
+	}
+
+	ContextSyncPoint = nullptr;
+
+	// Move the list of payloads out of this context
+	OutPayloads.insert_range(OutPayloads.end(), std::move(Payloads));
+}
+
+void ContextCommon::ConditionalSplitCommandList()
+{
+	// Start a new command list if the total number of commands exceeds the threshold. Too many commands in a single command list can cause TDRs.
+	if (IsOpen() && ActiveQueries == 0 && CmdList->State.NumCommands > (uint32)GD3D12MaxCommandsPerCommandList)
+	{
+		spdlog::info("Splitting command lists because too many commands have been enqueued already ({} commands)", CmdList->State.NumCommands);
+		CloseCommandList();
+	}
+}
+
+void ContextCommon::WriteGPUEventStackToBreadCrumbData(const char* Name, int32 CRC)
+{
+}
+void ContextCommon::WriteGPUEventToBreadCrumbData(D3D12::BreadcrumbStack* Breadcrumbs, uint32 MarkerIndex, bool bBeginEvent)
+{
+}
+bool ContextCommon::InitPayloadBreadcrumbs()
+{
+	return false;
+}
+void ContextCommon::PopGPUEventStackFromBreadCrumbData()
+{
 }

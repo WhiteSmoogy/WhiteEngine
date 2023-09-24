@@ -17,6 +17,8 @@ namespace white::threading {
 
 		void wait() noexcept;
 
+		bool ready() noexcept { return value.load(std::memory_order_acquire) == 0; }
+
 	private:
 		std::atomic<std::uint8_t> value;
 	};

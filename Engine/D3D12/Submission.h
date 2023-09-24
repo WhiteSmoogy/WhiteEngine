@@ -3,6 +3,7 @@
 #include "Fence.h"
 #include "Utility.h"
 #include "Queue.h"
+#include "Core/Threading/ManualResetEvent.h"
 
 namespace platform_ex::Windows::D3D12 {
 	enum class SyncPointType
@@ -34,19 +35,23 @@ namespace platform_ex::Windows::D3D12 {
 
 	using SyncPointRef = COMPtr<SyncPoint>;
 
+	using SubmissionEvent = white::threading::manual_reset_event;
+
+	using SubmissionEventRef = std::shared_ptr<SubmissionEvent>;
+
 	class SyncPoint :public RefCountBase
 	{
 		SyncPoint(SyncPoint const&) = delete;
 		SyncPoint(SyncPoint&&) = delete;
 
 		std::optional<ResolveFence> ResolvedFence;
-		HANDLE CompletionEvent;
+		SubmissionEventRef CompletionEvent;
 
 		SyncPoint(SyncPointType Type)
 		{
 			if (Type == SyncPointType::GPUAndCPU)
 			{
-				CompletionEvent = CreateEventW(nullptr, true, false, nullptr);
+				CompletionEvent.reset();
 			}
 		}
 	public:
@@ -55,9 +60,15 @@ namespace platform_ex::Windows::D3D12 {
 			return new SyncPoint(Type);
 		}
 
-		void Wait() const;
+		void Wait() const
+		{
+			CompletionEvent->wait();
+		}
 
-		bool IsComplete();
+		bool IsComplete()
+		{
+			return CompletionEvent->ready();
+		}
 	};
 
 	//GPU breadcrumbs for crash debugging
@@ -130,7 +141,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		std::vector<SyncPointRef> SyncPointsToSignal;
 		uint64 CompletionFenceValue = 0;
-		HANDLE SubmissionEvent;
+		SubmissionEventRef SubmissionEvent;
 		std::optional<uint64> SubmissionTime;
 
 		// Flags.

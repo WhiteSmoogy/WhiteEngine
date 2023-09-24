@@ -128,7 +128,7 @@ namespace platform_ex::Windows::D3D12 {
 		virtual void OpenCommandList();
 		virtual void CloseCommandList();
 
-		void WriteGPUEventStackToBreadCrumbData(const TCHAR* Name, int32 CRC);
+		void WriteGPUEventStackToBreadCrumbData(const char* Name, int32 CRC);
 		void WriteGPUEventToBreadCrumbData(BreadcrumbStack* Breadcrumbs, uint32 MarkerIndex, bool bBeginEvent);
 		[[nodiscard]] bool InitPayloadBreadcrumbs();
 		void PopGPUEventStackFromBreadCrumbData();
@@ -173,7 +173,7 @@ namespace platform_ex::Windows::D3D12 {
 		// These are returned when the context is finalized.
 		std::vector<D3D12Payload*> Payloads;
 
-		std::shared_ptr<BreadcrumbStack> BreadcrumbStack;
+		//std::shared_ptr<BreadcrumbStack> BreadcrumbStack;
 
 		ResourceBarrierBatcher ResourceBarrierBatcher;
 	};

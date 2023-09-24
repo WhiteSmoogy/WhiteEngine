@@ -13,6 +13,19 @@ CommandList::ListState::ListState(CommandAllocator* InCommandAllocator)
 {
 }
 
+void CommandList::Close()
+{
+	if (Interfaces.CopyCommandList)
+	{
+		CheckHResult(Interfaces.CopyCommandList->Close());
+	}
+	else
+	{
+		CheckHResult(Interfaces.GraphicsCommandList->Close());
+	}
+
+	State.IsClosed = true;
+}
 
 CommandAllocator::CommandAllocator(NodeDevice* InDevice, QueueType InType)
 	:Device(InDevice),Type(InType)
@@ -426,5 +439,32 @@ void ContextCommon::AddTransitionBarrier(ResourceHolder* pResource, D3D12_RESOUR
 
 		ResourceState_OnCommandList->SetSubresourceState(Subresource, After);
 		ResourceState_OnCommandList->SetHasInternalTransition();
+	}
+}
+
+void ContextCommon::AddUAVBarrier()
+{
+	ResourceBarrierBatcher.AddUAV();
+
+	if (!GD3D12BatchResourceBarriers)
+	{
+		FlushResourceBarriers();
+	}
+}
+
+void ContextCommon::FlushResourceBarriers()
+{
+	if (!ResourceBarrierBatcher.IsEmpty())
+	{
+		ResourceBarrierBatcher.Flush(GetCommandList());
+	}
+}
+
+void ResourceBarrierBatcher::Flush(CommandList& CommandList)
+{
+	if (!Barriers.empty())
+	{
+		CommandList.GraphicsCommandList()->ResourceBarrier(static_cast<UINT>(Barriers.size()), Barriers.data());
+		Reset();
 	}
 }

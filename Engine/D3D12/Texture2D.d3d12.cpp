@@ -193,7 +193,7 @@ D3D12_UNORDERED_ACCESS_VIEW_DESC Texture2D::CreateUAVDesc(uint8 first_array_inde
 
 	desc.Format = dxgi_format;
 	
-	if (array_size) {
+	if (array_size > 1) {
 		desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
 		desc.Texture2DArray.ArraySize = num_items;
 		desc.Texture2DArray.FirstArraySlice = first_array_index;
@@ -215,7 +215,7 @@ D3D12_RENDER_TARGET_VIEW_DESC Texture2D::CreateRTVDesc(uint8 first_array_index, 
 	D3D12_RENDER_TARGET_VIEW_DESC desc{};
 
 	desc.Format = Convert(format);
-	if (array_size) {
+	if (array_size > 1) {
 		if (sample_info.Count == 1) {
 			desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 			desc.Texture2DArray.ArraySize = num_items;
@@ -252,7 +252,7 @@ D3D12_DEPTH_STENCIL_VIEW_DESC Texture2D::CreateDSVDesc(uint8 first_array_index, 
 	desc.Format = Convert(format);
 	desc.Flags = D3D12_DSV_FLAG_NONE;
 
-	if (array_size) {
+	if (array_size > 1) {
 		if (sample_info.Count == 1) {
 			desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
 			desc.Texture2DArray.MipSlice = level;

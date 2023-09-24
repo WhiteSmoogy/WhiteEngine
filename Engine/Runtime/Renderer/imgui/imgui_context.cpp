@@ -277,7 +277,7 @@ void CreateFontsTexture(Render::Context& context)
     GFontSampler.filtering = TexFilterOp::Min_Mag_Mip_Linear;
     GFontSampler.min_lod = 0;
     GFontSampler.max_lod = 0;
-    GFontSampler.cmp_func = CompareOp::Pass;
+    GFontSampler.cmp_func = CompareOp::Fail;
 }
 
 IMPLEMENT_BUILTIN_SHADER(imguiVS, "imgui/imgui.wsl", "MainVS", platform::Render::VertexShader);

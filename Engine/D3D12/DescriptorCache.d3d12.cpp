@@ -809,7 +809,7 @@ uint32  platform_ex::Windows::D3D12::GetTypeHash(const SamplerArrayDesc& Key)
 LocalOnlineHeap::LocalOnlineHeap(DescriptorCache& InCache, CommandContext& InContext)
 	: OnlineHeap(InContext.GetParentDevice(), true)
 	, Cache(InCache)
-	, Context(Context)
+	, Context(InContext)
 {
 }
 

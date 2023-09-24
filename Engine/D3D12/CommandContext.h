@@ -191,6 +191,7 @@ namespace platform_ex::Windows::D3D12 {
 	{
 	public:
 		CommandContext(NodeDevice* InParent, QueueType Type, bool InIsDefaultContext);
+		CommandContext(const CommandContext&) = delete;
 	public:
 		virtual void SetAsyncComputeBudgetInternal(platform::Render::AsyncComputeBudget Budget) {}
 

@@ -212,13 +212,11 @@ namespace platform_ex::Windows::D3D12 {
 	public:
 		GlobalOnlineSamplerHeap(NodeDevice* Device)
 			: OnlineHeap(Device, false)
-			, bUniqueDescriptorTablesAreDirty(false)
+			, UniqueDescriptorTables(std::make_shared<SamplerSet>())
 		{ }
 
 		void Init(uint32 TotalSize);
 
-		void ToggleDescriptorTablesDirtyFlag(bool Value) { bUniqueDescriptorTablesAreDirty = Value; }
-		bool DescriptorTablesDirty() { return bUniqueDescriptorTablesAreDirty; }
 		std::mutex& GetCriticalSection() { return Mutex; }
 
 		void ConsolidateUniqueSamplerTables(white::span<UniqueSamplerTable> UniqueTables);
@@ -228,7 +226,6 @@ namespace platform_ex::Windows::D3D12 {
 		bool RollOver();
 	private:
 		std::shared_ptr<SamplerSet> UniqueDescriptorTables;
-		bool bUniqueDescriptorTablesAreDirty;
 
 		std::mutex Mutex;
 	};

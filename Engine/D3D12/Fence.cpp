@@ -62,7 +62,7 @@ void Fence::CreateFence()
 	fence_val = last_completed_val + 1;
 }
 
-uint64 Fence::Signal(CommandQueueType type)
+uint64 Fence::Signal(QueueType type)
 {
 	uint64 id = fence_val;
 
@@ -74,13 +74,13 @@ uint64 Fence::Signal(CommandQueueType type)
 	return id;
 }
 
-void Fence::GpuWait(uint32 DeviceIndex, CommandQueueType InQueueType, uint64 FenceValue, uint32 FenceGPUIndex)
+void Fence::GpuWait(uint32 DeviceIndex, QueueType InQueueType, uint64 FenceValue, uint32 FenceGPUIndex)
 {
-	auto CommandQueue = GetParentAdapter()->GetNodeDevice(DeviceIndex)->GetD3DCommandQueue(InQueueType);
+	auto& CommandQueue = GetParentAdapter()->GetNodeDevice(DeviceIndex)->GetQueue(InQueueType);
 
 	auto FenceCore = FenceCores[FenceGPUIndex];
 
-	CheckHResult(CommandQueue->Wait(FenceCore->GetFence(), FenceValue));
+	CheckHResult(CommandQueue.D3DCommandQueue->Wait(FenceCore->GetFence(), FenceValue));
 }
 
 bool Fence::IsFenceComplete(uint64 FenceValue)
@@ -108,16 +108,15 @@ uint64 Fence::UpdateLastCompletedFence()
 	return CompletedFence;
 }
 
-void Fence::InternalSignal(CommandQueueType InQueueType, uint64 FenceToSignal)
+void Fence::InternalSignal(QueueType InQueueType, uint64 FenceToSignal)
 {
 	auto GPUIndex = GetGPUMask().ToIndex();
 
-	auto CommandQueue = GetParentAdapter()->GetNodeDevice(GPUIndex)->GetD3DCommandQueue(InQueueType);
-	wconstraint(CommandQueue);
+	auto& CommandQueue = GetParentAdapter()->GetNodeDevice(GPUIndex)->GetQueue(InQueueType);
 	auto FenceCore = FenceCores[GPUIndex];
 	wconstraint(FenceCore);
 
-	CommandQueue->Signal(FenceCore->GetFence(), FenceToSignal);
+	CommandQueue.D3DCommandQueue->Signal(FenceCore->GetFence(), FenceToSignal);
 }
 
 void Fence::WaitForFence(uint64 FenceValue)
@@ -139,7 +138,7 @@ void Fence::WaitForFence(uint64 FenceValue)
 	}
 }
 
-uint64 ManualFence::Signal(CommandQueueType InQueueType, uint64 FenceToSignal)
+uint64 ManualFence::Signal(QueueType InQueueType, uint64 FenceToSignal)
 {
 	InternalSignal(InQueueType, FenceToSignal);
 

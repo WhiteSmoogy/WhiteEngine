@@ -15,6 +15,8 @@
 
 
 namespace platform_ex::Windows::D3D12 {
+	enum class QueueType;
+
 	class FenceCore : public AdapterChild
 	{
 	public:
@@ -42,10 +44,10 @@ namespace platform_ex::Windows::D3D12 {
 
 		void CreateFence();
 
-		uint64 Signal(CommandQueueType type);
-		void GpuWait(uint32 DeviceIndex, CommandQueueType InQueueType, uint64 FenceValue, uint32 FenceGPUIndex);
+		uint64 Signal(QueueType type);
+		void GpuWait(uint32 DeviceIndex, QueueType InQueueType, uint64 FenceValue, uint32 FenceGPUIndex);
 
-		void GpuWait(CommandQueueType InQueueType, uint64 FenceValue)
+		void GpuWait(QueueType InQueueType, uint64 FenceValue)
 		{
 			GpuWait(GetGPUMask().ToIndex(), InQueueType, FenceValue, GetGPUMask().ToIndex());
 		}
@@ -63,7 +65,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		void Destroy();
 	protected:
-		void InternalSignal(CommandQueueType InQueueType, uint64 FenceToSignal);
+		void InternalSignal(QueueType InQueueType, uint64 FenceToSignal);
 
 	protected:
 		uint64 last_completed_val;
@@ -80,7 +82,7 @@ namespace platform_ex::Windows::D3D12 {
 		{}
 
 		// Signals the specified fence value.
-		uint64 Signal(CommandQueueType InQueueType, uint64 FenceToSignal);
+		uint64 Signal(QueueType InQueueType, uint64 FenceToSignal);
 
 		// Increments the current fence and returns the previous value.
 		inline uint64 IncrementCurrentFence()

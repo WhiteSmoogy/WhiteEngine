@@ -7,6 +7,7 @@
 #include "DescriptorCache.h"
 #include "Allocation.h"
 #include "Descriptors.h"
+#include "Queue.h"
 
 #include <vector>
 #include <unordered_map>
@@ -53,8 +54,6 @@ namespace platform_ex::Windows::D3D12
 			return *ImmediateCommandContext;
 		}
 
-		ID3D12CommandQueue* GetD3DCommandQueue(CommandQueueType InQueueType);
-
 		void CreateSamplerInternal(const D3D12_SAMPLER_DESC& Desc, D3D12_CPU_DESCRIPTOR_HANDLE Descriptor);
 
 		std::shared_ptr<SamplerState> CreateSampler(const D3D12_SAMPLER_DESC& Desc);
@@ -81,7 +80,12 @@ namespace platform_ex::Windows::D3D12
 		const D3DDefaultViews& GetDefaultViews() const { return DefaultViews; }
 
 		CommandAllocator* ObtainCommandAllocator(QueueType Type);
+		void ReleaseCommandAllocator(CommandAllocator* Allocator);
+
 		CommandList* ObtainCommandList(CommandAllocator* CommandAllocator);
+		void ReleaseCommandList(CommandList* Cmd);
+
+		NodeQueue& GetQueue(QueueType QueueType) { return Queues[(uint32)QueueType]; }
 
 	private:
 		void SetupAfterDeviceCreation();
@@ -102,6 +106,8 @@ namespace platform_ex::Windows::D3D12
 
 		FastAllocator DefaultFastAllocator;
 		BufferAllocator DefaultBufferAllocator;
+
+		std::vector<NodeQueue> Queues;
 
 		RayTracingDescriptorHeapCache* RayTracingDescriptorHeapCache = nullptr;
 		void DestroyRayTracingDescriptorCache();

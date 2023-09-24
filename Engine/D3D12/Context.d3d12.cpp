@@ -127,7 +127,7 @@ namespace platform_ex::Windows::D3D12 {
 	{
 		CheckHResult(d3d_cmd_lists[type]->Close());
 		ID3D12CommandList* cmd_lists[] = { d3d_cmd_lists[type].Get() };
-		device->GetNodeDevice(0)->GetD3DCommandQueue(CommandQueueType::Default)->ExecuteCommandLists(1, cmd_lists);
+		device->GetNodeDevice(0)->GetQueue(QueueType::Direct).D3DCommandQueue->ExecuteCommandLists(1, cmd_lists);
 
 		if (type == Device::CommandType::Command_Resource) {
 			auto val = GetFence(type).Signal(CommandQueueType::Default);

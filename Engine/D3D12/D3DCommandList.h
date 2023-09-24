@@ -25,6 +25,8 @@ namespace platform_ex::Windows::D3D12 {
 	class CommandAllocator
 	{
 	public:
+		friend class NodeDevice;
+
 		CommandAllocator(CommandAllocator const&) = delete;
 
 		explicit CommandAllocator(NodeDevice* InDevice, QueueType InType);

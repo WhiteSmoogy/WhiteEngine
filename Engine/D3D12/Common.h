@@ -77,13 +77,6 @@ namespace platform_ex::Windows::D3D12 {
 		constexpr bool operator==(const GPUMaskType&) const = default;
 	};
 
-	enum class CommandQueueType
-	{
-		Default,
-		Copy,
-		Async
-	};
-
 	class DeviceChild
 	{
 	protected:

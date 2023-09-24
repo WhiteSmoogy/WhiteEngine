@@ -18,6 +18,11 @@ NodeDevice::NodeDevice(GPUMaskType InGPUMask, D3D12Adapter* InAdapter)
 	{
 		OfflineDescriptorManagers.emplace_back(this, (DescriptorHeapType)HeapType);
 	}
+
+	for (uint32 Type = 0; Type < (uint32)QueueType::Count; ++Type)
+	{
+		Queues.emplace_back(this, (QueueType)Type);
+	}
 }
 
 void NodeDevice::Initialize()
@@ -49,6 +54,11 @@ int32 GOnlineDescriptorHeapBlockSize = 2000;
 
 void NodeDevice::SetupAfterDeviceCreation()
 {
+	for (auto& Queue : Queues)
+	{
+		Queue.SetupAfterDeviceCreation();
+	}
+
 	ID3D12Device* Direct3DDevice = GetParentAdapter()->GetDevice();
 
 	NormalDescriptorHeapManager.Init(GGlobalResourceDescriptorHeapSize, GGlobalSamplerDescriptorHeapSize);
@@ -157,3 +167,55 @@ void NodeDevice::CreateDefaultViews()
 		wassume(DefaultViews.DefaultSampler->ID == 0);
 	}
 }
+
+CommandAllocator* NodeDevice::ObtainCommandAllocator(QueueType Type)
+{
+	auto Allocator = Queues[(uint32)Type].ObjectPool.Allocators.Pop();
+	if (!Allocator)
+	{
+		Allocator = new CommandAllocator(this, Type);
+	}
+
+	return Allocator;
+}
+
+void NodeDevice::ReleaseCommandAllocator(CommandAllocator* Allocator)
+{
+	Allocator->Reset();
+
+	Queues[(uint32)Allocator->Type].ObjectPool.Allocators.Push(Allocator);
+}
+
+CommandList* platform_ex::Windows::D3D12::NodeDevice::ObtainCommandList(CommandAllocator* CommandAllocator)
+{
+	auto* List = Queues[(uint32)CommandAllocator->Type].ObjectPool.Lists.Pop();
+	if (!List)
+	{
+		List = new CommandList(CommandAllocator);
+	}
+	else
+	{
+		List->Reset(CommandAllocator);
+	}
+
+	return List;
+}
+
+void platform_ex::Windows::D3D12::NodeDevice::ReleaseCommandList(CommandList* Cmd)
+{
+	Queues[(uint32)Cmd->Type].ObjectPool.Lists.Push(Cmd);
+}
+
+platform_ex::Windows::D3D12::NodeQueue::NodeQueue(NodeDevice* Device, QueueType QueueType)
+	:Device(Device),Fence(Device->GetParentAdapter(),0,Device->GetGPUIndex()),Type(QueueType)
+{
+}
+
+platform_ex::Windows::D3D12::NodeQueue::~NodeQueue()
+{
+}
+
+void platform_ex::Windows::D3D12::NodeQueue::SetupAfterDeviceCreation()
+{
+}
+

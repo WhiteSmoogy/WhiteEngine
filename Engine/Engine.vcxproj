@@ -92,6 +92,7 @@
     <ClCompile Include="D3D12\RootSignature.cpp" />
     <ClCompile Include="D3D12\SamplerState.d3d12.cpp" />
     <ClCompile Include="D3D12\ShaderCompose.d3d12.cpp" />
+    <ClCompile Include="D3D12\Submission.cpp" />
     <ClCompile Include="D3D12\Texture.d3d12.cpp" />
     <ClCompile Include="D3D12\Texture1D.d3d12.cpp" />
     <ClCompile Include="D3D12\Texture2D.d3d12.cpp" />

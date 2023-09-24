@@ -10,7 +10,7 @@
 using namespace platform_ex::Windows::D3D12;
 
 DescriptorCache::DescriptorCache(CommandContext& InContext, GPUMaskType Node)
-	:DeviceChild(Context.GetParentDevice())
+	:DeviceChild(InContext.GetParentDevice())
 	,SingleNodeGPUObject(Node)
 	, pPreviousViewHeap(nullptr)
 	, pPreviousSamplerHeap(nullptr)

@@ -97,13 +97,7 @@ namespace platform_ex {
 		COMPtr(_iOther* ptr) wnothrow
 			: pInterface(ptr)
 		{}
-		template<class _iOther>
-		COMPtr(_iOther& intf, std::enable_if_t<!std::is_convertible<_iOther&,
-			COMPtr&>::value, int> = 0) wnothrow
-			: pInterface(&intf)
-		{
-			pInterface->AddRef();
-		}
+		
 		COMPtr(const COMPtr& ptr) wnothrow
 			: pInterface(ptr.pInterface)
 		{

@@ -26,6 +26,7 @@ namespace platform_ex::Windows::D3D12 {
 	{
 	public:
 		friend class NodeDevice;
+		friend class CommandList;
 
 		CommandAllocator(CommandAllocator const&) = delete;
 
@@ -63,11 +64,11 @@ namespace platform_ex::Windows::D3D12 {
 		void Reset(CommandAllocator* CommandAllocator);
 		void Close();
 
-		bool IsOpen() const;
+		bool IsOpen() const { return !State.IsClosed; }
 
-		bool IsClosed() const;
+		bool IsClosed() const { return State.IsClosed; }
 
-		uint32 GetNumCommands() const;
+		uint32 GetNumCommands() const { return State.NumCommands; }
 
 		NodeDevice* const Device;
 		QueueType const Type;
@@ -81,7 +82,7 @@ namespace platform_ex::Windows::D3D12 {
 			COMPtr<ID3D12GraphicsCommandList> GraphicsCommandList;
 
 			template<typename T,size_t N>
-			struct CommandListInterface :white::conditional_t< D3D12_MAX_COMMANDLIST_INTERFACE >= N, COMPtr<T>, std::identity>
+			struct CommandListInterface :white::conditional_t< D3D12_MAX_COMMANDLIST_INTERFACE >= N, COMPtr<T>, COMPtr<IUnknown>>
 			{};
 
 			CommandListInterface<ID3D12GraphicsCommandList1, 1> GraphicsCommandList1;

@@ -41,6 +41,7 @@ namespace platform_ex::Windows::D3D12 {
 	struct D3D12Payload;
 	class ContextCommon;
 	class CommandAllocator;
+	class CommandList;
 
 	template<typename T>
 	struct D3DObjectPool

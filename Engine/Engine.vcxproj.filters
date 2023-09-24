@@ -443,6 +443,9 @@
     <ClCompile Include="D3D12\Descriptors.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
+    <ClCompile Include="D3D12\Submission.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">

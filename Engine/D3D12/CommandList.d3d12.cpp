@@ -13,6 +13,82 @@ CommandList::ListState::ListState(CommandAllocator* InCommandAllocator)
 {
 }
 
+CommandList::CommandList(CommandAllocator* CommandAllocator)
+	:Device(CommandAllocator->Device)
+	, Type(CommandAllocator->Type)
+	, State(CommandAllocator)
+{
+	switch (Type)
+	{
+	case QueueType::Direct:
+	case QueueType::Async:
+		CheckHResult(Device->GetDevice()->CreateCommandList(
+			Device->GetGPUMask().GetNative(),
+			GetD3DCommandListType(Type),
+			*CommandAllocator,
+			nullptr,
+			IID_PPV_ARGS(Interfaces.GraphicsCommandList.ReleaseAndGetAddress())
+		));
+		Interfaces.CommandList = Interfaces.GraphicsCommandList;
+
+		Interfaces.CommandList->QueryInterface(IID_PPV_ARGS(Interfaces.CopyCommandList.ReleaseAndGetAddress()));
+
+		// Optionally obtain the versioned ID3D12GraphicsCommandList[0-9]+ interfaces, we don't check the HRESULT.
+		Interfaces.CommandList->QueryInterface(IID_PPV_ARGS(Interfaces.GraphicsCommandList1.ReleaseAndGetAddress()));
+		Interfaces.CommandList->QueryInterface(IID_PPV_ARGS(Interfaces.GraphicsCommandList2.ReleaseAndGetAddress()));
+		Interfaces.CommandList->QueryInterface(IID_PPV_ARGS(Interfaces.GraphicsCommandList3.ReleaseAndGetAddress()));
+		Interfaces.CommandList->QueryInterface(IID_PPV_ARGS(Interfaces.GraphicsCommandList4.ReleaseAndGetAddress()));
+		Interfaces.CommandList->QueryInterface(IID_PPV_ARGS(Interfaces.GraphicsCommandList5.ReleaseAndGetAddress()));
+		Interfaces.CommandList->QueryInterface(IID_PPV_ARGS(Interfaces.GraphicsCommandList6.ReleaseAndGetAddress()));
+		Interfaces.CommandList->QueryInterface(IID_PPV_ARGS(Interfaces.GraphicsCommandList7.ReleaseAndGetAddress()));
+		Interfaces.CommandList->QueryInterface(IID_PPV_ARGS(Interfaces.GraphicsCommandList8.ReleaseAndGetAddress()));
+		Interfaces.CommandList->QueryInterface(IID_PPV_ARGS(Interfaces.GraphicsCommandList9.ReleaseAndGetAddress()));
+
+#ifndef NDEBUG
+		Interfaces.CommandList->QueryInterface(IID_PPV_ARGS(Interfaces.DebugCommandList.ReleaseAndGetAddress()));
+#endif
+		break;
+
+	case QueueType::Copy:
+		CheckHResult(Device->GetDevice()->CreateCommandList(
+			Device->GetGPUMask().GetNative(),
+			GetD3DCommandListType(Type),
+			*CommandAllocator,
+			nullptr,
+			IID_PPV_ARGS(Interfaces.CopyCommandList.ReleaseAndGetAddress())
+		));
+		Interfaces.CommandList = Interfaces.CopyCommandList;
+
+		break;
+
+	default:
+		throw unsupported();
+		return;
+	}
+
+#if ENABLE_AFTER_MATH
+	if (GEnableNvidaiAfterMath)
+	{
+		GFSDK_Aftermath_Result Result = GFSDK_Aftermath_DX12_CreateContextHandle(Interfaces.CommandList.Get(), &Interfaces.AftermathHandle);
+
+		wassume(Result == GFSDK_Aftermath_Result_Success);
+	}
+#endif
+
+	D3D::Debug(Interfaces.CommandList,std::format("CommandList (GPU {})", Device->GetGPUIndex()).c_str());
+}
+
+CommandList::~CommandList()
+{
+#if ENABLE_AFTER_MATH
+	if (Interfaces.AftermathHandle)
+	{
+		GFSDK_Aftermath_Result Result = GFSDK_Aftermath_ReleaseContextHandle(Interfaces.AftermathHandle);
+		wassume(Result == GFSDK_Aftermath_Result_Success);
+	}
+#endif
+}
+
 void CommandList::Close()
 {
 	if (Interfaces.CopyCommandList)
@@ -25,6 +101,21 @@ void CommandList::Close()
 	}
 
 	State.IsClosed = true;
+}
+
+void CommandList::Reset(CommandAllocator* NewCommandAllocator)
+{
+	wassume(IsClosed());
+	if (Interfaces.CopyCommandList)
+	{
+		CheckHResult(Interfaces.CopyCommandList->Reset(*NewCommandAllocator, nullptr));
+	}
+	else
+	{
+		CheckHResult(Interfaces.CopyCommandList->Reset(*NewCommandAllocator, nullptr));
+	}
+
+	State = ListState(NewCommandAllocator);
 }
 
 CommandAllocator::CommandAllocator(NodeDevice* InDevice, QueueType InType)
@@ -467,4 +558,23 @@ void ResourceBarrierBatcher::Flush(CommandList& CommandList)
 		CommandList.GraphicsCommandList()->ResourceBarrier(static_cast<UINT>(Barriers.size()), Barriers.data());
 		Reset();
 	}
+}
+
+CResourceState& CommandList::GetResourceState_OnCommandList(ResourceHolder* Resource)
+{
+	wassume(Resource->RequiresResourceStateTracking());
+
+	CResourceState& ResourceState = State.TrackedResourceState[Resource];
+
+	// If there is no entry, all subresources should be in the resource's TBD state.
+	// This means we need to have pending resource barrier(s).
+	if (!ResourceState.CheckResourceStateInitalized())
+	{
+		ResourceState.Initialize(Resource->GetSubresourceCount());
+		wassume(ResourceState.CheckResourceState(D3D12_RESOURCE_STATE_TBD));
+	}
+
+	wassume(ResourceState.CheckResourceStateInitalized());
+
+	return ResourceState;
 }

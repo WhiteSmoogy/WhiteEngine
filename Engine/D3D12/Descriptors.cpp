@@ -112,10 +112,25 @@ void OnlineDescriptorManager::Recycle(OnlineDescriptorBlock* Block)
 	FreeBlocks.emplace(Block);
 }
 
+static uint32 GetOfflineDescriptorHeapDefaultSize(DescriptorHeapType InHeapType)
+{
+	switch (InHeapType)
+	{
+	default: throw unsupported();
+	case DescriptorHeapType::Standard:     return 2048;
+	case DescriptorHeapType::RenderTarget: return 256;
+	case DescriptorHeapType::DepthStencil: return 256;
+	case DescriptorHeapType::Sampler:      return 128;
+	}
+}
+
 OfflineDescriptorManager::OfflineDescriptorManager(NodeDevice* InDevice, DescriptorHeapType InHeapType)
 	:DeviceChild(InDevice),
 	HeapType(InHeapType)
-{}
+{
+	DescriptorSize = GetParentDevice()->GetDevice()->GetDescriptorHandleIncrementSize(Convert(InHeapType));
+	NumDescriptorsPerHeap = GetOfflineDescriptorHeapDefaultSize(InHeapType);
+}
 
 
 OfflineDescriptorManager::~OfflineDescriptorManager() = default;

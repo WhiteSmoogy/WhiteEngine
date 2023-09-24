@@ -283,7 +283,7 @@
     <ClInclude Include="D3D12\InputLayout.hpp" />
     <ClInclude Include="D3D12\NodeDevice.h" />
     <ClInclude Include="D3D12\PipleState.h" />
-    <ClInclude Include="D3D12\Queue.h" />
+    <ClInclude Include="D3D12\NodeQueue.h" />
     <ClInclude Include="D3D12\RayContext.h" />
     <ClInclude Include="D3D12\RayDevice.h" />
     <ClInclude Include="D3D12\RayTracingGeometry.h" />

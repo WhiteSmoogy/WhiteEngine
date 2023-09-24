@@ -1,7 +1,7 @@
 #include "NodeDevice.h"
 #include "D3DCommandList.h"
 #include "CommandContext.h"
-#include "Queue.h"
+#include "NodeQueue.h"
 
 using namespace platform_ex::Windows::D3D12;
 

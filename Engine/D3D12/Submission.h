@@ -2,7 +2,7 @@
 
 #include "Fence.h"
 #include "Utility.h"
-#include "Queue.h"
+#include "NodeQueue.h"
 #include "Core/Threading/ManualResetEvent.h"
 
 namespace platform_ex::Windows::D3D12 {

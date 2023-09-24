@@ -231,18 +231,18 @@ void Display::UpdateFramewBufferView()
 
 class D3D12SignalFrameFence : platform::Render::CommandBase {
 public:
-	CommandQueueType QueueType;
+	QueueType Type;
 	ManualFence* const Fence;
 	const uint64 Value;
 
-	D3D12SignalFrameFence(CommandQueueType InQueueType, ManualFence* InFence, uint64 InValue)
-		:QueueType(InQueueType), Fence(InFence), Value(InValue)
+	D3D12SignalFrameFence(QueueType InQueueType, ManualFence* InFence, uint64 InValue)
+		:Type(InQueueType), Fence(InFence), Value(InValue)
 	{
 	}
 
 	void ExecuteAndDestruct(platform::Render::CommandListBase& CmdList, platform::Render::CommandListContext& Context)
 	{
-		Fence->Signal(QueueType, Value);
+		Fence->Signal(Type, Value);
 
 		this->~D3D12SignalFrameFence();
 	}
@@ -255,7 +255,7 @@ void Context::AdvanceFrameFence()
 
 	auto& CmdList = platform::Render::CommandListExecutor::GetImmediateCommandList();
 
-	new (CmdList.AllocCommand<D3D12SignalFrameFence>()) D3D12SignalFrameFence(CommandQueueType::Default, FrameFence, PreviousFence);
+	new (CmdList.AllocCommand<D3D12SignalFrameFence>()) D3D12SignalFrameFence(QueueType::Direct, FrameFence, PreviousFence);
 }
 
 void Context::AdvanceDisplayBuffer()

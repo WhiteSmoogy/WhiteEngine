@@ -1165,7 +1165,7 @@
     <ClInclude Include="D3D12\Descriptors.h">
       <Filter>D3D12</Filter>
     </ClInclude>
-    <ClInclude Include="D3D12\Queue.h">
+    <ClInclude Include="D3D12\NodeQueue.h">
       <Filter>D3D12</Filter>
     </ClInclude>
     <ClInclude Include="D3D12\Submission.h">

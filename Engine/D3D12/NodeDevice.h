@@ -7,7 +7,7 @@
 #include "DescriptorCache.h"
 #include "Allocation.h"
 #include "Descriptors.h"
-#include "Queue.h"
+#include "NodeQueue.h"
 
 #include <vector>
 #include <unordered_map>

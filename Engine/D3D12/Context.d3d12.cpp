@@ -107,7 +107,7 @@ namespace platform_ex::Windows::D3D12 {
 
 	void D3D12::Context::SyncCommand(Device::CommandType type)
 	{
-		auto val = GetFence(type).Signal((CommandQueueType)type);
+		auto val = GetFence(type).Signal((QueueType)type);
 		GetFence(type).WaitForFence(val);
 	}
 
@@ -130,7 +130,7 @@ namespace platform_ex::Windows::D3D12 {
 		device->GetNodeDevice(0)->GetQueue(QueueType::Direct).D3DCommandQueue->ExecuteCommandLists(1, cmd_lists);
 
 		if (type == Device::CommandType::Command_Resource) {
-			auto val = GetFence(type).Signal(CommandQueueType::Default);
+			auto val = GetFence(type).Signal(QueueType::Direct);
 			GetFence(type).WaitForFence(val);
 
 			GetDevice().d3d_cmd_allocators[type]->Reset();
@@ -175,7 +175,7 @@ namespace platform_ex::Windows::D3D12 {
 		device = std::make_shared<Device>(DefaultAdapter());
 		ContextEx(device->d3d_device.Get(), nullptr);
 
-		display = std::make_shared<Display>(GetDXGIFactory4(), device->GetNodeDevice(0)->GetD3DCommandQueue(CommandQueueType::Default), setting, g_hwnd);//test code
+		display = std::make_shared<Display>(GetDXGIFactory4(), device->GetNodeDevice(0)->GetQueue(QueueType::Direct).D3DCommandQueue.Get(), setting, g_hwnd);//test code
 
 		platform::Render::GCommandList.GetImmediateCommandList().SetContext(GetDefaultCommandContext());
 		

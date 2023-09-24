@@ -64,7 +64,6 @@
     <ClCompile Include="D3D12\BuiltInRayTracingShaders.cpp" />
     <ClCompile Include="D3D12\CommandContext.d3d12.cpp" />
     <ClCompile Include="D3D12\CommandList.d3d12.cpp" />
-    <ClCompile Include="D3D12\CommandListManager.d3d12.cpp" />
     <ClCompile Include="D3D12\ConstantBuffer.d3d12.cpp" />
     <ClCompile Include="D3D12\Context.d3d12.cpp" />
     <ClCompile Include="D3D12\ContextStateCache.d3d12.cpp" />
@@ -263,7 +262,6 @@
     <ClInclude Include="D3D12\Allocation.h" />
     <ClInclude Include="D3D12\BuiltInRayTracingShaders.h" />
     <ClInclude Include="D3D12\CommandContext.h" />
-    <ClInclude Include="D3D12\CommandListManager.h" />
     <ClInclude Include="D3D12\Common.h" />
     <ClInclude Include="D3D12\ConstantBuffer.h" />
     <ClInclude Include="D3D12\Context.h" />

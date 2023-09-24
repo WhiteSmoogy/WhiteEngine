@@ -170,9 +170,6 @@
     <ClCompile Include="D3D12\CommandList.d3d12.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
-    <ClCompile Include="D3D12\CommandListManager.d3d12.cpp">
-      <Filter>D3D12</Filter>
-    </ClCompile>
     <ClCompile Include="D3D12\ConstantBuffer.d3d12.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
@@ -746,9 +743,6 @@
       <Filter>D3D12</Filter>
     </ClInclude>
     <ClInclude Include="D3D12\CommandContext.h">
-      <Filter>D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="D3D12\CommandListManager.h">
       <Filter>D3D12</Filter>
     </ClInclude>
     <ClInclude Include="D3D12\Common.h">

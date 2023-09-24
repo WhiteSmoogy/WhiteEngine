@@ -34,6 +34,7 @@ namespace platform_ex::Windows::D3D12 {
 		HANDLE hFenceCompleteEvent;
 	};
 
+	//todo:remove
 	class Fence : public AdapterChild,public MultiNodeGPUObject {
 	public:
 		Fence(D3D12Adapter* InParent,GPUMaskType InGpuMask,const std::string& InName="<unnamed fence>");

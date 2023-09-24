@@ -4,6 +4,13 @@
 #ifndef WE_RENDER_D3D12_d3d12_dxgi_h
 #define WE_RENDER_D3D12_d3d12_dxgi_h 1
 
+#define D3D12_MAX_DEVICE_INTERFACE 12
+#define D3D12_MAX_COMMANDLIST_INTERFACE 9
+#define D3D12_SUPPORTS_INFO_QUEUE 1
+#define D3D12_SUPPORTS_DXGI_DEBUG 1
+#define DXGI_MAX_FACTORY_INTERFACE 6
+#define DXGI_MAX_SWAPCHAIN_INTERFACE 4
+
 #include <WBase/wdef.h>
 #include <WBase/winttype.hpp>
 #include <WBase/exception_type.h>
@@ -1267,6 +1274,8 @@ namespace platform_ex::Windows::D3D12 {
 	constexpr unsigned MAX_UAVS = 16;
 	constexpr unsigned MAX_CBS = 16;
 
+	constexpr unsigned MAX_NUM_GPUS = 8;
+
 	// This value controls how many root constant buffers can be used per shader stage in a root signature.
 	// Note: Using root descriptors significantly increases the size of root signatures (each root descriptor is 2 DWORDs).
 	constexpr unsigned MAX_ROOT_CBVS = MAX_CBS;
@@ -1286,6 +1295,12 @@ namespace platform_ex::Windows::D3D12 {
 
 	constexpr D3D12_RESOURCE_STATES D3D12_RESOURCE_STATE_TBD = D3D12_RESOURCE_STATES(-1 ^ (1 << 31));
 	constexpr D3D12_RESOURCE_STATES D3D12_RESOURCE_STATE_CORRUPT = D3D12_RESOURCE_STATES(-2 ^ (1 << 31));
+
+#if WFL_Win64
+	typedef ID3D12GraphicsCommandList ID3D12CopyCommandList;
+	constexpr D3D12_DESCRIPTOR_HEAP_TYPE DESCRIPTOR_HEAP_TYPE_SAMPLER = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+	constexpr D3D12_COMMAND_LIST_TYPE COPY_COMMAND_LIST_TYPE = D3D12_COMMAND_LIST_TYPE_COPY;
+#endif
 }
 
 template<typename CharT>
@@ -1302,6 +1317,7 @@ struct std::formatter<D3D12_HEAP_TYPE, CharT> : std::formatter<std::string_view,
 #ifndef USE_PIX
 #define USE_PIX 1
 #endif
+
 #endif
 
 #ifndef ENABLE_AFTER_MATH

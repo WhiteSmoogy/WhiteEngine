@@ -5,30 +5,34 @@
 
 
 namespace platform_ex::Windows::D3D12 {
-	class Fence;
-
-	class SyncPoint
+	class RefCountBase
 	{
-	public:
-		explicit SyncPoint()
-			: Fence(nullptr)
-			, Value(0)
-		{
-		}
-
-		explicit SyncPoint(Fence* InFence, uint64 InValue)
-			: Fence(InFence)
-			, Value(InValue)
-		{
-		}
-
-		bool IsValid() const;
-		bool IsComplete() const;
-		void WaitForCompletion() const;
-
 	private:
-		Fence* Fence;
-		uint64 Value;
+		unsigned long Uses = 1;
+	public:
+		virtual ~RefCountBase()
+		{
+		}
+
+		unsigned long AddRef()
+		{
+			return _InterlockedIncrement(reinterpret_cast<volatile long*>(&Uses));
+		}
+
+		unsigned long Release()
+		{
+			uint32 NewValue = _InterlockedDecrement(reinterpret_cast<volatile long*>(&Uses));
+
+			if (NewValue == 0)
+				delete this;
+
+			return NewValue;
+		}
+
+		uint32 GetRefCount() const
+		{
+			return Uses;
+		}
 	};
 
 	/** Find the appropriate depth-stencil typeless DXGI format for the given format. */

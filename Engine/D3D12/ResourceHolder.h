@@ -19,42 +19,15 @@ namespace platform_ex::Windows {
 
 		class ResourceLocation;
 
-		class RefCountBase
-		{
-		private:
-			unsigned long Uses = 1;
-		public:
-			virtual ~RefCountBase()
-			{
-			}
-
-			unsigned long AddRef()
-			{
-				return _InterlockedIncrement(reinterpret_cast<volatile long*>(&Uses));
-			}
-
-			unsigned long Release()
-			{
-				uint32 NewValue = _InterlockedDecrement(reinterpret_cast<volatile long*>(&Uses));
-
-				if (NewValue == 0)
-					delete this;
-
-				return NewValue;
-			}
-
-			uint32 GetRefCount() const
-			{
-				return Uses;
-			}
-		};
-
+	
 		enum class ResourceStateMode
 		{
 			Default,
 			Single,
 			Multi,
 		};
+
+		
 
 		class CResourceState
 		{
@@ -197,7 +170,6 @@ namespace platform_ex::Windows {
 			// unreachable code
 			return D3D12_RESOURCE_STATE_COMMON;
 		}
-
 
 		class ResourceHolder :public RefCountBase {
 		public:
@@ -438,6 +410,20 @@ namespace platform_ex::Windows {
 					}
 				}
 			}
+		};
+
+		class PendingResourceBarrier
+		{
+		public:
+			ResourceHolder* Resource;
+			D3D12_RESOURCE_STATES State;
+			uint32                SubResource;
+
+			PendingResourceBarrier(ResourceHolder* Resource, D3D12_RESOURCE_STATES State, uint32 SubResource)
+				: Resource(Resource)
+				, State(State)
+				, SubResource(SubResource)
+			{}
 		};
 
 		enum class AllocationStrategy

@@ -730,7 +730,8 @@ ResourceHolder* PoolAllocator<Order, Defrag>::GetBackingResource(ResourceLocatio
 using MultiBuddyConstantUploadAllocator = MultiBuddyAllocator<true, true>;
 
 MultiBuddyConstantUploadAllocator::MultiBuddyAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes)
-	:DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), VisibleNodes)
+	:DeviceChild(InParentDevice),
+	MultiNodeGPUObject(InParentDevice->GetGPUMask(), VisibleNodes)
 {}
 
 bool MultiBuddyConstantUploadAllocator::TryAllocate(uint32 SizeInBytes, uint32 Alignment, ResourceLocation& ResourceLocation)
@@ -772,7 +773,9 @@ void MultiBuddyConstantUploadAllocator::CleanUpAllocations(uint64 InFrameLag)
 }
 
 MultiBuddyConstantUploadAllocator::ConstantAllocator::ConstantAllocator(NodeDevice* InParentDevice, GPUMaskType VisibleNodes, uint32 InBlockSize)
-	:DeviceChild(InParentDevice), MultiNodeGPUObject(InParentDevice->GetGPUMask(), VisibleNodes), BlockSize(InBlockSize), TotalSizeUsed(0), BackingResource(nullptr), DelayCreated(false)
+	:DeviceChild(InParentDevice), 
+	MultiNodeGPUObject(InParentDevice->GetGPUMask(), VisibleNodes), 
+	BlockSize(InBlockSize), TotalSizeUsed(0), BackingResource(nullptr), DelayCreated(false)
 	, RetireFrameFence(-1)
 {}
 

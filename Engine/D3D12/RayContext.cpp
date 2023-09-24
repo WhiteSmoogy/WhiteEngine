@@ -4,7 +4,6 @@
 #include "GraphicsBuffer.hpp"
 #include "View.h"
 #include "NodeDevice.h"
-#include "CommandListManager.h"
 #include "BuiltInRayTracingShaders.h"
 
 using std::make_unique;
@@ -71,7 +70,7 @@ RayTracingShader* D12::RayDevice::CreateRayTracingShader(white::span<const uint8
 
 const Fence& platform_ex::Windows::D3D12::RayDevice::GetFence() const
 {
-	return Context::Instance().GetDefaultCommandContext()->GetParentDevice()->GetCommandListManager(CommandQueueType::Default)->GetFence();
+	return Context::Instance().GetDefaultCommandContext()->GetParentDevice()->GetParentAdapter()->GetFrameFence();
 }
 
 RayTracingPipelineCache* platform_ex::Windows::D3D12::RayDevice::GetRayTracingPipelineCache() const

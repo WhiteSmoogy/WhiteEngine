@@ -143,20 +143,17 @@ namespace platform_ex::Windows::D3D12 {
 			auto Device = CurrentBuffer->Location.GetParentDevice();
 
 			auto& CommandContext = Device->GetDefaultCommandContext();
-			auto& hCommandList = CommandContext.CommandListHandle;
 			// Copy from the temporary upload heap to the default resource
 			{
-				++CommandContext.numInitialResourceCopies;
-
 				//could have been suballocated from shared resource  - not very optimal and should be batched
 				if (!Destination->RequiresResourceStateTracking())
 				{
 					CommandContext.TransitionResource(Destination, Destination->GetDefaultResourceState(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 				}
 
-				hCommandList.FlushResourceBarriers();
+				CommandContext.FlushResourceBarriers();
 
-				hCommandList->CopyBufferRegion(
+				CommandContext.CopyCommandList()->CopyBufferRegion(
 					Destination->Resource(),
 					CurrentBuffer->Location.GetOffsetFromBaseOfResource(),
 					SrcResourceLoc.GetResource()->Resource(),
@@ -165,10 +162,10 @@ namespace platform_ex::Windows::D3D12 {
 				// Update the resource state after the copy has been done (will take care of updating the residency as well)
 				if (DestinationState != D3D12_RESOURCE_STATE_COPY_DEST)
 				{
-					hCommandList.AddTransitionBarrier(Destination, D3D12_RESOURCE_STATE_COPY_DEST, DestinationState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+					CommandContext.AddTransitionBarrier(Destination, D3D12_RESOURCE_STATE_COPY_DEST, DestinationState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 				}
 
-				CommandContext.ConditionalFlushCommandList();
+				CommandContext.ConditionalSplitCommandList();
 			}
 
 			// Buffer is now written and ready, so unlock the block (locked after creation and can be defragmented if needed)

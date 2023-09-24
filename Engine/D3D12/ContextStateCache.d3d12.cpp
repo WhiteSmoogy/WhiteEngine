@@ -89,9 +89,7 @@ void CommandContextStateCache::SetComputeShader(const ComputeHWShader* Shader)
 
 void CommandContextStateCache::InternalSetIndexBuffer(ResourceHolder* Resource)
 {
-	auto& CommandList = CmdContext.CommandListHandle;
-
-	CommandList->IASetIndexBuffer(&PipelineState.Graphics.IBCache.CurrentIndexBufferView);
+	CmdContext.GraphicsCommandList()->IASetIndexBuffer(&PipelineState.Graphics.IBCache.CurrentIndexBufferView);
 
 	auto NewView = PipelineState.Graphics.IBCache.CurrentIndexBufferView;
 
@@ -371,7 +369,6 @@ void CommandContextStateCache::ApplySamplers(const RootSignature* const pRootSig
 	if (DescriptorCache.UsingGlobalSamplerHeap())
 	{
 		auto& GlobalSamplerSet = DescriptorCache.GetLocalSamplerSet();
-		auto& CommandList = CmdContext.CommandListHandle;
 
 		for (uint32 Stage = StartStage; Stage < EndStage; Stage++)
 		{
@@ -399,12 +396,12 @@ void CommandContextStateCache::ApplySamplers(const RootSignature* const pRootSig
 					if (Stage == ShaderType::ComputeShader)
 					{
 						const uint32 RDTIndex = pRootSignature->SamplerRDTBindSlot(ShaderType(Stage));
-						CommandList->SetComputeRootDescriptorTable(RDTIndex, CachedTable->GPUHandle);
+						CmdContext.GraphicsCommandList()->SetComputeRootDescriptorTable(RDTIndex, CachedTable->GPUHandle);
 					}
 					else
 					{
 						const uint32 RDTIndex = pRootSignature->SamplerRDTBindSlot(ShaderType(Stage));
-						CommandList->SetGraphicsRootDescriptorTable(RDTIndex, CachedTable->GPUHandle);
+						CmdContext.GraphicsCommandList()->SetGraphicsRootDescriptorTable(RDTIndex, CachedTable->GPUHandle);
 					}
 
 					// We changed the descriptor table, so all resources bound to slots outside of the table's range are now dirty.
@@ -567,12 +564,6 @@ bool CommandContextStateCache::AssertResourceStates(CachePipelineType PipelineTy
 #ifdef NDEBUG
 	return true;
 #else
-	ID3D12CommandList* pCommandList = CmdContext.CommandListHandle.CommandList();
-	COMPtr<ID3D12DebugCommandList> pDebugCommandList;
-	CheckHResult(pCommandList->QueryInterface(&pDebugCommandList.ReleaseAndGetRef()));
-
-	//TODO
-
 	return true;
 #endif
 }
@@ -629,8 +620,6 @@ void CommandContextStateCache::ClearUAVs()
 template<CachePipelineType PipelineType>
 void CommandContextStateCache::ApplyState()
 {
-	auto& CommandList = CmdContext.CommandListHandle;
-
 	const RootSignature* pRootSignature = nullptr;
 
 	if (PipelineType == CPT_Graphics)
@@ -640,7 +629,7 @@ void CommandContextStateCache::ApplyState()
 		// See if we need to set a graphics root signature
 		if (PipelineState.Graphics.bNeedSetRootSignature)
 		{
-			CommandList->SetGraphicsRootSignature(pRootSignature->GetSignature());
+			CmdContext.GraphicsCommandList()->SetGraphicsRootSignature(pRootSignature->GetSignature());
 			PipelineState.Graphics.bNeedSetRootSignature = false;
 
 			// After setting a root signature, all root parameters are undefined and must be set again.
@@ -657,7 +646,7 @@ void CommandContextStateCache::ApplyState()
 		// See if we need to set a compute root signature
 		if (PipelineState.Compute.bNeedSetRootSignature)
 		{
-			CommandList->SetComputeRootSignature(pRootSignature->GetSignature());
+			CmdContext.GraphicsCommandList()->SetComputeRootSignature(pRootSignature->GetSignature());
 			PipelineState.Compute.bNeedSetRootSignature = false;
 
 			// After setting a root signature, all root parameters are undefined and must be set again.
@@ -672,7 +661,7 @@ void CommandContextStateCache::ApplyState()
 	InternalSetPipelineState<PipelineType>();
 
 	// Need to cache compute budget, as we need to reset after PSO changes
-	if (PipelineType == CPT_Compute && CommandList->GetType() == D3D12_COMMAND_LIST_TYPE_COMPUTE)
+	if (PipelineType == CPT_Compute && CmdContext.IsAsyncComputeContext())
 	{
 		CmdContext.SetAsyncComputeBudgetInternal(PipelineState.Compute.ComputeBudget);
 	}
@@ -694,27 +683,27 @@ void CommandContextStateCache::ApplyState()
 		if (bNeedSetViewports)
 		{
 			bNeedSetViewports = false;
-			CommandList->RSSetViewports(PipelineState.Graphics.CurrentNumberOfViewports, PipelineState.Graphics.CurrentViewport);
+			CmdContext.GraphicsCommandList()->RSSetViewports(PipelineState.Graphics.CurrentNumberOfViewports, PipelineState.Graphics.CurrentViewport);
 		}
 		if (bNeedSetScissorRects)
 		{
 			bNeedSetScissorRects = false;
-			CommandList->RSSetScissorRects(PipelineState.Graphics.CurrentNumberOfScissorRects, PipelineState.Graphics.CurrentScissorRects);
+			CmdContext.GraphicsCommandList()->RSSetScissorRects(PipelineState.Graphics.CurrentNumberOfScissorRects, PipelineState.Graphics.CurrentScissorRects);
 		}
 		if (bNeedSetPrimitiveTopology)
 		{
 			bNeedSetPrimitiveTopology = false;
-			CommandList->IASetPrimitiveTopology(PipelineState.Graphics.CurrentPrimitiveTopology);
+			CmdContext.GraphicsCommandList()->IASetPrimitiveTopology(PipelineState.Graphics.CurrentPrimitiveTopology);
 		}
 		if (bNeedSetBlendFactor)
 		{
 			bNeedSetBlendFactor = false;
-			CommandList->OMSetBlendFactor(PipelineState.Graphics.CurrentBlendFactor);
+			CmdContext.GraphicsCommandList()->OMSetBlendFactor(PipelineState.Graphics.CurrentBlendFactor);
 		}
 		if (bNeedSetStencilRef)
 		{
 			bNeedSetStencilRef = false;
-			CommandList->OMSetStencilRef(PipelineState.Graphics.CurrentReferenceStencil);
+			CmdContext.GraphicsCommandList()->OMSetStencilRef(PipelineState.Graphics.CurrentReferenceStencil);
 		}
 		if (bNeedSetRTs)
 		{
@@ -724,8 +713,7 @@ void CommandContextStateCache::ApplyState()
 		if (bNeedSetDepthBounds)
 		{
 			bNeedSetDepthBounds = false;
-			ID3D12GraphicsCommandList1* CommandList1 = nullptr;
-			CommandList1->OMSetDepthBounds(PipelineState.Graphics.MinDepth, PipelineState.Graphics.MaxDepth);
+			CmdContext.GraphicsCommandList1()->OMSetDepthBounds(PipelineState.Graphics.MinDepth, PipelineState.Graphics.MaxDepth);
 		}
 	}
 
@@ -876,7 +864,7 @@ void CommandContextStateCache::ApplyState()
 	}
 
 	// Flush any needed resource barriers
-	CommandList.FlushResourceBarriers();
+	CmdContext.FlushResourceBarriers();
 }
 
 template <typename TShader> 
@@ -921,7 +909,7 @@ void CommandContextStateCache::InternalSetPipelineState()
 	// Set the PSO on the command list if necessary.
 	if (bNeedSetPSO)
 	{
-		this->CmdContext.CommandListHandle->SetPipelineState(CurrentPSO);
+		this->CmdContext.GraphicsCommandList()->SetPipelineState(CurrentPSO);
 		PipelineState.Common.bNeedSetPSO = false;
 	}
 }

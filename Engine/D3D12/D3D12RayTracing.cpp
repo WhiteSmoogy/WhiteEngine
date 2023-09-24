@@ -6,7 +6,6 @@
 #include "GraphicsBuffer.hpp"
 #include "CommandContext.h"
 #include "NodeDevice.h"
-#include "CommandListManager.h"
 
 #include "../Core/Hash/CityHash.h"
 
@@ -188,7 +187,7 @@ RayTracingDescriptorHeapCache::Entry RayTracingDescriptorHeapCache::AllocateHeap
 
 	Entry Result = {};
 
-	auto& Fence =GetParentDevice()->GetCommandListManager().GetFence();
+	auto& Fence = GetParentDevice()->GetParentAdapter()->GetFrameFence();
 	auto CompletedFenceValue = Fence.GetLastCompletedFenceFast();
 
 	for (unsigned EntryIndex = 0; EntryIndex < Entries.size(); ++EntryIndex)
@@ -282,7 +281,7 @@ uint32 RayTracingDescriptorHeap::Allocate(uint32 InNumDescriptors)
 
 void RayTracingDescriptorHeap::UpdateSyncPoint()
 {
-	auto& Fence = GetParentDevice()->GetCommandListManager().GetFence();
+	auto& Fence = GetParentDevice()->GetParentAdapter()->GetFrameFence();
 
 	HeapCacheEntry.FenceValue = std::max(HeapCacheEntry.FenceValue, Fence.GetCurrentFence());
 }
@@ -295,7 +294,7 @@ void RayTracingDescriptorCache::SetDescriptorHeaps(D3D12::CommandContext& Contex
 		SamplerHeap.D3D12Heap
 	};
 
-	Context.CommandListHandle.GraphicsCommandList()->SetDescriptorHeaps(2, Heaps);
+	Context.GraphicsCommandList()->SetDescriptorHeaps(2, Heaps);
 }
 
 uint32 RayTracingDescriptorCache::GetDescriptorTableBaseIndex(const D3D12_CPU_DESCRIPTOR_HANDLE* Descriptors, uint32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE Type)
@@ -498,17 +497,17 @@ struct FD3D12RayTracingGlobalResourceBinder
 
 	void SetRootCBV(uint32 BaseSlotIndex, uint32 DescriptorIndex, D3D12_GPU_VIRTUAL_ADDRESS Address)
 	{
-		CommandContext.CommandListHandle->SetComputeRootConstantBufferView(BaseSlotIndex + DescriptorIndex, Address);
+		CommandContext.RayTracingCommandList()->SetComputeRootConstantBufferView(BaseSlotIndex + DescriptorIndex, Address);
 	}
 
 	void SetRootSRV(uint32 BaseSlotIndex, uint32 DescriptorIndex, D3D12_GPU_VIRTUAL_ADDRESS Address)
 	{
-		CommandContext.CommandListHandle->SetComputeRootShaderResourceView(BaseSlotIndex + DescriptorIndex, Address);
+		CommandContext.RayTracingCommandList()->SetComputeRootShaderResourceView(BaseSlotIndex + DescriptorIndex, Address);
 	}
 
 	void SetRootDescriptorTable(uint32 SlotIndex, D3D12_GPU_DESCRIPTOR_HANDLE DescriptorTable)
 	{
-		CommandContext.CommandListHandle->SetComputeRootDescriptorTable(SlotIndex, DescriptorTable);
+		CommandContext.RayTracingCommandList()->SetComputeRootDescriptorTable(SlotIndex, DescriptorTable);
 	}
 
 	D3D12_GPU_VIRTUAL_ADDRESS CreateTransientConstantBuffer(const void* Data, uint32 DataSize)
@@ -725,7 +724,7 @@ void ::DispatchRays(D3D12::CommandContext& CommandContext, const platform::Rende
 		CommandContext.StateCache.GetDescriptorCache()->GetCurrentSamplerHeap()->GetHeap(),
 	};
 
-	CommandContext.CommandListHandle.GraphicsCommandList()->SetComputeRootSignature(Pipeline->GetRootSignature());
+	CommandContext.GraphicsCommandList()->SetComputeRootSignature(Pipeline->GetRootSignature());
 
 	auto RayGenShader = Pipeline->RayGenShaders.Shaders[RayGenShaderIndex].get();
 
@@ -744,16 +743,14 @@ void ::DispatchRays(D3D12::CommandContext& CommandContext, const platform::Rende
 		SetRayTracingShaderResources(CommandContext, RayGenShader, GlobalBindings, TransientDescriptorCache, ResourceBinder);
 	}
 
-	CommandContext.CommandListHandle.FlushResourceBarriers();
+	CommandContext.FlushResourceBarriers();
 
 	auto StateObject = Pipeline->StateObject.Get();
 
-	auto RayTracingCommandList = CommandContext.CommandListHandle.RayTracingCommandList();
-
-	RayTracingCommandList->SetPipelineState1(StateObject);
-	RayTracingCommandList->DispatchRays(&DispatchDesc);
+	CommandContext.RayTracingCommandList()->SetPipelineState1(StateObject);
+	CommandContext.RayTracingCommandList()->DispatchRays(&DispatchDesc);
 
 	// Restore old global descriptor heaps
-	CommandContext.CommandListHandle.GraphicsCommandList()->SetDescriptorHeaps(2, PreviousHeaps);
+	CommandContext.GraphicsCommandList()->SetDescriptorHeaps(2, PreviousHeaps);
 }
 

@@ -12,7 +12,6 @@
 #include "FrameBuffer.h"
 #include "RayContext.h"
 #include "NodeDevice.h"
-#include "CommandListManager.h"
 #include "DirectStorage.h"
 
 #if ENABLE_AFTER_MATH
@@ -90,7 +89,7 @@ namespace platform_ex::Windows::D3D12 {
 
 	void D3D12::Context::SyncCPUGPU(bool force)
 	{
-		GetDefaultCommandContext()->CommandListHandle.FlushResourceBarriers();
+		GetDefaultCommandContext()->FlushResourceBarriers();
 		GetDefaultCommandContext()->FlushCommands();
 
 		device->EndFrame();
@@ -121,7 +120,7 @@ namespace platform_ex::Windows::D3D12 {
 	{
 		auto nodedvice = device->GetNodeDevice(0);
 		auto& commandcontext = nodedvice->GetDefaultCommandContext();
-		commandcontext.CommandListHandle.AddUAVBarrier();
+		commandcontext.AddUAVBarrier();
 	}
 
 	void D3D12::Context::CommitCommandList(Device::CommandType type)

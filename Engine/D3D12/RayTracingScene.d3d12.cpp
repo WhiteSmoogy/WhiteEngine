@@ -120,12 +120,10 @@ void RayTracingScene::BuildAccelerationStructure(CommandContext& CommandContext)
 	BuildDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
 	BuildDesc.SourceAccelerationStructureData = D3D12_GPU_VIRTUAL_ADDRESS(0);
 
-	CommandContext.CommandListHandle.AddUAVBarrier();
-	CommandContext.CommandListHandle.FlushResourceBarriers();
+	CommandContext.AddUAVBarrier();
+	CommandContext.FlushResourceBarriers();
 
-	auto RayTracingCommandList = CommandContext.CommandListHandle.RayTracingCommandList();
+	CommandContext.RayTracingCommandList()->BuildRaytracingAccelerationStructure(&BuildDesc, 0, nullptr);
 
-	RayTracingCommandList->BuildRaytracingAccelerationStructure(&BuildDesc, 0, nullptr);
-
-	CommandContext.CommandListHandle.AddUAVBarrier();
+	CommandContext.AddUAVBarrier();
 }

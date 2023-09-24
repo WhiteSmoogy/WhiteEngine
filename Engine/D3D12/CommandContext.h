@@ -94,7 +94,8 @@ namespace platform_ex::Windows::D3D12 {
 
 		void AddAliasingBarrier(ID3D12Resource* InResourceBefore, ID3D12Resource* InResourceAfter);
 		void AddPendingResourceBarrier(ResourceHolder* Resource, D3D12_RESOURCE_STATES After, uint32 SubResource, CResourceState& ResourceState_OnCommandList);
-		void AddTransitionBarrier(ResourceHolder* pResource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource, CResourceState* ResourceState_OnCommandList);
+		void AddTransitionBarrier(ResourceHolder* pResource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource, CResourceState* ResourceState_OnCommandList = nullptr);
+		void AddUAVBarrier();
 
 		void FlushResourceBarriers();
 
@@ -119,6 +120,10 @@ namespace platform_ex::Windows::D3D12 {
 		auto BaseCommandList() { return GetCommandList().BaseCommandList(); }
 		auto CopyCommandList() { return GetCommandList().CopyCommandList(); }
 		auto GraphicsCommandList() { return GetCommandList().GraphicsCommandList(); }
+		auto RayTracingCommandList() { return GetCommandList().RayTracingCommandList(); }
+
+		auto GraphicsCommandList1() { return GetCommandList().GraphicsCommandList1(); }
+
 	protected:
 		virtual void OpenCommandList();
 		virtual void CloseCommandList();

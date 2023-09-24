@@ -103,7 +103,7 @@ void GlobalOnlineSamplerHeap::ConsolidateUniqueSamplerTables(white::span<UniqueS
 					GetParentDevice()->GetDevice()->CopyDescriptors(
 						1, &DestDescriptor, &Table.Key.Count,
 						Table.Key.Count, Table.CPUTable, nullptr /* sizes */,
-						D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+						DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 					Table.GPUHandle = GetGPUSlotHandle(HeapSlot);
 					UniqueDescriptorTables->emplace(Table);
@@ -116,13 +116,6 @@ void GlobalOnlineSamplerHeap::ConsolidateUniqueSamplerTables(white::span<UniqueS
 
 bool DescriptorCache::SetDescriptorHeaps()
 {
-	// Sometimes there is no underlying command list for the context.
-	// In that case, there is nothing to do and that's ok since we'll call this function again later when a command list is opened.
-	if (Context.CommandListHandle == nullptr)
-	{
-		return false;
-	}
-
 	// See if the descriptor heaps changed.
 	bool bHeapChanged = false;
 	ID3D12DescriptorHeap* const pCurrentViewHeap = CurrentViewHeap->GetHeap();
@@ -148,7 +141,7 @@ bool DescriptorCache::SetDescriptorHeaps()
 	if (bHeapChanged)
 	{
 		ID3D12DescriptorHeap* /*const*/ ppHeaps[] = { pCurrentViewHeap, pCurrentSamplerHeap };
-		Context.CommandListHandle->SetDescriptorHeaps(white::size(ppHeaps), ppHeaps);
+		Context.GraphicsCommandList()->SetDescriptorHeaps(white::size(ppHeaps), ppHeaps);
 
 		pPreviousViewHeap = pCurrentViewHeap;
 		pPreviousSamplerHeap = pCurrentSamplerHeap;
@@ -167,7 +160,7 @@ void DescriptorCache::SetVertexBuffers(VertexBufferCache& Cache)
 		return; // No-op
 	}
 
-	Context.CommandListHandle->IASetVertexBuffers(0, Count, Cache.CurrentVertexBufferViews);
+	Context.GraphicsCommandList()->IASetVertexBuffers(0, Count, Cache.CurrentVertexBufferViews);
 }
 
 
@@ -199,11 +192,11 @@ void DescriptorCache::SetRenderTargets(RenderTargetView** RenderTargetViewArray,
 		Context.TransitionResource(DepthStencilTarget);
 
 		const D3D12_CPU_DESCRIPTOR_HANDLE DSVDescriptor = DepthStencilTarget->GetOfflineCpuHandle();
-		Context.CommandListHandle->OMSetRenderTargets(Count, RTVDescriptors, 0, &DSVDescriptor);
+		Context.GraphicsCommandList()->OMSetRenderTargets(Count, RTVDescriptors, 0, &DSVDescriptor);
 	}
 	else
 	{
-		Context.CommandListHandle->OMSetRenderTargets(Count, RTVDescriptors, 0, nullptr);
+		Context.GraphicsCommandList()->OMSetRenderTargets(Count, RTVDescriptors, 0, nullptr);
 	}
 }
 
@@ -227,8 +220,6 @@ void DescriptorCache::SetUAVs(const RootSignature* RootSignature, UnorderedAcces
 	CD3DX12_CPU_DESCRIPTOR_HANDLE DestDescriptor(CurrentViewHeap->GetCPUSlotHandle(FirstSlotIndex));
 	CD3DX12_GPU_DESCRIPTOR_HANDLE BindDescriptor(CurrentViewHeap->GetGPUSlotHandle(FirstSlotIndex));
 	CD3DX12_CPU_DESCRIPTOR_HANDLE SrcDescriptors[MAX_UAVS];
-
-	auto& CommandList = Context.CommandListHandle;
 
 	const uint32 UAVStartSlot = Cache.StartSlot[ShaderStage];
 	auto& UAVs = Cache.Views[ShaderStage];
@@ -260,13 +251,13 @@ void DescriptorCache::SetUAVs(const RootSignature* RootSignature, UnorderedAcces
 	if (ShaderStage == ShaderType::PixelShader)
 	{
 		const uint32 RDTIndex = RootSignature->UAVRDTBindSlot(ShaderStage);
-		CommandList->SetGraphicsRootDescriptorTable(RDTIndex, BindDescriptor);
+		Context.GraphicsCommandList()->SetGraphicsRootDescriptorTable(RDTIndex, BindDescriptor);
 	}
 	else
 	{
 		wconstraint(ShaderStage == ShaderType::ComputeShader);
 		const uint32 RDTIndex = RootSignature->UAVRDTBindSlot(ShaderStage);
-		CommandList->SetComputeRootDescriptorTable(RDTIndex, BindDescriptor);
+		Context.GraphicsCommandList()->SetComputeRootDescriptorTable(RDTIndex, BindDescriptor);
 	}
 
 	// We changed the descriptor table, so all resources bound to slots outside of the table's range are now dirty.
@@ -288,8 +279,6 @@ void DescriptorCache::SetSRVs(const RootSignature* RootSignature, ShaderResource
 	wconstraint(CurrentDirtySlotMask != 0);	// All dirty slots for the current shader stage.
 	wconstraint(SlotsNeededMask != 0);		// All dirty slots for the current shader stage AND used by the current shader stage.
 	wconstraint(SlotsNeeded != 0);
-
-	auto& CommandList = Context.CommandListHandle;
 
 	auto& SRVs = Cache.Views[ShaderStage];
 
@@ -338,12 +327,12 @@ void DescriptorCache::SetSRVs(const RootSignature* RootSignature, ShaderResource
 	if (ShaderStage == ShaderType::ComputeShader)
 	{
 		const uint32 RDTIndex = RootSignature->SRVRDTBindSlot(ShaderStage);
-		CommandList->SetComputeRootDescriptorTable(RDTIndex, BindDescriptor);
+		Context.GraphicsCommandList()->SetComputeRootDescriptorTable(RDTIndex, BindDescriptor);
 	}
 	else
 	{
 		const uint32 RDTIndex = RootSignature->SRVRDTBindSlot(ShaderStage);
-		CommandList->SetGraphicsRootDescriptorTable(RDTIndex, BindDescriptor);
+		Context.GraphicsCommandList()->SetGraphicsRootDescriptorTable(RDTIndex, BindDescriptor);
 	}
 
 	// We changed the descriptor table, so all resources bound to slots outside of the table's range are now dirty.
@@ -369,7 +358,6 @@ void DescriptorCache::SetConstantBuffers(const RootSignature* RootSignature, Con
 	wconstraint(CurrentDirtySlotMask != 0);	// All dirty slots for the current shader stage.
 	wconstraint(SlotsNeededMask != 0);		// All dirty slots for the current shader stage AND used by the current shader stage.
 
-	auto& CommandList = Context.CommandListHandle;
 	ID3D12Device* Device = GetParentDevice()->GetDevice();
 
 	// Process root CBV
@@ -391,11 +379,11 @@ void DescriptorCache::SetConstantBuffers(const RootSignature* RootSignature, Con
 			wconstraint(CurrentGPUVirtualAddress != 0);
 			if (ShaderStage == ShaderType::ComputeShader)
 			{
-				CommandList->SetComputeRootConstantBufferView(BaseIndex + SlotIndex, CurrentGPUVirtualAddress);
+				Context.GraphicsCommandList()->SetComputeRootConstantBufferView(BaseIndex + SlotIndex, CurrentGPUVirtualAddress);
 			}
 			else
 			{
-				CommandList->SetGraphicsRootConstantBufferView(BaseIndex + SlotIndex, CurrentGPUVirtualAddress);
+				Context.GraphicsCommandList()->SetGraphicsRootConstantBufferView(BaseIndex + SlotIndex, CurrentGPUVirtualAddress);
 			}
 
 			// Clear the dirty bit.
@@ -489,7 +477,7 @@ void DescriptorCache::SetSamplers(const RootSignature* RootSignature, SamplerSta
 		GetParentDevice()->GetDevice()->CopyDescriptors(
 			1, &DestDescriptor, &SlotsNeeded,
 			SlotsNeeded, SrcDescriptors, nullptr /* sizes */,
-			D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+			DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 		// Remember the locations of the samplers in the sampler map
 		if (SlotsNeeded <= white::size(Desc.SamplerID))
@@ -500,17 +488,15 @@ void DescriptorCache::SetSamplers(const RootSignature* RootSignature, SamplerSta
 		}
 	}
 
-	auto& CommandList = Context.CommandListHandle;
-
 	if (ShaderStage == ShaderType::ComputeShader)
 	{
 		const uint32 RDTIndex = RootSignature->SamplerRDTBindSlot(ShaderStage);
-		CommandList->SetComputeRootDescriptorTable(RDTIndex, BindDescriptor);
+		Context.GraphicsCommandList()->SetComputeRootDescriptorTable(RDTIndex, BindDescriptor);
 	}
 	else
 	{
 		const uint32 RDTIndex = RootSignature->SamplerRDTBindSlot(ShaderStage);
-		CommandList->SetGraphicsRootDescriptorTable(RDTIndex, BindDescriptor);
+		Context.GraphicsCommandList()->SetGraphicsRootDescriptorTable(RDTIndex, BindDescriptor);
 	}
 
 	// We changed the descriptor table, so all resources bound to slots outside of the table's range are now dirty.
@@ -547,8 +533,6 @@ void DescriptorCache::SetStreamOutTargets(ResourceHolder** Buffers, uint32 Count
 
 	D3D12_STREAM_OUTPUT_BUFFER_VIEW SOViews[D3D12_SO_BUFFER_SLOT_COUNT] = { };
 
-	auto& CommandList = Context.CommandListHandle;
-
 	// Fill heap slots
 	for (uint32 i = 0; i < SlotsNeeded; i++)
 	{
@@ -570,7 +554,7 @@ void DescriptorCache::SetStreamOutTargets(ResourceHolder** Buffers, uint32 Count
 		}
 	}
 
-	CommandList->SOSetTargets(0, SlotsNeeded, SOViews);
+	Context.GraphicsCommandList()->SOSetTargets(0, SlotsNeeded, SOViews);
 }
 
 bool DescriptorCache::HeapRolledOver(DescriptorHeapType Type)
@@ -861,10 +845,10 @@ void LocalOnlineHeap::Init(uint32 InNumDescriptors, DescriptorHeapType InHeapTyp
 bool LocalOnlineHeap::RollOver()
 {
 	// Enqueue the current entry
-	Entry.SyncPoint = Context.CommandListHandle;
+	Entry.SyncPoint = Context.GetContextSyncPoint();
 	ReclaimPool.emplace(Entry);
 
-	if (ReclaimPool.front().SyncPoint.IsComplete())
+	if (ReclaimPool.front().SyncPoint->IsComplete())
 	{
 		Entry = ReclaimPool.front();
 		ReclaimPool.pop();
@@ -913,14 +897,14 @@ void LocalOnlineHeap::CloseCommandList()
 	{
 		// Track the previous command list
 		SyncPointEntry SyncPoint;
-		SyncPoint.SyncPoint = Context.CommandListHandle;
+		SyncPoint.SyncPoint = Context.GetContextSyncPoint();
 		SyncPoint.LastSlotInUse = NextSlotIndex - 1;
 		SyncPoints.push(SyncPoint);
 
-		Entry.SyncPoint = Context.CommandListHandle;
+		Entry.SyncPoint = Context.GetContextSyncPoint();
 
 		// Free up slots for finished command lists
-		while (!SyncPoints.empty() && !!(SyncPoint = SyncPoints.front()).SyncPoint && SyncPoint.SyncPoint.IsComplete())
+		while (!SyncPoints.empty() && !!(SyncPoint = SyncPoints.front()).SyncPoint && SyncPoint.SyncPoint->IsComplete())
 		{
 			SyncPoints.pop();
 			FirstUsedSlot = SyncPoint.LastSlotInUse + 1;

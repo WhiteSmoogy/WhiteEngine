@@ -148,6 +148,7 @@ namespace platform_ex::Windows::D3D12 {
 		auto BaseCommandList() { return BuildRValuePtr(&Interfaces::CommandList); }
 		auto CopyCommandList() { return BuildRValuePtr(&Interfaces::CopyCommandList); }
 		auto GraphicsCommandList() { return BuildRValuePtr(&Interfaces::GraphicsCommandList); }
+		auto GraphicsCommandList1() { return BuildRValuePtr(&Interfaces::GraphicsCommandList1); }
 
 #ifndef NDEBUG
 		auto DebugCommandList() { return BuildRValuePtr(&Interfaces::DebugCommandList); }

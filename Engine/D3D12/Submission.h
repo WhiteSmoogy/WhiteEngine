@@ -56,6 +56,8 @@ namespace platform_ex::Windows::D3D12 {
 		}
 
 		void Wait() const;
+
+		bool IsComplete();
 	};
 
 	//GPU breadcrumbs for crash debugging

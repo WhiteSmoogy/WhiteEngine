@@ -1,6 +1,5 @@
 #include "NodeDevice.h"
 #include "CommandContext.h"
-#include "CommandListManager.h"
 #include "Adapter.h"
 
 extern int GGlobalViewHeapSize;
@@ -8,9 +7,6 @@ using namespace platform_ex::Windows::D3D12;
 
 NodeDevice::NodeDevice(GPUMaskType InGPUMask, D3D12Adapter* InAdapter)
 	:SingleNodeGPUObject(InGPUMask), AdapterChild(InAdapter),
-	CommandListManager(nullptr),
-	CopyCommandListManager(nullptr),
-	AsyncCommandListManager(nullptr),
 	OnlineDescriptorManager(this),
 	GlobalSamplerHeap(this),
 	NormalDescriptorHeapManager(this)
@@ -22,10 +18,6 @@ NodeDevice::NodeDevice(GPUMaskType InGPUMask, D3D12Adapter* InAdapter)
 	{
 		OfflineDescriptorManagers.emplace_back(this, (DescriptorHeapType)HeapType);
 	}
-
-	CommandListManager = new D3D12CommandListManager(this, D3D12_COMMAND_LIST_TYPE_DIRECT, CommandQueueType::Default);
-	CopyCommandListManager = new D3D12CommandListManager(this, D3D12_COMMAND_LIST_TYPE_COPY, CommandQueueType::Copy);
-	AsyncCommandListManager = new D3D12CommandListManager(this, D3D12_COMMAND_LIST_TYPE_COMPUTE, CommandQueueType::Async);
 }
 
 void NodeDevice::Initialize()
@@ -89,11 +81,7 @@ void NodeDevice::SetupAfterDeviceCreation()
 
 	CreateDefaultViews();
 
-	CommandListManager->Create(white::sfmt("3D Queue %d", GetGPUIndex()));
-	CopyCommandListManager->Create(white::sfmt("Copy Queue %d", GetGPUIndex()));
-	AsyncCommandListManager->Create(white::sfmt("Compute Queue %d", GetGPUIndex()));
-
-	ImmediateCommandContext = new CommandContext(this, true);
+	ImmediateCommandContext = new CommandContext(this,QueueType::Direct, true);
 }
 
 void NodeDevice::CreateDefaultViews()
@@ -167,26 +155,5 @@ void NodeDevice::CreateDefaultViews()
 		// The default sampler must have ID=0
 		// FD3D12DescriptorCache::SetSamplers relies on this
 		wassume(DefaultViews.DefaultSampler->ID == 0);
-	}
-}
-
-ID3D12CommandQueue* NodeDevice::GetD3DCommandQueue(CommandQueueType InQueueType)
-{
-	return GetCommandListManager(InQueueType)->GetD3DCommandQueue();
-}
-
-CommandListManager* NodeDevice::GetCommandListManager(CommandQueueType InQueueType)
-{
-	switch (InQueueType)
-	{
-	case CommandQueueType::Default:
-		return CommandListManager;
-	case CommandQueueType::Copy:
-		return CopyCommandListManager;
-	case CommandQueueType::Async:
-		return AsyncCommandListManager;
-	default:
-		wconstraint(false);
-		return nullptr;
 	}
 }

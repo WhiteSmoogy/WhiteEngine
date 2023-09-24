@@ -80,6 +80,9 @@ namespace platform_ex::Windows::D3D12
 
 		const D3DDefaultViews& GetDefaultViews() const { return DefaultViews; }
 
+		CommandAllocator* ObtainCommandAllocator(QueueType Type);
+		CommandList* ObtainCommandList(CommandAllocator* CommandAllocator);
+
 	private:
 		void SetupAfterDeviceCreation();
 	protected:

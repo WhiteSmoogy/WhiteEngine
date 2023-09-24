@@ -119,7 +119,7 @@ void platform_ex::Windows::D3D12::Display::SwapBuffers()
 
 		DefaultContext.TransitionResource(rt_tex->GetResource(),D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_PRESENT, 0);
 
-		DefaultContext.CommandListHandle.FlushResourceBarriers();
+		DefaultContext.FlushResourceBarriers();
 		DefaultContext.FlushCommands();
 
 		bool allow_tearing = tearing_allow;

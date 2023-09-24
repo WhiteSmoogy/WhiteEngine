@@ -209,6 +209,17 @@ void platform_ex::Windows::D3D12::NodeDevice::ReleaseCommandList(CommandList* Cm
 platform_ex::Windows::D3D12::NodeQueue::NodeQueue(NodeDevice* Device, QueueType QueueType)
 	:Device(Device),Fence(Device->GetParentAdapter(),0,Device->GetGPUIndex()),Type(QueueType)
 {
+	D3D12_COMMAND_QUEUE_DESC CommandQueueDesc = {};
+	CommandQueueDesc.Type = GetD3DCommandListType(QueueType);
+	CommandQueueDesc.Priority = 0;
+	CommandQueueDesc.NodeMask = Device->GetGPUMask().GetNative();
+	CommandQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+
+	CheckHResult(Device->GetDevice()->CreateCommandQueue(&CommandQueueDesc, COMPtr_RefParam(D3DCommandQueue, IID_ID3D12CommandQueue)));
+
+	D3D::Debug(D3DCommandQueue, std::format("{} Queue (GPU {})", GetD3DCommandQueueTypeName(QueueType), Device->GetGPUIndex()).c_str());
+
+	D3D::Debug(Fence.GetFence(), std::format("{} Queue Fence (GPU {})", GetD3DCommandQueueTypeName(QueueType), Device->GetGPUIndex()).c_str());
 }
 
 platform_ex::Windows::D3D12::NodeQueue::~NodeQueue()
@@ -217,5 +228,6 @@ platform_ex::Windows::D3D12::NodeQueue::~NodeQueue()
 
 void platform_ex::Windows::D3D12::NodeQueue::SetupAfterDeviceCreation()
 {
+	//TODO:BreadCrumbs Support
 }
 

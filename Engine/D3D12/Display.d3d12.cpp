@@ -178,6 +178,7 @@ void Display::UpdateFramewBufferView()
 		D3D12_RESOURCE_DESC BackBufferDesc = pResources->GetDesc();
 
 		auto NewResourceWrapper = new ResourceHolder(pResources, D3D12_RESOURCE_STATE_COMMON, BackBufferDesc);
+		NewResourceWrapper->SetIsBackBuffer(true);
 		rt_tex = make_shared<Texture2D>(NewResourceWrapper);
 		rt_tex->SetName(std::format("backbuffer {}", rt_tex_index).c_str());
 

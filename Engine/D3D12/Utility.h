@@ -2,9 +2,12 @@
 
 #include <WBase/winttype.hpp>
 #include "d3d12_dxgi.h"
+#include "WBase/enum.hpp"
 
 
 namespace platform_ex::Windows::D3D12 {
+	using white::has_anyflags;
+
 	class RefCountBase
 	{
 	private:
@@ -137,4 +140,9 @@ namespace platform_ex::Windows::D3D12 {
 		const ComputeHWShader* const ComputeShader,
 		QuantizedBoundShaderState& OutQBSS
 	);
+
+	static bool IsDirectQueueExclusiveD3D12State(D3D12_RESOURCE_STATES InState)
+	{
+		return has_anyflags(InState, D3D12_RESOURCE_STATE_RENDER_TARGET | D3D12_RESOURCE_STATE_DEPTH_WRITE | D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	}
 }

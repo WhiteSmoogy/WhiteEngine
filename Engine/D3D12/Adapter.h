@@ -145,6 +145,11 @@ namespace platform_ex::Windows::D3D12 {
 			return Devices[Index];
 		}
 
+		white::span<NodeDevice* const> GetDevices() const
+		{
+			return white::make_const_span(Devices);
+		}
+
 		UploadHeapAllocator& GetUploadHeapAllocator(uint32 GPUIndex);
 
 		void InitializeRayTracing();

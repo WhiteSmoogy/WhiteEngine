@@ -165,6 +165,8 @@ namespace platform_ex::Windows::D3D12 {
 		{
 			ray_context = std::make_shared<RayContext>(device.get(), this);
 		}
+
+		InitializeSubmissionPipe();
 	}
 
 	Fence & Context::GetFence(Device::CommandType index)

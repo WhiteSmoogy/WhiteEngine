@@ -14,6 +14,16 @@ namespace white::threading {
 
 namespace platform_ex::Windows::D3D12 {
 	const std::chrono::seconds SubmissionTimeOutInSeconds{ 5 };
+	using std::chrono::duration_cast;
+
+	static int32 GetMaxExecuteBatchSize()
+	{
+		return
+#ifndef NDEBUG
+			platform::Render::Caps.IsDebugLayerEnabled ? 1 :
+#endif
+			std::numeric_limits<int32>::max();
+	}
 
 	class D3D12Thread
 	{
@@ -55,7 +65,7 @@ namespace platform_ex::Windows::D3D12 {
 			{
 				// Process the queue until no more progress is made
 				Context::ProcessResult Result;
-				do { Result = (Ctx->*Func)(); } while (white::has_anyflags(Result.Status, Context::QueueStatus::Processed));
+				do { Result = (Ctx->*Func)(); } while (has_anyflags(Result.Status, Context::QueueStatus::Processed));
 
 				WaitForSingleObject(Event, Result.WaitTimeout);
 			}
@@ -131,7 +141,7 @@ namespace platform_ex::Windows::D3D12 {
 				{
 					ProcessResult Result;
 					do { Result = ProcessInterruptQueue(); } while (Event ?
-						!Event->ready() : white::has_anyflags(Result.Status, QueueStatus::Processed));
+						!Event->ready() : has_anyflags(Result.Status, QueueStatus::Processed));
 
 					InterruptCS.unlock();
 				}
@@ -183,7 +193,7 @@ namespace platform_ex::Windows::D3D12 {
 						// Detect a hung GPU
 						if (Payload->SubmissionTime.has_value())
 						{
-							static const uint64 TimeoutCycles = std::chrono::duration_cast<std::chrono::nanoseconds>(SubmissionTimeOutInSeconds).count();
+							static const uint64 TimeoutCycles = duration_cast<std::chrono::nanoseconds>(SubmissionTimeOutInSeconds).count();
 
 							uint64 ElapsedCycles = platform::GetHighResolutionTicks() - Payload->SubmissionTime.value();
 
@@ -198,8 +208,8 @@ namespace platform_ex::Windows::D3D12 {
 								// Adjust the event wait timeout to cause the interrupt thread to wake automatically when
 								// the timeout for this payload is reached, assuming it hasn't been woken by the GPU already.
 								uint64 RemainingCycles = TimeoutCycles - ElapsedCycles;
-								uint32 RemainingMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::nanoseconds(RemainingCycles)).count();
-								Result.WaitTimeout = std::min(Result.WaitTimeout, RemainingMilliseconds);
+								uint64 RemainingMilliseconds = duration_cast<std::chrono::milliseconds>(std::chrono::nanoseconds(RemainingCycles)).count();
+								Result.WaitTimeout = std::min<uint32>(Result.WaitTimeout,static_cast<uint32>(RemainingMilliseconds));
 							}
 						}
 
@@ -319,7 +329,32 @@ namespace platform_ex::Windows::D3D12 {
 						{
 							CommandList* CurrentCommandList = Payload->CommandListsToExecute[Index];
 
-							//
+							if (auto BarrierCommandList = GenerateBarrierCommandListAndUpdateState(CurrentCommandList))
+							{
+								auto& BarrierQueue = BarrierCommandList->Device->GetQueue(BarrierCommandList->Type);
+
+								if (&BarrierQueue == &CurrentQueue)
+								{
+									// Barrier command list will run on the current queue.
+									// Insert it immediately before the corresponding command list that generated it.
+									wassume(BarrierQueue.PayloadToSubmit);
+									BarrierQueue.PayloadToSubmit->CommandListsToExecute.insert(BarrierQueue.PayloadToSubmit->CommandListsToExecute.begin() + (Index++), BarrierCommandList);
+								}
+								else
+								{
+									// Barrier command list will run on a different queue.
+									if (!BarrierQueue.PayloadToSubmit)
+									{
+										BarrierQueue.PayloadToSubmit = new D3D12Payload(BarrierCommandList->Device, BarrierCommandList->Type);
+										QueuesWithPayloads.emplace_back(&BarrierQueue);
+									}
+
+									BarrierQueue.PayloadToSubmit->CommandListsToExecute.emplace_back(BarrierCommandList);
+								}
+
+								// Append the barrier cmdlist begin/end timestamps to the other queue.
+								AccumulateQueries(BarrierCommandList);
+							}
 
 							AccumulateQueries(CurrentCommandList);
 						}
@@ -367,12 +402,22 @@ namespace platform_ex::Windows::D3D12 {
 			Payload->Queue.PendingInterrupt.Enqueue(Payload);
 		}
 
-		if (InterruptThread && white::has_anyflags(Result.Status, QueueStatus::Processed))
+		if (InterruptThread && has_anyflags(Result.Status, QueueStatus::Processed))
 		{
 			InterruptThread->Kick();
 		}
 
 		return Result;
+	}
+
+	void Context::HandleGpuTimeout(D3D12Payload* Payload, double SecondsSinceSubmission)
+	{
+		spdlog::warn("GPU timeout: A payload ({}) on the [{}, {]] queue has not completed after {] seconds."
+			, (void*)Payload
+			, (void*)&Payload->Queue
+			, GetD3DCommandQueueTypeName(Payload->Queue.Type)
+			, SecondsSinceSubmission
+		);
 	}
 
 	void Context::SubmitPayloads(white::span<D3D12Payload*> Payloads)
@@ -395,19 +440,11 @@ namespace platform_ex::Windows::D3D12 {
 				std::unique_lock Lock(SubmissionCS);
 
 				// Process the submission queue until no further progress is being made.
-				while (white::has_anyflags(ProcessSubmissionQueue().Status, QueueStatus::Processed)) {}
+				while (has_anyflags(ProcessSubmissionQueue().Status, QueueStatus::Processed)) {}
 			}
 		}
 	}
 
-	static int32 GetMaxExecuteBatchSize()
-	{
-		return
-#ifndef NDEBUG
-			platform::Render::Caps.IsDebugLayerEnabled ? 1 :
-#endif
-			std::numeric_limits<int32>::max();
-	}
 
 	uint64 NodeQueue::ExecutePayload()
 	{
@@ -504,4 +541,141 @@ namespace platform_ex::Windows::D3D12 {
 		return 0;
 	}
 	
+	CommandList* Context::GenerateBarrierCommandListAndUpdateState(CommandList* SourceCommandList)
+	{
+		ResourceBarrierBatcher Batcher;
+
+		bool bHasGraphicStates = false;
+		for (const auto& PRB : SourceCommandList->State.PendingResourceBarriers)
+		{
+			// Should only be doing this for the few resources that need state tracking
+			wassume(PRB.Resource->RequiresResourceStateTracking());
+
+			CResourceState& ResourceState = PRB.Resource->GetResourceState_OnResource();
+
+			const D3D12_RESOURCE_STATES Before = ResourceState.GetSubresourceState(PRB.SubResource);
+			const D3D12_RESOURCE_STATES After = PRB.State;
+
+			// We shouldn't have any TBD / CORRUPT states here
+			wassume(Before != D3D12_RESOURCE_STATE_TBD && Before != D3D12_RESOURCE_STATE_CORRUPT);
+			wassume(After != D3D12_RESOURCE_STATE_TBD && After != D3D12_RESOURCE_STATE_CORRUPT);
+
+			if (Before != After)
+			{
+				if (SourceCommandList->Type != QueueType::Direct)
+				{
+					wassume(!IsDirectQueueExclusiveD3D12State(After));
+					if (IsDirectQueueExclusiveD3D12State(Before))
+					{
+						// If we are transitioning to a subset of the already set state on the resource (SRV_MASK -> SRV_COMPUTE for example)
+						// and there are no other transitions done on this resource in the command list then this transition can be ignored
+						// (otherwise a transition from SRV_COMPUTE as before state might already be recorded in the command list)
+						CResourceState& ResourceState_OnCommandList = SourceCommandList->GetResourceState_OnCommandList(PRB.Resource);
+						if (ResourceState_OnCommandList.HasInternalTransition() || !has_anyflags(Before, After))
+						{
+							bHasGraphicStates = true;
+						}
+						else
+						{
+							// should be the same final state as well
+							wassume(After == ResourceState_OnCommandList.GetSubresourceState(PRB.SubResource));
+
+							// Force the original state again if we're skipping this transition
+							ResourceState_OnCommandList.SetSubresourceState(PRB.SubResource, Before);
+							continue;
+						}
+					}
+				}
+
+				if (PRB.Resource->IsBackBuffer() && has_anyflags(After, BackBufferBarrierWriteTransitionTargets))
+				{
+					Batcher.AddTransition(PRB.Resource, Before, After, PRB.SubResource);
+				}
+				// Special case for UAV access resources transitioning from UAV (then they need to transition from the cache hidden state instead)
+				else if (PRB.Resource->GetUAVAccessResource() && has_anyflags(Before | After, D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
+				{
+					// After state should never be UAV here
+					wassume(!has_anyflags(After, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+
+					// Add the aliasing barrier
+					Batcher.AddAliasingBarrier(PRB.Resource->GetUAVAccessResource(), PRB.Resource->Resource());
+
+					D3D12_RESOURCE_STATES UAVState = ResourceState.GetUAVHiddenResourceState();
+					wassume(UAVState != D3D12_RESOURCE_STATE_TBD && !has_anyflags(UAVState, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+					if (UAVState != After)
+					{
+						Batcher.AddTransition(PRB.Resource, UAVState, After, PRB.SubResource);
+					}
+				}
+				else
+				{
+					Batcher.AddTransition(PRB.Resource, Before, After, PRB.SubResource);
+				}
+			}
+		}
+
+		// Update the tracked resource states with the final states from the command list
+		for (auto const& [Resource, CommandListState] : SourceCommandList->State.TrackedResourceState)
+		{
+			CResourceState& ResourceState = Resource->GetResourceState_OnResource();
+			if (CommandListState.AreAllSubresourcesSame())
+			{
+				D3D12_RESOURCE_STATES State = CommandListState.GetSubresourceState(0);
+				if (State != D3D12_RESOURCE_STATE_TBD)
+				{
+					ResourceState.SetResourceState(State);
+				}
+
+				D3D12_RESOURCE_STATES UAVHiddenState = CommandListState.GetUAVHiddenResourceState();
+				if (UAVHiddenState != D3D12_RESOURCE_STATE_TBD)
+				{
+					wassume(Resource->GetUAVAccessResource());
+					ResourceState.SetUAVHiddenResourceState(UAVHiddenState);
+				}
+			}
+			else
+			{
+				for (uint32 Subresource = 0; Subresource < Resource->GetSubresourceCount(); ++Subresource)
+				{
+					D3D12_RESOURCE_STATES State = CommandListState.GetSubresourceState(Subresource);
+					if (State != D3D12_RESOURCE_STATE_TBD)
+					{
+						ResourceState.SetSubresourceState(Subresource, State);
+					}
+				}
+			}
+		}
+
+		if (Batcher.IsEmpty())
+			return nullptr;
+
+		auto& Queue = SourceCommandList->Device->GetQueue(
+			bHasGraphicStates
+			? QueueType::Direct
+			: SourceCommandList->Type
+		);
+
+		// Get an allocator if we don't have one
+		if (!Queue.BarrierAllocator)
+			Queue.BarrierAllocator = Queue.Device->ObtainCommandAllocator(Queue.Type);
+
+		// Get a new command list
+		auto* BarrierCommandList = Queue.Device->ObtainCommandList(Queue.BarrierAllocator);
+
+		Batcher.Flush(*BarrierCommandList);
+		BarrierCommandList->Close();
+
+		return BarrierCommandList;
+	}
+
+	void Context::ForEachQueue(std::function<void(NodeQueue&)> Callback)
+	{
+		for (auto* Device : device->GetDevices())
+		{
+			for (auto& Queue : Device->GetQueues())
+			{
+				Callback(Queue);
+			}
+		}
+	}
 }

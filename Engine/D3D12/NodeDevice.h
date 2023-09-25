@@ -86,6 +86,7 @@ namespace platform_ex::Windows::D3D12
 		void ReleaseCommandList(CommandList* Cmd);
 
 		NodeQueue& GetQueue(QueueType QueueType) { return Queues[(uint32)QueueType]; }
+		white::span<NodeQueue> GetQueues() { return white::make_span(Queues); }
 
 	private:
 		void SetupAfterDeviceCreation();

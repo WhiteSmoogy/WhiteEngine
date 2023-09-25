@@ -122,6 +122,8 @@ namespace platform_ex {
 				void ForEachQueue(std::function<void(NodeQueue&)> Callback);
 
 				void HandleGpuTimeout(D3D12Payload* Payload, double SecondsSinceSubmission);
+
+				static CommandList* GenerateBarrierCommandListAndUpdateState(CommandList* SourceCommandList);
 			private:
 				DXGI::AdapterList adapter_list;
 

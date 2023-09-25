@@ -27,7 +27,12 @@ namespace platform_ex::Windows {
 			Multi,
 		};
 
-		
+		constexpr D3D12_RESOURCE_STATES BackBufferBarrierWriteTransitionTargets = D3D12_RESOURCE_STATES(
+			uint32(D3D12_RESOURCE_STATE_RENDER_TARGET) |
+			uint32(D3D12_RESOURCE_STATE_UNORDERED_ACCESS) |
+			uint32(D3D12_RESOURCE_STATE_STREAM_OUT) |
+			uint32(D3D12_RESOURCE_STATE_COPY_DEST) |
+			uint32(D3D12_RESOURCE_STATE_RESOLVE_DEST));
 
 		class CResourceState
 		{
@@ -195,6 +200,9 @@ namespace platform_ex::Windows {
 
 			bool IsDepthStencilResource() const { return bDepthStencil; }
 
+			bool IsBackBuffer() const { return bIsBackBuffer; }
+			void SetIsBackBuffer(bool bBackBufferIn) { bIsBackBuffer = bBackBufferIn; }
+
 			D3D12_HEAP_TYPE GetHeapType() const
 			{
 				return heap_type;
@@ -334,6 +342,7 @@ namespace platform_ex::Windows {
 
 			bool bDepthStencil : 1;
 			bool bRequiresResourceStateTracking : 1;
+			bool bIsBackBuffer : 1;
 
 			uint16 SubresourceCount = 0;
 		private:

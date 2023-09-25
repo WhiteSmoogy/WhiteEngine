@@ -19,11 +19,11 @@ namespace platform_ex::Windows::D3D12 {
 
 	struct ResolveFence
 	{
-		std::shared_ptr<FenceCore> Fence;
+		FenceCore* Fence;
 		uint64 Value = 0;
 
 		ResolveFence() = default;
-		ResolveFence(std::shared_ptr<FenceCore> InFence, uint64 InValue)
+		ResolveFence(FenceCore* InFence, uint64 InValue)
 			:Fence(InFence), Value(InValue)
 		{}
 	};
@@ -41,6 +41,9 @@ namespace platform_ex::Windows::D3D12 {
 
 	class SyncPoint :public RefCountBase
 	{
+		friend class NodeQueue;
+		friend class Context;
+
 		SyncPoint(SyncPoint const&) = delete;
 		SyncPoint(SyncPoint&&) = delete;
 
@@ -60,10 +63,7 @@ namespace platform_ex::Windows::D3D12 {
 			return new SyncPoint(Type);
 		}
 
-		void Wait() const
-		{
-			CompletionEvent->wait();
-		}
+		void Wait() const;
 
 		bool IsComplete()
 		{

@@ -49,6 +49,12 @@ namespace white {
 		\note µ¥Î»ÎªºÁÃë¡£
 		*/
 		using TimeSpan = std::chrono::duration<Duration::rep, std::milli>;
+
+		template<typename T>
+		T HighTicksToSecond(uint64 t)
+		{
+			return (std::chrono::duration_cast<std::chrono::duration<T>>(std::chrono::nanoseconds(t))).count();
+		}
 	}
 }
 

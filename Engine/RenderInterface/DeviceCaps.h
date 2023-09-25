@@ -27,6 +27,8 @@ namespace platform{
 			std::function<bool(EFormat, SampleDesc)>	RenderTargetMSAASupport;
 
 			white::math::uint3 MaxDispatchThreadGroupsPerDimension;
+
+			bool IsDebugLayerEnabled = false;
 		};
 
 		extern DeviceCaps Caps;

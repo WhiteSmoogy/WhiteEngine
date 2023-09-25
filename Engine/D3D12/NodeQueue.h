@@ -96,7 +96,6 @@ namespace platform_ex::Windows::D3D12 {
 				if (!empty())
 				{
 					auto Result = front();
-					pop();
 
 					return Result;
 				}
@@ -104,7 +103,28 @@ namespace platform_ex::Windows::D3D12 {
 				return nullptr;
 			}
 
-			PayloadQueue(PayloadQueue&& Queue)
+			void Enqueue(D3D12Payload* Payload)
+			{
+				std::unique_lock lock{ Mutex };
+
+				push(Payload);
+			}
+
+			bool Pop()
+			{
+				std::unique_lock lock{ Mutex };
+
+				if (!empty())
+				{
+					pop();
+
+					return true;
+				}
+
+				return false;
+			}
+
+			PayloadQueue(PayloadQueue&& Queue) noexcept
 				:std::queue<D3D12Payload*>(Queue), Mutex()
 			{
 			}

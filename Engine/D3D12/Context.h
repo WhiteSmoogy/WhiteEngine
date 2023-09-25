@@ -19,6 +19,8 @@ namespace platform_ex {
 
 			class CommandContext;
 
+			class D3D12Thread;
+
 			class Context : public platform::Render::Context {
 			public:
 				DefGetter(override, Device&, Device, *device);
@@ -79,10 +81,47 @@ namespace platform_ex {
 					return InnerResourceRecycle(type,resource, size);
 				}
 
+				void ProcessInterruptQueueUntil(SubmissionEventRef Event);
+
 			private:
 				void ContextEx(ID3D12Device* device, ID3D12CommandQueue* cmd_queue);
 
 				Fence& GetFence(Device::CommandType);
+			private:
+				friend class D3D12Thread;
+
+				D3D12Thread* SubmissionThread = nullptr;
+				D3D12Thread* InterruptThread = nullptr;
+
+				enum class QueueStatus
+				{
+					None = 0,
+
+					// Work was processed through the queue.
+					Processed = 1 << 0,
+
+					// The queue has further, unprocessed work.
+					Pending = 1 << 1
+				};
+
+				struct ProcessResult
+				{
+					QueueStatus Status = QueueStatus::None;
+					uint32 WaitTimeout = INFINITE;
+				};
+
+				std::mutex SubmissionCS;
+				std::mutex InterruptCS;
+
+				ProcessResult ProcessInterruptQueue();
+				ProcessResult ProcessSubmissionQueue();
+
+				void InitializeSubmissionPipe();
+				void ShutdownSubmissionPipe();
+
+				void ForEachQueue(std::function<void(NodeQueue&)> Callback);
+
+				void HandleGpuTimeout(D3D12Payload* Payload, double SecondsSinceSubmission);
 			private:
 				DXGI::AdapterList adapter_list;
 

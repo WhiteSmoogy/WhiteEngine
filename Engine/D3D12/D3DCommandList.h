@@ -52,6 +52,7 @@ namespace platform_ex::Windows::D3D12 {
 		friend CommandContext;
 		friend ResourceBarrierBatcher;
 		friend class ContextCommon;
+		friend class NodeQueue;
 
 		CommandList(CommandList const&) = delete;
 		CommandList(CommandList&&) = delete;

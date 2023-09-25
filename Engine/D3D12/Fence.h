@@ -29,6 +29,7 @@ namespace platform_ex::Windows::D3D12 {
 		inline uint32 GetGPUIndex() const { return GPUIndex; }
 
 		uint64 FenceValueAvailableAt;
+		bool bInterruptAwaited = false;
 	private:
 		uint32 GPUIndex;
 

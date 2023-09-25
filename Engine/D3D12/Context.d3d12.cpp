@@ -72,11 +72,12 @@ namespace platform_ex::Windows::D3D12 {
 #endif
 		{
 #ifndef NDEBUG
-
 			COMPtr<ID3D12Debug> debug_ctrl;
 			if (SUCCEEDED(D3D12::GetDebugInterface(COMPtr_RefParam(debug_ctrl, IID_ID3D12Debug)))) {
 				WAssertNonnull(debug_ctrl);
 				debug_ctrl->EnableDebugLayer();
+
+				platform::Render::Caps.IsDebugLayerEnabled = true;
 			}
 #endif
 		}

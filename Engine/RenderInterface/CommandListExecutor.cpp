@@ -99,7 +99,7 @@ class RenderTaskArray
 {
 public:
 	RenderTaskArray()
-		:tasks{ RenderTask(nullptr),RenderTask(nullptr),RenderTask(nullptr),RenderTask(nullptr),RenderTask(nullptr),RenderTask(nullptr)}
+		:tasks{ RenderTask(nullptr),RenderTask(nullptr),RenderTask(nullptr),RenderTask(nullptr)}
 	{}
 
 	void assign(RenderTask&& t)
@@ -116,7 +116,7 @@ public:
 		WAssert(false, "out of max render_tasks");
 	}
 
-	RenderTask tasks[6];
+	RenderTask tasks[4];
 };
 
 RenderTaskArray SwapTasks;

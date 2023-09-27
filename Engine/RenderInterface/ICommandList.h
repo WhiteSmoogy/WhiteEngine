@@ -4,6 +4,7 @@
 #include "IRayTracingGeometry.h"
 #include "IRayTracingScene.h"
 #include "Runtime/MemStack.h"
+#include "Core/Threading/ManualResetEvent.h"
 
 //Command List definitions for queueing up & executing later.
 
@@ -22,18 +23,30 @@ namespace platform::Render {
 	};
 
 	template <typename TCmd>
-	struct Command : public CommandBase
+	struct LadmbdaCommand : public CommandBase
 	{
 		TCmd Cmd;
 
-		Command(TCmd&& InCmd)
+		LadmbdaCommand(TCmd&& InCmd)
 			:Cmd(InCmd)
 		{}
 
 		void ExecuteAndDestruct(CommandListBase& CmdList, CommandListContext& Context) override final
 		{
 			Cmd(CmdList);
-			this->~Command();
+			Cmd.~TCmd();
+		}
+	};
+
+	template <typename TCmd> 
+	struct TCommand : public CommandBase
+	{
+		void ExecuteAndDestruct(CommandListBase& CmdList, CommandListContext& Context) override final
+		{
+			TCmd* ThisCmd = static_cast<TCmd*>(this);
+
+			ThisCmd->Execute(CmdList);
+			ThisCmd->~TCmd();
 		}
 	};
 
@@ -154,13 +167,13 @@ namespace platform::Render {
 		template<typename TCmd>
 		void InsertCommand(TCmd&& Cmd)
 		{
-			new (AllocCommand(sizeof(Command<TCmd>), alignof(Command<TCmd>))) Command<TCmd> {std::forward<TCmd>(Cmd)};
+			new (AllocCommand(sizeof(LadmbdaCommand<TCmd>), alignof(LadmbdaCommand<TCmd>))) LadmbdaCommand<TCmd> {std::forward<TCmd>(Cmd)};
 		}
 
 		template<typename TCmd,typename... Args>
 		void InsertCommand(TCmd&& Cmd,Args&&... args)
 		{
-			new (AllocCommand(sizeof(Command<TCmd>), alignof(Command<TCmd>))) Command<TCmd> {TCmd(std::forward<Args>(args)...)};
+			new (AllocCommand(sizeof(LadmbdaCommand<TCmd>), alignof(LadmbdaCommand<TCmd>))) LadmbdaCommand<TCmd> {TCmd(std::forward<Args>(args)...)};
 		}
 
 		void SetShaderSampler(const ComputeHWShader* Shader, uint32 SamplerIndex, const TextureSampleDesc& Desc)
@@ -423,7 +436,13 @@ namespace platform::Render {
 	class CommandListImmediate : public CommandList
 	{
 	public:
+		using RIFenceType = white::threading::manual_reset_event;
+		using RIFenceTypeRef = std::shared_ptr<RIFenceType>;
+
+
 		void ImmediateFlush();
+
+		RIFenceTypeRef ThreadFence();
 	};
 
 	class CommandListExecutor

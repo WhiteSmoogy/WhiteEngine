@@ -10,6 +10,9 @@ bool platform::Render::GRenderInterfaceSupportCommandThread = true;
 
 CommandListExecutor platform::Render::GCommandList;
 
+#define ALLOC_COMMAND(...) new ( AllocCommand(sizeof(__VA_ARGS__), alignof(__VA_ARGS__)) ) __VA_ARGS__
+
+
 platform::Render::CommandListBase::CommandListBase()
 	:Context(nullptr),MemManager(0)
 {
@@ -43,6 +46,9 @@ void platform::Render::CommandList::EndFrame()
 	CommandListExecutor::GetImmediateCommandList().ImmediateFlush();
 }
 
+static CommandListImmediate::RIFenceTypeRef PresentFences[2];
+static int PresentFenceIndex = 0;
+
 void platform::Render::CommandList::Present(Display* display)
 {
 	InsertCommand([=](CommandListBase& CmdList) {
@@ -50,10 +56,23 @@ void platform::Render::CommandList::Present(Display* display)
 	});
 
 	//get event
+	if (IsRunningCommandInThread())
+	{
+		PresentFences[PresentFenceIndex] = static_cast<CommandListImmediate*>(this)->ThreadFence();
+	}
 
 	CommandListExecutor::GetImmediateCommandList().ImmediateFlush();
 
 	//wait prev
+	if (IsRunningCommandInThread())
+	{
+		uint32 PreviousFrameFenceIndex = 1 - PresentFenceIndex;
+		auto& LastFrameFence = PresentFences[PreviousFrameFenceIndex];
+		if(LastFrameFence)
+			LastFrameFence->wait();
+		PresentFences[PreviousFrameFenceIndex] = nullptr;
+		PresentFenceIndex = PreviousFrameFenceIndex;
+	}
 
 	GRenderIF->AdvanceDisplayBuffer();
 }
@@ -65,4 +84,34 @@ SRVRIRef platform::Render::CommandList::CreateShaderResourceView(const platform:
 UAVRIRef platform::Render::CommandList::CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format)
 {
 	return GRenderIF->GetDevice().CreateUnorderedAccessView(InBuffer, format);
+}
+
+using RIFenceTypeRef = std::shared_ptr<CommandListImmediate::RIFenceType>;
+
+struct ThreadFenceCommand :TCommand< ThreadFenceCommand>
+{
+	RIFenceTypeRef Fence;
+
+	ThreadFenceCommand()
+		:Fence(std::make_shared<CommandListImmediate::RIFenceType>())
+	{
+	}
+
+	void Execute(CommandListBase& CmdList)
+	{
+		Fence->set();
+		Fence.reset();
+	}
+};
+
+CommandListImmediate::RIFenceTypeRef platform::Render::CommandListImmediate::ThreadFence()
+{
+	if (IsRunningCommandInThread())
+	{
+		auto Cmd = ALLOC_COMMAND(ThreadFenceCommand)();
+
+		return Cmd->Fence;
+	}
+
+	return {};
 }

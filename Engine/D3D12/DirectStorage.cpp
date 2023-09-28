@@ -169,6 +169,8 @@ struct DStorageSubmitCommand : platform::Render::TCommand< DStorageSubmitCommand
 	}
 };
 
+using platform::Render::CommandListExecutor;
+
 std::shared_ptr<platform_ex::DStorageSyncPoint> DirectStorage::SubmitUpload(platform_ex::DStorageQueueType type)
 {
 	auto status_index = RequestNextStatusIndex();
@@ -176,7 +178,8 @@ std::shared_ptr<platform_ex::DStorageSyncPoint> DirectStorage::SubmitUpload(plat
 
 	if (type == platform_ex::DStorageQueueType::Gpu)
 	{
-		CL_ALLOC_COMMAND(platform::Render::CommandListExecutor::GetImmediateCommandList(), DStorageSubmitCommand)(gpu_upload_queue, syncpoint);
+		CL_ALLOC_COMMAND(CommandListExecutor::GetImmediateCommandList(), DStorageSubmitCommand)(gpu_upload_queue, syncpoint);
+		CommandListExecutor::GetImmediateCommandList().ImmediateFlush();
 	}
 	else
 	{

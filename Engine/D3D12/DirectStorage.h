@@ -7,6 +7,9 @@
 #include "d3d12_dxgi.h"
 #include <shared_mutex>
 
+
+struct DStorageSubmitCommand;
+
 namespace platform_ex::Windows::D3D12
 {
 	class DStorageFile : public platform_ex::DStorageFile
@@ -41,6 +44,8 @@ namespace platform_ex::Windows::D3D12
 
 		uint32 RequestNextStatusIndex();
 	private:
+		friend DStorageSubmitCommand;
+
 		struct DStorageSyncPoint :platform_ex::DStorageSyncPoint
 		{
 			DStorageSyncPoint(platform_ex::COMPtr<IDStorageStatusArray> statusArray,uint32 index);

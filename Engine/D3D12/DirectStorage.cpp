@@ -6,6 +6,9 @@
 #include "GraphicsBuffer.hpp"
 #include <zlib.h>
 #include <spdlog/spdlog.h>
+#include "RenderInterface/ICommandList.h"
+#include "CommandContext.h"
+#include "NodeDevice.h"
 
 #include <WinPixEventRuntime/pix3.h>
 
@@ -148,18 +151,41 @@ void DirectStorage::DStorageSyncPoint::AwaitSuspend(std::coroutine_handle<> hand
 	::SetThreadpoolWait(wait, complete_event, nullptr);
 }
 
+struct DStorageSubmitCommand : platform::Render::TCommand< DStorageSubmitCommand>
+{
+	platform_ex::COMPtr<IDStorageQueue1> Queue;
+	std::shared_ptr<DirectStorage::DStorageSyncPoint> SyncPoint;
+
+	DStorageSubmitCommand(platform_ex::COMPtr<IDStorageQueue1> InQueue, std::shared_ptr<DirectStorage::DStorageSyncPoint> InSyncPoint)
+		:Queue(InQueue), SyncPoint(InSyncPoint)
+	{
+	}
+
+	void Execute(platform::Render::CommandListBase& CmdList)
+	{
+		Queue->EnqueueSetEvent(SyncPoint->complete_event);
+		Queue->EnqueueStatus(SyncPoint->status_array.Get(), SyncPoint->status_index);
+		Queue->Submit();
+	}
+};
+
 std::shared_ptr<platform_ex::DStorageSyncPoint> DirectStorage::SubmitUpload(platform_ex::DStorageQueueType type)
 {
 	auto status_index = RequestNextStatusIndex();
 	auto syncpoint = std::make_shared<DStorageSyncPoint>(status_array, status_index);
 
-	IDStorageQueue1* upload_queue = type == platform_ex::DStorageQueueType::Gpu ? gpu_upload_queue.Get() : memory_upload_queue.Get();
+	if (type == platform_ex::DStorageQueueType::Gpu)
+	{
+		CL_ALLOC_COMMAND(platform::Render::CommandListExecutor::GetImmediateCommandList(), DStorageSubmitCommand)(gpu_upload_queue, syncpoint);
+	}
+	else
+	{
+		memory_upload_queue->EnqueueSetEvent(syncpoint->complete_event);
+		memory_upload_queue->EnqueueStatus(syncpoint->status_array.Get(), syncpoint->status_index);
+		memory_upload_queue->Submit();
+	}
 
-	upload_queue->EnqueueSetEvent(syncpoint->complete_event);
-	upload_queue->EnqueueStatus(syncpoint->status_array.Get(), syncpoint->status_index);
-	upload_queue->Submit();
 	file_references.clear();
-
 	return syncpoint;
 }
 

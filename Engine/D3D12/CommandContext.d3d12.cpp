@@ -752,6 +752,13 @@ void CommandContext::PopEvent()
 
 void ContextCommon::FlushCommands(D3DFlushFlags FlushFlags)
 {
+	wassume(IsDefaultContext());
+
+	if (IsOpen())
+	{
+		CloseCommandList();
+	}
+
 	SyncPointRef SyncPoint;
 	SubmissionEventRef SubmissionEvent;
 
@@ -840,13 +847,13 @@ void ContextCommon::Finalize(std::vector<D3D12Payload*>& OutPayloads)
 			? Payloads[0]
 			: GetPayload(Phase::Wait);
 
-		Payload->SyncPointsToWait.insert_range(Payload->SyncPointsToWait.end(), BatchedSyncPoints.ToWait);
+		Payload->SyncPointsToWait.append_range(BatchedSyncPoints.ToWait);
 		BatchedSyncPoints.ToWait.clear();
 	}
 
 	if (!BatchedSyncPoints.ToSignal.empty())
 	{
-		GetPayload(Phase::Signal)->SyncPointsToSignal.insert_range(GetPayload(Phase::Signal)->SyncPointsToSignal.end(), BatchedSyncPoints.ToSignal);
+		GetPayload(Phase::Signal)->SyncPointsToSignal.append_range(BatchedSyncPoints.ToSignal);
 		BatchedSyncPoints.ToSignal.clear();
 	}
 
@@ -861,7 +868,8 @@ void ContextCommon::Finalize(std::vector<D3D12Payload*>& OutPayloads)
 	ContextSyncPoint = nullptr;
 
 	// Move the list of payloads out of this context
-	OutPayloads.insert_range(OutPayloads.end(), std::move(Payloads));
+	OutPayloads.append_range(Payloads);
+	Payloads.resize(0);
 }
 
 void ContextCommon::ConditionalSplitCommandList()

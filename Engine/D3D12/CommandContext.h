@@ -99,7 +99,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		void FlushResourceBarriers();
 
-		SyncPoint* GetContextSyncPoint()
+		SyncPointRef GetContextSyncPoint()
 		{
 			if (!ContextSyncPoint)
 			{
@@ -107,7 +107,7 @@ namespace platform_ex::Windows::D3D12 {
 				BatchedSyncPoints.ToSignal.emplace_back(ContextSyncPoint);
 			}
 
-			return ContextSyncPoint.Get();
+			return ContextSyncPoint;
 		}
 
 		// Flushes any pending commands in this context to the GPU.

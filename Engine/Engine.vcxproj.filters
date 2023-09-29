@@ -1174,6 +1174,9 @@
     <ClInclude Include="D3D12\Submission.h">
       <Filter>D3D12</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Threading\Thread.h">
+      <Filter>Core\Threading</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Asset">

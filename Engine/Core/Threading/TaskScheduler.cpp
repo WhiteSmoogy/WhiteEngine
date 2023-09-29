@@ -9,6 +9,7 @@
 #include <thread>
 #include <mutex>
 #include <queue>
+#include "Thread.h"
 
 using namespace platform;
 using WhiteEngine::SpinMutex;
@@ -21,10 +22,6 @@ namespace
 		constexpr std::size_t max_local_queue_size = 1024 * 1024 / sizeof(void*);
 		constexpr std::size_t initial_local_queue_size = 256;
 	}
-}
-
-namespace white::threading {
-	void SetThreadDescription(void* hThread, const wchar_t* lpThreadDescription);
 }
 
 thread_local white::coroutine::ThreadScheduler* thread_local_scheduler = nullptr;
@@ -261,7 +258,7 @@ namespace white::coroutine {
 		native_handle = fire_forget.native_handle();
 
 		
-		std::wstring descirption = white::sfmt(L"Scheduler Worker%d", thread_index);
+		std::string descirption = white::sfmt("Scheduler Worker%d", thread_index);
 
 		white::threading::SetThreadDescription(native_handle, descirption.c_str());
 
@@ -361,8 +358,8 @@ namespace white::threading {
 			std::thread io_thread1([this] {this->io_scheduler.process_events(); });
 			std::thread io_thread2([this] {this->io_scheduler.process_events(); });
 
-			SetThreadDescription(io_thread1.native_handle(), L"IO Thread 1");
-			SetThreadDescription(io_thread2.native_handle(), L"IO Thread 2");
+			SetThreadDescription(io_thread1.native_handle(), "IO Thread 1");
+			SetThreadDescription(io_thread2.native_handle(), "IO Thread 2");
 
 			io_thread1.detach();
 			io_thread2.detach();

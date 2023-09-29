@@ -2,15 +2,12 @@
 #include "NodeQueue.h"
 #include "NodeDevice.h"
 #include "Context.h"
+#include "Core/Threading/Thread.h"
 
 #define D3D12_PLATFORM_SUPPORTS_BLOCKING_FENCES 1
 
 #define D3D12_USE_SUBMISSION_THREAD (1)
 #define D3D12_USE_INTERRUPT_THREAD  (1 && D3D12_PLATFORM_SUPPORTS_BLOCKING_FENCES)
-
-namespace white::threading {
-	void SetThreadDescription(void* hThread, const wchar_t* lpThreadDescription);
-}
 
 namespace platform_ex::Windows::D3D12 {
 	const std::chrono::seconds SubmissionTimeOutInSeconds{ 5 };
@@ -35,12 +32,12 @@ namespace platform_ex::Windows::D3D12 {
 			return reinterpret_cast<D3D12Thread*>(param)->Run();
 		}
 
-		D3D12Thread(const wchar_t* Name, Context* Context, QueueFunc InFunc)
+		D3D12Thread(const char* Name, Context* Context, QueueFunc InFunc)
 			:Ctx(Context),Func(InFunc)
 			,Event(CreateEventW(nullptr,false,false ,nullptr))
 			,Thread(CreateThread(nullptr,128*1024, StartAddress,this,0,nullptr))
 		{
-			SetThreadDescription(Thread, Name);
+			white::threading::SetThreadDescription(Thread, Name);
 		}
 
 		~D3D12Thread()
@@ -87,11 +84,11 @@ namespace platform_ex::Windows::D3D12 {
 	void Context::InitializeSubmissionPipe()
 	{
 #if D3D12_USE_INTERRUPT_THREAD
-		InterruptThread = new D3D12Thread(L"D3DInterruptThread", this, &Context::ProcessInterruptQueue);
+		InterruptThread = new D3D12Thread("D3DInterruptThread", this, &Context::ProcessInterruptQueue);
 #endif
 
 #if D3D12_USE_SUBMISSION_THREAD
-		SubmissionThread = new D3D12Thread(L"D3DSubmissionThread",this, &Context::ProcessSubmissionQueue);
+		SubmissionThread = new D3D12Thread("D3DSubmissionThread",this, &Context::ProcessSubmissionQueue);
 #endif
 	}
 

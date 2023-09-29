@@ -1313,13 +1313,6 @@ struct std::formatter<D3D12_HEAP_TYPE, CharT> : std::formatter<std::string_view,
 	}
 };
 
-#if WFL_Win64
-#ifndef USE_PIX
-#define USE_PIX 1
-#endif
-
-#endif
-
 #ifndef ENABLE_AFTER_MATH
 #define ENABLE_AFTER_MATH 1
 #endif

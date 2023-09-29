@@ -259,6 +259,7 @@
     <ClInclude Include="Core\Threading\SpinMutex.h" />
     <ClInclude Include="Core\Threading\SpinWait.h" />
     <ClInclude Include="Core\Threading\TaskScheduler.h" />
+    <ClInclude Include="Core\Threading\Thread.h" />
     <ClInclude Include="D3D12\Adapter.h" />
     <ClInclude Include="D3D12\Allocation.h" />
     <ClInclude Include="D3D12\BuiltInRayTracingShaders.h" />

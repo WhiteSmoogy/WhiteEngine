@@ -2,6 +2,7 @@
 #include "WFramework/Helper/Initialization.H"
 #include <WFramework/Win32/WCLib/Mingw32.h>
 #include <WFramework/Helper/GUIApplication.h>
+#include <Core/Threading/Thread.h>
 #include <commctrl.h>
 
 using namespace Test;
@@ -51,6 +52,7 @@ TestFrameWork::TestFrameWork(const std::wstring_view & name)
 		return ret;
 	}));
 
+	white::threading::SetThreadDescription(p_wnd_thrd->GetNativeHandle(), "WindowThread");
 
 	while (!p_wnd_thrd->GetWindowPtr())
 		// TODO: Resolve magic sleep duration.

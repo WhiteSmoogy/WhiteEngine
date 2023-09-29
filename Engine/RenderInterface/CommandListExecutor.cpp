@@ -1,13 +1,12 @@
 #include "ICommandList.h"
 #include "Core/Coroutine/ThreadScheduler.h"
+#include "Core/Threading/Thread.h"
 #include "System/SystemEnvironment.h"
 #include <spdlog/spdlog.h>
 #include <coroutine>
 
 extern thread_local white::coroutine::ThreadScheduler* thread_local_scheduler;
-namespace white::threading {
-	void SetThreadDescription(void* hThread, const wchar_t* lpThreadDescription);
-}
+
 namespace white::coroutine
 {
 	class RenderThreadScheduler::thread_state
@@ -66,7 +65,7 @@ namespace white::coroutine
 		);
 		native_handle = fire_forget.native_handle();
 
-		white::threading::SetThreadDescription(native_handle, L"Scheduler Render");
+		white::threading::SetThreadDescription(native_handle, "CommandExecuteThread");
 
 		fire_forget.detach();
 	}

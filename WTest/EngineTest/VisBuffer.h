@@ -84,14 +84,16 @@ private:
 		OnGUI();
 		ImGui::Render();
 
-		Trinf::Scene->AddResource(sponza_trinf);
+		{
+			SCOPED_GPU_EVENT(CmdList, Trinf);
+			Trinf::Scene->AddResource(sponza_trinf);
 
-		Trinf::Scene->BeginAsyncUpdate(CmdList);
+			Trinf::Scene->BeginAsyncUpdate(CmdList);
 
-		RenderTrinf(CmdList);
+			RenderTrinf(CmdList);
 
-		Trinf::Scene->EndAsyncUpdate(CmdList);
-
+			Trinf::Scene->EndAsyncUpdate(CmdList);
+		}
 		OnDrawUI(CmdList, screen_tex);
 		CmdList.EndFrame();
 

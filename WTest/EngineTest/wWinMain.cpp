@@ -5,6 +5,7 @@
 #include "VisBuffer.h"
 #include "Runtime/Path.h"
 #include "WFramework/Win32/WCLib/Mingw32.h"
+#include "Core/Threading/Thread.h"
 
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/basic_file_sink.h"
@@ -107,6 +108,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR cmdLine, int nCmdShow)
 {
 	SetupLog();
 	SetupD3DDll();
+	white::threading::SetThreadDescription(GetCurrentThread(), "WhiteMain");
 
 	static auto pInitGuard = WhiteEngine::System::InitGlobalEnvironment();
 

@@ -7,6 +7,7 @@
 
 #include "IFormat.hpp"
 #include "WBase/wmathtype.hpp"
+#include "WFramework/WCLib/Platform.h"
 #include <functional>
 
 namespace platform{
@@ -40,5 +41,9 @@ namespace platform{
 		constexpr unsigned MaxSimultaneousUAVs = 8;
 	}
 }
+
+#ifndef USE_PIX
+#define USE_PIX WFL_Win64
+#endif
 
 #endif

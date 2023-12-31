@@ -22,29 +22,29 @@ int32 GD3D12MaxCommandsPerCommandList = 10000;
 ContextCommon::ContextCommon(NodeDevice* InParent, QueueType Type, bool bIsDefaultContext)
 	:Device(InParent)
 	, Type(Type)
-	,bIsDefaultContext(bIsDefaultContext)
+	, bIsDefaultContext(bIsDefaultContext)
 {
 }
 
 CommandContextBase::CommandContextBase(D3D12Adapter* InParent, GPUMaskType InGpuMask)
 	:AdapterChild(InParent)
-	,GPUMask(InGpuMask)
+	, GPUMask(InGpuMask)
 {
 }
 
 CommandContext::CommandContext(NodeDevice* InParent, QueueType Type, bool InIsDefaultContext)
 	:
-	ContextCommon(InParent, Type ,InIsDefaultContext),
+	ContextCommon(InParent, Type, InIsDefaultContext),
 	DeviceChild(InParent),
 	CommandContextBase(InParent->GetParentAdapter(), InParent->GetGPUMask()),
-	ConstantsAllocator(InParent,InParent->GetGPUMask()),
+	ConstantsAllocator(InParent, InParent->GetGPUMask()),
 	VSConstantBuffer(InParent, ConstantsAllocator),
 	HSConstantBuffer(InParent, ConstantsAllocator),
 	DSConstantBuffer(InParent, ConstantsAllocator),
 	PSConstantBuffer(InParent, ConstantsAllocator),
 	GSConstantBuffer(InParent, ConstantsAllocator),
 	CSConstantBuffer(InParent, ConstantsAllocator),
-	StateCache(*this ,InParent->GetGPUMask())
+	StateCache(*this, InParent->GetGPUMask())
 {
 }
 
@@ -67,9 +67,13 @@ void CommandContext::SetRenderTargetsAndClear(const platform::Render::RenderTarg
 	{
 		for (int Index = 0; Index < RenderTargetsInfo.NumColorRenderTargets; ++Index)
 		{
-			//TODO clear value binding
-
-			ClearColors[Index] = white::math::float4();
+			if (RenderTargetsInfo.ColorRenderTarget[Index].Texture != nullptr)
+			{
+				auto& ClearValue = RenderTargetsInfo.ColorRenderTarget[Index].Texture->GetClearBinding();
+				memcpy(ClearColors[Index], ClearValue.Value.Color);
+			}
+			else
+				ClearColors[Index] = white::math::float4();
 		}
 	}
 
@@ -79,6 +83,10 @@ void CommandContext::SetRenderTargetsAndClear(const platform::Render::RenderTarg
 	if (RenderTargetsInfo.bClearDepth || RenderTargetsInfo.bClearStencil)
 	{
 		//TODO clear value binding
+		auto& ClearValue = RenderTargetsInfo.DepthStencilRenderTarget.Texture->GetClearBinding();
+
+		DepthClear = ClearValue.Value.DSValue.Depth;
+		StencilClear = ClearValue.Value.DSValue.Stencil;
 	}
 
 	ClearMRT(RenderTargetsInfo.bClearColor, RenderTargetsInfo.NumColorRenderTargets, ClearColors, RenderTargetsInfo.bClearDepth, DepthClear, RenderTargetsInfo.bClearStencil, StencilClear);
@@ -375,7 +383,7 @@ void CommandContext::ClearState()
 	std::memset(DirtyConstantBuffers, 0, sizeof(DirtyConstantBuffers));
 }
 
-static uint32 GetIndexCount(platform::Render::PrimtivteType type,uint32 NumPrimitives)
+static uint32 GetIndexCount(platform::Render::PrimtivteType type, uint32 NumPrimitives)
 {
 	auto PrimitiveTypeFactor = platform::Render::GetPrimitiveTypeFactor(type);
 
@@ -394,7 +402,7 @@ void CommandContext::DrawIndexedPrimitive(platform::Render::GraphicsBuffer* IInd
 	CommitGraphicsResourceTables();
 	CommitNonComputeShaderConstants();
 
-	uint32 IndexCount = GetIndexCount(StateCache.GetPrimtivteType(),NumPrimitives);
+	uint32 IndexCount = GetIndexCount(StateCache.GetPrimtivteType(), NumPrimitives);
 	auto IndexBuffer = static_cast<GraphicsBuffer*>(IIndexBuffer);
 
 	const DXGI_FORMAT Format = IndexBuffer->GetFormat();
@@ -450,12 +458,28 @@ void CommandContext::DrawIndirect(platform::Render::CommandSignature* Sig, uint3
 
 	auto Signature = static_cast<D3DCommandSignature*>(Sig);
 
+	ID3D12Resource* CountBufferResource = nullptr;
+	if (CountBuffer != nullptr)
+	{
+		auto& CounterLocation = static_cast<GraphicsBuffer*>(IndirectBuffer)->Location;
+
+		CountBufferResource = CounterLocation.GetResource()->Resource();
+		TransitionResource(CounterLocation.GetResource(), D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+	}
+
+	auto& Location = static_cast<GraphicsBuffer*>(IndirectBuffer)->Location;
+
+	// Indirect args buffer can be a previously pending UAV, which becomes PS\Non-PS read. ApplyState will flush pending transitions, so enqueue the indirect
+	// arg transition and flush here.
+	TransitionResource(Location.GetResource(), D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+	FlushResourceBarriers();	// Must flush so the desired state is actually set.
+
 	GraphicsCommandList()->ExecuteIndirect(
 		Signature->Get(),
 		MaxCmdCount,
-		static_cast<GraphicsBuffer*>(IndirectBuffer)->D3DResource(),
+		Location.GetResource()->Resource(),
 		BufferOffset,
-		static_cast<GraphicsBuffer*>(CountBuffer)->D3DResource(),
+		CountBufferResource,
 		CountBufferOffset
 	);
 }
@@ -676,7 +700,7 @@ void CommandContext::ClearMRT(bool bClearColor, int32 NumClearColors, const whit
 			if (bClearDepth)
 			{
 				// Transition just the depth plane
-				TransitionResource(DSView->GetResource(),D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_DEPTH_WRITE, DSView->GetDepthOnlySubset());
+				TransitionResource(DSView->GetResource(), D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_DEPTH_WRITE, DSView->GetDepthOnlySubset());
 			}
 			else
 			{

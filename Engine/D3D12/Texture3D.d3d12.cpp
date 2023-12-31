@@ -41,6 +41,10 @@ void Texture3D::HWResourceCreate(ElementInitData const *  init_data) {
 	Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION_TEXTURE3D,
 		width, height,depth, array_size,
 		init_data);
+
+	if (init_data && init_data->clear_value) {
+		this->clear_value = *init_data->clear_value;
+	}
 }
 
 void Texture3D::HWResourceDelete() {

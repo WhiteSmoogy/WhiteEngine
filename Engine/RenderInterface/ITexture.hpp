@@ -80,6 +80,10 @@ namespace platform::Render {
 		virtual void HWResourceCreate(ElementInitData const *  init_data) = 0;
 		virtual void HWResourceDelete() = 0;
 		virtual bool HWResourceReady() const = 0;
+
+		const ClearValueBinding& GetClearBinding() const {
+			return clear_value;
+		}
 	protected:
 		uint8		mipmap_size;
 		uint8		array_size;
@@ -88,6 +92,8 @@ namespace platform::Render {
 		Type		type;
 		SampleDesc		sample_info;
 		uint32		access_mode;
+
+		ClearValueBinding clear_value;
 	};
 
 	class Texture1D;

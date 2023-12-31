@@ -45,6 +45,7 @@ namespace platform::Render {
 		virtual void SetScissorRect(bool bEnable, uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY) = 0;
 
 		virtual void SetVertexBuffer(uint32 slot, GraphicsBuffer* VertexBuffer) = 0;
+		virtual void SetIndexBuffer(platform::Render::GraphicsBuffer* IndexBuffer) = 0;
 
 		virtual void SetGraphicsPipelineState(GraphicsPipelineState* pso) = 0;
 
@@ -66,6 +67,8 @@ namespace platform::Render {
 		virtual void DrawIndexedPrimitive(GraphicsBuffer* IndexBuffer, int32 BaseVertexIndex, uint32 FirstInstance, uint32 NumVertices, uint32 StartIndex, uint32 NumPrimitives, uint32 NumInstances) = 0;
 
 		virtual void DrawPrimitive(uint32 BaseVertexIndex, uint32 FirstInstance, uint32 NumPrimitives, uint32 NumInstances) = 0;
+
+		virtual void DrawIndirect(CommandSignature* Sig, uint32 MaxCmdCount, GraphicsBuffer* IndirectBuffer, uint32 BufferOffset, GraphicsBuffer* CountBuffer, uint32 CountBufferOffset) = 0;
 
 		virtual void BeginFrame() = 0;
 

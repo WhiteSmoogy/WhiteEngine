@@ -277,6 +277,13 @@ namespace platform::Render {
 				});
 		}
 
+		void SetIndexBuffer(platform::Render::GraphicsBuffer* IndexBuffer)
+		{
+			InsertCommand([=](CommandListBase& CmdList) {
+				CmdList.GetContext().SetIndexBuffer(IndexBuffer);
+				});
+		}
+
 		void SetGraphicsPipelineState(GraphicsPipelineState* pso)
 		{
 			InsertCommand([=](CommandListBase& CmdList) {
@@ -330,13 +337,6 @@ namespace platform::Render {
 				});
 		}
 
-		void DrawPrimitive(uint32 BaseVertexIndex, uint32 FirstInstance, uint32 NumPrimitives, uint32 NumInstances)
-		{
-			InsertCommand([=](CommandListBase& CmdList) {
-				CmdList.GetContext().DrawPrimitive(BaseVertexIndex, FirstInstance, NumPrimitives, NumInstances);
-				});
-		}
-
 		template<THardwareShader T>
 		void SetShaderParameter(T* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue)
 		{
@@ -346,6 +346,20 @@ namespace platform::Render {
 		}
 
 		using ComputeCommandList::SetShaderParameter;
+
+		void DrawPrimitive(uint32 BaseVertexIndex, uint32 FirstInstance, uint32 NumPrimitives, uint32 NumInstances)
+		{
+			InsertCommand([=](CommandListBase& CmdList) {
+				CmdList.GetContext().DrawPrimitive(BaseVertexIndex, FirstInstance, NumPrimitives, NumInstances);
+				});
+		}
+
+		void DrawIndirect(CommandSignature* Sig, uint32 MaxCmdCount, GraphicsBuffer* IndirectBuffer, uint32 BufferOffset, GraphicsBuffer* CountBuffer, uint32 CountBufferOffset)
+		{
+			InsertCommand([=](CommandListBase& CmdList) {
+				CmdList.GetContext().DrawIndirect(Sig, MaxCmdCount, IndirectBuffer, BufferOffset, CountBuffer, CountBufferOffset);
+				});
+		}
 
 		void FillRenderTargetsInfo(GraphicsPipelineStateInitializer& GraphicsPSOInit)
 		{

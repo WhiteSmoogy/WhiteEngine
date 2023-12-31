@@ -12,7 +12,7 @@
 #include "RenderInterface/IContext.h"
 #include "RenderInterface/IFrameBuffer.h"
 #include "RenderInterface/ITexture.hpp"
-
+#include "RenderInterface/Indirect.h"
 #include "imgui/imgui_impl_win32.h"
 #include "Runtime/CameraController.h"
 #include "Runtime/Camera.h"
@@ -43,6 +43,8 @@ public:
 	wm::float4x4 projMatrix;
 
 	std::shared_ptr<Trinf::Resources> sponza_trinf;
+	std::shared_ptr<render::CommandSignature> draw_visidSig;
+	std::shared_ptr<render::Texture2D> vis_buffer;
 private:
 	bool SubWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override
 	{
@@ -168,6 +170,25 @@ private:
 		float fov = atan(1 / aspect);
 
 		projMatrix = WhiteEngine::X::perspective_fov_lh(fov * 2, aspect, 1, 1000);
+
+		//Indirect Draw CommandSig
+		render::IndirectArgumentDescriptor indirctArguments[1] =
+		{
+			{render::IndirectArgumentType::INDIRECT_DRAW_INDEX, 0, sizeof(render::DrawIndexArguments)},
+		};
+
+		render::CommandSignatureDesc commandSigDesc =
+		{
+			nullptr, white::make_const_span(indirctArguments), false
+		};
+
+		draw_visidSig = white::share_raw(Device.CreateCommandSignature(commandSigDesc));
+
+		render::ClearValueBinding invalidId;
+		std::memset(invalidId.Value.Color, 0xFFFFFFFF, sizeof(invalidId.Value));
+		render::ElementInitData data;
+		data.clear_value = &invalidId;
+		vis_buffer = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_R32UI, EAccessHint::EA_GPURead | EAccessHint::EA_RTV, {}, &data));
 	}
 
 	void OnGUI();

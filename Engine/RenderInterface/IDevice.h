@@ -42,7 +42,7 @@ namespace platform::Render {
 		DepthStencilDesc DepthStencilState;
 		BlendDesc BlendState;
 
-		PrimtivteType Primitive;
+		PrimtivteType Primitive = PrimtivteType::TriangleList;
 	public:
 		GraphicsPipelineStateInitializer()
 		{

@@ -398,6 +398,11 @@ namespace platform_ex::Windows::D3D12
 			Init(desc);
 		}
 
+		ID3D12CommandSignature* Get() const
+		{
+			return CommandSignature.Get();
+		}
+
 	private:
 		void Init(const platform::Render::CommandSignatureDesc& desc);
 

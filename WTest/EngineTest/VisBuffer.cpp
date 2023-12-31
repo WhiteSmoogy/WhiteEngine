@@ -6,6 +6,16 @@
 
 using namespace platform::Render;
 
+struct Matrixs
+{
+	wm::float4x4 mvp;
+};
+
+struct ViewArgs
+{
+	Matrixs matrixs;
+};
+
 class FilterTriangleCS :public BuiltInShader
 {
 public:
@@ -45,15 +55,7 @@ public:
 		uint Pad1;
 	};
 
-	struct Matrixs
-	{
-		wm::float4x4 mvp;
-	};
-
-	struct ViewArgs
-	{
-		Matrixs matrixs;
-	};
+	
 
 	struct UncompactedDrawArguments
 	{
@@ -103,6 +105,23 @@ public:
 
 IMPLEMENT_BUILTIN_SHADER(BatchCompactionCS, "BatchCompaction.hlsl", "BatchCompactionCS", platform::Render::ComputeShader);
 
+class VisTriangleVS :public BuiltInShader
+{
+	EXPORTED_BUILTIN_SHADER(VisTriangleVS);
+
+	BEGIN_SHADER_PARAMETER_STRUCT(Parameters)
+		SHADER_PARAMETER_CBUFFER(ViewArgs, View)
+		END_SHADER_PARAMETER_STRUCT()
+};
+IMPLEMENT_BUILTIN_SHADER(VisTriangleVS, "VisTriangle.hlsl", "VisTriangleVS", platform::Render::VertexShader);
+
+class VisTrianglePS :public BuiltInShader
+{
+	EXPORTED_BUILTIN_SHADER(VisTrianglePS);
+};
+IMPLEMENT_BUILTIN_SHADER(VisTrianglePS, "VisTriangle.hlsl", "VisTrianglePS", platform::Render::PixelShader);
+
+
 void VisBufferTest::OnGUI()
 {
 	if (sponza_trinf->State != Trinf::Resources::StreamingState::Resident)
@@ -118,7 +137,7 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	if (sponza_trinf->State != Trinf::Resources::StreamingState::Resident)
 		return;
 
-	FilterTriangleCS::ViewArgs view;
+	ViewArgs view;
 
 	view.matrixs.mvp = wm::transpose(camera.GetViewMatrix() * projMatrix);
 
@@ -243,4 +262,37 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 
 		platform::ComputeShaderUtils::Dispatch(CmdList, compactCS, compactionPars, white::math::int3(dispatchCount, 1, 1));
 	}
+
+	auto& screen_frame = render::Context::Instance().GetScreenFrame();
+
+	auto depth_tex = static_cast<render::Texture2D*>(screen_frame->Attached(render::FrameBuffer::DepthStencil));
+	render::RenderPassInfo visPass(
+		vis_buffer.get(), render::Clear_Store,
+		depth_tex,render::DepthStencilTargetActions::ClearDepthStencil_StoreDepthStencil
+	);
+
+	CmdList.BeginRenderPass(visPass, "VisBuffer");
+
+	auto VisTriVS = GetBuiltInShaderMap()->GetShader<VisTriangleVS>();
+	VisTriangleVS::Parameters VSParas;
+	VSParas.View = ViewCB.Get();
+
+	auto VisTriPS = GetBuiltInShaderMap()->GetShader<VisTrianglePS>();
+
+	// Setup pipelinestate
+	render::GraphicsPipelineStateInitializer VisPso{};
+	CmdList.FillRenderTargetsInfo(VisPso);
+
+	VisPso.ShaderPass.VertexShader = VisTriVS.GetVertexShader();
+	VisPso.ShaderPass.VertexDeclaration.push_back(
+		CtorVertexElement(0, 0, Vertex::Usage::Position, 0, EF_ABGR32F, sizeof(wm::float3)));
+	VisPso.ShaderPass.PixelShader = VisTriPS.GetPixelShader();
+
+	SetGraphicsPipelineState(CmdList, VisPso);
+	render::SetShaderParameters(CmdList, VisTriVS, VisTriVS.GetVertexShader(), VSParas);
+
+	CmdList.SetVertexBuffer(0, Trinf::Scene->Position.DataBuffer.get());
+	CmdList.SetIndexBuffer(FliteredIndexBuffer.get());
+
+	CmdList.DrawIndirect(draw_visidSig.get(), sponza_trinf->Metadata->TrinfsCount, CompactedDrawArgs.get(), sizeof(DrawIndexArguments), CompactedDrawArgs.get(), 0);
 }

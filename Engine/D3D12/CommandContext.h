@@ -220,6 +220,7 @@ namespace platform_ex::Windows::D3D12 {
 		void SetScissorRect(bool bEnable, uint32 MinX, uint32 MinY, uint32 MaxX, uint32 MaxY) override;
 
 		void SetVertexBuffer(uint32 slot, platform::Render::GraphicsBuffer* VertexBuffer) override;
+		void SetIndexBuffer(platform::Render::GraphicsBuffer* IndexBuffer) override;
 
 		void SetGraphicsPipelineState(platform::Render::GraphicsPipelineState* pso) override;
 
@@ -241,6 +242,8 @@ namespace platform_ex::Windows::D3D12 {
 		void DrawIndexedPrimitive(platform::Render::GraphicsBuffer* IndexBuffer, int32 BaseVertexIndex, uint32 FirstInstance, uint32 NumVertices, uint32 StartIndex, uint32 NumPrimitives, uint32 NumInstances) override;
 
 		void DrawPrimitive(uint32 BaseVertexIndex, uint32 FirstInstance, uint32 NumPrimitives, uint32 NumInstances) override;
+
+		void DrawIndirect(platform::Render::CommandSignature* Sig, uint32 MaxCmdCount, platform::Render::GraphicsBuffer* IndirectBuffer, uint32 BufferOffset, platform::Render::GraphicsBuffer* CountBuffer, uint32 CountBufferOffset);
 
 		void PushEvent(const char16_t* Name, platform::FColor Color) override;
 

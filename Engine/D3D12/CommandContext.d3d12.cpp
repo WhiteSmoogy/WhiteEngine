@@ -417,6 +417,49 @@ void CommandContext::DrawPrimitive(uint32 BaseVertexIndex, uint32 FirstInstance,
 	GraphicsCommandList()->DrawInstanced(VertexCount, NumInstances, BaseVertexIndex, FirstInstance);
 }
 
+void CommandContext::SetIndexBuffer(platform::Render::GraphicsBuffer* IIndexBuffer)
+{
+	auto IndexBuffer = static_cast<GraphicsBuffer*>(IIndexBuffer);
+
+	DXGI_FORMAT Format = IndexBuffer->GetFormat();
+
+	if (Format == DXGI_FORMAT_UNKNOWN)
+	{
+		switch (IndexBuffer->GetStride())
+		{
+		case 4:
+			Format = DXGI_FORMAT_R32_UINT;
+			break;
+		case 2:
+			Format = DXGI_FORMAT_R16_UINT;
+		default:
+			WAssert(false, "Invalid IndexBuffer");
+		}
+	}
+
+	StateCache.SetIndexBuffer(IndexBuffer->Location, Format, 0);
+}
+
+
+void CommandContext::DrawIndirect(platform::Render::CommandSignature* Sig, uint32 MaxCmdCount, platform::Render::GraphicsBuffer* IndirectBuffer, uint32 BufferOffset, platform::Render::GraphicsBuffer* CountBuffer, uint32 CountBufferOffset)
+{
+	CommitGraphicsResourceTables();
+	CommitNonComputeShaderConstants();
+
+	StateCache.ApplyState<CPT_Graphics>();
+
+	auto Signature = static_cast<D3DCommandSignature*>(Sig);
+
+	GraphicsCommandList()->ExecuteIndirect(
+		Signature->Get(),
+		MaxCmdCount,
+		static_cast<GraphicsBuffer*>(IndirectBuffer)->D3DResource(),
+		BufferOffset,
+		static_cast<GraphicsBuffer*>(CountBuffer)->D3DResource(),
+		CountBufferOffset
+	);
+}
+
 struct FRTVDesc
 {
 	uint32 Width;

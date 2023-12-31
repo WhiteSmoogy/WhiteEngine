@@ -36,6 +36,8 @@ namespace platform_ex::Windows::D3D12 {
 		RenderTargetView* RetriveRenderTargetView(uint16 width, uint16 height, platform::Render::EFormat pf);
 
 		DXGI_FORMAT GetFormat() const { return format; }
+
+		uint32 GetStride() const { return Stride; }
 	private:
 		void* Map(platform::Render::CommandListImmediate& CmdList,platform::Render::Buffer::Access ba) override;
 		void Unmap(platform::Render::CommandListImmediate& CmdList) override;

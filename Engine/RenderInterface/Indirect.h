@@ -31,7 +31,7 @@ namespace platform::Render
 		const RootSignature* pRootSignature;
 		white::span<const IndirectArgumentDescriptor> ArgDescs;
 		/// Set to true if indirect argument struct should not be aligned to 16 bytes
-		bool mPacked;
+		bool mPacked = true;
 	};
 
 	class CommandSignature

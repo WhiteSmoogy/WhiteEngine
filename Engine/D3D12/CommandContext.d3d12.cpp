@@ -463,6 +463,8 @@ void CommandContext::DrawIndirect(platform::Render::CommandSignature* Sig, uint3
 	{
 		auto& CounterLocation = static_cast<GraphicsBuffer*>(IndirectBuffer)->Location;
 
+		CountBufferOffset += CounterLocation.GetOffsetFromBaseOfResource();
+
 		CountBufferResource = CounterLocation.GetResource()->Resource();
 		TransitionResource(CounterLocation.GetResource(), D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 	}
@@ -478,7 +480,7 @@ void CommandContext::DrawIndirect(platform::Render::CommandSignature* Sig, uint3
 		Signature->Get(),
 		MaxCmdCount,
 		Location.GetResource()->Resource(),
-		BufferOffset,
+		BufferOffset + Location.GetOffsetFromBaseOfResource(),
 		CountBufferResource,
 		CountBufferOffset
 	);

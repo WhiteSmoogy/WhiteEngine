@@ -691,7 +691,7 @@ void D3D12::D3DCommandSignature::Init(const platform::Render::CommandSignatureDe
 		{
 		case IndirectBasicAT::INDIRECT_DRAW:
 		{
-			auto d3dDesc = argumentDescs.emplace_back();
+			auto& d3dDesc = argumentDescs.emplace_back();
 			d3dDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;
 			commandStride += sizeof(D3D12_DRAW_ARGUMENTS);
 			drawType = argdesc.mType;
@@ -699,7 +699,7 @@ void D3D12::D3DCommandSignature::Init(const platform::Render::CommandSignatureDe
 		}
 		case IndirectBasicAT::INDIRECT_DRAW_INDEX:
 		{
-			auto d3dDesc = argumentDescs.emplace_back();
+			auto& d3dDesc = argumentDescs.emplace_back();
 			d3dDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
 			commandStride += sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
 			drawType = argdesc.mType;
@@ -707,7 +707,7 @@ void D3D12::D3DCommandSignature::Init(const platform::Render::CommandSignatureDe
 		}
 		case IndirectBasicAT::INDIRECT_DISPATCH:
 		{
-			auto d3dDesc = argumentDescs.emplace_back();
+			auto& d3dDesc = argumentDescs.emplace_back();
 			d3dDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
 			commandStride += sizeof(D3D12_DISPATCH_ARGUMENTS);
 			drawType = argdesc.mType;

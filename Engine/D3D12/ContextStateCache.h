@@ -62,7 +62,7 @@ namespace platform_ex::Windows::D3D12 {
 			BoundVBMask = 0;
 		}
 
-		GraphicsBuffer* CurrentVertexBufferResources[max_vbs];
+		ResourceLocation* CurrentVertexBufferResources[max_vbs];
 		D3D12_VERTEX_BUFFER_VIEW CurrentVertexBufferViews[max_vbs];
 		int32 MaxBoundVertexBufferIndex;
 		VBSlotMask BoundVBMask;
@@ -328,7 +328,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		void InternalSetIndexBuffer(ResourceHolder* Resource);
 
-		void InternalSetStreamSource(GraphicsBuffer* VertexBufferLocation, uint32 StreamIndex, uint32 Stride, uint32 Offset);
+		void InternalSetStreamSource(ResourceLocation* VertexBufferLocation, uint32 StreamIndex, uint32 Stride, uint32 Offset);
 
 		template <typename TShader> struct StateCacheShaderTraits;
 #define DECLARE_SHADER_TRAITS(Name) \
@@ -604,12 +604,12 @@ namespace platform_ex::Windows::D3D12 {
 			std::memcpy(PipelineState.Graphics.StreamStrides, InStreamStrides, sizeof(PipelineState.Graphics.StreamStrides));
 		}
 
-		void SetStreamSource(GraphicsBuffer* VertexBufferLocation, uint32 StreamIndex, uint32 Stride, uint32 Offset)
+		void SetStreamSource(ResourceLocation* VertexBufferLocation, uint32 StreamIndex, uint32 Stride, uint32 Offset)
 		{
 			InternalSetStreamSource(VertexBufferLocation, StreamIndex, Stride, Offset);
 		}
 
-		void SetStreamSource(GraphicsBuffer* VertexBufferLocation, uint32 StreamIndex, uint32 Offset)
+		void SetStreamSource(ResourceLocation* VertexBufferLocation, uint32 StreamIndex, uint32 Offset)
 		{
 			InternalSetStreamSource(VertexBufferLocation, StreamIndex, PipelineState.Graphics.StreamStrides[StreamIndex], Offset);
 		}

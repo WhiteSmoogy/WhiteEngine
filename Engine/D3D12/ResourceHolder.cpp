@@ -334,5 +334,45 @@ namespace platform_ex::Windows {
 				m_SubresourceState[SubresourceIndex] = State;
 			}
 		}
-	}
+	
+		int32 ResourceBarrierBatcher::AddTransition(ID3D12Resource* pResource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource)
+		{
+			wconstraint(Before != After);
+
+			if (!Barriers.empty())
+			{
+				//Revert A->B->A
+				const D3D12_RESOURCE_BARRIER& Last = Barriers.back();
+				if (pResource == Last.Transition.pResource &&
+					Subresource == Last.Transition.Subresource &&
+					Before == Last.Transition.StateAfter &&
+					After == Last.Transition.StateBefore &&
+					Last.Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
+				{
+					Barriers.pop_back();
+					return -1;
+				}
+
+				//Combine A->B->C => A->C
+				if (pResource == Last.Transition.pResource &&
+					Subresource == Last.Transition.Subresource &&
+					Before == Last.Transition.StateAfter && Last.Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
+				{
+					Before = Last.Transition.StateBefore;
+					Barriers.pop_back();
+				}
+			}
+
+			Barriers.resize(Barriers.size() + 1);
+			D3D12_RESOURCE_BARRIER& Barrier = Barriers.back();
+			Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+			Barrier.Transition.StateBefore = Before;
+			Barrier.Transition.StateAfter = After;
+			Barrier.Transition.Subresource = Subresource;
+			Barrier.Transition.pResource = pResource;
+			return 1;
+		}
+
+}
 }

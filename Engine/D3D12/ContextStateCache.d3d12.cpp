@@ -103,7 +103,7 @@ void CommandContextStateCache::InternalSetIndexBuffer(ResourceHolder* Resource)
 
 
 
-void CommandContextStateCache::InternalSetStreamSource(GraphicsBuffer* VertexBufferLocation, uint32 StreamIndex, uint32 Stride, uint32 Offset)
+void CommandContextStateCache::InternalSetStreamSource(ResourceLocation* VertexBufferLocation, uint32 StreamIndex, uint32 Stride, uint32 Offset)
 {
 	__declspec(align(16)) D3D12_VERTEX_BUFFER_VIEW NewView;
 	NewView.BufferLocation = (VertexBufferLocation) ? VertexBufferLocation->GetGPUVirtualAddress() + Offset : 0;
@@ -677,7 +677,6 @@ void CommandContextStateCache::ApplyState()
 		if (bNeedSetVB)
 		{
 			bNeedSetVB = false;
-			//SCOPE_CYCLE_COUNTER(STAT_D3D12ApplyStateSetVertexBufferTime);
 			DescriptorCache.SetVertexBuffers(PipelineState.Graphics.VBCache);
 		}
 		if (bNeedSetSOs)

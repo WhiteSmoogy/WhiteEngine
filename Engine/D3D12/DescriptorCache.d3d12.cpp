@@ -161,6 +161,24 @@ void DescriptorCache::SetVertexBuffers(VertexBufferCache& Cache)
 	}
 
 	Context.GraphicsCommandList()->IASetVertexBuffers(0, Count, Cache.CurrentVertexBufferViews);
+
+	for (uint32 i = 0; i < Count; ++i)
+	{
+		if (Cache.CurrentVertexBufferResources[i])
+		{
+			auto Resource = Cache.CurrentVertexBufferResources[i]->GetResource();
+			if (Resource && Resource->RequiresResourceStateTracking())
+			{
+				wassume(Resource->GetSubresourceCount() == 1);
+				Context.TransitionResource(
+					Resource,
+					D3D12_RESOURCE_STATE_TBD,
+					D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES
+				);
+			}
+		}
+	}
 }
 
 

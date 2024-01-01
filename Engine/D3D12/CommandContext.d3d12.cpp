@@ -128,7 +128,7 @@ void CommandContext::SetVertexBuffer(uint32 slot, platform::Render::GraphicsBuff
 {
 	auto VertexBuffer = static_cast<GraphicsBuffer*>(IVertexBuffer);
 
-	StateCache.SetStreamSource(VertexBuffer, slot, 0);
+	StateCache.SetStreamSource(VertexBuffer ? &VertexBuffer->Location : nullptr, slot, 0);
 }
 
 void CommandContext::SetGraphicsPipelineState(platform::Render::GraphicsPipelineState* pso)

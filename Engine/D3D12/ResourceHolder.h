@@ -857,38 +857,7 @@ namespace platform_ex::Windows {
 			}
 
 			// Add a transition resource barrier to the batch. Returns the number of barriers added, which may be negative if an existing barrier was cancelled.
-			int32 AddTransition(ID3D12Resource* pResource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource)
-			{
-				wconstraint(Before != After);
-
-				if (!Barriers.empty())
-				{
-					// Check if we are simply reverting the last transition. In that case, we can just remove both transitions.
-					// This happens fairly frequently due to resource pooling since different RHI buffers can point to the same underlying D3D buffer.
-					// Instead of ping-ponging that underlying resource between COPY_DEST and GENERIC_READ, several copies can happen without a ResourceBarrier() in between.
-					// Doing this check also eliminates a D3D debug layer warning about multiple transitions of the same subresource.
-					const D3D12_RESOURCE_BARRIER& Last = Barriers.back();
-					if (pResource == Last.Transition.pResource &&
-						Subresource == Last.Transition.Subresource &&
-						Before == Last.Transition.StateAfter &&
-						After == Last.Transition.StateBefore &&
-						Last.Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
-					{
-						Barriers.pop_back();
-						return -1;
-					}
-				}
-
-				Barriers.resize(Barriers.size() + 1);
-				D3D12_RESOURCE_BARRIER& Barrier = Barriers.back();
-				Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-				Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-				Barrier.Transition.StateBefore = Before;
-				Barrier.Transition.StateAfter = After;
-				Barrier.Transition.Subresource = Subresource;
-				Barrier.Transition.pResource = pResource;
-				return 1;
-			}
+			int32 AddTransition(ID3D12Resource* pResource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After, uint32 Subresource);
 
 			void AddAliasingBarrier(ID3D12Resource* pResource)
 			{

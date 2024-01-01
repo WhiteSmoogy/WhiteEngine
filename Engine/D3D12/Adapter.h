@@ -76,8 +76,8 @@ namespace platform_ex::Windows::D3D12 {
 		ShaderCompose* CreateShaderCompose(std::unordered_map<platform::Render::ShaderType, const asset::ShaderBlobAsset*> pShaderBlob, platform::Render::Effect::Effect* pEffect) override;
 
 		//\brief D3D12 Buffer 创建时没有BIND_FLAG
-		GraphicsBuffer* CreateBuffer(CommandListImmediate* Cmdlist, const BufferDesc& BufferDesc, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo);
-		GraphicsBuffer* CreateBuffer(CommandListImmediate* Cmdlist, const BufferDesc& BufferDesc, D3D12_RESOURCE_STATES InitialState, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo);
+		GraphicsBuffer* CreateBufferDesc(CommandListImmediate* Cmdlist, const BufferDesc& BufferDesc, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo);
+		GraphicsBuffer* CreateBufferDispatch(CommandListImmediate* Cmdlist, const BufferDesc& BufferDesc, D3D12_RESOURCE_STATES InitialState, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo);
 
 		GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, uint32 stride, std::optional<void const*>  init_data) override;
 

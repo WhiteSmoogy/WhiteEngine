@@ -173,36 +173,21 @@ namespace platform_ex::Windows::D3D12 {
 		}
 	};
 
-	GraphicsBuffer* Device::CreateBuffer(CommandListImmediate* Cmdlist, const BufferDesc& BufferDesc, D3D12_RESOURCE_STATES InitialState, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo)
-	{
-		IResourceAllocator* Allocator = nullptr;
+	static thread_local char DebugNames[256];
 
-		auto [Desc, Alignment] = GetResourceDescAndAlignment(BufferDesc);
-		Desc.Format = format;
-
-		return CreateBuffer<ResourceStateMode::Default>(Cmdlist, Desc, InitialState, BufferDesc, Alignment, CreateInfo, Allocator);
-	}
-
-	GraphicsBuffer* Device::CreateBuffer(CommandListImmediate* Cmdlist, const BufferDesc& BufferDesc, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo)
-	{
-		const bool bIsDynamic = (BufferDesc.Usage & Buffer::Usage::Dynamic) ? true : false;
-
-		D3D12_HEAP_TYPE HeapType = bIsDynamic ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_DEFAULT;
-		const D3D12_RESOURCE_STATES InitialState = BufferAllocator::GetDefaultInitialResourceState<ResourceStateMode::Default>(HeapType, BufferDesc.Access);
-
-		return CreateBuffer(Cmdlist, BufferDesc, InitialState, format, CreateInfo);
-	}
-	
-	const char* GetDebugBufferName(Buffer::Usage usage, white::uint32 access)
+	const char* GetDebugBufferName(Buffer::Usage usage, white::uint32 access, uint32 size)
 	{
 		if (white::has_anyflags(access, EAccessHint::EA_GPUStructured))
-			return "StructBuffer";
-		return "Buffer";
+			std::format_to(DebugNames, "StructBuffer({}x{})_{}", (uint32)usage, access, size);
+		else
+			std::format_to(DebugNames, "Buffer({}x{})_{}", (uint32)usage, access, size);
+
+		return DebugNames;
 	}
 
 	GraphicsBuffer* Device::CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 Size, uint32 Stride, std::optional<void const*> init_data)
 	{
-		auto CreateInfo = FillResourceCreateInfo(init_data, GetDebugBufferName(usage,access));
+		auto CreateInfo = FillResourceCreateInfo(init_data, GetDebugBufferName(usage, access,Size));
 
 		BufferDesc BufferDesc = {
 			.Size = Size,
@@ -211,7 +196,31 @@ namespace platform_ex::Windows::D3D12 {
 			.Access = access
 		};
 
-		return CreateBuffer(&CommandListExecutor::GetImmediateCommandList(), BufferDesc, DXGI_FORMAT_UNKNOWN, CreateInfo);
+		return CreateBufferDesc(&CommandListExecutor::GetImmediateCommandList(), BufferDesc, DXGI_FORMAT_UNKNOWN, CreateInfo);
+	}
+
+	GraphicsBuffer* Device::CreateBufferDesc(CommandListImmediate* Cmdlist, const BufferDesc& BufferDesc, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo)
+	{
+		const bool bIsDynamic = (BufferDesc.Usage & Buffer::Usage::Dynamic) ? true : false;
+
+		D3D12_HEAP_TYPE HeapType = bIsDynamic ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_DEFAULT;
+		const D3D12_RESOURCE_STATES InitialState = BufferAllocator::GetDefaultInitialResourceState<ResourceStateMode::Default>(HeapType, BufferDesc.Access);
+
+		return CreateBufferDispatch(Cmdlist, BufferDesc, InitialState, format, CreateInfo);
+	}
+	
+
+	GraphicsBuffer* Device::CreateBufferDispatch(CommandListImmediate* Cmdlist, const BufferDesc& BufferDesc, D3D12_RESOURCE_STATES InitialState, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo)
+	{
+		IResourceAllocator* Allocator = nullptr;
+
+		auto [Desc, Alignment] = GetResourceDescAndAlignment(BufferDesc);
+		Desc.Format = format;
+
+		if (white::has_allflags(BufferDesc.Access,EA_AccelerationStructure))
+			return CreateBuffer<ResourceStateMode::Single>(Cmdlist, Desc, InitialState, BufferDesc, Alignment, CreateInfo, Allocator);
+		else
+			return CreateBuffer<ResourceStateMode::Default>(Cmdlist, Desc, InitialState, BufferDesc, Alignment, CreateInfo, Allocator);
 	}
 
 	template<ResourceStateMode Mode>

@@ -1381,7 +1381,7 @@ D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState(D3D12_HEAP
 	}
 	else
 	{
-		return D3D12_RESOURCE_STATE_COMMON;
+		return D3D12_RESOURCE_STATE_GENERIC_READ;
 	}
 }
 

@@ -330,7 +330,7 @@ namespace platform_ex::Windows::D3D12 {
 			.Access = access
 		};
 
-		auto vb = CreateBuffer(&CommandListExecutor::GetImmediateCommandList(), BufferDesc, Convert(format), CreateInfo);
+		auto vb = CreateBufferDesc(&CommandListExecutor::GetImmediateCommandList(), BufferDesc, Convert(format), CreateInfo);
 
 		return vb;
 	}
@@ -347,7 +347,7 @@ namespace platform_ex::Windows::D3D12 {
 			.Access = access
 		};
 
-		return CreateBuffer(&platform::Render::CommandListExecutor::GetImmediateCommandList(), BufferDesc, Convert(format), CreateInfo);
+		return CreateBufferDesc(&platform::Render::CommandListExecutor::GetImmediateCommandList(), BufferDesc, Convert(format), CreateInfo);
 	}
 
 	platform::Render::HardwareShader* Device::CreateShader(const white::span<const uint8>& Code, platform::Render::ShaderType Type)

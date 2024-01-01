@@ -152,24 +152,24 @@ void StreamingScene::EndAsyncUpdate(platform::Render::CommandList& cmdList)
 
 		platform::Render::MemcpyResourceParams params =
 		{
-			.Count = resource->Metadata->Index.UncompressedSize,
+			.Count = resource->Metadata->Index.UncompressedSize / sizeof(float),
 			.SrcOffset = 0,
 			.DstOffset = key.Index * Index.kPageSize,
 		};
 		platform::Render::MemcpyResource(cmdList, Index.DataBuffer, resource->GpuStream, params);
 
 		params.SrcOffset += params.Count;
-		params.Count = resource->Metadata->Position.UncompressedSize;
+		params.Count = resource->Metadata->Position.UncompressedSize / sizeof(float);
 		params.DstOffset = key.Position * Position.kPageSize;
 		platform::Render::MemcpyResource(cmdList, Position.DataBuffer, resource->GpuStream, params);
 
 		params.SrcOffset += params.Count;
-		params.Count = resource->Metadata->Tangent.UncompressedSize;
+		params.Count = resource->Metadata->Tangent.UncompressedSize / sizeof(float);
 		params.DstOffset = key.Tangent * Tangent.kPageSize;
 		platform::Render::MemcpyResource(cmdList, Tangent.DataBuffer, resource->GpuStream, params);
 
 		params.SrcOffset += params.Count;
-		params.Count = resource->Metadata->TexCoord.UncompressedSize;
+		params.Count = resource->Metadata->TexCoord.UncompressedSize / sizeof(float);
 		params.DstOffset = key.TexCoord * TexCoord.kPageSize;
 		platform::Render::MemcpyResource(cmdList, TexCoord.DataBuffer, resource->GpuStream, params);
 

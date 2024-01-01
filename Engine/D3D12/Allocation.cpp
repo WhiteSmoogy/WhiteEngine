@@ -446,7 +446,20 @@ void PoolAllocator<Order, Defrag>::AllocDefaultResource(D3D12_HEAP_TYPE InHeapTy
 #endif
 
 	if (white::has_anyflags(InBufferAccess, EAccessHint::EA_DrawIndirect))
-		(void)0;//Force indirect args to stand alone allocations instead of pooled
+	{
+		//Force indirect args to stand alone allocations instead of pooled
+		ResourceLocation.Clear();
+
+		ResourceHolder* NewResource = nullptr;
+		const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InHeapType, GetGPUMask().GetNative(), GetVisibilityMask().GetNative());
+		D3D12_RESOURCE_DESC Desc = InDesc;
+		Desc.Alignment = 0;
+		CheckHResult(GetParentDevice()->GetParentAdapter()->CreateCommittedResource(
+			Desc, GetGPUMask(), HeapProps, InCreateState, InCreateState, nullptr, &NewResource, InName));
+
+		ResourceLocation.AsStandAlone(NewResource, InDesc.Width);
+		return;
+	}
 
 	AllocateResource(GetParentDevice()->GetGPUIndex(), InHeapType, InDesc, InDesc.Width, InAlignment, InResourceStateMode, InCreateState, nullptr, InName, ResourceLocation);
 }

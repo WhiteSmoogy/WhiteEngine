@@ -55,7 +55,7 @@ public:
 		uint Pad1;
 	};
 
-	
+
 
 	struct UncompactedDrawArguments
 	{
@@ -84,7 +84,7 @@ public:
 
 	constexpr static const uint32 DrawIndexArgumentNumElements = sizeof(DrawIndexArguments) / sizeof(uint32);
 
-	class DrawArgumentDim : SHADER_PERMUTATION_SPARSE_INT("INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS" , DrawIndexArgumentNumElements);
+	class DrawArgumentDim : SHADER_PERMUTATION_SPARSE_INT("INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS", DrawIndexArgumentNumElements);
 
 	using PermutationDomain = TShaderPermutationDomain<DrawArgumentDim>;
 
@@ -143,13 +143,13 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 
 	auto ViewCB = CreateGraphicsBuffeImmediate(view, Buffer::Usage::SingleFrame);
 
-	auto RWStructAccess = EAccessHint::EA_GPUReadWrite | EAccessHint::EA_GPUStructured  | EAccessHint::EA_GPUUnordered;
+	auto RWStructAccess = EAccessHint::EA_GPUReadWrite | EAccessHint::EA_GPUStructured | EAccessHint::EA_GPUUnordered;
 
 	auto FliteredIndexBuffer = shared_raw_robject(device.CreateBuffer(Buffer::Usage::SingleFrame,
 		RWStructAccess | EAccessHint::EA_Raw,
-		Trinf::Scene->Index.Allocator.GetMaxSize()* Trinf::Scene->Index.kPageSize, sizeof(uint32), nullptr));
+		Trinf::Scene->Index.Allocator.GetMaxSize() * Trinf::Scene->Index.kPageSize, sizeof(uint32), nullptr));
 
-	auto UncompactedDrawArgsSize = white::Align(sizeof(FilterTriangleCS::UncompactedDrawArguments) * sponza_trinf->Metadata->TrinfsCount,16);
+	auto UncompactedDrawArgsSize = white::Align(sizeof(FilterTriangleCS::UncompactedDrawArguments) * sponza_trinf->Metadata->TrinfsCount, 16);
 	auto UncompactedDrawArgs = shared_raw_robject(device.CreateBuffer(Buffer::Usage::SingleFrame,
 		RWStructAccess,
 		UncompactedDrawArgsSize, sizeof(FilterTriangleCS::UncompactedDrawArguments), nullptr));
@@ -240,7 +240,7 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	auto CompactedDrawArgs = shared_raw_robject(device.CreateBuffer(Buffer::Usage::SingleFrame,
 		RWStructAccess | EAccessHint::EA_DrawIndirect | EAccessHint::EA_Raw,
 		CompactedDrawArgsSize, sizeof(uint), nullptr));
-	Params.Count = white::Align(sizeof(DrawIndexArguments),16);
+	Params.Count = white::Align(sizeof(DrawIndexArguments), 16);
 	Params.DstOffset = 0;
 	Params.Value = 0;
 	MemsetResource(CmdList, CompactedDrawArgs, Params);
@@ -268,7 +268,7 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	auto depth_tex = static_cast<render::Texture2D*>(screen_frame->Attached(render::FrameBuffer::DepthStencil));
 	render::RenderPassInfo visPass(
 		vis_buffer.get(), render::Clear_Store,
-		depth_tex,render::DepthStencilTargetActions::ClearDepthStencil_StoreDepthStencil
+		depth_tex, render::DepthStencilTargetActions::ClearDepthStencil_StoreDepthStencil
 	);
 
 	CmdList.BeginRenderPass(visPass, "VisBuffer");
@@ -285,14 +285,28 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 
 	VisPso.ShaderPass.VertexShader = VisTriVS.GetVertexShader();
 	VisPso.ShaderPass.VertexDeclaration.push_back(
-		CtorVertexElement(0, 0, Vertex::Usage::Position, 0, EF_ABGR32F, sizeof(wm::float3)));
+		CtorVertexElement(0, 0, Vertex::Usage::Position, 0, EF_BGR32F, sizeof(wm::float3)));
 	VisPso.ShaderPass.PixelShader = VisTriPS.GetPixelShader();
 
 	SetGraphicsPipelineState(CmdList, VisPso);
 	render::SetShaderParameters(CmdList, VisTriVS, VisTriVS.GetVertexShader(), VSParas);
 
 	CmdList.SetVertexBuffer(0, Trinf::Scene->Position.DataBuffer.get());
-	CmdList.SetIndexBuffer(FliteredIndexBuffer.get());
 
-	CmdList.DrawIndirect(draw_visidSig.get(), sponza_trinf->Metadata->TrinfsCount, CompactedDrawArgs.get(), sizeof(DrawIndexArguments), CompactedDrawArgs.get(), 0);
+	for (int i = 0; i < sponza_trinf->Metadata->TrinfsCount; ++i)
+	{
+		auto& Trinf = sponza_trinf->Metadata->Trinfs[i];
+
+		for (auto clustIndex = 0; clustIndex < Trinf.ClusterCount; ++clustIndex)
+		{
+			auto& Compact = Trinf.ClusterCompacts[clustIndex];
+
+			CmdList.DrawIndexedPrimitive(
+				Trinf::Scene->Index.DataBuffer.get(),
+				0,0,Compact.TriangleCount*3,
+				Compact.ClusterStart, Compact.TriangleCount,1);
+		}
+	}
+	//CmdList.SetIndexBuffer(FliteredIndexBuffer.get());
+	//CmdList.DrawIndirect(draw_visidSig.get(), sponza_trinf->Metadata->TrinfsCount, CompactedDrawArgs.get(), sizeof(DrawIndexArguments), CompactedDrawArgs.get(), 0);
 }

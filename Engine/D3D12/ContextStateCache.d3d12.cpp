@@ -94,6 +94,11 @@ void CommandContextStateCache::InternalSetIndexBuffer(ResourceHolder* Resource)
 	auto NewView = PipelineState.Graphics.IBCache.CurrentIndexBufferView;
 
 	//ResourceBarrier
+	if (Resource->RequiresResourceStateTracking())
+	{
+		wassume(Resource->GetSubresourceCount() == 1);
+		CmdContext.TransitionResource(Resource, D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+	}
 }
 
 

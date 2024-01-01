@@ -179,7 +179,7 @@ private:
 
 		render::CommandSignatureDesc commandSigDesc =
 		{
-			nullptr, white::make_const_span(indirctArguments), false
+			nullptr, white::make_const_span(indirctArguments), true
 		};
 
 		draw_visidSig = white::share_raw(Device.CreateCommandSignature(commandSigDesc));

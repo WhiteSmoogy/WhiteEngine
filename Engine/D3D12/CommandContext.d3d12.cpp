@@ -392,6 +392,26 @@ static uint32 GetIndexCount(platform::Render::PrimtivteType type, uint32 NumPrim
 	return PrimitiveTypeFactor * NumPrimitives + PrimitiveTypeOffset;
 }
 
+DXGI_FORMAT GetIndexBufferFormat(GraphicsBuffer* IndexBuffer)
+{
+	DXGI_FORMAT Format = IndexBuffer->GetFormat();
+	if (Format == DXGI_FORMAT_UNKNOWN)
+	{
+		switch (IndexBuffer->GetStride())
+		{
+		case 4:
+			Format = DXGI_FORMAT_R32_UINT;
+			break;
+		case 2:
+			Format = DXGI_FORMAT_R16_UINT;
+		default:
+			WAssert(false, "Invalid IndexBuffer");
+		}
+	}
+
+	return Format;
+}
+
 void CommandContext::DrawIndexedPrimitive(platform::Render::GraphicsBuffer* IIndexBuffer, int32 BaseVertexIndex, uint32 FirstInstance, uint32 NumVertices, uint32 StartIndex, uint32 NumPrimitives, uint32 NumInstances)
 {
 	// called should make sure the input is valid, this avoid hidden bugs
@@ -405,7 +425,7 @@ void CommandContext::DrawIndexedPrimitive(platform::Render::GraphicsBuffer* IInd
 	uint32 IndexCount = GetIndexCount(StateCache.GetPrimtivteType(), NumPrimitives);
 	auto IndexBuffer = static_cast<GraphicsBuffer*>(IIndexBuffer);
 
-	const DXGI_FORMAT Format = IndexBuffer->GetFormat();
+	const DXGI_FORMAT Format = GetIndexBufferFormat(IndexBuffer);
 	StateCache.SetIndexBuffer(IndexBuffer->Location, Format, 0);
 	StateCache.ApplyState<CPT_Graphics>();
 
@@ -429,21 +449,7 @@ void CommandContext::SetIndexBuffer(platform::Render::GraphicsBuffer* IIndexBuff
 {
 	auto IndexBuffer = static_cast<GraphicsBuffer*>(IIndexBuffer);
 
-	DXGI_FORMAT Format = IndexBuffer->GetFormat();
-
-	if (Format == DXGI_FORMAT_UNKNOWN)
-	{
-		switch (IndexBuffer->GetStride())
-		{
-		case 4:
-			Format = DXGI_FORMAT_R32_UINT;
-			break;
-		case 2:
-			Format = DXGI_FORMAT_R16_UINT;
-		default:
-			WAssert(false, "Invalid IndexBuffer");
-		}
-	}
+	const DXGI_FORMAT Format = GetIndexBufferFormat(IndexBuffer);
 
 	StateCache.SetIndexBuffer(IndexBuffer->Location, Format, 0);
 }

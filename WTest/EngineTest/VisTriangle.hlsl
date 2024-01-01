@@ -10,9 +10,9 @@ struct ViewArgs
 
 ConstantBuffer<ViewArgs> View;
 
-float4 VisTriangleVS(float4 postion : POSITION) : SV_Position
+float4 VisTriangleVS(float3 postion : POSITION) : SV_Position
 {
-    float4 Position = mul(postion, View.matrixs.mvp);
+    float4 Position = mul(float4(postion, 1), View.matrixs.mvp);
 
     return Position;
 }

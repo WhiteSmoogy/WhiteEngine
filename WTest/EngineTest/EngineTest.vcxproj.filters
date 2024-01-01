@@ -87,5 +87,6 @@
     <CopyFileToFolders Include="FilterTriangle.hlsl" />
     <CopyFileToFolders Include="BatchCompaction.hlsl" />
     <CopyFileToFolders Include="VisTriangle.hlsl" />
+    <CopyFileToFolders Include="Debug.hlsl" />
   </ItemGroup>
 </Project>

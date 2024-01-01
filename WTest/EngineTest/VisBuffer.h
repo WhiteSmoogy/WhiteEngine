@@ -18,6 +18,7 @@
 #include "Runtime/Camera.h"
 #include "Runtime/Renderer/imgui/imgui_context.h"
 #include "Runtime/Renderer/Trinf.h"
+#include "RenderInterface/PixelShaderUtils.h"
 
 
 
@@ -86,6 +87,9 @@ private:
 		OnGUI();
 		ImGui::Render();
 
+		static int FrameCount = 0;
+		++FrameCount;
+		if (FrameCount > 5)
 		{
 			SCOPED_GPU_EVENT(CmdList, Trinf);
 			Trinf::Scene->AddResource(sponza_trinf);
@@ -96,6 +100,7 @@ private:
 
 			Trinf::Scene->EndAsyncUpdate(CmdList);
 		}
+		DrawDetph(CmdList, screen_tex, depth_tex);
 		OnDrawUI(CmdList, screen_tex);
 		CmdList.EndFrame();
 
@@ -137,7 +142,7 @@ private:
 		white::math::float3 up_vec{ 0,1.f,0 };
 		white::math::float3 view_vec{ 0.94f,-0.1f,0.2f };
 
-		white::math::float3 eye{ -20,0,0 };
+		white::math::float3 eye{ 0,110,-90 };
 
 		camera.SetViewMatrix(WhiteEngine::X::look_at_lh(eye, white::math::float3(0, 0, 0), up_vec));
 
@@ -202,6 +207,8 @@ private:
 
 		platform::imgui::Context_RenderDrawData(CmdList, ImGui::GetDrawData());
 	}
+
+	void DrawDetph(render::CommandList& CmdList, render::Texture* screenTex, render::Texture* depthTex);
 };
 
 

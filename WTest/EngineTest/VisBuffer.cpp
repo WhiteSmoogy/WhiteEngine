@@ -3,6 +3,7 @@
 #include "Runtime/RenderCore/ShaderTextureTraits.hpp"
 #include "Runtime/RenderCore/UnifiedBuffer.h"
 #include "Runtime/RenderCore/Dispatch.h"
+#include "Runtime/Renderer/SceneInfo.h"
 
 using namespace platform::Render;
 
@@ -297,16 +298,72 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	{
 		auto& Trinf = sponza_trinf->Metadata->Trinfs[i];
 
+		uint TraingleCount = 0;
+		uint ClusterStart = Trinf.ClusterCompacts[0].ClusterStart;
 		for (auto clustIndex = 0; clustIndex < Trinf.ClusterCount; ++clustIndex)
 		{
 			auto& Compact = Trinf.ClusterCompacts[clustIndex];
 
-			CmdList.DrawIndexedPrimitive(
-				Trinf::Scene->Index.DataBuffer.get(),
-				0,0,Compact.TriangleCount*3,
-				Compact.ClusterStart, Compact.TriangleCount,1);
+			TraingleCount += Compact.TriangleCount;
 		}
+		CmdList.DrawIndexedPrimitive(
+			Trinf::Scene->Index.DataBuffer.get(),
+			0, 0, TraingleCount * 3,
+			ClusterStart, TraingleCount, 1);
 	}
 	//CmdList.SetIndexBuffer(FliteredIndexBuffer.get());
 	//CmdList.DrawIndirect(draw_visidSig.get(), sponza_trinf->Metadata->TrinfsCount, CompactedDrawArgs.get(), sizeof(DrawIndexArguments), CompactedDrawArgs.get(), 0);
+}
+
+class FullScreenVS : public BuiltInShader
+{
+public:
+	EXPORTED_BUILTIN_SHADER(FullScreenVS);
+};
+
+IMPLEMENT_BUILTIN_SHADER(FullScreenVS, "Debug.hlsl", "FullScreenVS", platform::Render::VertexShader);
+
+BEGIN_SHADER_PARAMETER_STRUCT(DebugParameters)
+SHADER_PARAMETER_TEXTURE(Texture2D, DepthTexture)
+SHADER_PARAMETER(white::math::float4, InvDeviceZToWorldZTransform)
+SHADER_PARAMETER(white::math::float2, NearFar)
+SHADER_PARAMETER_SAMPLER(TextureSampleDesc, DepthSampler)
+END_SHADER_PARAMETER_STRUCT()
+
+class LinearDepthPS : public BuiltInShader
+{
+public:
+	using Parameters = DebugParameters;
+	EXPORTED_BUILTIN_SHADER(LinearDepthPS);
+};
+
+IMPLEMENT_BUILTIN_SHADER(LinearDepthPS, "Debug.hlsl", "LinearDepthPS", platform::Render::PixelShader);
+
+
+void VisBufferTest::DrawDetph(render::CommandList& CmdList, render::Texture* screenTex, render::Texture* depthTex)
+{
+	auto PixelShader = render::GetBuiltInShaderMap()->GetShader<LinearDepthPS>();
+
+	platform::Render::RenderPassInfo passInfo(screenTex, render::RenderTargetActions::Load_Store);
+	CmdList.BeginRenderPass(passInfo, "DrawDetph");
+
+	render::GraphicsPipelineStateInitializer GraphicsPSOInit{};
+	render::PixelShaderUtils::InitFullscreenPipelineState(CmdList, PixelShader, GraphicsPSOInit);
+
+	auto VertexShader = render::GetBuiltInShaderMap()->GetShader<FullScreenVS>();
+	GraphicsPSOInit.ShaderPass.VertexShader = VertexShader.GetVertexShader();
+
+	SetGraphicsPipelineState(CmdList, GraphicsPSOInit);
+
+	DebugParameters Parameters;
+	Parameters.DepthTexture = static_cast<Texture2D*>(depthTex);
+	Parameters.DepthSampler.filtering = render::TexFilterOp::Min_Mag_Mip_Point;
+
+	Parameters.InvDeviceZToWorldZTransform =WhiteEngine::CreateInvDeviceZToWorldZTransform(projMatrix);
+	Parameters.NearFar.x = 1;
+	Parameters.NearFar.y = 1 / (1000.0f - 1);
+
+	SetShaderParameters(CmdList, PixelShader, PixelShader.GetPixelShader(), Parameters);
+
+	PixelShaderUtils::DrawFullscreenTriangle(CmdList);
 }

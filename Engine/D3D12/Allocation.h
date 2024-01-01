@@ -423,7 +423,7 @@ namespace platform_ex::Windows::D3D12
 	private:
 		BufferPool* CreateBufferPool(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_FLAGS InResourceFlags, uint32 InBufferAccess, ResourceStateMode InResourceStateMode);
 
-
+		std::shared_mutex Mutex;
 		std::vector< BufferPool*> DefaultBufferPools;
 	};
 

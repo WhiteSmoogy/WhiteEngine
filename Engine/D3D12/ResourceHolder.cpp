@@ -75,7 +75,10 @@ namespace platform_ex::Windows {
 			D3D12_RESOURCE_STATES InInitialResourceState,
 			const D3D12_RESOURCE_DESC& InDesc,
 			HeapHolder* InHeap, D3D12_HEAP_TYPE InHeapType)
-			:ResourceHolder(pResource, InInitialResourceState, ResourceStateMode::Default,D3D12_RESOURCE_STATE_TBD, InDesc)
+			:ResourceHolder(pResource, 
+				InInitialResourceState, ResourceStateMode::Default, D3D12_RESOURCE_STATE_TBD, 
+				InDesc,
+				InHeap, InHeapType)
 		{
 		}
 
@@ -83,7 +86,7 @@ namespace platform_ex::Windows {
 			D3D12_RESOURCE_STATES InInitialState, ResourceStateMode InResourceStateMode, D3D12_RESOURCE_STATES InDefaultResourceState,
 			const D3D12_RESOURCE_DESC& InDesc,
 			HeapHolder* InHeap, D3D12_HEAP_TYPE InHeapType)
-			: resource(pResource), desc(InDesc), heap_type(InHeapType), bRequiresResourceStateTracking(true)
+			: resource(pResource), heap(InHeap), heap_type(InHeapType), desc(InDesc), bRequiresResourceStateTracking(true)
 		{
 			bDepthStencil = (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0;
 

@@ -445,22 +445,6 @@ void PoolAllocator<Order, Defrag>::AllocDefaultResource(D3D12_HEAP_TYPE InHeapTy
 	}
 #endif
 
-	if (white::has_anyflags(InBufferAccess, EAccessHint::EA_DrawIndirect))
-	{
-		//Force indirect args to stand alone allocations instead of pooled
-		ResourceLocation.Clear();
-
-		ResourceHolder* NewResource = nullptr;
-		const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InHeapType, GetGPUMask().GetNative(), GetVisibilityMask().GetNative());
-		D3D12_RESOURCE_DESC Desc = InDesc;
-		Desc.Alignment = 0;
-		CheckHResult(GetParentDevice()->GetParentAdapter()->CreateCommittedResource(
-			Desc, GetGPUMask(), HeapProps, InCreateState, InCreateState, nullptr, &NewResource, InName));
-
-		ResourceLocation.AsStandAlone(NewResource, InDesc.Width);
-		return;
-	}
-
 	AllocateResource(GetParentDevice()->GetGPUIndex(), InHeapType, InDesc, InDesc.Width, InAlignment, InResourceStateMode, InCreateState, nullptr, InName, ResourceLocation);
 }
 
@@ -1318,6 +1302,7 @@ BufferAllocator::BufferAllocator(NodeDevice* Parent, GPUMaskType VisibleNodes)
 
 void BufferAllocator::CleanUpAllocations(uint64 InFrameLag)
 {
+	std::shared_lock lock{ Mutex };
 	for (auto Pool : DefaultBufferPools)
 	{
 		if (Pool)
@@ -1332,14 +1317,33 @@ void BufferAllocator::AllocDefaultResource(D3D12_HEAP_TYPE InHeapType, const D3D
 	D3D12_RESOURCE_DESC ResourceDesc = InResourceDesc;
 	ResourceDesc.Flags = ResourceDesc.Flags & (~D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE);
 
+	if (white::has_anyflags(InBuffAccess, EAccessHint::EA_DrawIndirect))
+	{
+		//Force indirect args to stand alone allocations instead of pooled
+		ResourceLocation.Clear();
+
+		ResourceHolder* NewResource = nullptr;
+		const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InHeapType, GetGPUMask().GetNative(), GetVisibilityMask().GetNative());
+		D3D12_RESOURCE_DESC Desc = InResourceDesc;
+		Desc.Alignment = 0;
+		CheckHResult(GetParentDevice()->GetParentAdapter()->CreateCommittedResource(
+			Desc, GetGPUMask(), HeapProps, InCreateState, InCreateState, nullptr, &NewResource, Name));
+
+		ResourceLocation.AsStandAlone(NewResource, InResourceDesc.Width);
+		return;
+	}
+
 	// Do we already have a default pool which support this allocation?
 	BufferPool* BufferPool = nullptr;
-	for (auto Pool : DefaultBufferPools)
 	{
-		if (Pool->SupportsAllocation(InHeapType, ResourceDesc.Flags, InBuffAccess, mode))
+		std::shared_lock lock{ Mutex };
+		for (auto Pool : DefaultBufferPools)
 		{
-			BufferPool = Pool;
-			break;
+			if (Pool->SupportsAllocation(InHeapType, ResourceDesc.Flags, InBuffAccess, mode))
+			{
+				BufferPool = Pool;
+				break;
+			}
 		}
 	}
 
@@ -1411,6 +1415,7 @@ BufferPool* BufferAllocator::CreateBufferPool(D3D12_HEAP_TYPE InHeapType, D3D12_
 	else
 		NewPool = new PoolAllocator<MemoryPool::FreeListOrder::SortByOffset, false>(Device, GetVisibilityMask(), Config, Name, AllocationStrategy, PoolSize, PoolAlignment, static_cast<uint32>(MaxAllocationSize));
 
+	std::unique_lock lock{ Mutex };
 	DefaultBufferPools.emplace_back(NewPool);
 
 	return NewPool;

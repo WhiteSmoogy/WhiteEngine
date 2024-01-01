@@ -636,7 +636,7 @@ namespace platform_ex::Windows {
 				}
 
 				// multi state resource need to placed because each allocation can be in a different state
-				return (InResourceStateMode == ResourceStateMode::Multi) ? AllocationStrategy::kPlacedResource : AllocationStrategy::kManualSubAllocation;
+				return (ResourceStateMode == ResourceStateMode::Multi) ? AllocationStrategy::kPlacedResource : AllocationStrategy::kManualSubAllocation;
 			}
 
 			virtual void Deallocate(ResourceLocation& ResourceLocation) = 0;

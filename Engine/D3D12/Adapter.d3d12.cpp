@@ -906,6 +906,7 @@ namespace platform_ex::Windows::D3D12 {
 			auto Device = BackingHeap->GetParentDevice();
 			const D3D12_HEAP_DESC HeapDesc = Heap->GetDesc();
 
+			BackingHeap->AddRef();
 			// Set the output pointer
 			*ppOutResource = new ResourceHolder(
 				pResource,

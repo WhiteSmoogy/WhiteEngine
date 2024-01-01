@@ -37,7 +37,7 @@ namespace platform_ex::Windows::D3D12 {
 			if (SUCCEEDED(D3D12::CreateDevice(adapter.Get(),
 				level, IID_ID3D12Device, reinterpret_cast<void**>(&device)))) {
 
-#if 1
+#if _DEBUG || ENGINE_TOOL
 				COMPtr<ID3D12InfoQueue> info_queue;
 				if (SUCCEEDED(device->QueryInterface(COMPtr_RefParam(info_queue, IID_ID3D12InfoQueue)))) {
 					D3D12_INFO_QUEUE_FILTER filter;
@@ -49,10 +49,15 @@ namespace platform_ex::Windows::D3D12 {
 
 					D3D12_MESSAGE_ID denyIds[] =
 					{
-						//      This warning gets triggered by ClearDepthStencilView/ClearRenderTargetView because when the resource was created
-						//      it wasn't passed an optimized clear color (see CreateCommitedResource). This shows up a lot and is very noisy.
+						//This warning gets triggered by ClearDepthStencilView/ClearRenderTargetView because when the resource was created
+						//it wasn't passed an optimized clear color (see CreateCommitedResource). This shows up a lot and is very noisy.
 						D3D12_MESSAGE_ID_CLEARDEPTHSTENCILVIEW_MISMATCHINGCLEARVALUE,
 						D3D12_MESSAGE_ID_CLEARDEPTHSTENCILVIEW_MISMATCHINGCLEARVALUE,
+
+						// D3D12 complains when a buffer is created with a specific initial resource state while all buffers are currently created in COMMON state.The
+						// next transition is then done use state promotion. It's just a warning and we need to keep track of the correct initial state as well for upcoming
+						// internal transitions.
+						D3D12_MESSAGE_ID_CREATERESOURCE_STATE_IGNORED,
 					};
 					filter.DenyList.NumIDs = sizeof(denyIds) / sizeof(D3D12_MESSAGE_ID);
 					filter.DenyList.pIDList = denyIds;
@@ -60,6 +65,8 @@ namespace platform_ex::Windows::D3D12 {
 					CheckHResult(info_queue->PushStorageFilter(&filter));
 
 					info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+
+					info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, IsDebuggerPresent());
 				}
 #endif
 

@@ -132,8 +132,8 @@ void StreamingScene::BeginAsyncUpdate(platform::Render::CommandList& cmdList)
 	{
 		if ((*itr)->IORequest->IsReady())
 		{
-			Resident.emplace_back(*itr);
-			(*itr)->State = Resources::StreamingState::Resident;
+			GpuStreaming.emplace_back(*itr);
+			(*itr)->State = Resources::StreamingState::GPUStreaming;
 
 			itr = Streaming.erase(itr);
 		}
@@ -144,6 +144,41 @@ void StreamingScene::BeginAsyncUpdate(platform::Render::CommandList& cmdList)
 
 void StreamingScene::EndAsyncUpdate(platform::Render::CommandList& cmdList)
 {
+	for (auto itr = GpuStreaming.begin(); itr != GpuStreaming.end();)
+	{
+		auto resource = *itr;
+
+		auto key = Keys[resource->TrinfKey];
+
+		platform::Render::MemcpyResourceParams params =
+		{
+			.Count = resource->Metadata->Index.UncompressedSize,
+			.SrcOffset = 0,
+			.DstOffset = key.Index * Index.kPageSize,
+		};
+		platform::Render::MemcpyResource(cmdList, Index.DataBuffer, resource->GpuStream, params);
+
+		params.SrcOffset += params.Count;
+		params.Count = resource->Metadata->Position.UncompressedSize;
+		params.DstOffset = key.Position * Position.kPageSize;
+		platform::Render::MemcpyResource(cmdList, Position.DataBuffer, resource->GpuStream, params);
+
+		params.SrcOffset += params.Count;
+		params.Count = resource->Metadata->Tangent.UncompressedSize;
+		params.DstOffset = key.Tangent * Tangent.kPageSize;
+		platform::Render::MemcpyResource(cmdList, Tangent.DataBuffer, resource->GpuStream, params);
+
+		params.SrcOffset += params.Count;
+		params.Count = resource->Metadata->TexCoord.UncompressedSize;
+		params.DstOffset = key.TexCoord * TexCoord.kPageSize;
+		platform::Render::MemcpyResource(cmdList, TexCoord.DataBuffer, resource->GpuStream, params);
+
+		Resident.emplace_back(resource);
+		resource->State = Resources::StreamingState::Resident;
+		resource->GpuStream.reset();
+
+		itr = GpuStreaming.erase(itr);
+	}
 }
 
 
@@ -161,29 +196,37 @@ void StreamingScene::ProcessNewResources(platform::Render::CommandList& cmdList)
 
 		DStorageFile2GpuRequest::Buffer target{};
 
+		auto GpuStreamingSize = 0;
+		GpuStreamingSize += resource->Metadata->Index.UncompressedSize;
+		GpuStreamingSize += resource->Metadata->Position.UncompressedSize;
+		GpuStreamingSize += resource->Metadata->Tangent.UncompressedSize;
+		GpuStreamingSize += resource->Metadata->TexCoord.UncompressedSize;
+
+		resource->GpuStream = pr::shared_raw_robject(CreateByteAddressBuffer(GpuStreamingSize, sizeof(float)));
+
 		{
 			auto index_req = resource->BuildRequestForRegion(resource->Metadata->Index);
-			target.Offset = key.Index * Index.kPageSize;
+			target.Offset = 0;
 			target.Size = index_req.UncompressedSize;
-			target.Target = Index.DataBuffer.get();
+			target.Target = resource->GpuStream.get();
 			index_req.Destination = target;
 			storage_api.EnqueueRequest(index_req);
 		}
 
 		{
 			auto pos_req = resource->BuildRequestForRegion(resource->Metadata->Position);
-			target.Offset = key.Position * Position.kPageSize;
+			target.Offset += target.Size;
 			target.Size = pos_req.UncompressedSize;
-			target.Target = Position.DataBuffer.get();
+			target.Target = resource->GpuStream.get();
 			pos_req.Destination = target;
 			storage_api.EnqueueRequest(pos_req);
 		}
 
 		{
 			auto tan_req = resource->BuildRequestForRegion(resource->Metadata->Tangent);
-			target.Offset = key.Tangent * Tangent.kPageSize;
+			target.Offset += target.Size;
 			target.Size = tan_req.UncompressedSize;
-			target.Target = Tangent.DataBuffer.get();
+			target.Target = resource->GpuStream.get();
 			tan_req.Destination = target;
 
 			storage_api.EnqueueRequest(tan_req);
@@ -191,9 +234,9 @@ void StreamingScene::ProcessNewResources(platform::Render::CommandList& cmdList)
 
 		{
 			auto uv_req = resource->BuildRequestForRegion(resource->Metadata->TexCoord);
-			target.Offset = key.TexCoord * TexCoord.kPageSize;
+			target.Offset += target.Size;
 			target.Size = uv_req.UncompressedSize;
-			target.Target = TexCoord.DataBuffer.get();
+			target.Target = resource->GpuStream.get();
 			uv_req.Destination = target;
 
 			storage_api.EnqueueRequest(uv_req);

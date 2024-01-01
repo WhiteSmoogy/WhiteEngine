@@ -17,6 +17,7 @@ namespace Trinf
 		{
 			None,
 			Streaming,
+			GPUStreaming,
 			Resident,
 		};
 
@@ -25,6 +26,7 @@ namespace Trinf
 
 		std::shared_ptr<DStorageFile> File;
 		std::shared_ptr<DStorageSyncPoint> IORequest;
+		std::shared_ptr<platform::Render::GraphicsBuffer> GpuStream;
 
 		TrinfHeader Header;
 		MemoryRegion<TrinfGridHeader> Metadata;
@@ -131,6 +133,7 @@ namespace Trinf
 
 		std::vector<std::shared_ptr<Resources>> Streaming;
 		std::vector<std::shared_ptr<Resources>> Resident;
+		std::vector<std::shared_ptr<Resources>> GpuStreaming;
 
 		DirectStorage& storage_api;
 	};

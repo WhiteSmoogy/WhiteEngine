@@ -114,18 +114,18 @@ void StoreByte(RWByteAddressBuffer buffer,uint index,uint value)
 [numthreads(TRIANGLE_PER_CLUSTER, 1, 1)]
 void FilterTriangleCS( uint BatchIndex : SV_GroupID, uint3 TriId: SV_GroupThreadID)
 {
+    if (TriId.x == 0)
+    {
+        workGroupIndexCount = 0;
+    }
+
+    GroupMemoryBarrierWithGroupSync();
+	
 	FilterDispatchArgs Args = DispatchArgs.Args[BatchIndex];
 
 	uint ClusterOffsetIndex = Args.IndexStart + Args.ClusterId * TRIANGLE_PER_CLUSTER * 3;
     
 	uint IndexOffset = ClusterOffsetIndex + TriId.x * 3;
-
-	if (TriId.x == 0)
-	{
-		workGroupIndexCount = 0;
-	}
-
-	GroupMemoryBarrier();
 
 	uint threadOutputSlot = 0;
 
@@ -150,8 +150,7 @@ void FilterTriangleCS( uint BatchIndex : SV_GroupID, uint3 TriId: SV_GroupThread
 			mul(v2, mvp)
 		};
 
-		cull = CullTriangle(vertices);
-        cull = false;
+		cull = false;
 
 		if (!cull)
 		{
@@ -159,23 +158,23 @@ void FilterTriangleCS( uint BatchIndex : SV_GroupID, uint3 TriId: SV_GroupThread
 		}
 	}
 
-	GroupMemoryBarrier();
+    GroupMemoryBarrierWithGroupSync();
 
 	if (TriId.x == 0)
 	{
 		InterlockedAdd(UncompactedDrawArgs[Args.DrawId].numIndices, workGroupIndexCount, workGroupOutputSlot);
 	}
 
-	AllMemoryBarrier();
+    AllMemoryBarrierWithGroupSync();
 
 	if (!cull)
 	{
 		uint index = workGroupOutputSlot;
         
-		StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 0, Indices.x);
-		StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 1, Indices.y);
-		StoreByte(FliteredIndexBuffer, index + Args.OutpuIndexOffset + threadOutputSlot + 2, Indices.z);
-	}
+        StoreByte(FliteredIndexBuffer, Args.OutpuIndexOffset + index + threadOutputSlot + 0, Indices.x);
+		StoreByte(FliteredIndexBuffer, Args.OutpuIndexOffset + index + threadOutputSlot + 1, Indices.y);
+        StoreByte(FliteredIndexBuffer, Args.OutpuIndexOffset + index + threadOutputSlot + 2, Indices.z);
+    }
 
 	if (TriId.x == 0 && Args.ClusterId == 0)
 	{

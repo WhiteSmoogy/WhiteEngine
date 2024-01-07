@@ -87,9 +87,6 @@ private:
 		OnGUI();
 		ImGui::Render();
 
-		static int FrameCount = 0;
-		++FrameCount;
-		if (FrameCount > 5)
 		{
 			SCOPED_GPU_EVENT(CmdList, Trinf);
 			Trinf::Scene->AddResource(sponza_trinf);

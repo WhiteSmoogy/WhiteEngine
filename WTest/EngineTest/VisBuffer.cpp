@@ -205,7 +205,8 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 
 			args.DrawId = drawId;
 			args.IndexStart = cluster_compact.ClusterStart;
-			args.IndexEnd = args.IndexStart + (trinf.ClusterCount - 1) * 64 + last_compact.TriangleCount * 3;
+			auto MaxTriangle = (trinf.ClusterCount - 1) * 64 + last_compact.TriangleCount;
+			args.IndexEnd = args.IndexStart + MaxTriangle * 3;
 
 			args.VertexStart = 0;
 			args.OutpuIndexOffset = args.IndexStart;
@@ -294,25 +295,8 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 
 	CmdList.SetVertexBuffer(0, Trinf::Scene->Position.DataBuffer.get());
 
-	for (int i = 0; i < sponza_trinf->Metadata->TrinfsCount; ++i)
-	{
-		auto& Trinf = sponza_trinf->Metadata->Trinfs[i];
-
-		uint TraingleCount = 0;
-		uint ClusterStart = Trinf.ClusterCompacts[0].ClusterStart;
-		for (auto clustIndex = 0; clustIndex < Trinf.ClusterCount; ++clustIndex)
-		{
-			auto& Compact = Trinf.ClusterCompacts[clustIndex];
-
-			TraingleCount += Compact.TriangleCount;
-		}
-		CmdList.DrawIndexedPrimitive(
-			Trinf::Scene->Index.DataBuffer.get(),
-			0, 0, TraingleCount * 3,
-			ClusterStart, TraingleCount, 1);
-	}
-	//CmdList.SetIndexBuffer(FliteredIndexBuffer.get());
-	//CmdList.DrawIndirect(draw_visidSig.get(), sponza_trinf->Metadata->TrinfsCount, CompactedDrawArgs.get(), sizeof(DrawIndexArguments), CompactedDrawArgs.get(), 0);
+	CmdList.SetIndexBuffer(FliteredIndexBuffer.get());
+	CmdList.DrawIndirect(draw_visidSig.get(), sponza_trinf->Metadata->TrinfsCount, CompactedDrawArgs.get(), sizeof(DrawIndexArguments), CompactedDrawArgs.get(), 0);
 }
 
 class FullScreenVS : public BuiltInShader

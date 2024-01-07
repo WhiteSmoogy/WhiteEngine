@@ -150,7 +150,7 @@ void FilterTriangleCS( uint BatchIndex : SV_GroupID, uint3 TriId: SV_GroupThread
 			mul(v2, mvp)
 		};
 
-		cull = false;
+        cull = CullTriangle(vertices);
 
 		if (!cull)
 		{

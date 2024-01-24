@@ -1379,6 +1379,10 @@ D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState(D3D12_HEAP
 		wconstraint(InHeapType == D3D12_HEAP_TYPE_DEFAULT);
 		return D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 	}
+	else if (InBufferAccess & EA_DStorage)
+	{
+		return D3D12_RESOURCE_STATE_COPY_DEST;
+	}
 	else
 	{
 		return D3D12_RESOURCE_STATE_GENERIC_READ;

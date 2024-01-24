@@ -190,6 +190,8 @@ void StreamingScene::ProcessNewResources(platform::Render::CommandList& cmdList)
 	TexCoord.ResizeByteAddressBufferIfNeeded(cmdList);
 	Index.ResizeByteAddressBufferIfNeeded(cmdList);
 
+	auto& device = Context::Instance().GetDevice();
+
 	for (auto resource : PendingAdds)
 	{
 		auto key = Keys[resource->TrinfKey];
@@ -202,8 +204,10 @@ void StreamingScene::ProcessNewResources(platform::Render::CommandList& cmdList)
 		GpuStreamingSize += resource->Metadata->Tangent.UncompressedSize;
 		GpuStreamingSize += resource->Metadata->TexCoord.UncompressedSize;
 
-		resource->GpuStream = pr::shared_raw_robject(CreateByteAddressBuffer(GpuStreamingSize, sizeof(float)));
-
+		resource->GpuStream = pr::shared_raw_robject(device.CreateBuffer(pr::Buffer::Usage::Static,
+			pr::EAccessHint::EA_GPUReadWrite |
+			pr::EAccessHint::EA_Raw | pr::EAccessHint::EA_DStorage,
+			GpuStreamingSize, sizeof(uint32), nullptr));
 		{
 			auto index_req = resource->BuildRequestForRegion(resource->Metadata->Index);
 			target.Offset = 0;

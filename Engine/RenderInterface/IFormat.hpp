@@ -509,6 +509,8 @@ namespace platform::Render {
 			EA_DSVRead = 1 << 20 |EA_GPURead,
 
 			EA_ShadingRateSource = 1 << 21,
+
+			EA_DStorage = 1 << 22,
 		};
 
 		enum class ClearBinding

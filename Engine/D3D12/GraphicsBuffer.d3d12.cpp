@@ -219,6 +219,8 @@ namespace platform_ex::Windows::D3D12 {
 
 		if (white::has_allflags(BufferDesc.Access,EA_AccelerationStructure))
 			return CreateBuffer<ResourceStateMode::Single>(Cmdlist, Desc, InitialState, BufferDesc, Alignment, CreateInfo, Allocator);
+		else if(white::has_allflags(BufferDesc.Access, EA_DStorage))
+			return CreateBuffer<ResourceStateMode::Multi>(Cmdlist, Desc, InitialState, BufferDesc, Alignment, CreateInfo, Allocator);
 		else
 			return CreateBuffer<ResourceStateMode::Default>(Cmdlist, Desc, InitialState, BufferDesc, Alignment, CreateInfo, Allocator);
 	}

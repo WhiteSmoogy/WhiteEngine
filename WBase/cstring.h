@@ -1,6 +1,5 @@
 #ifndef WBase_cstring_h
 #define WBase_cstring_h 1
-
 #include "wdef.h"
 #include "type_pun.hpp" // for or_, is_same;
 #include "cassert.h" // for wconstraint;

@@ -16,6 +16,16 @@
 
 namespace white
 {
+	template <class _category, class _ty, class _diff = ptrdiff_t, class _Pointer = _ty*,
+		class _Reference = _ty&>
+		struct iterator { // base type for iterator classes
+		using iterator_category = _category;
+		using value_type = _ty;
+		using difference_type = _diff;
+		using pointer = _Pointer;
+		using reference = _Reference;
+	};
+
 	template<typename _type, typename _tIter =const _type*,
 		typename _tTraits = std::iterator_traits<_tIter >>
 		//伪迭代器,总返回单一值

@@ -5,6 +5,7 @@
 #include "cassert.h" // for wdef.h, <cstdio> and wconstraint;
 #include "iterator_op.hpp" // for iterator_operators_t, is_undereferenceable;
 #include "winttype.hpp"
+#include "iterator.hpp"
 
 #include <cstdarg> // for std::va_list;
 #include <memory> // for std::unique_ptr;
@@ -26,16 +27,18 @@ namespace white
 	/*!
 	\brief 基于 ISO C 标准库的流只读迭代器。
 	*/
-	class WB_API ifile_iterator : public std::iterator<std::input_iterator_tag,
+	class WB_API ifile_iterator : public white::iterator<std::input_iterator_tag,
 		byte, ptrdiff_t, const byte*, const byte&>, public white::iterator_operators_t<
-		ifile_iterator, std::iterator_traits<wimpl(std::iterator<
+		ifile_iterator, std::iterator_traits<wimpl(white::iterator<
 			std::input_iterator_tag, byte, ptrdiff_t, const byte*, const byte&>) >>
 	{
-	protected:
-		using traits_type = std::iterator<std::input_iterator_tag, byte, ptrdiff_t,
-			const byte*, const byte&>;
-
 	public:
+		using iterator_category = std::input_iterator_tag;
+		using value_type = byte;
+		using difference_type = ptrdiff_t;
+		using pointer = const byte*;
+		using reference = const byte&;
+
 		using char_type = byte;
 		using int_type = int;
 

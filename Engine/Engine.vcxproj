@@ -41,9 +41,18 @@
     <ClCompile Include="Core\Container\HashTable.cpp" />
     <ClCompile Include="Core\Coroutine\AsyncStream.cpp" />
     <ClCompile Include="Core\Coroutine\file.coroutine.cpp" />
-    <ClCompile Include="Core\Coroutine\file_read_operation.cpp" />
-    <ClCompile Include="Core\Coroutine\file_write_operation.cpp" />
-    <ClCompile Include="Core\Coroutine\IOScheduler.cpp" />
+    <ClCompile Include="Core\Coroutine\file_read_operation.cpp">
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
+    </ClCompile>
+    <ClCompile Include="Core\Coroutine\file_write_operation.cpp">
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
+    </ClCompile>
+    <ClCompile Include="Core\Coroutine\IOScheduler.cpp">
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
+    </ClCompile>
     <ClCompile Include="Core\Coroutine\readable_file.cpp" />
     <ClCompile Include="Core\Coroutine\ReadOnlyFile.cpp" />
     <ClCompile Include="Core\Coroutine\ThreadScheduler.cpp" />
@@ -53,12 +62,28 @@
     <ClCompile Include="Core\Hash\MessageDigest.cpp" />
     <ClCompile Include="Core\Serialization\Archive.cpp" />
     <ClCompile Include="Core\Serialization\BulkData.cpp" />
-    <ClCompile Include="Core\Threading\AutoResetEvent.cpp" />
-    <ClCompile Include="Core\Threading\ManualResetEvent.cpp" />
-    <ClCompile Include="Core\Threading\SpinMutex.cpp" />
-    <ClCompile Include="Core\Threading\SpinWait.cpp" />
+    <ClCompile Include="Core\Threading\AutoResetEvent.cpp">
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</PreprocessToFile>
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
+    </ClCompile>
+    <ClCompile Include="Core\Threading\ManualResetEvent.cpp">
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
+    </ClCompile>
+    <ClCompile Include="Core\Threading\SpinMutex.cpp">
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
+    </ClCompile>
+    <ClCompile Include="Core\Threading\SpinWait.cpp">
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
+    </ClCompile>
     <ClCompile Include="Core\Threading\TaskScheduler.cpp" />
-    <ClCompile Include="Core\Threading\Win32Thread.cpp" />
+    <ClCompile Include="Core\Threading\Win32Thread.cpp">
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
+    </ClCompile>
     <ClCompile Include="D3D12\Adapter.d3d12.cpp" />
     <ClCompile Include="D3D12\Allocation.cpp" />
     <ClCompile Include="D3D12\BuiltInRayTracingShaders.cpp" />
@@ -69,7 +94,10 @@
     <ClCompile Include="D3D12\ContextStateCache.d3d12.cpp" />
     <ClCompile Include="D3D12\Convert.d3d12.cpp" />
     <ClCompile Include="D3D12\D3D12RayTracing.cpp" />
-    <ClCompile Include="D3D12\d3d12_dxgi.cpp" />
+    <ClCompile Include="D3D12\d3d12_dxgi.cpp">
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
+    </ClCompile>
     <ClCompile Include="D3D12\DescriptorCache.d3d12.cpp" />
     <ClCompile Include="D3D12\Descriptors.cpp" />
     <ClCompile Include="D3D12\DirectStorage.cpp" />
@@ -113,6 +141,8 @@
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</BasicRuntimeChecks>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">SQLITE_THREADSAFE=2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">SQLITE_THREADSAFE=2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
     </ClCompile>
     <ClCompile Include="RenderInterface\BuiltInRayTracingShader.cpp" />
     <ClCompile Include="RenderInterface\BuiltInShader.cpp" />
@@ -164,6 +194,10 @@
     <ClCompile Include="Runtime\Renderer\Mesh.cpp" />
     <ClCompile Include="Runtime\Renderer\PostProcess\PostProcessCombineLUTs.cpp" />
     <ClCompile Include="Runtime\Renderer\PostProcess\PostProcessToneMap.cpp" />
+    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphAllocator.ixx">
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</TranslateIncludes>
+    </ClCompile>
     <ClCompile Include="Runtime\Renderer\SceneRendering.cpp" />
     <ClCompile Include="Runtime\Renderer\ScreenRendering.cpp" />
     <ClCompile Include="Runtime\Renderer\ScreenSpaceDenoiser.cpp" />
@@ -175,9 +209,18 @@
     <ClCompile Include="Runtime\WSLEvaluator.cpp" />
     <ClCompile Include="System\NinthTimer.cpp" />
     <ClCompile Include="System\SystemEnvironment.cpp" />
-    <ClCompile Include="System\Win32\File.cpp" />
-    <ClCompile Include="System\Win32\NTHandle.cpp" />
-    <ClCompile Include="test.cpp" />
+    <ClCompile Include="System\Win32\File.cpp">
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
+    </ClCompile>
+    <ClCompile Include="System\Win32\NTHandle.cpp">
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
+    </ClCompile>
+    <ClCompile Include="test.cpp">
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp" />
@@ -570,7 +613,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>SPDLOG_COMPILED_LIB;ENGINE_TOOL;INITGUID;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;SPDLOG_COMPILED_LIB;ENGINE_TOOL;INITGUID;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalOptions>
       </AdditionalOptions>
@@ -580,6 +623,9 @@
       <CppLanguageStandard>gnu++1y</CppLanguageStandard>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <DisableSpecificWarnings>4819</DisableSpecificWarnings>
+      <TranslateIncludes>false</TranslateIncludes>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+      <BuildStlModules>true</BuildStlModules>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

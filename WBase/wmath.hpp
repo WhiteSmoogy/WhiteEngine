@@ -304,8 +304,6 @@ namespace white {
 			return float4(min(l.x, r.x), min(l.y, r.y), min(l.z, r.z), min(l.w, r.w));
 		}
 
-		using std::fabs;
-
 		inline float2 abs(const float2& f2) noexcept {
 			return float2(fabs(f2.x), fabs(f2.y));
 		}

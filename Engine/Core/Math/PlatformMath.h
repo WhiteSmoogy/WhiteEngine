@@ -1,8 +1,6 @@
 #pragma once
 #include <WBase/wmath.hpp>
 #include <WBase/id.hpp>
-#include <bit>
-#include <functional>
 
 namespace white::math
 {

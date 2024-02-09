@@ -21,7 +21,6 @@
 #include "ref.hpp"
 #include "cassert.h"
 
-#include <cmath>
 #include <algorithm> //std::max,std::min
 #include <cstring> //std::memcpy 
 #include <array> //std::array

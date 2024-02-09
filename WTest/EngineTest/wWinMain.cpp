@@ -20,6 +20,7 @@ namespace we = WhiteEngine;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+import Render;
 
 #ifndef NDEBUG
 class DebugBreakSink : public spdlog::sinks::base_sink<std::mutex>
@@ -120,6 +121,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR cmdLine, int nCmdShow)
 	VisBufferTest Test(L"VisBuffer");
 	Test.Create();
 	Test.Run();
+
+	RenderGraph::GetAllocator();
 
 	return 0;
 }

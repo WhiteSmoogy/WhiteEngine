@@ -26,10 +26,10 @@
 #include <folly/synchronization/HazptrObj.h>
 #include <folly/synchronization/HazptrRec.h>
 #include <folly/synchronization/HazptrThrLocal.h>
-
 ///
 /// Classes related to hazard pointer domains.
 ///
+#include "WBase/cassert.h"
 
 namespace folly {
 
@@ -138,7 +138,6 @@ class hazptr_domain {
     reclaim_all_objects();
     free_hazptr_recs();
     if (kIsDebug && !tagged_empty()) {
-     wdebug("Tagged objects remain. This may indicate a higher-level leak ""of object(s) that use hazptr_obj_cohort.");
     }
   }
 
@@ -707,7 +706,6 @@ class hazptr_domain {
      recl_fn();
     } else {
       if (kIsDebug) {
-        wdebug("INFO Skip asynchronous reclamation by hazptr executor");
       }
     }
     if (backlog >= 10) {

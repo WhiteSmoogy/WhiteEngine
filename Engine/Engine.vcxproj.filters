@@ -446,6 +446,9 @@
     <ClCompile Include="D3D12\Submission.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
+    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphAllocator.ixx">
+      <Filter>Runtime\Renderer\RenderGraph</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">
@@ -1274,6 +1277,9 @@
     </Filter>
     <Filter Include="Runtime\RuntimeCore">
       <UniqueIdentifier>{e687d0e2-f2d3-4fd9-9cf4-24aa77da22b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Renderer\RenderGraph">
+      <UniqueIdentifier>{7a16141c-5770-448e-af92-bfe706d1b0c4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -198,6 +198,10 @@
       <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ScanSourceForModuleDependencies>
       <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</TranslateIncludes>
     </ClCompile>
+    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphBuilder.ixx" />
+    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphDef.ixx" />
+    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphFwd.ixx" />
+    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphModule.ixx" />
     <ClCompile Include="Runtime\Renderer\SceneRendering.cpp" />
     <ClCompile Include="Runtime\Renderer\ScreenRendering.cpp" />
     <ClCompile Include="Runtime\Renderer\ScreenSpaceDenoiser.cpp" />
@@ -440,6 +444,11 @@
     <ClInclude Include="Runtime\Renderer\ShadowRendering.h" />
     <ClInclude Include="Runtime\Renderer\Trinf.h" />
     <ClInclude Include="Runtime\Renderer\VolumeRendering.h" />
+    <ClCompile Include="Runtime\Render\RenderGraph\RenderGraphResource.ixx">
+      <FileType>Document</FileType>
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</TranslateIncludes>
+    </ClCompile>
     <ClInclude Include="Runtime\Resource.h" />
     <ClInclude Include="Runtime\ResourcesHolder.h" />
     <ClInclude Include="Runtime\Sorting.h" />

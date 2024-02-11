@@ -19,18 +19,18 @@ namespace platform::Render
 
 
 	template<typename TBufferStruct>
-	class GraphicsBufferRef
+	class ConstantBufferRef
 	{
 	public:
-		static GraphicsBufferRef<TBufferStruct> CreateGraphicsBuffeImmediate(const TBufferStruct& Value, Buffer::Usage Usage)
+		static ConstantBufferRef<TBufferStruct> CreateGraphicsBuffeImmediate(const TBufferStruct& Value, Buffer::Usage Usage)
 		{
 			if constexpr (requires { TBufferStruct::TypeInfo::GetStructMetadata; })
-				return GraphicsBufferRef<TBufferStruct>(CreateConstantBuffer(&Value, Usage, *TBufferStruct::TypeInfo::GetStructMetadata()));
+				return ConstantBufferRef<TBufferStruct>(CreateConstantBuffer(&Value, Usage, *TBufferStruct::TypeInfo::GetStructMetadata()));
 			else
 			{
 				ShaderParametersMetadata Layout(white::Align<uint32>(sizeof(TBufferStruct), 16), {});
 
-				return GraphicsBufferRef<TBufferStruct>(CreateConstantBuffer(&Value, Usage, Layout));
+				return ConstantBufferRef<TBufferStruct>(CreateConstantBuffer(&Value, Usage, Layout));
 			}
 		}
 
@@ -44,7 +44,7 @@ namespace platform::Render
 			return buffer.get();
 		}
 	private:
-		GraphicsBufferRef(ConstantBuffer* InBuffer)
+		ConstantBufferRef(ConstantBuffer* InBuffer)
 			:buffer(InBuffer, RObjectDeleter())
 		{
 		}
@@ -53,9 +53,9 @@ namespace platform::Render
 	};
 
 	template<typename TBufferStruct>
-	GraphicsBufferRef<TBufferStruct> CreateGraphicsBuffeImmediate(const TBufferStruct& Value, Buffer::Usage Usage)
+	ConstantBufferRef<TBufferStruct> CreateGraphicsBuffeImmediate(const TBufferStruct& Value, Buffer::Usage Usage)
 	{
-		return GraphicsBufferRef<TBufferStruct>::CreateGraphicsBuffeImmediate(Value, Usage);
+		return ConstantBufferRef<TBufferStruct>::CreateGraphicsBuffeImmediate(Value, Usage);
 	}
 
 	struct MemcpyResourceParams

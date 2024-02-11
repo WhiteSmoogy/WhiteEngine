@@ -449,6 +449,21 @@
     <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphAllocator.ixx">
       <Filter>Runtime\Renderer\RenderGraph</Filter>
     </ClCompile>
+    <ClCompile Include="Runtime\Render\RenderGraph\RenderGraphResource.ixx">
+      <Filter>Runtime\Renderer\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphModule.ixx">
+      <Filter>Runtime\Renderer\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphBuilder.ixx">
+      <Filter>Runtime\Renderer\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphFwd.ixx">
+      <Filter>Runtime\Renderer\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphDef.ixx">
+      <Filter>Runtime\Renderer\RenderGraph</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">

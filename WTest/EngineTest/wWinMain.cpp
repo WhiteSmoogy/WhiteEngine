@@ -20,8 +20,6 @@ namespace we = WhiteEngine;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-import Render;
-
 #ifndef NDEBUG
 class DebugBreakSink : public spdlog::sinks::base_sink<std::mutex>
 {

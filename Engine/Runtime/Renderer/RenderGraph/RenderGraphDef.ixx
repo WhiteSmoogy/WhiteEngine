@@ -1,6 +1,6 @@
 module;
 #include "Runtime/RenderCore/ShaderParametersMetadata.h"
-
+#include <format>
 export module RenderGraph:definition;
 
 import "WBase/cassert.h";
@@ -231,6 +231,9 @@ export namespace RenderGraph
 		std::vector<ObjectType*, RGSTLAllocator<ObjectType*>> Array;
 	};
 
+	template <typename TStruct>
+	concept IsRGParameterStruct = requires{ TStruct::TypeInfo::GetStructMetadata; };
+
 	class RGParameterStruct
 	{
 	public:
@@ -273,5 +276,26 @@ export namespace RenderGraph
 		{
 			return GetContents();
 		}
+	};
+
+	class RGEventName final
+	{
+	public:
+		RGEventName() = default;
+
+		template<typename... Types>
+		explicit RGEventName(const std::format_string<Types...> fmt, Types && ... Args)
+		{
+			EventName = std::format(fmt, std::forward<Types>(Args...));
+		}
+
+		const char* GetName() const
+		{
+			return EventName.c_str();
+		}
+	private:
+		const char* EventFormat;
+
+		std::string EventName;
 	};
 }

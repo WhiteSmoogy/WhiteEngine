@@ -16,7 +16,7 @@ import "WBase/cassert.h";
 export namespace RenderGraph
 {
 	class RGView;
-	using RGViewHandle = RGHandle<RGView,uint16>;
+	using RGViewHandle = RGHandle<RGView, uint16>;
 	using RGViewRegistry = RGHandleRegistry<RGViewHandle, ERGHandleRegistryDestructPolicy::Never>;
 
 	class RGBuffer;
@@ -66,6 +66,10 @@ export namespace RenderGraph
 	protected:
 		/** Whether this is an externally registered resource. */
 		uint8 bExternal : 1;
+
+		RGViewableResource(const char* Name, ERGViewableResourceType InType)
+			:RGResource(Name), Type(InType)
+		{}
 
 	private:
 		friend RGBuilder;
@@ -124,7 +128,7 @@ export namespace RenderGraph
 
 	protected:
 		RGUnorderedAccessView(const char* InName, ERGViewType InType, ERGUnorderedAccessViewFlags InFlag)
-			:RGView(InName, InType),Flags(InFlag)
+			:RGView(InName, InType), Flags(InFlag)
 		{}
 	};
 
@@ -197,6 +201,10 @@ export namespace RenderGraph
 		}
 
 	private:
+		RGBuffer(const char* Name, const RGBufferDesc& InDesc, ERGBufferFlags InFlags)
+			:RGViewableResource(Name, StaticType), Desc(InDesc), Flags(InFlags)
+		{}
+
 		RGBufferHandle Handle;
 
 		friend RGBuilder;
@@ -221,7 +229,7 @@ export namespace RenderGraph
 
 	private:
 		RGBufferUAV(const char* InName, const RGBufferUAVDesc& InDesc, ERGUnorderedAccessViewFlags InFlag)
-			:RGUnorderedAccessView(InName, StaticType, InFlag),Desc(InDesc)
+			:RGUnorderedAccessView(InName, StaticType, InFlag), Desc(InDesc)
 		{
 		}
 
@@ -295,16 +303,42 @@ export namespace RenderGraph
 			return Parameters;
 		}
 
+		TBufferStruct* operator->()
+		{
+			return Parameters;
+		}
+
 	private:
-		explicit RGTConstBuffer(const TBufferStruct* InParameters, const char* InName)
+		explicit RGTConstBuffer(TBufferStruct* InParameters, const char* InName)
 			: RGConstBuffer(InParameters, InName)
 			, Parameters(InParameters)
 		{}
-	
+
 		TBufferStruct* Parameters;
 
 		friend RGBuilder;
 		friend RGConstBufferRegistry;
 		friend RGAllocator;
+	};
+
+	template<typename TBufferStruct>
+	struct RGTConstBufferRef
+	{
+		RGTConstBuffer<TBufferStruct>* CBuffer;
+
+		const TBufferStruct* operator->() const
+		{
+			return CBuffer->operator->();
+		}
+
+		TBufferStruct* operator->()
+		{
+			return CBuffer->operator->();
+		}
+
+		const TBufferStruct* Contents() const
+		{
+			return CBuffer->Contents();
+		}
 	};
 }

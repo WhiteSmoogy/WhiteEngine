@@ -199,7 +199,10 @@
       <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</TranslateIncludes>
     </ClCompile>
     <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphBuilder.ixx" />
-    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphDef.ixx" />
+    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphDef.ixx">
+      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ScanSourceForModuleDependencies>
+      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</TranslateIncludes>
+    </ClCompile>
     <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphFwd.ixx" />
     <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphModule.ixx" />
     <ClCompile Include="Runtime\Renderer\SceneRendering.cpp" />

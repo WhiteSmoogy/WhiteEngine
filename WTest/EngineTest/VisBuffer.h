@@ -26,6 +26,8 @@
 #include "test.h"
 #include <windowsx.h>
 
+import RenderGraph;
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace render = platform::Render;
@@ -60,7 +62,7 @@ private:
 		return false;
 	}
 
-	void RenderTrinf(platform::Render::CommandList& CmdList);
+	void RenderTrinf(RenderGraph::RGBuilder& Builder);
 
 	white::uint32 DoUpdate(white::uint32 pass) override {
 		auto& CmdList = render::CommandListExecutor::GetImmediateCommandList();
@@ -92,8 +94,6 @@ private:
 			Trinf::Scene->AddResource(sponza_trinf);
 
 			Trinf::Scene->BeginAsyncUpdate(CmdList);
-
-			RenderTrinf(CmdList);
 
 			Trinf::Scene->EndAsyncUpdate(CmdList);
 		}

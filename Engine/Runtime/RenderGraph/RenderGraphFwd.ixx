@@ -15,4 +15,5 @@ export namespace RenderGraph
 	class RGPass;
 
 	class RGPooledBuffer;
+	class RGBufferPool;
 }

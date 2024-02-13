@@ -41,14 +41,14 @@ void Texture1D::BuildMipSubLevels()
 		DoHWBuildMipSubLevels(array_size, mipmap_size, width);
 }
 
-void Texture1D::HWResourceCreate(ElementInitData const *  init_data)
+void Texture1D::HWResourceCreate(ResourceCreateInfo& CreateInfo)
 {
 	Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION_TEXTURE1D,
 		width, 1, 1, array_size,
-		init_data);
+		CreateInfo);
 
-	if (init_data && init_data->clear_value) {
-		this->clear_value = *init_data->clear_value;
+	if (CreateInfo.clear_value) {
+		this->clear_value = *CreateInfo.clear_value;
 	}
 }
 

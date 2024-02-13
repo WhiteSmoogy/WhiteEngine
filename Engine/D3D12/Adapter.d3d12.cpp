@@ -118,19 +118,19 @@ namespace platform_ex::Windows::D3D12 {
 		dstorage->CreateUploadQueue(d3d_device.Get());
 	}
 
-	Texture1D* Device::CreateTexture(uint16 width, uint8 num_mipmaps, uint8 array_size, EFormat format, uint32 access, SampleDesc sample_info, std::optional<ElementInitData const *>  init_data)
+	Texture1D* Device::CreateTexture(uint16 width, uint8 num_mipmaps, uint8 array_size, EFormat format, uint32 access, SampleDesc sample_info, ResourceCreateInfo CreateInfo)
 	{
 		auto texture = std::make_unique<Texture1D>(width, num_mipmaps, array_size, format, access, sample_info);
-		if (init_data.has_value())
-			texture->HWResourceCreate(init_data.value());
+		if (!CreateInfo.WithoutNativeResource)
+			texture->HWResourceCreate(CreateInfo);
 		return texture.release();
 	}
 
-	Texture2D* Device::CreateTexture(uint16 width, uint16 height, uint8 num_mipmaps, uint8 array_size, EFormat format, uint32 access, SampleDesc sample_info, std::optional<ElementInitData const *>  init_data)
+	Texture2D* Device::CreateTexture(uint16 width, uint16 height, uint8 num_mipmaps, uint8 array_size, EFormat format, uint32 access, SampleDesc sample_info, ResourceCreateInfo init_data)
 	{
 		auto texture = std::make_unique<Texture2D>(width, height, num_mipmaps, array_size, format, access, sample_info);
-		if (init_data.has_value())
-			texture->HWResourceCreate(init_data.value());
+		if (!init_data.WithoutNativeResource)
+			texture->HWResourceCreate(init_data);
 
 		if ((access & platform::Render::EA_RTV) == platform::Render::EA_RTV)
 		{
@@ -174,11 +174,11 @@ namespace platform_ex::Windows::D3D12 {
 		return texture.release();
 	}
 
-	Texture3D* Device::CreateTexture(const platform::Render::Texture3DInitializer& Initializer,  std::optional<ElementInitData const *>  init_data)
+	Texture3D* Device::CreateTexture(const platform::Render::Texture3DInitializer& Initializer, ResourceCreateInfo init_data)
 	{
 		auto texture = std::make_unique<Texture3D>(Initializer.Width, Initializer.Height, Initializer.Depth, Initializer.NumMipmaps, Initializer.ArraySize, Initializer.Format, Initializer.Access, Initializer.NumSamples);
-		if (init_data.has_value())
-			texture->HWResourceCreate(init_data.value());
+		if (!init_data.WithoutNativeResource)
+			texture->HWResourceCreate(init_data);
 
 		if ((Initializer.Access & platform::Render::EA_RTV) == platform::Render::EA_RTV)
 		{
@@ -203,11 +203,11 @@ namespace platform_ex::Windows::D3D12 {
 		return texture.release();
 	}
 
-	TextureCube* Device::CreateTextureCube(uint16 size, uint8 num_mipmaps, uint8 array_size, EFormat format, uint32 access, SampleDesc sample_info, std::optional<ElementInitData const *>  init_data)
+	TextureCube* Device::CreateTextureCube(uint16 size, uint8 num_mipmaps, uint8 array_size, EFormat format, uint32 access, SampleDesc sample_info, ResourceCreateInfo init_data)
 	{
 		auto texture = std::make_unique<TextureCube>(size, num_mipmaps, array_size, format, access, sample_info);
-		if (init_data.has_value())
-			texture->HWResourceCreate(init_data.value());
+		if (!init_data.WithoutNativeResource)
+			texture->HWResourceCreate(init_data);
 		return texture.release();
 	}
 
@@ -313,22 +313,16 @@ namespace platform_ex::Windows::D3D12 {
 		return Alloc;
 	}
 
-	ResourceCreateInfo FillResourceCreateInfo(std::optional<void const*> init_data,const char* DebugName)
+	void ReplaceUnknownName(ResourceCreateInfo& init_data,const char* DebugName)
 	{
 		ResourceCreateInfo CreateInfo;
-
-		CreateInfo.WithoutNativeResource = !init_data.has_value();
-		if (!CreateInfo.WithoutNativeResource)
-			CreateInfo.ResouceData = *init_data;
-
-		CreateInfo.DebugName = DebugName;
-
-		return CreateInfo;
+		if (init_data.Name == CreateInfo.Name)
+			init_data.Name = DebugName;
 	}
 
-	GraphicsBuffer * Device::CreateVertexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*> init_data)
+	GraphicsBuffer * Device::CreateVertexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, ResourceCreateInfo CreateInfo)
 	{
-		auto CreateInfo = FillResourceCreateInfo(init_data, "VertexBuffer");
+		ReplaceUnknownName(CreateInfo, "VertexBuffer");
 
 		BufferDesc BufferDesc = {
 			.Size = size_in_byte,
@@ -342,10 +336,10 @@ namespace platform_ex::Windows::D3D12 {
 		return vb;
 	}
 
-	GraphicsBuffer * Device::CreateIndexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*> init_data)
+	GraphicsBuffer * Device::CreateIndexBuffer(platform::Render::Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, ResourceCreateInfo CreateInfo)
 	{
 		wconstraint(format == platform::Render::EFormat::EF_R16UI || format == platform::Render::EFormat::EF_R32UI);
-		auto CreateInfo = FillResourceCreateInfo(init_data, "IndexBuffer");
+		ReplaceUnknownName(CreateInfo, "IndexBuffer");
 
 		BufferDesc BufferDesc = {
 			.Size = size_in_byte,
@@ -813,7 +807,9 @@ namespace platform_ex::Windows::D3D12 {
 				math::float2(+1,-1),
 			};
 
-			postprocess_layout->BindVertexStream(share_raw(CreateVertexBuffer(Buffer::Usage::Static, EAccessHint::EA_GPURead | EAccessHint::EA_Immutable, sizeof(postprocess_pos), EFormat::EF_Unknown, postprocess_pos)), { Vertex::Element{ Vertex::Position,0,EFormat::EF_GR32F } });
+			platform::Render::ResourceCreateInfoEx CreateInfo{ postprocess_pos,"PostProcesVertex" };
+
+			postprocess_layout->BindVertexStream(share_raw(CreateVertexBuffer(Buffer::Usage::Static, EAccessHint::EA_GPURead | EAccessHint::EA_Immutable, sizeof(postprocess_pos), EFormat::EF_Unknown, CreateInfo)), { Vertex::Element{ Vertex::Position,0,EFormat::EF_GR32F } });
 		}
 		return platform::Deref(postprocess_layout);
 	}
@@ -913,7 +909,7 @@ namespace platform_ex::Windows::D3D12 {
 			auto Device = BackingHeap->GetParentDevice();
 			const D3D12_HEAP_DESC HeapDesc = Heap->GetDesc();
 
-			BackingHeap->AddRef();
+			BackingHeap->add_ref();
 			// Set the output pointer
 			*ppOutResource = new ResourceHolder(
 				pResource,

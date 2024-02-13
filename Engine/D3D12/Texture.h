@@ -18,6 +18,7 @@ namespace platform_ex::Windows::D3D12 {
 	using platform::Render::TextureCubeFaces;
 	using platform::Render::ElementInitData;
 	using platform::Render::TextureMapAccess;
+	using platform::Render::ResourceCreateInfo;
 	using namespace platform::Render::IFormat;
 
 	class ViewSimulation;
@@ -54,7 +55,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		void DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim,
 			uint16 width, uint16 height, uint16 depth, uint8 array_size,
-			ElementInitData const* init_data);
+			ResourceCreateInfo& Info);
 
 		void DoMap(EFormat format, uint32 subres, TextureMapAccess tma,
 			uint16 x_offset, uint16 y_offset, uint16 z_offset,
@@ -153,7 +154,7 @@ namespace platform_ex::Windows::D3D12 {
 	public:
 		void BuildMipSubLevels() override;
 
-		void HWResourceCreate(ElementInitData const* init_data) override;
+		void HWResourceCreate(ResourceCreateInfo& Info) override;
 		void HWResourceDelete() override;
 		bool HWResourceReady() const override;
 
@@ -203,7 +204,7 @@ namespace platform_ex::Windows::D3D12 {
 	public:
 		void BuildMipSubLevels() override;
 
-		void HWResourceCreate(ElementInitData const* init_data) override;
+		void HWResourceCreate(ResourceCreateInfo& init_data) override;
 		void HWResourceDelete() override;
 		bool HWResourceReady() const override;
 
@@ -254,7 +255,7 @@ namespace platform_ex::Windows::D3D12 {
 	public:
 		void BuildMipSubLevels() override;
 
-		void HWResourceCreate(ElementInitData const* init_data) override;
+		void HWResourceCreate(ResourceCreateInfo& init_data) override;
 		void HWResourceDelete() override;
 		bool HWResourceReady() const override;
 
@@ -308,7 +309,7 @@ namespace platform_ex::Windows::D3D12 {
 	public:
 		void BuildMipSubLevels() override;
 
-		void HWResourceCreate(ElementInitData const* init_data) override;
+		void HWResourceCreate(ResourceCreateInfo& init_data) override;
 		void HWResourceDelete() override;
 		bool HWResourceReady() const override;
 

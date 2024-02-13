@@ -25,6 +25,7 @@ namespace
 }
 
 thread_local white::coroutine::ThreadScheduler* thread_local_scheduler = nullptr;
+thread_local white::threading::TaskTag ActiveTag = white::threading::TaskTag::None;
 
 white::threading::TaskScheduler* task_scheduler = nullptr;
 
@@ -252,12 +253,12 @@ namespace white::coroutine {
 		std::thread fire_forget(
 			[this, thread_index] {
 				thread_local_scheduler = this;
+				ActiveTag = white::enum_or(ActiveTag, white::threading::TaskTag::WorkerThread);
 				this->run(thread_index);
 			}
 		);
 		native_handle = fire_forget.native_handle();
 
-		
 		std::string descirption = white::sfmt("Scheduler Worker%d", thread_index);
 
 		white::threading::SetThreadDescription(native_handle, descirption.c_str());
@@ -355,8 +356,14 @@ namespace white::threading {
 			,schedulers(nullptr)
 			,max_scheduler(InMaxScheduler)
 		{
-			std::thread io_thread1([this] {this->io_scheduler.process_events(); });
-			std::thread io_thread2([this] {this->io_scheduler.process_events(); });
+			std::thread io_thread1([this] {
+				ActiveTag = white::enum_or(ActiveTag, white::threading::TaskTag::IOThread);
+				this->io_scheduler.process_events(); 
+				});
+			std::thread io_thread2([this] {
+				ActiveTag = white::enum_or(ActiveTag, white::threading::TaskTag::IOThread);
+				this->io_scheduler.process_events(); 
+				});
 
 			SetThreadDescription(io_thread1.native_handle(), "IO Thread 1");
 			SetThreadDescription(io_thread2.native_handle(), "IO Thread 2");

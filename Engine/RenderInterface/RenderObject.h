@@ -5,7 +5,45 @@
 #include <WBase/winttype.hpp>
 #include <atomic>
 
+#include "IFormat.hpp"
+
 namespace platform::Render {
+	struct ResourceCreateInfo
+	{
+		unsigned int GPUIndex = 0;
+		bool WithoutNativeResource = false;
+
+		const ElementInitData* InitData = nullptr;
+		const ClearValueBinding* clear_value = nullptr;
+		const char* Name = "unknown";
+
+		ResourceCreateInfo() = default;
+
+		ResourceCreateInfo(const char* InName)
+			:Name(InName)
+		{}
+
+		ResourceCreateInfo(const ElementInitData* init_data, const char* InName)
+			:InitData(init_data), Name(InName)
+		{}
+
+		const void* GetData() const
+		{
+			if (InitData != nullptr)
+				return InitData->data;
+			return nullptr;
+		}
+	};
+
+	struct ResourceCreateInfoEx :ResourceCreateInfo
+	{
+		ElementInitData InitData;
+		template<typename Data>
+		ResourceCreateInfoEx(const Data* init_data,const char* name)
+			:ResourceCreateInfo(&InitData,name),InitData{.data=init_data}
+		{}
+	};
+
 	class RObject :public white::ref_count_base
 	{
 	public:
@@ -58,14 +96,19 @@ namespace platform::Render {
 
 	struct RObjectController
 	{
-		void release(RObject* obj) const
+		static void release(RObject* obj)
 		{
 			obj->Release();
 		}
 
-		void add_ref(RObject* obj) const
+		static void add_ref(RObject* obj)
 		{
 			obj->AddRef();
+		}
+
+		static white::uint32 count(RObject* obj)
+		{
+			return obj->count();
 		}
 	};
 

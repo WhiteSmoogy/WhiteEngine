@@ -170,7 +170,7 @@ void UnorderedAccessView::CreateView(D3D12_UNORDERED_ACCESS_VIEW_DESC const& InD
 			//, ResourceStateMode::Multi
 			, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
 			, 4
-			, CounterResource.ReleaseAndGetAddress()
+			, CounterResource.relase_and_getaddress()
 			, "Counter"
 			, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
 		);

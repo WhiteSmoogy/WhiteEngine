@@ -516,4 +516,6 @@ namespace platform::Render {
 	{
 		return GRenderInterfaceSupportCommandThread;
 	}
+
+	bool IsInRenderCommandThread();
 }

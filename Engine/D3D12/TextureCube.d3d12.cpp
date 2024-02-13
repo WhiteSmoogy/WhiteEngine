@@ -43,12 +43,12 @@ void TextureCube::BuildMipSubLevels(){
 		DoHWBuildMipSubLevels(array_size, mipmap_size, size, size, 6);
 }
 
-void TextureCube::HWResourceCreate(ElementInitData const *  init_data) {
+void TextureCube::HWResourceCreate(ResourceCreateInfo& init_data) {
 	DoCreateHWResource(D3D12_RESOURCE_DIMENSION_TEXTURE2D,
 		size, size, 1, array_size * 6, init_data);
 
-	if (init_data && init_data->clear_value) {
-		this->clear_value = *init_data->clear_value;
+	if (init_data.clear_value) {
+		this->clear_value = *init_data.clear_value;
 	}
 }
 

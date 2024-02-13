@@ -7,6 +7,17 @@
 #include "../Coroutine/AwaitableTraits.h"
 
 namespace white::threading {
+	enum class TaskTag
+	{
+		None = 0,
+		WorkerThread = 1 << 0,
+		//CommandListExecuteThread
+		RenderThread = 1 << 1,
+		IOThread = 1 << 2,
+	};
+
+	extern thread_local TaskTag ActiveTag;
+
 	class TaskScheduler
 	{
 	public:

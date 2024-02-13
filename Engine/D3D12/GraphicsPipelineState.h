@@ -83,13 +83,16 @@ namespace platform_ex::Windows::D3D12
 
 	template <typename TDesc> struct equality_pipeline_state_desc;
 
+#pragma warning(push)
+#pragma warning(disable:5103)
+
 	template <> struct equality_pipeline_state_desc<KeyGraphicsPipelineStateDesc>
 	{
-#define PSO_IF_NOT_EQUAL_RETURN_FALSE( value ) if(lhs.##value != rhs.##value){ return false; }
-#define PSO_IF_MEMCMP_FAILS_RETURN_FALSE( value ) if(std::memcmp(&lhs.##value, &rhs.##value, sizeof(rhs.##value)) != 0){ return false; }
+#define PSO_IF_NOT_EQUAL_RETURN_FALSE( value ) if(WPP_Join(WPP_Concat(lhs,.),value) != WPP_Join(WPP_Concat(rhs,.),value)){ return false; }
+#define PSO_IF_MEMCMP_FAILS_RETURN_FALSE( value ) if(std::memcmp(WPP_Concat(&lhs.,value), WPP_Concat(&rhs.,value), sizeof(WPP_Concat(rhs.,value))) != 0){ return false; }
 #define PSO_IF_STRING_COMPARE_FAILS_RETURN_FALSE( value ) \
-	const char* const lhString = lhs.##value##; \
-	const char* const rhString = rhs.##value##; \
+	const char* const lhString = WPP_Concat(lhs.,value); \
+	const char* const rhString = WPP_Concat(rhs.,value); \
 	if (lhString != rhString) \
 	{ \
 		if (strcmp(lhString, rhString) != 0) \
@@ -172,6 +175,8 @@ namespace platform_ex::Windows::D3D12
 		}
 #undef PSO_IF_NOT_EQUAL_RETURN_FALSE
 	};
+
+#pragma warning(pop)
 
 
 	struct GraphicsPipelineStateCreateArgs;

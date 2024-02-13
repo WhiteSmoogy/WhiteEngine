@@ -1,6 +1,7 @@
 #include "ICommandList.h"
 
 #include "IContext.h"
+#include "Core/Threading/TaskScheduler.h"
 #include <utility>
 #include <mutex>
 
@@ -114,4 +115,9 @@ CommandListImmediate::RIFenceTypeRef platform::Render::CommandListImmediate::Thr
 	}
 
 	return {};
+}
+
+bool platform::Render::IsInRenderCommandThread()
+{
+	return white::has_anyflags(white::threading::ActiveTag, white::threading::TaskTag::RenderThread);
 }

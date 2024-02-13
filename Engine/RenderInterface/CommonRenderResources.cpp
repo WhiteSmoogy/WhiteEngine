@@ -41,10 +41,12 @@ std::shared_ptr<GraphicsBuffer> platform::Render::GScreenRectangleVertexBuffer()
 			Vertices[5].Position = white::math::float4(1, -1, 0, 1);
 			Vertices[5].UV = white::math::float2(1, -1);
 
+			platform::Render::ResourceCreateInfoEx CreateInfo(Vertices, "ScreenRectangleVertexBuffer");
+
 			VertexBuffer = white::share_raw(Render::Context::Instance().GetDevice().CreateVertexBuffer(Render::Buffer::Usage::Static,
 				Render::EAccessHint::EA_GPURead | Render::EAccessHint::EA_Immutable,
 				sizeof(Vertices),
-				Render::EF_Unknown, Vertices));
+				Render::EF_Unknown, CreateInfo));
 		}
 
 		std::shared_ptr<Render::GraphicsBuffer> VertexBuffer;
@@ -62,10 +64,12 @@ std::shared_ptr<GraphicsBuffer> platform::Render::GScreenRectangleIndexBuffer()
 			// Indices 0 - 5 are used for rendering a quad. Indices 6 - 8 are used for triangle optimization.
 			const uint16 Indices[] = { 0, 1, 2, 2, 1, 3, 0, 4, 5 };
 
+			platform::Render::ResourceCreateInfoEx CreateInfo(Indices, "ScreenRectangleIndexBuffer");
+
 			IndexBuffer = white::share_raw(Render::Context::Instance().GetDevice().CreateIndexBuffer(Render::Buffer::Usage::Static,
 				Render::EAccessHint::EA_GPURead | Render::EAccessHint::EA_Immutable,
 				sizeof(Indices),
-				Render::EF_R16UI, Indices));
+				Render::EF_R16UI, CreateInfo));
 		}
 
 		std::shared_ptr<Render::GraphicsBuffer> IndexBuffer;

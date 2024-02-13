@@ -14,10 +14,7 @@
 #include <functional> //for std::hash
 #include <numeric> //for std::accmulate
 #include <string>
-
-#ifndef WB_IMPL_GNUCPP
 #include <string_view>
-#endif
 
 namespace white {
 
@@ -91,6 +88,12 @@ namespace white {
 	inline std::size_t hash(T(&x)[N])
 	{
 		return hash(x, x + N);
+	}
+
+	template< class _type>
+	inline std::size_t hash(const _type& val)
+	{
+		return std::hash<_type>()(val);
 	}
 
 	namespace details

@@ -7,6 +7,7 @@
 #include "RenderInterface/ICommandList.h"
 #include "RenderInterface/Effect/CopyEffect.h"
 #include "RenderInterface/PipelineStateUtility.h"
+#include "Runtime/RenderCore/RenderResource.h"
 
 #include "Convert.h"
 #include "FrameBuffer.h"
@@ -167,6 +168,9 @@ namespace platform_ex::Windows::D3D12 {
 		}
 
 		InitializeSubmissionPipe();
+
+		platform::Render::RenderResource::InitResources();
+		platform::Render::Caps.IsInitialized = true;
 	}
 
 	Fence & Context::GetFence(Device::CommandType index)

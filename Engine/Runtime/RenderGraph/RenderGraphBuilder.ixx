@@ -6,6 +6,7 @@ export module RenderGraph:builder;
 import :fwd;
 import :definition;
 import :resource;
+import :resourcepool;
 
 export namespace RenderGraph
 {
@@ -25,7 +26,7 @@ export namespace RenderGraph
 	{
 	public:
 		RGPass(RGEventName&& InName, RGParameterStruct InParameterStruct, ERGPassFlags InFlag)
-			:Name(std::move(InName)), ParameterStruct(InParameterStruct),Flag(InFlag)
+			:Name(std::move(InName)), ParameterStruct(InParameterStruct), Flag(InFlag)
 		{}
 
 		const char* GetName() const
@@ -121,7 +122,7 @@ export namespace RenderGraph
 		AllowParallelExecute = 1 << 0
 	};
 
-	class RGBuilder:RGAllocatorScope
+	class RGBuilder :RGAllocatorScope
 	{
 	public:
 		RGBuilder(CommandListImmediate& InCmdList, RGEventName InName = {}, ERGBuilderFlags Flags = ERGBuilderFlags::None)
@@ -166,7 +167,7 @@ export namespace RenderGraph
 
 		RGBufferRef CreateBuffer(const RGBufferDesc& Desc, const char* Name, ERGBufferFlags Flags = ERGBufferFlags::None)
 		{
-			auto Buffer = Buffers.Allocate(Allocator, Name, Desc , Flags);
+			auto Buffer = Buffers.Allocate(Allocator, Name, Desc, Flags);
 			return Buffer;
 		}
 
@@ -191,7 +192,10 @@ export namespace RenderGraph
 		{
 			if (!Buffer->bExternal)
 			{
-				Buffer->bExternal = true;
+				Buffer->bExternal = 1;
+				Buffer->bForceNonTransient = 1;
+
+				BeginResource(GetProloguePassHandle(), Buffer);
 
 				ExternalBuffers.emplace(Buffer->GetRObject(), Buffer);
 			}
@@ -239,7 +243,7 @@ export namespace RenderGraph
 			auto Buffer = Buffers.Allocate(Allocator, Name, External->Desc, Flags);
 			SetRObject(Buffer, External, GetProloguePassHandle());
 
-			Buffer->bExternal = true;
+			Buffer->bExternal = 1;
 			ExternalBuffers.emplace(Buffer->GetRObject(), Buffer);
 
 			return Buffer;
@@ -284,6 +288,21 @@ export namespace RenderGraph
 			Buffer->Allocation = Pooled;
 			Buffer->FirstPass = PassHandle;
 		}
+
+		void BeginResource(RGPassHandle PassHandle, RGBufferRef Buffer)
+		{
+			if (Buffer->HasRObject())
+				return;
+
+			//transient create
+
+			if (!Buffer->bTransient)
+			{
+				auto Alignment = Buffer->bQueuedForUpload ? ERGPooledBufferAlignment::PowerOfTwo : ERGPooledBufferAlignment::Page;
+
+				SetRObject(Buffer, GRenderGraphResourcePool.FindFreeBuffer(Buffer->Desc, Buffer->Name, Alignment), PassHandle);
+			}
+		}
 	private:
 		CommandListImmediate& CmdList;
 		const RGEventName BuilderName;
@@ -297,10 +316,10 @@ export namespace RenderGraph
 		RGBufferRegistry Buffers;
 
 		std::unordered_map<
-			GraphicsBuffer*, 
+			GraphicsBuffer*,
 			RGBufferRef,
 			std::hash<GraphicsBuffer*>,
-			std::equal_to<GraphicsBuffer*>, 
+			std::equal_to<GraphicsBuffer*>,
 			RGSTLAllocator<std::pair<GraphicsBuffer* const, RGBufferRef>>> ExternalBuffers;
 	};
 }

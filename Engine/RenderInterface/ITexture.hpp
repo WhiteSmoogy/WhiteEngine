@@ -77,7 +77,7 @@ namespace platform::Render {
 		*/
 		virtual void BuildMipSubLevels() = 0;
 
-		virtual void HWResourceCreate(ElementInitData const *  init_data) = 0;
+		virtual void HWResourceCreate(ResourceCreateInfo& CreateInfo) = 0;
 		virtual void HWResourceDelete() = 0;
 		virtual bool HWResourceReady() const = 0;
 

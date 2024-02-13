@@ -60,6 +60,8 @@ namespace white::coroutine
 		std::thread fire_forget(
 			[this] {
 				thread_local_scheduler = this;
+				white::threading::ActiveTag = white::enum_or(white::threading::ActiveTag, white::threading::TaskTag::RenderThread);
+
 				this->run();
 			}
 		);

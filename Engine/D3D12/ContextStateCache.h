@@ -330,6 +330,9 @@ namespace platform_ex::Windows::D3D12 {
 
 		void InternalSetStreamSource(ResourceLocation* VertexBufferLocation, uint32 StreamIndex, uint32 Stride, uint32 Offset);
 
+#pragma warning(push)
+#pragma warning(disable:5103)
+
 		template <typename TShader> struct StateCacheShaderTraits;
 #define DECLARE_SHADER_TRAITS(Name) \
 	template <> struct StateCacheShaderTraits<Name##HWShader> \
@@ -343,6 +346,8 @@ namespace platform_ex::Windows::D3D12 {
 		DECLARE_SHADER_TRAITS(Hull);
 		DECLARE_SHADER_TRAITS(Geometry);
 #undef DECLARE_SHADER_TRAITS
+
+#pragma warning(pop)
 
 		template <typename TShader>
 		void SetShader(TShader* Shader);

@@ -178,6 +178,7 @@
     <ClCompile Include="Runtime\Compression.cpp" />
     <ClCompile Include="Runtime\MemStack.cpp" />
     <ClCompile Include="Runtime\Path.cpp" />
+    <ClCompile Include="Runtime\RenderCore\RenderResource.cpp" />
     <ClCompile Include="Runtime\RenderCore\ShaderDB.cpp" />
     <ClCompile Include="Runtime\RenderCore\ShaderParametersMetadata.cpp" />
     <ClCompile Include="Runtime\RenderCore\ShaderParameterUtility.cpp" />
@@ -194,23 +195,19 @@
     <ClCompile Include="Runtime\Renderer\Mesh.cpp" />
     <ClCompile Include="Runtime\Renderer\PostProcess\PostProcessCombineLUTs.cpp" />
     <ClCompile Include="Runtime\Renderer\PostProcess\PostProcessToneMap.cpp" />
-    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphAllocator.ixx">
-      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ScanSourceForModuleDependencies>
-      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</TranslateIncludes>
-    </ClCompile>
-    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphBuilder.ixx" />
-    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphDef.ixx">
-      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ScanSourceForModuleDependencies>
-      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</TranslateIncludes>
-    </ClCompile>
-    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphFwd.ixx" />
-    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphModule.ixx" />
     <ClCompile Include="Runtime\Renderer\SceneRendering.cpp" />
     <ClCompile Include="Runtime\Renderer\ScreenRendering.cpp" />
     <ClCompile Include="Runtime\Renderer\ScreenSpaceDenoiser.cpp" />
     <ClCompile Include="Runtime\Renderer\ShadowRendering.cpp" />
     <ClCompile Include="Runtime\Renderer\Trinf.cpp" />
     <ClCompile Include="Runtime\Renderer\VolumeRendering.cpp" />
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphAllocator.ixx" />
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphBuilder.ixx" />
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphDef.ixx" />
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphFwd.ixx" />
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphModule.ixx" />
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphResource.ixx" />
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphResourcePool.ixx" />
     <ClCompile Include="Runtime\ResourcesHolder.cpp" />
     <ClCompile Include="Runtime\WSLBuilder.cpp" />
     <ClCompile Include="Runtime\WSLEvaluator.cpp" />
@@ -424,6 +421,7 @@
     <ClInclude Include="Runtime\PlatformAtomics.h" />
     <ClInclude Include="Runtime\PlatformMemory.h" />
     <ClInclude Include="Runtime\RenderCore\Dispatch.h" />
+    <ClInclude Include="Runtime\RenderCore\RenderResource.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderDB.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderParameters.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderParametersMetadata.h" />
@@ -447,11 +445,6 @@
     <ClInclude Include="Runtime\Renderer\ShadowRendering.h" />
     <ClInclude Include="Runtime\Renderer\Trinf.h" />
     <ClInclude Include="Runtime\Renderer\VolumeRendering.h" />
-    <ClCompile Include="Runtime\Render\RenderGraph\RenderGraphResource.ixx">
-      <FileType>Document</FileType>
-      <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ScanSourceForModuleDependencies>
-      <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</TranslateIncludes>
-    </ClCompile>
     <ClInclude Include="Runtime\Resource.h" />
     <ClInclude Include="Runtime\ResourcesHolder.h" />
     <ClInclude Include="Runtime\Sorting.h" />

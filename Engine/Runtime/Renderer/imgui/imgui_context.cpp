@@ -259,6 +259,9 @@ void CreateFontsTexture(Render::Context& context)
         subResource.data = pixels;
         subResource.row_pitch = width * 4;
         subResource.slice_pitch = 0;
+
+        ResourceCreateInfo CreateInfo{ &subResource,"ImGuiFont" };
+
         GFontTexture = context.GetDevice().CreateTexture(
             static_cast<uint16>(width),
             static_cast<uint16>(height),
@@ -266,7 +269,7 @@ void CreateFontsTexture(Render::Context& context)
             EF_ARGB8,
             (uint32)Render::EAccessHint::EA_GPURead,
             SampleDesc(1,0),
-            &subResource
+            CreateInfo
         );
     }
 

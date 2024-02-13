@@ -96,27 +96,29 @@ namespace platform::Render {
 
 	using DStorage = platform_ex::DirectStorage;
 
+	
+
 	class Device {
 	public:
 		virtual Texture1D* CreateTexture(uint16 width, uint8 num_mipmaps, uint8 array_size,
-			EFormat format, uint32 access, SampleDesc sample_info, std::optional<ElementInitData const *> init_data = nullptr) = 0;
+			EFormat format, uint32 access, SampleDesc sample_info, ResourceCreateInfo init_data = {}) = 0;
 
 		virtual Texture2D* CreateTexture(uint16 width, uint16 height, uint8 num_mipmaps, uint8 array_size,
-			EFormat format, uint32 access, SampleDesc sample_info, std::optional<ElementInitData const *>  init_data = nullptr) = 0;
+			EFormat format, uint32 access, SampleDesc sample_info, ResourceCreateInfo init_data = {}) = 0;
 
-		virtual Texture3D* CreateTexture(const Texture3DInitializer& Initializer, std::optional<ElementInitData const *>  init_data = nullptr) = 0;
+		virtual Texture3D* CreateTexture(const Texture3DInitializer& Initializer, ResourceCreateInfo init_data = {}) = 0;
 
 		virtual TextureCube* CreateTextureCube(uint16 size, uint8 num_mipmaps, uint8 array_size,
-			EFormat format, uint32 access, SampleDesc sample_info, std::optional<ElementInitData const *>  init_data = nullptr) = 0;
+			EFormat format, uint32 access, SampleDesc sample_info, ResourceCreateInfo init_data = {}) = 0;
 
 		virtual ShaderCompose* CreateShaderCompose(std::unordered_map<ShaderType,const asset::ShaderBlobAsset*> pShaderBlob, Effect::Effect* pEffect) = 0;
 
 		virtual ConstantBuffer* CreateConstantBuffer(Buffer::Usage usage,uint32 size_in_byte,const void*  init_data = nullptr) = 0;
 
-		virtual GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, uint32 stride, std::optional<void const*>  init_data = nullptr) = 0;
+		virtual GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, uint32 stride, ResourceCreateInfo init_data = {}) = 0;
 
-		virtual GraphicsBuffer* CreateVertexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const *>  init_data = nullptr) = 0;
-		virtual GraphicsBuffer* CreateIndexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const *>  init_data = nullptr) = 0;
+		virtual GraphicsBuffer* CreateVertexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, ResourceCreateInfo init_data = {}) = 0;
+		virtual GraphicsBuffer* CreateIndexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, ResourceCreateInfo init_data = {}) = 0;
 
 		virtual PipleState* CreatePipleState(const PipleState& state) = 0;
 

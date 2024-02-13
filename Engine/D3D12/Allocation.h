@@ -37,9 +37,9 @@ namespace platform_ex::Windows::D3D12
 			PoolResouceTypes InAllocationResourceType, FreeListOrder InFreeListOrder);
 
 
-		ResourceHolder* GetBackingResource() const { return BackingResource.Get(); }
+		ResourceHolder* GetBackingResource() const { return BackingResource.get(); }
 
-		HeapHolder* GetBackingHeap() const { return BackingHeap.Get(); }
+		HeapHolder* GetBackingHeap() const { return BackingHeap.get(); }
 
 		uint64 GetUsedSize() const { return PoolSize - FreeSize; }
 
@@ -87,8 +87,8 @@ namespace platform_ex::Windows::D3D12
 		AllocationStrategy Strategy;
 		uint64 LastUsedFrameFence;
 
-		COMPtr<HeapHolder> BackingHeap;
-		COMPtr<ResourceHolder> BackingResource;
+		white::ref_ptr<HeapHolder> BackingHeap;
+		white::ref_ptr<ResourceHolder> BackingResource;
 	};
 
 	struct HeapAndOffset
@@ -444,7 +444,7 @@ namespace platform_ex::Windows::D3D12
 		~FastAllocatorPage()
 		{
 			if (FastAllocBuffer)
-				FastAllocBuffer->Release();
+				FastAllocBuffer->release();
 		}
 
 		void Reset()

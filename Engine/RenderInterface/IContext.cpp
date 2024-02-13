@@ -55,6 +55,8 @@ namespace platform::Render {
 	{
 		auto& Device = Context::Instance().GetDevice();
 
-		return Device.CreateVertexBuffer(Usage, Access,static_cast<uint32>(Contents.size()), EFormat::EF_Unknown, Contents.data());
+		ResourceCreateInfoEx CreateInfo(Contents.data(), "VertexBuffer");
+
+		return Device.CreateVertexBuffer(Usage, Access,static_cast<uint32>(Contents.size()), EFormat::EF_Unknown, CreateInfo);
 	}
 }

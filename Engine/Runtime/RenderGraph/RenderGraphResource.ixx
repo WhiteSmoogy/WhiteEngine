@@ -52,6 +52,10 @@ export namespace RenderGraph
 			:Name(InName)
 		{}
 
+		bool HasRObject() const
+		{
+			return RealObj != nullptr;
+		}
 	private:
 		RObject* RealObj = nullptr;
 
@@ -72,7 +76,13 @@ export namespace RenderGraph
 
 	protected:
 		/** Whether this is an externally registered resource. */
-		uint8 bExternal : 1;
+		uint8 bExternal : 1 = 0;
+
+		uint8 bForceNonTransient : 1 = 0;
+
+		uint8 bTransient : 1 = 0;
+
+		uint8 bQueuedForUpload : 1 = 0;
 
 		RGViewableResource(const char* Name, ERGViewableResourceType InType)
 			:RGResource(Name), Type(InType)
@@ -121,6 +131,15 @@ export namespace RenderGraph
 		SkipTracking = 1 << 1,
 
 		ForceImmediateFirstBarrier = 1 << 2,
+	};
+
+	enum class ERGPooledBufferAlignment : uint8
+	{
+		None,
+
+		Page,
+
+		PowerOfTwo
 	};
 
 	class RGUnorderedAccessView : public RGView
@@ -195,7 +214,52 @@ export namespace RenderGraph
 			return NumElements * BytesPerElement;
 		}
 
+		uint32 HashCode() const
+		{
+			auto Hash64 = white::hash_combine_seq(0, BytesPerElement, NumElements, Usage);
+
+			return (uint32)Hash64 + ((uint32)(Hash64 >> 32) * 23);
+		}
+
 		auto operator<=>(const RGBufferDesc&) const = default;
+	};
+
+	class RGPooledBuffer final :public white::ref_count_base
+	{
+	public:
+		RGPooledBuffer(CommandList& CmdList, GraphicsBufferRef InBuffer, const RGBufferDesc& InDesc, uint32 InAlignNumElements, const char* InName)
+			:Desc(InDesc)
+			, AlignNumElements(InAlignNumElements)
+			, Buffer(InBuffer)
+			, Name(InName)
+		{}
+
+		GraphicsBuffer* GetRObject() const
+		{
+			return Buffer.get();
+		}
+
+	private:
+		RGBufferDesc GetAlignDesc() const
+		{
+			auto AlignDesc = Desc;
+			AlignDesc.NumElements = AlignNumElements;
+			return AlignDesc;
+		}
+
+		const RGBufferDesc Desc;
+		uint32 AlignNumElements;
+
+		GraphicsBufferRef Buffer;
+		const char* Name = nullptr;
+
+		uint32 LastUsedFrame = 0;
+
+
+		friend RGBuilder;
+		friend RGAllocator;
+
+		friend RGBufferPool;
 	};
 
 	class RGBuffer final :public RGViewableResource
@@ -355,29 +419,5 @@ export namespace RenderGraph
 		{
 			return CBuffer->Contents();
 		}
-	};
-
-	class RGPooledBuffer final :public white::ref_count_base
-	{
-	public:
-		RGPooledBuffer(CommandList& CmdList, GraphicsBufferRef InBuffer, const RGBufferDesc& InDesc,const char* InName)
-			:Desc(InDesc)
-			,Buffer(InBuffer)
-			,Name(InName)
-		{}
-
-		GraphicsBuffer* GetRObject() const
-		{
-			return Buffer.get();
-		}
-
-	private:
-
-		const RGBufferDesc Desc;
-		GraphicsBufferRef Buffer;
-		const char* Name = nullptr;
-
-		friend RGBuilder;
-		friend RGAllocator;
 	};
 }

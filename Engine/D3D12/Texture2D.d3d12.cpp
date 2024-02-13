@@ -83,14 +83,14 @@ void Texture2D::BuildMipSubLevels()
 		DoHWBuildMipSubLevels(array_size, mipmap_size, width, height);
 }
 
-void Texture2D::HWResourceCreate(ElementInitData const *  init_data)
+void Texture2D::HWResourceCreate(ResourceCreateInfo& init_data)
 {
 	Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION_TEXTURE2D,
 		width, height, 1, array_size,
 		init_data);
 
-	if (init_data && init_data->clear_value) {
-		this->clear_value = *init_data->clear_value;
+	if (init_data.clear_value) {
+		this->clear_value = *init_data.clear_value;
 	}
 }
 

@@ -166,11 +166,7 @@ void D12::CreateAccelerationStructureBuffers(shared_ptr<GraphicsBuffer>& Acceler
 
 	bool isTopLevel = Type == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
-	ResourceCreateInfo CreateInfo{
-		.WithoutNativeResource = false,
-		.DebugName = isTopLevel ? "Acceleration structure[Scene]" : "Acceleration structure[Geometry]",
-		.ResouceData = nullptr
-	};
+	ResourceCreateInfo CreateInfo{isTopLevel ? "Acceleration structure[Scene]" : "Acceleration structure[Geometry]"};
 
 	D3D12_RESOURCE_DESC AccelerationStructureBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
 		PrebuildInfo.ResultDataMaxSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
@@ -200,7 +196,7 @@ void D12::CreateAccelerationStructureBuffers(shared_ptr<GraphicsBuffer>& Acceler
 			.Access = EAccessHint::EA_GPUUnordered | EAccessHint::EA_Raw
 	};
 
-	CreateInfo.DebugName = isTopLevel ? "Acceleration structure scratch[Scene]" : "Acceleration structure scratch[Geometry]";
+	CreateInfo.Name = isTopLevel ? "Acceleration structure scratch[Scene]" : "Acceleration structure scratch[Geometry]";
 	ScratchBuffer = platform::Render::shared_raw_robject(Creator->CreateBuffer<ResourceStateMode::Single>(
 		nullptr, ScratchBufferDesc, 
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,

@@ -33,13 +33,13 @@ namespace platform_ex::Windows::D3D12 {
 	class CommandList;
 	class CommandAllocator;
 
-	using SyncPointRef = COMPtr<SyncPoint>;
+	using SyncPointRef = white::ref_ptr<SyncPoint>;
 
 	using SubmissionEvent = white::threading::manual_reset_event;
 
 	using SubmissionEventRef = std::shared_ptr<SubmissionEvent>;
 
-	class SyncPoint :public RefCountBase
+	class SyncPoint :public white::ref_count_base
 	{
 		friend class NodeQueue;
 		friend class Context;

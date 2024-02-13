@@ -331,13 +331,18 @@ namespace platform {
 	Render::TexturePtr LoadDDSTexture(X::path const& texpath, uint32 access) {
 		auto pAsset = platform::AssetResourceScheduler::Instance().SyncLoad<dds::DDSLoadingDesc>(texpath);
 		auto& device = Render::Context::Instance().GetDevice();
+
+		Render::ElementInitData InitData{ .data = pAsset->GetElementInitDatas().data() };
+		auto name = texpath.filename().string();
+		Render::ResourceCreateInfo CreateInfo{ &InitData, name.c_str() };
+
 		switch (pAsset->GetTextureType()) {
 		case TextureType::T_1D:
 			return shared_raw_robject(device.CreateTexture(pAsset->GetWidth(), pAsset->GetMipmapSize(), pAsset->GetArraySize(),
-				pAsset->GetFormat(), access, { 1,0 }, pAsset->GetElementInitDatas().data()));
+				pAsset->GetFormat(), access, { 1,0 }, CreateInfo));
 		case TextureType::T_2D:
 			return shared_raw_robject(device.CreateTexture(pAsset->GetWidth(), pAsset->GetHeight(), pAsset->GetMipmapSize(), pAsset->GetArraySize(),
-				pAsset->GetFormat(), access, { 1,0 }, pAsset->GetElementInitDatas().data()));
+				pAsset->GetFormat(), access, { 1,0 }, CreateInfo));
 		case TextureType::T_3D:
 		{
 			Render::Texture3DInitializer Initializer;
@@ -349,11 +354,11 @@ namespace platform {
 			Initializer.Format = pAsset->GetFormat();
 			Initializer.Access = access;
 
-			return shared_raw_robject(device.CreateTexture(Initializer,pAsset->GetElementInitDatas().data()));
+			return shared_raw_robject(device.CreateTexture(Initializer, CreateInfo));
 		}
 		case TextureType::T_Cube:
 			return white::share_raw(device.CreateTextureCube(pAsset->GetWidth(), pAsset->GetMipmapSize(), pAsset->GetArraySize(),
-				pAsset->GetFormat(), access, { 1,0 }, pAsset->GetElementInitDatas().data()));
+				pAsset->GetFormat(), access, { 1,0 }, CreateInfo));
 		}
 
 		WAssert(false, "Out of TextureType");

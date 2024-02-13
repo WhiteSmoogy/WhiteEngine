@@ -133,10 +133,11 @@ std::shared_ptr<Render::Texture> platform::CombineLUTPass(Render::CommandList& C
 	initializer.Access = Render::EA_GPURead | Render::EA_RTV;
 	initializer.NumSamples = 1;
 
-	Render::ElementInitData data;
-	data.clear_value = &Render::ClearValueBinding::Black;
+	Render::ResourceCreateInfo CreateInfo;
+	CreateInfo.clear_value = &Render::ClearValueBinding::Black;
+	CreateInfo.Name = "VolumeCombineLUT";
 	if(bUseVolumeTextureLUT)
-		OutputTexture = Render::Context::Instance().GetDevice().CreateTexture(initializer,&data);
+		OutputTexture = Render::Context::Instance().GetDevice().CreateTexture(initializer, CreateInfo);
 
 	Render::RenderPassInfo passInfo(OutputTexture,Render::RenderTargetActions::Clear_Store);
 

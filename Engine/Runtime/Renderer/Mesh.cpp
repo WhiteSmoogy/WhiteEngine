@@ -17,23 +17,30 @@ namespace platform {
 		auto& device = Context::Instance().GetDevice();
 		input_layout = unique_raw(device.CreateInputLayout());
 
+		auto ibname = name + "_IB";
+		ElementInitData InitData{ .data = asset.GetIndexStreams().get() };
+		ResourceCreateInfo CreateInfo{ &InitData ,ibname.c_str() };
 		auto index_stream = white::share_raw(
 			device.CreateIndexBuffer(
 				Buffer::Usage::Static, EAccessHint::EA_GPURead | EAccessHint::EA_Immutable,
 				NumFormatBytes(asset.GetIndexFormat()) * asset.GetIndexCount(),
-				asset.GetIndexFormat(), asset.GetIndexStreams().get()));
+				asset.GetIndexFormat(), CreateInfo));
 
 		min = white::math::float3();
 		max = white::math::float3();
 		for (std::size_t i = 0; i != asset.GetVertexElements().size(); ++i) {
 			auto& element = asset.GetVertexElements()[i];
 			auto& stream = asset.GetVertexStreams()[i];
+
+			auto vbname = name + "_VB";
+			ElementInitData InitData{ .data = stream.get() };
+			ResourceCreateInfo CreateInfo{ &InitData ,vbname.c_str()};
 			auto vertex_stream = white::share_raw(
 				device.CreateVertexBuffer(
 					Buffer::Usage::Static,
 					EAccessHint::EA_GPURead | EAccessHint::EA_Immutable,
 					element.GetElementSize()*asset.GetVertexCount(),
-					element.format, stream.get()));
+					element.format, CreateInfo));
 			input_layout->BindVertexStream(vertex_stream, { element });
 
 			if (element.usage == Vertex::Position)

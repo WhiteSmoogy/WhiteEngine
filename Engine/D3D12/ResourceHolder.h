@@ -10,6 +10,7 @@
 #include "Utility.h"
 #include "RenderInterface/IFormat.hpp"
 #include <WBase/enum.hpp>
+#include <WBase/smart_ptr.hpp>
 
 namespace platform_ex::Windows {
 	namespace D3D12 {
@@ -91,7 +92,7 @@ namespace platform_ex::Windows {
 			std::vector<D3D12_RESOURCE_STATES> m_SubresourceState;
 		};
 
-		class HeapHolder :public RefCountBase, public DeviceChild, public MultiNodeGPUObject
+		class HeapHolder :public white::ref_count_base, public DeviceChild, public MultiNodeGPUObject
 		{
 		public:
 			HeapHolder(NodeDevice* InParentDevice, GPUMaskType VisibleNodes);
@@ -176,7 +177,7 @@ namespace platform_ex::Windows {
 			return D3D12_RESOURCE_STATE_COMMON;
 		}
 
-		class ResourceHolder :public RefCountBase {
+		class ResourceHolder :public white::ref_count_base {
 		public:
 			virtual ~ResourceHolder();
 
@@ -327,7 +328,7 @@ namespace platform_ex::Windows {
 			friend class Texture;
 		protected:
 			COMPtr<ID3D12Resource> resource;
-			COMPtr<HeapHolder> heap;
+			white::ref_ptr<HeapHolder> heap;
 			D3D12_HEAP_TYPE heap_type;
 
 			D3D12_RESOURCE_DESC desc;

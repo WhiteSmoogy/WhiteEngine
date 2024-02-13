@@ -201,7 +201,8 @@ void Display::UpdateFramewBufferView()
 
 	if (depth_stencil_format != EF_Unknown) {
 		platform::Render::ElementInitData initData;
-		initData.clear_value = &platform::Render::ClearValueBinding::DepthOne;
+		ResourceCreateInfo CreateInfo{ "Depth" };
+		CreateInfo.clear_value = &platform::Render::ClearValueBinding::DepthOne;
 		depth_stencil = white::share_raw(Context::Instance().GetDevice().CreateTexture(
 			static_cast<white::uint16>(GetWidth()),
 			static_cast<white::uint16>(GetHeight()),
@@ -210,7 +211,7 @@ void Display::UpdateFramewBufferView()
 			depth_stencil_format,
 			EA_GPURead | EA_GPUWrite,
 			render_targets_texs[0]->GetSampleInfo(),
-			&initData
+			CreateInfo
 		));
 
 		auto dsv = new DepthStencilView(GetDefaultNodeDevice());

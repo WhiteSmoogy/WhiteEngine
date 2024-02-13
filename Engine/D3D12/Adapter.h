@@ -35,18 +35,11 @@ namespace platform_ex::Windows::D3D12 {
 	using platform::Render::SRVRIRef;
 	using platform::Render::UAVRIRef;
 
-	struct ResourceCreateInfo
-	{
-		unsigned int GPUIndex = 0;
-
-		bool WithoutNativeResource = true;
-		const char* DebugName = "unknown";
-		const void* ResouceData = nullptr;
-	};
+	using platform::Render::ResourceCreateInfo;
 
 	class IResourceAllocator;
 
-	ResourceCreateInfo FillResourceCreateInfo(std::optional<void const*> init_data, const char* DebugName);
+	void ReplaceUnknownName(ResourceCreateInfo& init_data, const char* DebugName);
 		
 	// Represents a set of linked D3D12 device nodes (LDA i.e 1 or more identical GPUs). In most cases there will be only 1 node, however if the system supports
 	// SLI/Crossfire and the app enables it an Adapter will have 2 or more nodes. This class will own anything that can be shared
@@ -58,15 +51,15 @@ namespace platform_ex::Windows::D3D12 {
 		ID3D12Device* operator->() wnoexcept;
 
 		Texture1D* CreateTexture(uint16 width, uint8 num_mipmaps, uint8 array_size,
-			EFormat format, uint32 access, SampleDesc sample_info, std::optional<ElementInitData const*>  init_data = nullptr) override;
+			EFormat format, uint32 access, SampleDesc sample_info, ResourceCreateInfo init_data = {}) override;
 
 		Texture2D* CreateTexture(uint16 width, uint16 height, uint8 num_mipmaps, uint8 array_size,
-			EFormat format, uint32 access, SampleDesc sample_info, std::optional<ElementInitData const*>  init_data = nullptr) override;
+			EFormat format, uint32 access, SampleDesc sample_info, ResourceCreateInfo init_data = {}) override;
 
-		Texture3D* CreateTexture(const platform::Render::Texture3DInitializer& Initializer, std::optional<ElementInitData const*>  init_data = nullptr) override;
+		Texture3D* CreateTexture(const platform::Render::Texture3DInitializer& Initializer, ResourceCreateInfo init_data = {}) override;
 
 		TextureCube* CreateTextureCube(uint16 size, uint8 num_mipmaps, uint8 array_size,
-			EFormat format, uint32 access, SampleDesc sample_info, std::optional<ElementInitData const*>  init_data = nullptr) override;
+			EFormat format, uint32 access, SampleDesc sample_info, ResourceCreateInfo init_data) override;
 
 		bool IsHeapNotZeroedSupported() const
 		{
@@ -79,7 +72,7 @@ namespace platform_ex::Windows::D3D12 {
 		GraphicsBuffer* CreateBufferDesc(CommandListImmediate* Cmdlist, const BufferDesc& BufferDesc, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo);
 		GraphicsBuffer* CreateBufferDispatch(CommandListImmediate* Cmdlist, const BufferDesc& BufferDesc, D3D12_RESOURCE_STATES InitialState, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo);
 
-		GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, uint32 stride, std::optional<void const*>  init_data) override;
+		GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, uint32 stride, ResourceCreateInfo init_data) override;
 
 		template<ResourceStateMode Mode>
 		GraphicsBuffer* CreateBuffer(CommandListImmediate* Cmdlist, 
@@ -91,8 +84,8 @@ namespace platform_ex::Windows::D3D12 {
 			IResourceAllocator* ResourceAllocator);
 
 		ConstantBuffer* CreateConstantBuffer(Buffer::Usage usage, uint32 size_in_byte,const void*  init_data) override;
-		GraphicsBuffer* CreateVertexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
-		GraphicsBuffer* CreateIndexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, std::optional<void const*>  init_data = nullptr) override;
+		GraphicsBuffer* CreateVertexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, ResourceCreateInfo init_data) override;
+		GraphicsBuffer* CreateIndexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, ResourceCreateInfo init_data) override;
 
 		platform::Render::HardwareShader* CreateShader(const white::span<const uint8>& Code,platform::Render::ShaderType Type);
 

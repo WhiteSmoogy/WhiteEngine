@@ -465,11 +465,13 @@ void CommandContext::DrawIndirect(platform::Render::CommandSignature* Sig, uint3
 	auto Signature = static_cast<D3DCommandSignature*>(Sig);
 
 	ID3D12Resource* CountBufferResource = nullptr;
+
+	UINT64 CountBufferOffset64 = CountBufferOffset;
 	if (CountBuffer != nullptr)
 	{
 		auto& CounterLocation = static_cast<GraphicsBuffer*>(IndirectBuffer)->Location;
 
-		CountBufferOffset += CounterLocation.GetOffsetFromBaseOfResource();
+		CountBufferOffset64 += CounterLocation.GetOffsetFromBaseOfResource();
 
 		CountBufferResource = CounterLocation.GetResource()->Resource();
 		TransitionResource(CounterLocation.GetResource(), D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
@@ -488,7 +490,7 @@ void CommandContext::DrawIndirect(platform::Render::CommandSignature* Sig, uint3
 		Location.GetResource()->Resource(),
 		BufferOffset + Location.GetOffsetFromBaseOfResource(),
 		CountBufferResource,
-		CountBufferOffset
+		CountBufferOffset64
 	);
 }
 
@@ -840,7 +842,7 @@ void ContextCommon::FlushCommands(D3DFlushFlags FlushFlags)
 	if (white::has_anyflags(FlushFlags, D3DFlushFlags::WaitForCompletion))
 	{
 		SyncPoint = SyncPoint::Create(SyncPointType::GPUAndCPU);
-		SignalSyncPoint(SyncPoint.Get());
+		SignalSyncPoint(SyncPoint.get());
 	}
 
 	if (white::has_anyflags(FlushFlags, D3DFlushFlags::WaitForSubmission))

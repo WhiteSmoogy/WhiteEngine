@@ -185,9 +185,9 @@ namespace platform_ex::Windows::D3D12 {
 		return DebugNames;
 	}
 
-	GraphicsBuffer* Device::CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 Size, uint32 Stride, std::optional<void const*> init_data)
+	GraphicsBuffer* Device::CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 Size, uint32 Stride, ResourceCreateInfo init_data)
 	{
-		auto CreateInfo = FillResourceCreateInfo(init_data, GetDebugBufferName(usage, access,Size));
+		 ReplaceUnknownName(init_data, GetDebugBufferName(usage, access,Size));
 
 		BufferDesc BufferDesc = {
 			.Size = Size,
@@ -196,7 +196,7 @@ namespace platform_ex::Windows::D3D12 {
 			.Access = access
 		};
 
-		return CreateBufferDesc(&CommandListExecutor::GetImmediateCommandList(), BufferDesc, DXGI_FORMAT_UNKNOWN, CreateInfo);
+		return CreateBufferDesc(&CommandListExecutor::GetImmediateCommandList(), BufferDesc, DXGI_FORMAT_UNKNOWN, init_data);
 	}
 
 	GraphicsBuffer* Device::CreateBufferDesc(CommandListImmediate* Cmdlist, const BufferDesc& BufferDesc, DXGI_FORMAT format, ResourceCreateInfo& CreateInfo)
@@ -252,17 +252,17 @@ namespace platform_ex::Windows::D3D12 {
 		}
 		else
 		{
-			const D3D12_RESOURCE_STATES CreateState = CreateInfo.ResouceData != nullptr ? D3D12_RESOURCE_STATE_COPY_DEST : InitialState;
+			const D3D12_RESOURCE_STATES CreateState = CreateInfo.GetData() != nullptr ? D3D12_RESOURCE_STATE_COPY_DEST : InitialState;
 
 			AllocateBuffer<Mode>(GetNodeDevice(0), Desc, BufferDesc, CreateState, CreateInfo, Alignment, BufferOut, BufferOut->Location, Allocator);
 
-			if (CreateInfo.ResouceData == nullptr)
+			if (CreateInfo.GetData() == nullptr)
 			{
 				BufferOut->Location.UnlockPoolData();
 			}
 		}
 
-		if (CreateInfo.ResouceData != nullptr)
+		if (CreateInfo.GetData() != nullptr)
 		{
 			if (!bIsDynamic && BufferOut->Location.IsValid())
 			{
@@ -280,7 +280,7 @@ namespace platform_ex::Windows::D3D12 {
 					pData = SrcResourceLoc.GetParentDevice()->GetDefaultFastAllocator().Allocate(BufferDesc.Size, 4UL, &SrcResourceLoc);
 				}
 				wconstraint(pData);
-				std::memcpy(pData, CreateInfo.ResouceData, BufferDesc.Size);
+				std::memcpy(pData, CreateInfo.GetData(), BufferDesc.Size);
 
 				if (bOnAsyncThread)
 				{
@@ -332,10 +332,10 @@ namespace platform_ex::Windows::D3D12 {
 			void* pData = GetUploadHeapAllocator(Device->GetGPUIndex()).AllocUploadResource(BufferDesc.Size, Alignment, ResourceLocation);
 			wconstraint(ResourceLocation.GetSize() == BufferDesc.Size);
 
-			if (CreateInfo.ResouceData)
+			if (CreateInfo.GetData())
 			{
 				// Handle initial data
-				std::memcpy(pData, CreateInfo.ResouceData, BufferDesc.Size);
+				std::memcpy(pData, CreateInfo.GetData(), BufferDesc.Size);
 			}
 		}
 		else
@@ -346,7 +346,7 @@ namespace platform_ex::Windows::D3D12 {
 			}
 			else
 			{
-				Device->GetDefaultBufferAllocator().AllocDefaultResource<Mode>(D3D12_HEAP_TYPE_DEFAULT, InDesc, BufferDesc.Access, InCreateState, ResourceLocation, Alignment, CreateInfo.DebugName);
+				Device->GetDefaultBufferAllocator().AllocDefaultResource<Mode>(D3D12_HEAP_TYPE_DEFAULT, InDesc, BufferDesc.Access, InCreateState, ResourceLocation, Alignment, CreateInfo.Name);
 			}
 		}
 	}

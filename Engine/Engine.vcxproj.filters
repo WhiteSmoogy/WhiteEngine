@@ -417,19 +417,19 @@
       <Filter>Runtime\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Runtime\RenderCore\ShaderDB.cpp">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClCompile>
     <ClCompile Include="Runtime\RenderCore\ShaderParametersMetadata.cpp">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClCompile>
     <ClCompile Include="Runtime\RenderCore\ShaderParameterUtility.cpp">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClCompile>
     <ClCompile Include="Runtime\RenderCore\ShaderParamterTraits.cpp">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClCompile>
     <ClCompile Include="Runtime\RenderCore\ShaderResource.cpp">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClCompile>
     <ClCompile Include="RenderInterface\Shader.cpp">
       <Filter>RenderInterface</Filter>
@@ -438,7 +438,7 @@
       <Filter>RenderInterface</Filter>
     </ClCompile>
     <ClCompile Include="Runtime\RenderCore\UnifiedBuffer..cpp">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClCompile>
     <ClCompile Include="D3D12\Descriptors.cpp">
       <Filter>D3D12</Filter>
@@ -446,23 +446,29 @@
     <ClCompile Include="D3D12\Submission.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphAllocator.ixx">
-      <Filter>Runtime\Renderer\RenderGraph</Filter>
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphAllocator.ixx">
+      <Filter>Runtime\RenderGraph</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\Render\RenderGraph\RenderGraphResource.ixx">
-      <Filter>Runtime\Renderer\RenderGraph</Filter>
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphBuilder.ixx">
+      <Filter>Runtime\RenderGraph</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphModule.ixx">
-      <Filter>Runtime\Renderer\RenderGraph</Filter>
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphDef.ixx">
+      <Filter>Runtime\RenderGraph</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphBuilder.ixx">
-      <Filter>Runtime\Renderer\RenderGraph</Filter>
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphFwd.ixx">
+      <Filter>Runtime\RenderGraph</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphFwd.ixx">
-      <Filter>Runtime\Renderer\RenderGraph</Filter>
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphModule.ixx">
+      <Filter>Runtime\RenderGraph</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\Renderer\RenderGraph\RenderGraphDef.ixx">
-      <Filter>Runtime\Renderer\RenderGraph</Filter>
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphResource.ixx">
+      <Filter>Runtime\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\RenderGraph\RenderGraphResourcePool.ixx">
+      <Filter>Runtime\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\RenderCore\RenderResource.cpp">
+      <Filter>Runtime\RenderCore</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1145,25 +1151,25 @@
       <Filter>Runtime\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Runtime\RenderCore\UnifiedBuffer.h">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClInclude>
     <ClInclude Include="Runtime\RenderCore\ShaderDB.h">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClInclude>
     <ClInclude Include="Runtime\RenderCore\ShaderParameters.h">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClInclude>
     <ClInclude Include="Runtime\RenderCore\ShaderParametersMetadata.h">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClInclude>
     <ClInclude Include="Runtime\RenderCore\ShaderParameterStruct.h">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClInclude>
     <ClInclude Include="Runtime\RenderCore\ShaderParamterTraits.hpp">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClInclude>
     <ClInclude Include="Runtime\RenderCore\ShaderTextureTraits.hpp">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClInclude>
     <ClInclude Include="RenderInterface\Shader.h">
       <Filter>RenderInterface</Filter>
@@ -1175,7 +1181,7 @@
       <Filter>RenderInterface</Filter>
     </ClInclude>
     <ClInclude Include="Runtime\RenderCore\Dispatch.h">
-      <Filter>Runtime\RuntimeCore</Filter>
+      <Filter>Runtime\RenderCore</Filter>
     </ClInclude>
     <ClInclude Include="RenderInterface\Indirect.h">
       <Filter>RenderInterface</Filter>
@@ -1194,6 +1200,9 @@
     </ClInclude>
     <ClInclude Include="Core\Threading\Thread.h">
       <Filter>Core\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\RenderCore\RenderResource.h">
+      <Filter>Runtime\RenderCore</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1290,10 +1299,10 @@
     <Filter Include="Core\Threading">
       <UniqueIdentifier>{ba8e5599-55ef-4f38-904b-e05d25432ec4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Runtime\RuntimeCore">
+    <Filter Include="Runtime\RenderCore">
       <UniqueIdentifier>{e687d0e2-f2d3-4fd9-9cf4-24aa77da22b0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Runtime\Renderer\RenderGraph">
+    <Filter Include="Runtime\RenderGraph">
       <UniqueIdentifier>{7a16141c-5770-448e-af92-bfe706d1b0c4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

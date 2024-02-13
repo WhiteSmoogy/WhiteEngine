@@ -70,7 +70,7 @@ bool Texture::ReadyHWResource() const
 	return Location.IsValid();
 }
 
-void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uint16 height, uint16 depth, uint8 array_size, ElementInitData const *  init_data)
+void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uint16 height, uint16 depth, uint8 array_size, ResourceCreateInfo& CreateInfo)
 {
 	auto & device = Context::Instance().GetDevice();
 	auto base_this = dynamic_cast<platform::Render::Texture*>(this);
@@ -125,8 +125,8 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 
 	D3D12_CLEAR_VALUE* ClearValuePtr = nullptr;
 	D3D12_CLEAR_VALUE ClearValue;
-	if (init_data && init_data->clear_value) {
-		auto& clear_value = *init_data->clear_value;
+	if (CreateInfo.clear_value) {
+		auto& clear_value = *CreateInfo.clear_value;
 		if (tex_desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET && clear_value.ColorBinding == platform::Render::ClearBinding::ColorBound)
 		{
 			ClearValue = CD3DX12_CLEAR_VALUE(tex_desc.Format, clear_value.Value.Color);
@@ -185,7 +185,7 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 		COMPtr_RefParam(texture_readback_heaps, IID_ID3D12Resource)));
 
 	uint64 required_size = 0;
-	if (init_data != nullptr && init_data->data != nullptr) {
+	if (CreateInfo.InitData != nullptr && CreateInfo.InitData->data != nullptr) {
 		auto& context = Context::Instance();
 		auto & cmd_list = context.GetCommandList(Device::Command_Resource);
 
@@ -216,9 +216,9 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 		for (auto i = 0; i < num_subres; ++i)
 		{
 			D3D12_SUBRESOURCE_DATA src_data;
-			src_data.pData = init_data[i].data;
-			src_data.RowPitch = init_data[i].row_pitch;
-			src_data.SlicePitch = init_data[i].slice_pitch;
+			src_data.pData = CreateInfo.InitData[i].data;
+			src_data.RowPitch = CreateInfo.InitData[i].row_pitch;
+			src_data.SlicePitch = CreateInfo.InitData[i].slice_pitch;
 
 			D3D12_MEMCPY_DEST dest_data;
 			dest_data.pData = p + layouts[i].Offset;
@@ -260,7 +260,6 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 		context.CommitCommandList(Device::Command_Resource);
 
 	}
-
 
 	auto pHolder = new ResourceHolder(resource,curr_state, tex_desc);
 

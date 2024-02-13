@@ -37,16 +37,19 @@ std::shared_ptr<Render::GraphicsBuffer> platform::GVolumeRasterizeVertexBuffer()
 			DestVertex[3].Position = white::math::float2(-1, 1);
 			DestVertex[3].UV = white::math::float2(0, 0);
 
-			VettexBuffer = white::share_raw(Render::Context::Instance().GetDevice().CreateVertexBuffer(Render::Buffer::Usage::Static,
+			platform::Render::ElementInitData InitData{ .data = DestVertex };
+			platform::Render::ResourceCreateInfo CreateInfo{ &InitData,"VolumeRasterizeVertex" };
+
+			VertexBuffer = white::share_raw(Render::Context::Instance().GetDevice().CreateVertexBuffer(Render::Buffer::Usage::Static,
 				Render::EAccessHint::EA_GPURead | Render::EAccessHint::EA_Immutable,
 				sizeof(DestVertex),
-				Render::EF_Unknown, DestVertex));
+				Render::EF_Unknown, CreateInfo));
 		}
 
-		std::shared_ptr<Render::GraphicsBuffer> VettexBuffer;
+		std::shared_ptr<Render::GraphicsBuffer> VertexBuffer;
 	} Buffer;
 
-	return Buffer.VettexBuffer;
+	return Buffer.VertexBuffer;
 }
 
 Render::VertexDeclarationElements platform::GScreenVertexDeclaration()

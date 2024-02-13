@@ -526,13 +526,13 @@ namespace platform_ex::Windows::D3D12 {
 
 		ResourceHolder* GetCounterResource() const
 		{
-			return CounterResource.Get();
+			return CounterResource.get();
 		}
 
 	protected:
 		virtual void UpdateDescriptor() override;
 
-		COMPtr<ResourceHolder> CounterResource;
+		white::ref_ptr<ResourceHolder> CounterResource;
 
 		// Required for resource renaming
 		uint64 OffsetInBytes = 0;

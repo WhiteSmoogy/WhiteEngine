@@ -565,7 +565,6 @@ namespace platform::Render {
 		void const* data = nullptr;
 		uint32_t row_pitch = 0;
 		uint32_t slice_pitch = 0;
-		const ClearValueBinding* clear_value = nullptr;
 	};
 
 	struct SampleDesc {

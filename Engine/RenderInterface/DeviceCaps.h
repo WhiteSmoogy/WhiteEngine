@@ -30,6 +30,8 @@ namespace platform{
 			white::math::uint3 MaxDispatchThreadGroupsPerDimension;
 
 			bool IsDebugLayerEnabled = false;
+
+			bool IsInitialized = false;
 		};
 
 		extern DeviceCaps Caps;

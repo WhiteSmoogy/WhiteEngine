@@ -168,7 +168,7 @@ namespace platform_ex::Windows {
 			case FastAllocation:
 				break;
 			case StandAlone:
-				UnderlyingResource->Release();
+				UnderlyingResource->release();
 				break;
 			default:
 				break;

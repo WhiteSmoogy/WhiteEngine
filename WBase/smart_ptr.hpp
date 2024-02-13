@@ -275,7 +275,7 @@ namespace white
 
 		value_type release()
 		{
-			uint32 NewValue = --uses;
+			auto NewValue = --uses;
 
 			if (NewValue == 0)
 				delete this;
@@ -283,7 +283,7 @@ namespace white
 			return NewValue;
 		}
 
-		uint32 count() const
+		value_type count() const
 		{
 			return uses;
 		}
@@ -292,14 +292,19 @@ namespace white
 	template<typename _type>
 	struct ref_controller
 	{
-		void release(_type* pointer) const
+		static void release(_type* pointer)
 		{
 			pointer->release();
 		}
 
-		void add_ref(_type* pointer) const
+		static void add_ref(_type* pointer)
 		{
 			pointer->add_ref();
+		}
+
+		static decltype(auto) count(_type* pointer) 
+		{
+			return pointer->count();
 		}
 	};
 
@@ -332,7 +337,7 @@ namespace white
 			c_add_ref();
 		}
 		template<class _iOther>
-		ref_ptr(const ref_ptr<_iOther>& ptr, std::enable_if_t<
+		ref_ptr(const ref_ptr<_iOther, controller>& ptr, std::enable_if_t<
 			std::is_convertible<_iOther*, _type*>::value, int> = 0) wnothrow
 			: ref_pointer(ptr.ref_pointer)
 		{
@@ -345,7 +350,7 @@ namespace white
 			ptr.swap(*this);
 		}
 		template<class _iOther>
-		ref_ptr(ref_ptr<_iOther>&& ptr, std::enable_if_t<
+		ref_ptr(ref_ptr<_iOther, controller>&& ptr, std::enable_if_t<
 			std::is_convertible<_iOther*, _type*>::value, int> = 0) wnothrow
 			: ref_pointer(ptr.ref_pointer)
 		{
@@ -367,7 +372,7 @@ namespace white
 			operator=(_type* p) wnothrow
 		{
 			if (ref_pointer != p)
-				ref_pointer(p).swap(*this);
+				ref_ptr(p).swap(*this);
 			return *this;
 		}
 		ref_ptr&
@@ -401,9 +406,35 @@ namespace white
 			return get() != nullptr;
 		}
 
+		bool operator !=(std::nullptr_t) const wnothrow
+		{
+			return get() != nullptr;
+		}
+
 		_type* get() const wnothrow
 		{
 			return ref_pointer;
+		}
+
+		auto count() const -> decltype(controller::count(ref_pointer))
+		{
+			if (ref_pointer)
+				return controller::count(ref_pointer);
+			return 0;
+		}
+
+		_type*&
+			relase_and_getref() wnothrow
+		{
+			c_release();
+			return ref_pointer;
+		}
+
+		_type**
+			relase_and_getaddress() wnothrow
+		{
+			c_release();
+			return &ref_pointer;
 		}
 	protected:
 		void

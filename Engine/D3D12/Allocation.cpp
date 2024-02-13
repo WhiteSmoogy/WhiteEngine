@@ -82,7 +82,7 @@ MemoryPool::MemoryPool(NodeDevice* InParentDevice, GPUMaskType VisibleNodes,
 		{
 			const D3D12_HEAP_PROPERTIES HeapProps = CD3DX12_HEAP_PROPERTIES(InitConfig.HeapType, GetGPUMask().GetNative(), GetVisibilityMask().GetNative());
 			CheckHResult(Adapter->CreateBuffer(HeapProps, GetGPUMask(), 
-				InitConfig.InitialResourceState, InitConfig.InitialResourceState, PoolSize, BackingResource.ReleaseAndGetAddress(), 
+				InitConfig.InitialResourceState, InitConfig.InitialResourceState, PoolSize, BackingResource.relase_and_getaddress(),
 				std::format("{}/{}", Name, GetMemoryPoolDebugName(InitConfig)).c_str(), InitConfig.ResourceFlags));
 		}
 
@@ -339,7 +339,7 @@ void PoolAllocator<Order, Defrag>::CleanUpAllocations(uint64 InFrameLag)
 				{
 					// Release the resource
 					wconstraint(Operation.PlacedResource != nullptr);
-					Operation.PlacedResource->Release();
+					Operation.PlacedResource->release();
 					Operation.PlacedResource = nullptr;
 				}
 				else
@@ -1547,7 +1547,7 @@ FastAllocatorPage* FastAllocatorPagePool::RequestFastAllocatorPage()
 		FastAllocatorPage* Page = Pool[Index];
 
 		//If the GPU is done with it and no-one has a lock on it
-		if (Page->FastAllocBuffer->GetRefCount() == 1 &&
+		if (Page->FastAllocBuffer->count() == 1 &&
 			Page->FrameFence <= CompletedFence)
 		{
 			Page->Reset();
@@ -1600,7 +1600,7 @@ void FastAllocatorPagePool::CleanupPages(uint64 FrameLag)
 		FastAllocatorPage* Page = Pool[Index];
 
 		//If the GPU is done with it and no-one has a lock on it
-		if (Page->FastAllocBuffer->GetRefCount() == 1 &&
+		if (Page->FastAllocBuffer->count() == 1 &&
 			Page->FrameFence + FrameLag <= CompletedFence)
 		{
 			Pool.erase(Pool.begin() + Index);
@@ -1631,7 +1631,7 @@ void* FastConstantAllocator::Allocate(uint32 Bytes, ResourceLocation& OutLocatio
 {
 	wassume(Bytes <= PageSize);
 
-	const uint32 AlignedSize = Align(Bytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+	const uint32 AlignedSize = white::Align(Bytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
 	if (Offset + AlignedSize > PageSize)
 	{

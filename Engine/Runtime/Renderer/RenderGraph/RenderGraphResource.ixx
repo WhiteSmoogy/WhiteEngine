@@ -5,6 +5,7 @@ module;
 #include "RenderInterface/IGPUResourceView.h"
 #include "RenderInterface/IGraphicsBuffer.hpp"
 #include "Runtime/RenderCore/ShaderParametersMetadata.h"
+#include "RenderInterface/ICommandList.h"
 
 export module RenderGraph:resource;
 
@@ -26,6 +27,10 @@ export namespace RenderGraph
 	class RGConstBuffer;
 	using RGConstBufferHandle = RGHandle<RGConstBuffer, white::uint16>;
 	using RGConstBufferRegistry = RGHandleRegistry<RGConstBufferHandle>;
+
+	class RGPass;
+	using RGPassHandle = RGHandle<RGPass, uint16>;
+	using RGPassRegistry = RGHandleRegistry<RGPassHandle>;
 
 	using namespace platform::Render;
 	class RGResource
@@ -49,6 +54,8 @@ export namespace RenderGraph
 
 	private:
 		RObject* RealObj = nullptr;
+
+		friend RGBuilder;
 	};
 
 	enum class ERGViewableResourceType : uint8
@@ -130,6 +137,10 @@ export namespace RenderGraph
 		RGUnorderedAccessView(const char* InName, ERGViewType InType, ERGUnorderedAccessViewFlags InFlag)
 			:RGView(InName, InType), Flags(InFlag)
 		{}
+
+		bool bExternal : 1;
+
+		friend RGBuilder;
 	};
 
 	class RGShaderResourceView : public RGView
@@ -206,6 +217,10 @@ export namespace RenderGraph
 		{}
 
 		RGBufferHandle Handle;
+
+		white::ref_ptr<RGPooledBuffer> Allocation;
+
+		RGPassHandle FirstPass;
 
 		friend RGBuilder;
 		friend RGBufferRegistry;
@@ -340,5 +355,29 @@ export namespace RenderGraph
 		{
 			return CBuffer->Contents();
 		}
+	};
+
+	class RGPooledBuffer final :public white::ref_count_base
+	{
+	public:
+		RGPooledBuffer(CommandList& CmdList, GraphicsBufferRef InBuffer, const RGBufferDesc& InDesc,const char* InName)
+			:Desc(InDesc)
+			,Buffer(InBuffer)
+			,Name(InName)
+		{}
+
+		GraphicsBuffer* GetRObject() const
+		{
+			return Buffer.get();
+		}
+
+	private:
+
+		const RGBufferDesc Desc;
+		GraphicsBufferRef Buffer;
+		const char* Name = nullptr;
+
+		friend RGBuilder;
+		friend RGAllocator;
 	};
 }

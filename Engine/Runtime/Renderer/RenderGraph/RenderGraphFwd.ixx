@@ -13,4 +13,6 @@ export namespace RenderGraph
 	class RGBuilder;
 	class RGAllocator;
 	class RGPass;
+
+	class RGPooledBuffer;
 }

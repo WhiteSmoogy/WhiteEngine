@@ -6,21 +6,19 @@
 #include <atomic>
 
 namespace platform::Render {
-	class RObject
+	class RObject :public white::ref_count_base
 	{
 	public:
-		using value_type = std::atomic_uint32_t::value_type;
-
 		virtual ~RObject();
 
 		value_type AddRef()
 		{
-			return ++NumRefs;
+			return ++uses;
 		}
 
 		value_type Release()
 		{
-			auto NewValue = --NumRefs;
+			auto NewValue = --uses;
 			if (NewValue == 0)
 			{
 				EnqueueDelete(this);
@@ -31,8 +29,6 @@ namespace platform::Render {
 		static void FlushPendingDeletes();
 
 	private:
-		std::atomic_uint32_t NumRefs = 1;
-
 		static void EnqueueDelete(RObject* value);
 
 		//D3D12 API don't do internal reference counting
@@ -57,6 +53,19 @@ namespace platform::Render {
 		void operator()(RObject* obj) const
 		{
 			obj->Release();
+		}
+	};
+
+	struct RObjectController
+	{
+		void release(RObject* obj) const
+		{
+			obj->Release();
+		}
+
+		void add_ref(RObject* obj) const
+		{
+			obj->AddRef();
 		}
 	};
 

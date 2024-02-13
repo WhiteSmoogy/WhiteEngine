@@ -7,11 +7,7 @@
 
 #include <WBase/winttype.hpp>
 
-#ifdef WB_IMPL_MSCPP
 #include <string_view>
-#else
-#include <experimental/string_view> //TODO:replace it
-#endif
 #include "NTHandle.h"
 
 namespace platform_ex {

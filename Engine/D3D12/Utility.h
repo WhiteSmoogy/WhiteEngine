@@ -8,36 +8,6 @@
 namespace platform_ex::Windows::D3D12 {
 	using white::has_anyflags;
 
-	class RefCountBase
-	{
-	private:
-		unsigned long Uses = 1;
-	public:
-		virtual ~RefCountBase()
-		{
-		}
-
-		unsigned long AddRef()
-		{
-			return _InterlockedIncrement(reinterpret_cast<volatile long*>(&Uses));
-		}
-
-		unsigned long Release()
-		{
-			uint32 NewValue = _InterlockedDecrement(reinterpret_cast<volatile long*>(&Uses));
-
-			if (NewValue == 0)
-				delete this;
-
-			return NewValue;
-		}
-
-		uint32 GetRefCount() const
-		{
-			return Uses;
-		}
-	};
-
 	/** Find the appropriate depth-stencil typeless DXGI format for the given format. */
 	inline DXGI_FORMAT FindDepthStencilParentDXGIFormat(DXGI_FORMAT InFormat)
 	{

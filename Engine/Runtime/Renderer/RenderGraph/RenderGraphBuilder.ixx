@@ -21,9 +21,6 @@ export namespace RenderGraph
 		NeverCull = 1 << 4,
 	};
 
-	using RGPassHandle = RGHandle<RGPass, uint16>;
-	using RGPassRegistry = RGHandleRegistry<RGPassHandle>;
-
 	class RGPass
 	{
 	public:
@@ -116,9 +113,29 @@ export namespace RenderGraph
 		ExecuteLambdaType ExecuteLambda;
 	};
 
-	class RGBuilder
+	enum class ERGBuilderFlags
+	{
+		None = 0,
+
+		/** Allows the builder to parallelize execution of passes. Without this flag, all passes execute on the render thread. */
+		AllowParallelExecute = 1 << 0
+	};
+
+	class RGBuilder:RGAllocatorScope
 	{
 	public:
+		RGBuilder(CommandListImmediate& InCmdList, RGEventName InName = {}, ERGBuilderFlags Flags = ERGBuilderFlags::None)
+			:CmdList(InCmdList), BuilderName(InName)
+			, bParallelSetupEnabled(white::has_anyflags(Flags, ERGBuilderFlags::AllowParallelExecute))
+			, bParallelExecuteEnabled(white::has_anyflags(Flags, ERGBuilderFlags::AllowParallelExecute))
+		{}
+
+		RGBuilder(const RGBuilder&) = delete;
+		~RGBuilder()
+		{
+
+		}
+
 		RGBufferUAVRef CreateUAV(const RGBufferUAVDesc& Desc, ERGUnorderedAccessViewFlags InFlags = ERGUnorderedAccessViewFlags::None)
 		{
 			auto UAV = Views.Allocate<RGBufferUAV>(Allocator, Desc.Buffer->Name, Desc, InFlags);
@@ -170,7 +187,71 @@ export namespace RenderGraph
 			return AddPassInternal(std::move(Name), RGParameterStruct::GetStructMetadata<ParameterStructType>(), Struct, Flags, std::forward<ExecuteLambdaType>(Lambda));
 		}
 
+		white::ref_ptr<RGPooledBuffer> ToExternal(RGBufferRef Buffer)
+		{
+			if (!Buffer->bExternal)
+			{
+				Buffer->bExternal = true;
+
+				ExternalBuffers.emplace(Buffer->GetRObject(), Buffer);
+			}
+
+			return Buffer->Allocation;
+		}
+
+		RGBufferRef FindExternal(GraphicsBuffer* ExternalBuffer) const
+		{
+			auto itr = ExternalBuffers.find(ExternalBuffer);
+			if (itr != ExternalBuffers.end())
+			{
+				return itr->second;
+			}
+			return nullptr;
+		}
+
+		RGBufferRef FindExternal(RGPooledBuffer* ExternalBuffer) const
+		{
+			if (ExternalBuffer)
+			{
+				return FindExternal(ExternalBuffer->GetRObject());
+			}
+			return nullptr;
+		}
+
+		RGBufferRef RegisterExternal(const white::ref_ptr<RGPooledBuffer>& External, ERGBufferFlags Flags)
+		{
+			const char* Name = External->Name;
+			if (!Name)
+			{
+				Name = "External";
+			}
+
+			return RegisterExternal(External, Name, Flags);
+		}
+
+		RGBufferRef RegisterExternal(const white::ref_ptr<RGPooledBuffer>& External, const char* Name, ERGBufferFlags Flags)
+		{
+			if (auto FoundBuffer = FindExternal(External.get()))
+			{
+				return FoundBuffer;
+			}
+
+			auto Buffer = Buffers.Allocate(Allocator, Name, External->Desc, Flags);
+			SetRObject(Buffer, External, GetProloguePassHandle());
+
+			Buffer->bExternal = true;
+			ExternalBuffers.emplace(Buffer->GetRObject(), Buffer);
+
+			return Buffer;
+		}
+
+		void Execute();
 	private:
+		RGPassHandle GetProloguePassHandle() const
+		{
+			return RGPassHandle(0);
+		}
+
 		template <typename ParameterStructType, typename ExecuteLambdaType>
 		RGPassRef AddPassInternal(
 			RGEventName&& Name,
@@ -195,12 +276,31 @@ export namespace RenderGraph
 			return Pass;
 		}
 
+		void SetRObject(RGBuffer* Buffer, const white::ref_ptr<RGPooledBuffer>& Pooled, RGPassHandle PassHandle)
+		{
+			auto BufferObj = Pooled->GetRObject();
+
+			Buffer->RealObj = BufferObj;
+			Buffer->Allocation = Pooled;
+			Buffer->FirstPass = PassHandle;
+		}
 	private:
-		RGAllocator& Allocator;
+		CommandListImmediate& CmdList;
+		const RGEventName BuilderName;
+
+		bool bParallelSetupEnabled;
+		bool bParallelExecuteEnabled;
 
 		RGPassRegistry Passes;
 		RGViewRegistry Views;
 		RGConstBufferRegistry CBufferers;
 		RGBufferRegistry Buffers;
+
+		std::unordered_map<
+			GraphicsBuffer*, 
+			RGBufferRef,
+			std::hash<GraphicsBuffer*>,
+			std::equal_to<GraphicsBuffer*>, 
+			RGSTLAllocator<std::pair<GraphicsBuffer* const, RGBufferRef>>> ExternalBuffers;
 	};
 }

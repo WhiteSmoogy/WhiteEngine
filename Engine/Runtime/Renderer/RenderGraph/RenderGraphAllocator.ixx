@@ -88,6 +88,8 @@ export namespace RenderGraph
 		{
 			return Context;
 		}
+
+		friend class RGAllocatorScope;
 	};
 
 	RGAllocator& GetAllocator()
@@ -116,6 +118,24 @@ export namespace RenderGraph
 		void deallocate(T* p, std::size_t n) noexcept
 		{
 		}
+	};
+
+	class RGAllocatorScope
+	{
+	public:
+		RGAllocatorScope()
+			: Allocator(GetAllocator())
+		{}
+
+		~RGAllocatorScope()
+		{
+			Allocator.Release();
+		}
+
+	protected:
+		RGAllocator& Allocator;
+
+	private:
 	};
 }
 

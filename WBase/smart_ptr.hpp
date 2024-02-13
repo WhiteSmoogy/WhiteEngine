@@ -3,7 +3,7 @@
 #include "wdef.h"
 #include "type_traits.hpp"
 #include <memory>
-
+#include <concepts>
 
 namespace white
 {
@@ -258,6 +258,175 @@ namespace white
 		make_unique_default_init(_tParams&&...) = delete;
 	//@}
 
+	class ref_count_base
+	{
+	protected:
+		using value_type = std::atomic_uint32_t::value_type;
+		std::atomic_uint32_t uses = 1;
+	public:
+		virtual ~ref_count_base()
+		{
+		}
 
-	//@}
+		value_type add_ref()
+		{
+			return ++uses;
+		}
+
+		value_type release()
+		{
+			uint32 NewValue = --uses;
+
+			if (NewValue == 0)
+				delete this;
+
+			return NewValue;
+		}
+
+		uint32 count() const
+		{
+			return uses;
+		}
+	};
+
+	template<typename _type>
+	struct ref_controller
+	{
+		void release(_type* pointer) const
+		{
+			pointer->release();
+		}
+
+		void add_ref(_type* pointer) const
+		{
+			pointer->add_ref();
+		}
+	};
+
+	template<typename _type,typename controller = ref_controller<_type>>
+	class ref_ptr :protected controller
+	{
+	public:
+		using ptr_type = _type*;
+	protected:
+		ptr_type ref_pointer;
+
+	public:
+		ref_ptr() wnothrow
+			:ref_pointer()
+		{}
+
+		ref_ptr(std::nullptr_t) wnothrow
+			:ref_pointer()
+		{}
+
+		template<class _iOther>
+		ref_ptr(_iOther* ptr) wnothrow
+			: ref_pointer(ptr)
+		{
+		}
+
+		ref_ptr(const ref_ptr& ptr) wnothrow
+			: ref_pointer(ptr.ref_pointer)
+		{
+			c_add_ref();
+		}
+		template<class _iOther>
+		ref_ptr(const ref_ptr<_iOther>& ptr, std::enable_if_t<
+			std::is_convertible<_iOther*, _type*>::value, int> = 0) wnothrow
+			: ref_pointer(ptr.ref_pointer)
+		{
+			c_add_ref();
+		}
+
+		ref_ptr(ref_ptr&& ptr) wnothrow
+			: ref_pointer()
+		{
+			ptr.swap(*this);
+		}
+		template<class _iOther>
+		ref_ptr(ref_ptr<_iOther>&& ptr, std::enable_if_t<
+			std::is_convertible<_iOther*, _type*>::value, int> = 0) wnothrow
+			: ref_pointer(ptr.ref_pointer)
+		{
+			ptr.ref_pointer = nullptr;
+		}
+
+		~ref_ptr()
+		{
+			c_release();
+		}
+
+		ref_ptr&
+			operator=(std::nullptr_t) wnothrow
+		{
+			c_release();
+			return *this;
+		}
+		ref_ptr&
+			operator=(_type* p) wnothrow
+		{
+			if (ref_pointer != p)
+				ref_pointer(p).swap(*this);
+			return *this;
+		}
+		ref_ptr&
+			operator=(const ref_ptr& ptr) wnothrow
+		{
+			ref_ptr(ptr).swap(*this);
+			return *this;
+		}
+		ref_ptr&
+			operator=(ref_ptr&& ptr) wnothrow
+		{
+			ptr.swap(*this);
+			return *this;
+		}
+
+		_type&
+			operator*() const wnothrowv
+		{
+			return *ref_pointer;
+		}
+
+		_type*
+			operator->() const wnothrow
+		{
+			return ref_pointer;
+		}
+
+		explicit
+			operator bool() const wnothrow
+		{
+			return get() != nullptr;
+		}
+
+		_type* get() const wnothrow
+		{
+			return ref_pointer;
+		}
+	protected:
+		void
+			c_add_ref() const wnothrow
+		{
+			if (ref_pointer)
+				controller::add_ref(ref_pointer);
+		}
+
+		void
+			c_release() wnothrow
+		{
+			if (const auto tmp = ref_pointer)
+			{
+				ref_pointer = nullptr;
+				controller::release(ref_pointer);
+			}
+		}
+
+		void
+			swap(ref_ptr& ptr) wnothrow
+		{
+			std::swap(ref_pointer, ptr.ref_pointer);
+		}
+	};
 }

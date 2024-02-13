@@ -81,6 +81,8 @@ namespace platform::Render {
 		white::uint32 size_in_byte;
 	};
 
+	using GraphicsBufferRef = white::ref_ptr<GraphicsBuffer, RObjectController>;
+
 	namespace Buffer {
 		class Mapper : white::noncopyable
 		{

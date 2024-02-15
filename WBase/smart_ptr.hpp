@@ -423,6 +423,11 @@ namespace white
 			return 0;
 		}
 
+		void reset() wnothrow
+		{
+			c_release();
+		}
+
 		_type*&
 			relase_and_getref() wnothrow
 		{

@@ -14,8 +14,8 @@ namespace platform::Render
 		virtual void InitRenderResource(CommandListBase& CmdList) {}
 		virtual void ReleaseRenderResource() {}
 
-		virtual void InitResource(CommandListBase& CmdList);
-		virtual void ReleaseResource();
+		void InitResource(CommandListBase& CmdList);
+		void ReleaseResource();
 
 		static CommandList& GetCommandList();
 		static void InitResources();

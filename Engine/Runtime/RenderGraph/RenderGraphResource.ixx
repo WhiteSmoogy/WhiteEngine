@@ -222,6 +222,13 @@ export namespace RenderGraph
 		}
 
 		auto operator<=>(const RGBufferDesc&) const = default;
+
+		friend RGBufferDesc operator |(RGBufferDesc lhs, platform::Render::EAccessHint access)
+		{
+			lhs.Usage |= static_cast<uint32>(access);
+
+			return lhs;
+		}
 	};
 
 	class RGPooledBuffer final :public white::ref_count_base
@@ -237,6 +244,11 @@ export namespace RenderGraph
 		GraphicsBuffer* GetRObject() const
 		{
 			return Buffer.get();
+		}
+
+		uint32 GetSize() const
+		{
+			return Desc.GetSize();
 		}
 
 	private:

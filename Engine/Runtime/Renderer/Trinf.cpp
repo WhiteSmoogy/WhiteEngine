@@ -10,7 +10,9 @@ namespace pr = platform::Render;
 using namespace platform_ex;
 using platform::Render::Context;
 
-std::unique_ptr<StreamingScene> Trinf::Scene;
+using RenderGraph::RGBufferDesc;
+
+platform::Render::GlobalResource<StreamingScene> Trinf::Scene;
 
 int32 Trinf::GrowOnlySpanAllocator::Allocate(int32 Num)
 {
@@ -62,26 +64,15 @@ StreamingScene::StreamingScene()
 	:storage_api(Context::Instance().GetDevice().GetDStorage())
 {}
 
-pr::GraphicsBuffer* CreateByteAddressBuffer(uint32 size, uint32 stride)
-{
-	auto& device = Context::Instance().GetDevice();
-
-	return device.CreateBuffer(pr::Buffer::Usage::Static, 
-		pr::EAccessHint::EA_GPUReadWrite | 
-		pr::EAccessHint::EA_GPUStructured |
-		pr::EAccessHint::EA_Raw | 
-		pr::EAccessHint::EA_GPUUnordered,
-		size, sizeof(uint32), nullptr);
-}
-
 template<typename T>
-std::shared_ptr<platform::Render::GraphicsBuffer> StreamingScene::TrinfBuffer<T>::ResizeByteAddressBufferIfNeeded(platform::Render::CommandList& cmdList)
+RenderGraph::RGBufferRef StreamingScene::TrinfBuffer<T>::ResizeByteAddressBufferIfNeeded(RenderGraph::RGBuilder& Builder)
 {
 	auto target_size = Allocator.GetMaxSize() * kPageSize;
+	auto InternalBufferOld = Builder.RegisterExternal(DataBuffer, RenderGraph::ERGBufferFlags::MultiFrame);
 
 	if (DataBuffer->GetSize() < target_size)
 	{
-		auto NewDataBuffer = pr::shared_raw_robject(CreateByteAddressBuffer(target_size, sizeof(T)));
+		auto NewDataBuffer = Builder.CreateBuffer(RGBufferDesc::CreateByteAddressDesc(target_size), __func__);
 
 		platform::Render::MemcpyResourceParams params =
 		{
@@ -89,20 +80,23 @@ std::shared_ptr<platform::Render::GraphicsBuffer> StreamingScene::TrinfBuffer<T>
 			.SrcOffset = 0,
 			.DstOffset = 0,
 		};
-		platform::Render::MemcpyResource(cmdList, NewDataBuffer, DataBuffer, params);
 
-		DataBuffer = NewDataBuffer;
+
+		//platform::Render::MemcpyResource(cmdList, NewDataBuffer, DataBuffer, params);
+		Builder.ToExternal(NewDataBuffer);
+
+		return NewDataBuffer;
 	}
 
-	return DataBuffer;
+	return InternalBufferOld;
 }
 
-void StreamingScene::Init()
+void StreamingScene::InitRenderResource(platform::Render::CommandListBase&)
 {
-	Index.DataBuffer = pr::shared_raw_robject(CreateByteAddressBuffer(sizeof(uint32), sizeof(uint32)));
-	Position.DataBuffer = pr::shared_raw_robject(CreateByteAddressBuffer(sizeof(wm::float3), sizeof(wm::float3)));
-	Tangent.DataBuffer = pr::shared_raw_robject(CreateByteAddressBuffer(sizeof(uint32), sizeof(uint32)));
-	TexCoord.DataBuffer = pr::shared_raw_robject(CreateByteAddressBuffer(sizeof(wm::float2), sizeof(wm::float2)));
+	Index.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(4), "Trinf.Index");
+	Position.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(sizeof(wm::float3)), "Trinf.Position");
+	Tangent.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(sizeof(uint32)), "Trinf.Tangent");
+	TexCoord.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(sizeof(wm::float2)), "Trinf.TexCoord");
 }
 
 void StreamingScene::AddResource(std::shared_ptr<Resources> pResource)
@@ -117,16 +111,16 @@ void StreamingScene::AddResource(std::shared_ptr<Resources> pResource)
 		key.Tangent = Tangent.Allocate(pResource->Metadata->Tangent);
 		key.TexCoord = TexCoord.Allocate(pResource->Metadata->TexCoord);
 
-		Keys.resize(std::max(Keys.size(),pResource->TrinfKey + 1));
+		Keys.resize(std::max(Keys.size(), pResource->TrinfKey + 1));
 		Keys[pResource->TrinfKey] = key;
 
 		PendingAdds.emplace_back(pResource);
 	}
 }
 
-void StreamingScene::BeginAsyncUpdate(platform::Render::CommandList& cmdList)
+void StreamingScene::BeginAsyncUpdate(RenderGraph::RGBuilder& Builder)
 {
-	ProcessNewResources(cmdList);
+	ProcessNewResources(Builder);
 
 	for (auto itr = Streaming.begin(); itr != Streaming.end();)
 	{
@@ -142,7 +136,7 @@ void StreamingScene::BeginAsyncUpdate(platform::Render::CommandList& cmdList)
 	}
 }
 
-void StreamingScene::EndAsyncUpdate(platform::Render::CommandList& cmdList)
+void StreamingScene::EndAsyncUpdate(RenderGraph::RGBuilder& Builder)
 {
 	for (auto itr = GpuStreaming.begin(); itr != GpuStreaming.end();)
 	{
@@ -156,22 +150,22 @@ void StreamingScene::EndAsyncUpdate(platform::Render::CommandList& cmdList)
 			.SrcOffset = 0,
 			.DstOffset = key.Index * Index.kPageSize,
 		};
-		platform::Render::MemcpyResource(cmdList, Index.DataBuffer, resource->GpuStream, params);
+		//platform::Render::MemcpyResource(cmdList, Index.DataBuffer, resource->GpuStream, params);
 
 		params.SrcOffset += params.Count;
 		params.Count = resource->Metadata->Position.UncompressedSize / sizeof(float);
 		params.DstOffset = key.Position * Position.kPageSize;
-		platform::Render::MemcpyResource(cmdList, Position.DataBuffer, resource->GpuStream, params);
+		//platform::Render::MemcpyResource(cmdList, Position.DataBuffer, resource->GpuStream, params);
 
 		params.SrcOffset += params.Count;
 		params.Count = resource->Metadata->Tangent.UncompressedSize / sizeof(float);
 		params.DstOffset = key.Tangent * Tangent.kPageSize;
-		platform::Render::MemcpyResource(cmdList, Tangent.DataBuffer, resource->GpuStream, params);
+		//platform::Render::MemcpyResource(cmdList, Tangent.DataBuffer, resource->GpuStream, params);
 
 		params.SrcOffset += params.Count;
 		params.Count = resource->Metadata->TexCoord.UncompressedSize / sizeof(float);
 		params.DstOffset = key.TexCoord * TexCoord.kPageSize;
-		platform::Render::MemcpyResource(cmdList, TexCoord.DataBuffer, resource->GpuStream, params);
+		//platform::Render::MemcpyResource(cmdList, TexCoord.DataBuffer, resource->GpuStream, params);
 
 		Resident.emplace_back(resource);
 		resource->State = Resources::StreamingState::Resident;
@@ -181,16 +175,12 @@ void StreamingScene::EndAsyncUpdate(platform::Render::CommandList& cmdList)
 	}
 }
 
-
-
-void StreamingScene::ProcessNewResources(platform::Render::CommandList& cmdList)
+void StreamingScene::ProcessNewResources(RenderGraph::RGBuilder& Builder)
 {
-	Position.ResizeByteAddressBufferIfNeeded(cmdList);
-	Tangent.ResizeByteAddressBufferIfNeeded(cmdList);
-	TexCoord.ResizeByteAddressBufferIfNeeded(cmdList);
-	Index.ResizeByteAddressBufferIfNeeded(cmdList);
-
-	auto& device = Context::Instance().GetDevice();
+	Position.ResizeByteAddressBufferIfNeeded(Builder);
+	Tangent.ResizeByteAddressBufferIfNeeded(Builder);
+	TexCoord.ResizeByteAddressBufferIfNeeded(Builder);
+	Index.ResizeByteAddressBufferIfNeeded(Builder);
 
 	for (auto resource : PendingAdds)
 	{
@@ -204,15 +194,13 @@ void StreamingScene::ProcessNewResources(platform::Render::CommandList& cmdList)
 		GpuStreamingSize += resource->Metadata->Tangent.UncompressedSize;
 		GpuStreamingSize += resource->Metadata->TexCoord.UncompressedSize;
 
-		resource->GpuStream = pr::shared_raw_robject(device.CreateBuffer(pr::Buffer::Usage::Static,
-			pr::EAccessHint::EA_GPUReadWrite |
-			pr::EAccessHint::EA_Raw | pr::EAccessHint::EA_DStorage,
-			GpuStreamingSize, sizeof(uint32), nullptr));
+		resource->GpuStream = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(GpuStreamingSize) | pr::EAccessHint::EA_DStorage, "Trinf.ResourceStream");
+
 		{
 			auto index_req = resource->BuildRequestForRegion(resource->Metadata->Index);
 			target.Offset = 0;
 			target.Size = index_req.UncompressedSize;
-			target.Target = resource->GpuStream.get();
+			target.Target = resource->GpuStream->GetRObject();
 			index_req.Destination = target;
 			storage_api.EnqueueRequest(index_req);
 		}
@@ -221,7 +209,7 @@ void StreamingScene::ProcessNewResources(platform::Render::CommandList& cmdList)
 			auto pos_req = resource->BuildRequestForRegion(resource->Metadata->Position);
 			target.Offset += target.Size;
 			target.Size = pos_req.UncompressedSize;
-			target.Target = resource->GpuStream.get();
+			target.Target = resource->GpuStream->GetRObject();
 			pos_req.Destination = target;
 			storage_api.EnqueueRequest(pos_req);
 		}
@@ -230,7 +218,7 @@ void StreamingScene::ProcessNewResources(platform::Render::CommandList& cmdList)
 			auto tan_req = resource->BuildRequestForRegion(resource->Metadata->Tangent);
 			target.Offset += target.Size;
 			target.Size = tan_req.UncompressedSize;
-			target.Target = resource->GpuStream.get();
+			target.Target = resource->GpuStream->GetRObject();
 			tan_req.Destination = target;
 
 			storage_api.EnqueueRequest(tan_req);
@@ -240,7 +228,7 @@ void StreamingScene::ProcessNewResources(platform::Render::CommandList& cmdList)
 			auto uv_req = resource->BuildRequestForRegion(resource->Metadata->TexCoord);
 			target.Offset += target.Size;
 			target.Size = uv_req.UncompressedSize;
-			target.Target = resource->GpuStream.get();
+			target.Target = resource->GpuStream->GetRObject();
 			uv_req.Destination = target;
 
 			storage_api.EnqueueRequest(uv_req);

@@ -125,7 +125,11 @@ export namespace RenderGraph
 		}
 
 	private:
-		void ReleaseResource() override;
+		void ReleaseRenderResource() override
+		{
+			AllocatedBuffers.clear();
+			AllocatedBufferHashes.clear();
+		}
 
 		std::vector<white::ref_ptr<RGPooledBuffer>> AllocatedBuffers;
 		std::vector<uint32> AllocatedBufferHashes;

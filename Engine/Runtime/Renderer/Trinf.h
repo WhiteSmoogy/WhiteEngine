@@ -4,9 +4,13 @@
 #include "Asset/TrinfAsset.h"
 #include "RenderInterface/ICommandList.h"
 #include "RenderInterface/DStorage.h"
+#include "Runtime/RenderCore/RenderResource.h"
+
+import RenderGraph;
 
 namespace Trinf
 {
+
 	using namespace platform_ex;
 	using namespace platform_ex::DSFileFormat::TrinfFormat;
 
@@ -26,7 +30,7 @@ namespace Trinf
 
 		std::shared_ptr<DStorageFile> File;
 		std::shared_ptr<DStorageSyncPoint> IORequest;
-		std::shared_ptr<platform::Render::GraphicsBuffer> GpuStream;
+		white::ref_ptr<RenderGraph::RGPooledBuffer> GpuStream;
 
 		TrinfHeader Header;
 		MemoryRegion<TrinfGridHeader> Metadata;
@@ -81,20 +85,20 @@ namespace Trinf
 		std::vector<LinearAlloc> FreeSpans;
 	};
 
-	class StreamingScene
+	class StreamingScene :public platform::Render::RenderResource
 	{
 	public:
 		StreamingScene();
 
-		void Init();
+		void InitRenderResource(platform::Render::CommandListBase& CmdList) override;
 
 		void AddResource(std::shared_ptr<Resources> pResource);
 
-		void BeginAsyncUpdate(platform::Render::CommandList& cmdList);
+		void BeginAsyncUpdate(RenderGraph::RGBuilder& Builder);
 
-		void EndAsyncUpdate(platform::Render::CommandList& cmdList);
+		void EndAsyncUpdate(RenderGraph::RGBuilder& Builder);
 	private:
-		void ProcessNewResources(platform::Render::CommandList& cmdList);
+		void ProcessNewResources(RenderGraph::RGBuilder& Builder);
 	public:
 		template<typename T>
 		struct TrinfBuffer
@@ -102,14 +106,14 @@ namespace Trinf
 			static constexpr uint32 kPageSize = 64 * 1024;
 
 			GrowOnlySpanAllocator Allocator;
-			std::shared_ptr<platform::Render::GraphicsBuffer> DataBuffer;
+			white::ref_ptr<RenderGraph::RGPooledBuffer> DataBuffer;
 
 			int32 Allocate(DSFileFormat::GpuRegion region)
 			{
 				return Allocator.Allocate((region.UncompressedSize + kPageSize - 1) / kPageSize);
 			}
 
-			std::shared_ptr<platform::Render::GraphicsBuffer> ResizeByteAddressBufferIfNeeded(platform::Render::CommandList& cmdList);
+			RenderGraph::RGBufferRef ResizeByteAddressBufferIfNeeded(RenderGraph::RGBuilder& Builder);
 		};
 
 		TrinfBuffer<wm::float3> Position;
@@ -138,5 +142,5 @@ namespace Trinf
 		DirectStorage& storage_api;
 	};
 
-	extern std::unique_ptr<StreamingScene> Scene;
+	extern platform::Render::GlobalResource<StreamingScene> Scene;
 }

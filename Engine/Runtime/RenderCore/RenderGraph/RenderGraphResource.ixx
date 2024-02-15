@@ -9,7 +9,7 @@ module;
 
 export module RenderGraph:resource;
 
-import :fwd;
+import RenderGraphFwd;
 import :definition;
 
 import "WBase/cassert.h";
@@ -287,6 +287,11 @@ export namespace RenderGraph
 			return static_cast<GraphicsBuffer*>(RGViewableResource::GetRObject());
 		}
 
+		uint32 GetAccess() const
+		{
+			return Desc.Usage;
+		}
+
 	private:
 		RGBuffer(const char* Name, const RGBufferDesc& InDesc, ERGBufferFlags InFlags)
 			:RGViewableResource(Name, StaticType), Desc(InDesc), Flags(InFlags)
@@ -308,7 +313,7 @@ export namespace RenderGraph
 	struct RGBufferUAVDesc
 	{
 		RGBufferRef Buffer = nullptr;
-		EFormat Format;
+		EFormat Format = EFormat::EF_Unknown;
 	};
 
 	class RGBufferUAV final :public RGUnorderedAccessView
@@ -317,6 +322,11 @@ export namespace RenderGraph
 		static const ERGViewType StaticType = ERGViewType::BufferUAV;
 
 		const RGBufferUAVDesc Desc;
+
+		RGBufferRef GetParent() const
+		{
+			return Desc.Buffer;
+		}
 
 	private:
 		RGBufferUAV(const char* InName, const RGBufferUAVDesc& InDesc, ERGUnorderedAccessViewFlags InFlag)
@@ -339,6 +349,11 @@ export namespace RenderGraph
 		static const ERGViewType StaticType = ERGViewType::BufferSRV;
 
 		const RGBufferSRVDesc Desc;
+
+		RGBufferRef GetParent() const
+		{
+			return Desc.Buffer;
+		}
 
 	private:
 		RGBufferSRV(const char* InName, const RGBufferSRVDesc& InDesc)

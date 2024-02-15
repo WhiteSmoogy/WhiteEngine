@@ -1,15 +1,15 @@
 module;
 
-#include "Runtime/RenderCore/RenderResource.h"
 #include "WBase/smart_ptr.hpp"
 #include "Core/Math/PlatformMath.h"
 #include "RenderInterface/IContext.h"
+#include "RenderInterface/RenderResource.h"
 
 export module RenderGraph:resourcepool;
 
 import "WBase/cassert.h";
 
-import :fwd;
+import RenderGraphFwd;
 import :definition;
 import :resource;
 

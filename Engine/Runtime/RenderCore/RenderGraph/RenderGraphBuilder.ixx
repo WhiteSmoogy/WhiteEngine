@@ -1,9 +1,10 @@
 module;
 #include "RenderInterface/ICommandList.h"
+#include "Runtime/RenderCore/Dispatch.h"
 
 export module RenderGraph:builder;
 
-import :fwd;
+import RenderGraphFwd;
 import :definition;
 import :resource;
 import :resourcepool;
@@ -222,7 +223,7 @@ export namespace RenderGraph
 			return nullptr;
 		}
 
-		RGBufferRef RegisterExternal(const white::ref_ptr<RGPooledBuffer>& External, ERGBufferFlags Flags)
+		RGBufferRef RegisterExternal(const white::ref_ptr<RGPooledBuffer>& External, ERGBufferFlags Flags = ERGBufferFlags::None)
 		{
 			const char* Name = External->Name;
 			if (!Name)
@@ -233,7 +234,7 @@ export namespace RenderGraph
 			return RegisterExternal(External, Name, Flags);
 		}
 
-		RGBufferRef RegisterExternal(const white::ref_ptr<RGPooledBuffer>& External, const char* Name, ERGBufferFlags Flags)
+		RGBufferRef RegisterExternal(const white::ref_ptr<RGPooledBuffer>& External, const char* Name, ERGBufferFlags Flags = ERGBufferFlags::None)
 		{
 			if (auto FoundBuffer = FindExternal(External.get()))
 			{
@@ -322,4 +323,21 @@ export namespace RenderGraph
 			std::equal_to<GraphicsBuffer*>,
 			RGSTLAllocator<std::pair<GraphicsBuffer* const, RGBufferRef>>> ExternalBuffers;
 	};
+}
+
+export namespace ComputeShaderUtils
+{
+	using namespace RenderGraph;
+
+	template <typename TShaderClass>
+	inline RGPassRef AddPass(
+		RGBuilder& GraphBuilder,
+		RGEventName&& PassName,
+		const Render::ShaderRef<TShaderClass>& ComputeShader,
+		typename TShaderClass::Parameters* Parameters,
+		white::math::int3 GroupCount)
+	{
+		auto* ParametersMetadata = TShaderClass::Parameters::TypeInfo::GetStructMetadata();
+		return AddPass(GraphBuilder, std::move(PassName), ERGPassFlags::Compute, ComputeShader, ParametersMetadata, Parameters, GroupCount);
+	}
 }

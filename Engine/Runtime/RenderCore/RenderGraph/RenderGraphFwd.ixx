@@ -1,7 +1,7 @@
 module;
 #include "WBase/winttype.hpp"
 
-export module RenderGraph:fwd;
+export module RenderGraphFwd;
 
 export namespace RenderGraph
 {
@@ -16,4 +16,7 @@ export namespace RenderGraph
 
 	class RGPooledBuffer;
 	class RGBufferPool;
+
+	class RGUnorderedAccessView;
+	class RGShaderResourceView;
 }

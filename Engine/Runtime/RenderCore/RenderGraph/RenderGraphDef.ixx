@@ -6,7 +6,7 @@ export module RenderGraph:definition;
 import "WBase/cassert.h";
 import <concepts>;
 
-import :fwd;
+import RenderGraphFwd;
 import :allocator;
 
 export namespace RenderGraph

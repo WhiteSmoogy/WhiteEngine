@@ -4,6 +4,8 @@
 #include "ShaderParametersMetadata.h"
 #include "RenderInterface/IGPUResourceView.h"
 
+import RenderGraphFwd;
+
 namespace platform::Render
 {
 	inline namespace Shader
@@ -28,6 +30,37 @@ namespace platform::Render
 
 		template<typename Struct>
 		struct StructuredBuffer {};
+
+		template<typename _type0, typename _type1>
+		struct UnionPointer
+		{
+			union {
+				_type0* v0;
+				_type1* v1;
+			};
+
+			_type0*& operator=(_type0* value)
+			{
+				v0 = value;
+				return v0;
+			}
+
+			_type1*& operator=(_type1* value)
+			{
+				v1 = value;
+				return v1;
+			}
+
+			operator _type0* () const
+			{
+				return v0;
+			}
+
+			operator _type1* () const
+			{
+				return v0;
+			}
+		};
 	}
 
 #define MS_ALIGN(n) __declspec(align(n))
@@ -36,7 +69,7 @@ namespace platform::Render
 		template<typename TypeParameter>
 		struct TShaderParameterTypeInfo;
 
-		template<ShaderParamType ShaderType,uint32 NumElements=0>
+		template<ShaderParamType ShaderType, uint32 NumElements = 0>
 		struct ShaderTypeInfo
 		{
 			static constexpr ShaderParamType ShaderType = ShaderType;
@@ -124,7 +157,7 @@ namespace platform::Render
 		template<ShaderParamType ShaderType>
 		struct TShaderParameterUAVType : ShaderTypeInfo<ShaderType>
 		{
-			using DeclType = platform::Render::UnorderedAccessView*;
+			using DeclType = HLSLTraits::UnionPointer<platform::Render::UnorderedAccessView, RenderGraph::RGUnorderedAccessView>;
 
 			template<std::size_t Boundary = 0>
 			static constexpr std::size_t Alignement = sizeof(DeclType);
@@ -133,7 +166,7 @@ namespace platform::Render
 		template<ShaderParamType ShaderType>
 		struct TShaderParameterSRVType : ShaderTypeInfo<ShaderType>
 		{
-			using DeclType = platform::Render::ShaderResourceView*;
+			using DeclType = HLSLTraits::UnionPointer<platform::Render::ShaderResourceView, RenderGraph::RGShaderResourceView>;
 
 			template<std::size_t Boundary = 0>
 			static constexpr std::size_t Alignement = sizeof(DeclType);
@@ -177,7 +210,7 @@ namespace platform::Render
 		struct TShaderParameterTypeInfo<HLSLTraits::StructuredBuffer<Struct>> : TShaderParameterSRVType<SPT_StructuredBuffer>
 		{
 		};
-		
+
 		template<typename TypeParameter>
 		struct TShaderTextureTypeInfo;
 	}
@@ -272,58 +305,58 @@ namespace platform::Render
 #define SHADER_PARAMETER_EX(MemberType,MemberName) \
 		INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::TShaderParameterTypeInfo<MemberType>::ShaderType, platform::Render::TShaderParameterTypeInfo<MemberType>,MemberType,MemberName)
 
-/** Adds a texture.
- *
- * Example:
- * SHADER_PARAMETER_TEXTURE(Texture2D, MyTexture)
- */
+ /** Adds a texture.
+  *
+  * Example:
+  * SHADER_PARAMETER_TEXTURE(Texture2D, MyTexture)
+  */
 #define SHADER_PARAMETER_TEXTURE(MemberType,MemberName) \
 	INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::TShaderTextureTypeInfo<MemberType>::ShaderType, platform::Render::TShaderTextureTypeInfo<MemberType>, ShaderType*,MemberName)
 
-/** Adds a sampler.
- *
- * Example:
- * SHADER_PARAMETER_SAMPLER(SamplerState, MySampler)
- */
+  /** Adds a sampler.
+   *
+   * Example:
+   * SHADER_PARAMETER_SAMPLER(SamplerState, MySampler)
+   */
 #define SHADER_PARAMETER_SAMPLER(MemberType,MemberName) SHADER_PARAMETER(MemberType,MemberName)
 
- /** Adds an unordered access view.
-  *
-  * Example:
-  *	SHADER_PARAMETER_UAV(RWTexture2D, MyUAV)
-  */
+   /** Adds an unordered access view.
+	*
+	* Example:
+	*	SHADER_PARAMETER_UAV(RWTexture2D, MyUAV)
+	*/
 #define SHADER_PARAMETER_UAV(MemberType,MemberName) \
 	INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>::ShaderType, platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>,MemberType,MemberName)
 
-  /** Adds a shader resource view.
-   *
-   * Example:
-   *	SHADER_PARAMETER_SRV(Texture2D, MySRV)
-   */
+	/** Adds a shader resource view.
+	 *
+	 * Example:
+	 *	SHADER_PARAMETER_SRV(Texture2D, MySRV)
+	 */
 #define SHADER_PARAMETER_SRV(MemberType,MemberName) \
 	INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>::ShaderType, platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::MemberType>,MemberType,MemberName)
 
-   /** Adds a shader constant buffer.
-	  *
-	  * Example:
-	  *	SHADER_PARAMETER_CBUFFER(Struct, MyStruct)
-	  */
+	 /** Adds a shader constant buffer.
+		*
+		* Example:
+		*	SHADER_PARAMETER_CBUFFER(Struct, MyStruct)
+		*/
 #define SHADER_PARAMETER_CBUFFER(MemberType,MemberName) \
 	INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::SPT_ConstantBuffer, platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::ConstantBuffer<MemberType>>,MemberType,MemberName)
 
 
-/** Include a shader parameter structure into another one in shader code.
-*
-* Example:
-*	BEGIN_SHADER_PARAMETER_STRUCT(FMyNestedStruct,)
-*		SHADER_PARAMETER(float, MyScalar)
-*		// ...
-*	END_SHADER_PARAMETER_STRUCT()
-*
-*	BEGIN_SHADER_PARAMETER_STRUCT(FOtherStruct)
-*		SHADER_PARAMETER_STRUCT_INCLUDE(FMyNestedStruct, MyStruct)
-*
-* 
-*/
+		/** Include a shader parameter structure into another one in shader code.
+		*
+		* Example:
+		*	BEGIN_SHADER_PARAMETER_STRUCT(FMyNestedStruct,)
+		*		SHADER_PARAMETER(float, MyScalar)
+		*		// ...
+		*	END_SHADER_PARAMETER_STRUCT()
+		*
+		*	BEGIN_SHADER_PARAMETER_STRUCT(FOtherStruct)
+		*		SHADER_PARAMETER_STRUCT_INCLUDE(FMyNestedStruct, MyStruct)
+		*
+		*
+		*/
 #define SHADER_PARAMETER_STRUCT_INCLUDE(StructType,MemberName) \
 	INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::SPT_StructInclude, StructType::TypeInfo, StructType, MemberName)

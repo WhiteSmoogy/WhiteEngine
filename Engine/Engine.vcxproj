@@ -169,6 +169,7 @@
     <ClCompile Include="RenderInterface\PixelShaderUtils.cpp" />
     <ClCompile Include="RenderInterface\RenderObject.cpp" />
     <ClCompile Include="RenderInterface\RenderPassInfo.cpp" />
+    <ClCompile Include="RenderInterface\RenderResource.cpp" />
     <ClCompile Include="RenderInterface\ResourceView.cpp" />
     <ClCompile Include="RenderInterface\Shader.cpp" />
     <ClCompile Include="RenderInterface\ShaderCore.cpp" />
@@ -178,7 +179,13 @@
     <ClCompile Include="Runtime\Compression.cpp" />
     <ClCompile Include="Runtime\MemStack.cpp" />
     <ClCompile Include="Runtime\Path.cpp" />
-    <ClCompile Include="Runtime\RenderCore\RenderResource.cpp" />
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphAllocator.ixx" />
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphBuilder.ixx" />
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphDef.ixx" />
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphFwd.ixx" />
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphModule.ixx" />
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphResource.ixx" />
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphResourcePool.ixx" />
     <ClCompile Include="Runtime\RenderCore\ShaderDB.cpp" />
     <ClCompile Include="Runtime\RenderCore\ShaderParametersMetadata.cpp" />
     <ClCompile Include="Runtime\RenderCore\ShaderParameterUtility.cpp" />
@@ -201,13 +208,6 @@
     <ClCompile Include="Runtime\Renderer\ShadowRendering.cpp" />
     <ClCompile Include="Runtime\Renderer\Trinf.cpp" />
     <ClCompile Include="Runtime\Renderer\VolumeRendering.cpp" />
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphAllocator.ixx" />
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphBuilder.ixx" />
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphDef.ixx" />
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphFwd.ixx" />
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphModule.ixx" />
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphResource.ixx" />
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphResourcePool.ixx" />
     <ClCompile Include="Runtime\ResourcesHolder.cpp" />
     <ClCompile Include="Runtime\WSLBuilder.cpp" />
     <ClCompile Include="Runtime\WSLEvaluator.cpp" />
@@ -403,6 +403,7 @@
     <ClInclude Include="RenderInterface\RayTracingDefinitions.h" />
     <ClInclude Include="RenderInterface\RenderObject.h" />
     <ClInclude Include="RenderInterface\RenderPassInfo.h" />
+    <ClInclude Include="RenderInterface\RenderResource.h" />
     <ClInclude Include="RenderInterface\Shader.h" />
     <ClInclude Include="RenderInterface\ShaderCore.h" />
     <ClInclude Include="RenderInterface\ShaderPermutation.h" />
@@ -421,7 +422,6 @@
     <ClInclude Include="Runtime\PlatformAtomics.h" />
     <ClInclude Include="Runtime\PlatformMemory.h" />
     <ClInclude Include="Runtime\RenderCore\Dispatch.h" />
-    <ClInclude Include="Runtime\RenderCore\RenderResource.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderDB.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderParameters.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderParametersMetadata.h" />

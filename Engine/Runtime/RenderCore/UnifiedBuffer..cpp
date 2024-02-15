@@ -6,6 +6,7 @@
 #include "Runtime/RenderCore/Dispatch.h"
 
 using namespace platform::Render;
+using namespace RenderGraph;
 
 ConstantBuffer* platform::Render::CreateConstantBuffer(const void* Contents, Buffer::Usage Usage, const ShaderParametersMetadata& Layout)
 {
@@ -90,10 +91,17 @@ public:
 
 IMPLEMENT_BUILTIN_SHADER(MemcpyCS, "ByteBuffer.hlsl", "MemcpyCS", platform::Render::ComputeShader);
 
-template<>
-void platform::Render::MemcpyResource<std::shared_ptr<GraphicsBuffer>>(CommandList& cmdList, const std::shared_ptr<GraphicsBuffer>& DstBuffer, const std::shared_ptr<GraphicsBuffer>& SrcBuffer, const MemcpyResourceParams& Params)
+void platform::Render::MemcpyResource(RGBuilder& Builder, RGBuffer* DstResource, RGBuffer* SrcResource, const MemcpyResourceParams& Params)
 {
-	const uint32 Divisor = white::has_anyflags(DstBuffer->GetAccess(), EAccessHint::EA_Raw) ? 4 : 1;
+	MemcpyResource(Builder, Builder.CreateUAV({ .Buffer = DstResource }, ERGUnorderedAccessViewFlags::SkipBarrier), Builder.CreateSRV({ .Buffer = SrcResource }), Params);
+}
+
+void platform::Render::MemcpyResource(RGBuilder& Builder, RGBufferUAV* UAV, RGBufferSRV* SRV, const MemcpyResourceParams& Params)
+{
+	auto* DstResource = UAV->GetParent();
+	auto* SrcResource = SRV->GetParent();
+
+	const uint32 Divisor = white::has_anyflags(DstResource->GetAccess(), EAccessHint::EA_Raw) ? 4 : 1;
 
 	uint32 NumElementsProcessed = 0;
 
@@ -109,27 +117,35 @@ void platform::Render::MemcpyResource<std::shared_ptr<GraphicsBuffer>>(CommandLi
 		Parameters.Common.SrcOffset = (Params.SrcOffset + NumElementsProcessed);
 		Parameters.Common.DstOffset = (Params.DstOffset + NumElementsProcessed);
 
-		if (white::has_anyflags(DstBuffer->GetAccess(), EAccessHint::EA_Raw))
+		if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::EA_Raw))
 		{
 			ResourceTypeEnum = ByteBufferResourceType::Uint_Buffer;
 
-			Parameters.SrcByteAddressBuffer = cmdList.CreateShaderResourceView(SrcBuffer.get()).get();
-			Parameters.Common.DstByteAddressBuffer = cmdList.CreateUnorderedAccessView(DstBuffer.get()).get();;
+			Parameters.SrcByteAddressBuffer = SRV;
+			Parameters.Common.DstByteAddressBuffer = UAV;
+		}
+		else
+		{
+			throw white::unimplemented();
 		}
 
 		MemcpyCS::PermutationDomain PermutationVector;
 		PermutationVector.Set<MemcpyCS::ResourceTypeDim >(ResourceTypeEnum);
 		PermutationVector.Set<MemcpyCS::StructuredElementSizeDim>(ByteBufferStructuredSize::Uint4);
 
-		auto ComputeShader = Render::GetBuiltInShaderMap()->GetShader<MemcpyCS>(PermutationVector);
+		auto ComputeShader = platform::Render::GetBuiltInShaderMap()->GetShader<MemcpyCS>(PermutationVector);
 
-		ComputeShaderUtils::Dispatch(cmdList, ComputeShader, Parameters, white::math::int3(NumWaves, 1, 1));
+		ComputeShaderUtils::AddPass(
+			Builder, 
+			{ "Memcpy(Offset:{} Count:{})",NumElementsProcessed,NumElementsPerDispatch },
+			ComputeShader, 
+			Parameters, 
+			white::math::int3(NumWaves, 1, 1));
 
 		NumElementsProcessed += NumElementsPerDispatch;
 	}
 }
 
-template void platform::Render::MemcpyResource<std::shared_ptr<GraphicsBuffer>>(CommandList& cmdList, const std::shared_ptr<GraphicsBuffer>& DstBuffer, const std::shared_ptr<GraphicsBuffer>& SrcBuffer, const MemcpyResourceParams& Params);
 
 class MemsetCS :public ByteBufferShader
 {
@@ -143,10 +159,11 @@ public:
 
 IMPLEMENT_BUILTIN_SHADER(MemsetCS, "ByteBuffer.hlsl", "MemsetCS", platform::Render::ComputeShader);
 
-template<>
-void platform::Render::MemsetResource<std::shared_ptr<GraphicsBuffer>>(CommandList& cmdList, const std::shared_ptr<GraphicsBuffer>& DstBuffer, const MemsetResourceParams& Params)
+void  platform::Render::MemsetResource(RenderGraph::RGBuilder& Builder, RenderGraph::RGBufferUAV* UAV, const MemsetResourceParams& Params)
 {
-	const uint32 Divisor = white::has_anyflags(DstBuffer->GetAccess(), EAccessHint::EA_Raw) ? 4 : 16;
+	auto* DstResource = UAV->GetParent();
+
+	const uint32 Divisor = white::has_anyflags(DstResource->GetAccess(), EAccessHint::EA_Raw) ? 4 : 16;
 
 	uint32 NumElementsProcessed = 0;
 
@@ -162,21 +179,21 @@ void platform::Render::MemsetResource<std::shared_ptr<GraphicsBuffer>>(CommandLi
 		Parameters.Common.DstOffset = (Params.DstOffset + NumElementsProcessed) / Divisor;
 		Parameters.Common.Value = Params.Value;
 
-		if (white::has_anyflags(DstBuffer->GetAccess(), EAccessHint::EA_Raw))
+		if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::EA_Raw))
 		{
 			ResourceTypeEnum = ByteBufferResourceType::Uint_Buffer;
 
-			Parameters.Common.DstByteAddressBuffer = cmdList.CreateUnorderedAccessView(DstBuffer.get()).get();;
+			Parameters.Common.DstByteAddressBuffer = UAV;
 		}
-		else if (white::has_anyflags(DstBuffer->GetAccess(), EAccessHint::EA_GPUStructured))
+		else if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::EA_GPUStructured))
 		{
 			ResourceTypeEnum = ByteBufferResourceType::StructuredBuffer;
-			Parameters.Common.DstStructuredBuffer4x = cmdList.CreateUnorderedAccessView(DstBuffer.get()).get();;
+			Parameters.Common.DstStructuredBuffer4x = UAV;
 		}
 		else
 		{
 			ResourceTypeEnum = ByteBufferResourceType::Float4_Buffer;
-			Parameters.Common.DstBuffer = cmdList.CreateUnorderedAccessView(DstBuffer.get()).get();;
+			Parameters.Common.DstBuffer = UAV;
 		}
 
 		MemsetCS::PermutationDomain PermutationVector;
@@ -185,11 +202,8 @@ void platform::Render::MemsetResource<std::shared_ptr<GraphicsBuffer>>(CommandLi
 
 		auto ComputeShader = Render::GetBuiltInShaderMap()->GetShader<MemsetCS>(PermutationVector);
 
-		ComputeShaderUtils::Dispatch(cmdList, ComputeShader, Parameters, white::math::int3(NumWaves, 1, 1));
+		ComputeShaderUtils::AddPass(Builder, ComputeShader, Parameters, white::math::int3(NumWaves, 1, 1));
 
 		NumElementsProcessed += NumElementsPerDispatch;
 	}
 }
-
-
-template void platform::Render::MemsetResource<std::shared_ptr<GraphicsBuffer>>(CommandList& cmdList, const std::shared_ptr<GraphicsBuffer>& DstBuffer, const MemsetResourceParams& Params);

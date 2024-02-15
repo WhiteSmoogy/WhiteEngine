@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ShaderParameters.h"
-#include "UnifiedBuffer.h"
 
 namespace platform::Render {
 	template<typename TCommandList,typename TShaderClass, THardwareShader TShader>

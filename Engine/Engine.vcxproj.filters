@@ -446,29 +446,29 @@
     <ClCompile Include="D3D12\Submission.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphAllocator.ixx">
-      <Filter>Runtime\RenderGraph</Filter>
+    <ClCompile Include="RenderInterface\RenderResource.cpp">
+      <Filter>RenderInterface</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphBuilder.ixx">
-      <Filter>Runtime\RenderGraph</Filter>
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphAllocator.ixx">
+      <Filter>Runtime\RenderCore\RenderGraph</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphDef.ixx">
-      <Filter>Runtime\RenderGraph</Filter>
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphBuilder.ixx">
+      <Filter>Runtime\RenderCore\RenderGraph</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphFwd.ixx">
-      <Filter>Runtime\RenderGraph</Filter>
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphDef.ixx">
+      <Filter>Runtime\RenderCore\RenderGraph</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphModule.ixx">
-      <Filter>Runtime\RenderGraph</Filter>
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphFwd.ixx">
+      <Filter>Runtime\RenderCore\RenderGraph</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphResource.ixx">
-      <Filter>Runtime\RenderGraph</Filter>
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphModule.ixx">
+      <Filter>Runtime\RenderCore\RenderGraph</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\RenderGraph\RenderGraphResourcePool.ixx">
-      <Filter>Runtime\RenderGraph</Filter>
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphResource.ixx">
+      <Filter>Runtime\RenderCore\RenderGraph</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime\RenderCore\RenderResource.cpp">
-      <Filter>Runtime\RenderCore</Filter>
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphResourcePool.ixx">
+      <Filter>Runtime\RenderCore\RenderGraph</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1201,8 +1201,8 @@
     <ClInclude Include="Core\Threading\Thread.h">
       <Filter>Core\Threading</Filter>
     </ClInclude>
-    <ClInclude Include="Runtime\RenderCore\RenderResource.h">
-      <Filter>Runtime\RenderCore</Filter>
+    <ClInclude Include="RenderInterface\RenderResource.h">
+      <Filter>RenderInterface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1302,8 +1302,8 @@
     <Filter Include="Runtime\RenderCore">
       <UniqueIdentifier>{e687d0e2-f2d3-4fd9-9cf4-24aa77da22b0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Runtime\RenderGraph">
-      <UniqueIdentifier>{7a16141c-5770-448e-af92-bfe706d1b0c4}</UniqueIdentifier>
+    <Filter Include="Runtime\RenderCore\RenderGraph">
+      <UniqueIdentifier>{3f70aa23-f1e4-4796-888d-722b4efcfca4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

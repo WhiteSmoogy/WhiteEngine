@@ -3,7 +3,7 @@ module;
 
 export module RenderGraph:allocator;
 
-import :fwd;
+import RenderGraphFwd;
 
 #pragma warning(disable:4291)
 

@@ -5,6 +5,8 @@
 #include "RenderInterface/ICommandList.h"
 #include "ShaderParametersMetadata.h"
 
+import RenderGraph;
+
 namespace platform::Render
 {
 	ConstantBuffer* CreateConstantBuffer(const void* Contents, Buffer::Usage Usage, const ShaderParametersMetadata& Layout);
@@ -72,9 +74,8 @@ namespace platform::Render
 		uint32 Value;
 	};
 
-	template<typename ResourceType>
-	void MemcpyResource(CommandList& cmdList, const ResourceType& DstBuffer, const ResourceType& SrcBuffer, const MemcpyResourceParams& Params);
+	void MemcpyResource(RenderGraph::RGBuilder& Builder, RenderGraph::RGBuffer* DstResource, RenderGraph::RGBuffer* SrcResource, const MemcpyResourceParams& Params);
+	void MemcpyResource(RenderGraph::RGBuilder& Builder, RenderGraph::RGBufferUAV* DstResource, RenderGraph::RGBufferSRV* SrcResource, const MemcpyResourceParams& Params);
 
-	template<typename ResourceType>
-	void MemsetResource(CommandList& cmdList, const ResourceType& DstBuffer, const MemsetResourceParams& Params);
+	void MemsetResource(RenderGraph::RGBuilder& Builder, RenderGraph::RGBufferUAV* DstResource, const MemsetResourceParams& Params);
 }

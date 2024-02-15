@@ -4,7 +4,7 @@
 #include "Asset/TrinfAsset.h"
 #include "RenderInterface/ICommandList.h"
 #include "RenderInterface/DStorage.h"
-#include "Runtime/RenderCore/RenderResource.h"
+#include "RenderInterface/RenderResource.h"
 
 import RenderGraph;
 

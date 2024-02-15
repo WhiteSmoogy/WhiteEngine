@@ -3,6 +3,7 @@
 #include "Runtime/RenderCore/ShaderParamterTraits.hpp"
 #include "Runtime/RenderCore/ShaderParameterStruct.h"
 #include "Runtime/RenderCore/ShaderTextureTraits.hpp"
+#include "Runtime/RenderCore/UnifiedBuffer.h"
 #include "RenderInterface/DrawEvent.h"
 #include "RenderInterface/ITexture.hpp"
 #include "RenderInterface/IContext.h"

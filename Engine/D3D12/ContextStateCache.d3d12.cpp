@@ -846,7 +846,7 @@ void CommandContextStateCache::ApplyState()
 		auto& CBVCache = PipelineState.Common.CBVCache;
 
 #define CONDITIONAL_SET_CBVS(Shader) \
-		if (CurrentShaderDirtyCBVSlots[ShaderType::##Shader]) \
+		if (CurrentShaderDirtyCBVSlots[ShaderType::Shader]) \
 		{ \
 			DescriptorCache.SetConstantBuffers<ShaderType::##Shader>(pRootSignature, CBVCache, CurrentShaderDirtyCBVSlots[ShaderType::##Shader]); \
 		}

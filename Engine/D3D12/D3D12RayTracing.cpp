@@ -25,7 +25,7 @@ void RayTracingShaderTable::UploadToGPU(D3D12::CommandContext& Context)
 
 	D3D12_RESOURCE_DESC D3DBufferDesc = D3D12::CD3DX12_RESOURCE_DESC::Buffer(static_cast<uint32>(Data.size()), D3D12_RESOURCE_FLAG_NONE, D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
 
-	auto CreateInfo = D3D12::FillResourceCreateInfo(Data.data(), "RayTracingShaderTable::Buffer");
+	platform::Render::ResourceCreateInfoEx CreateInfo{ Data.data(), "RayTracingShaderTable::Buffer" };
 
 	BufferDesc BufferDesc = {
 			.Size = static_cast<uint32>(Data.size()),

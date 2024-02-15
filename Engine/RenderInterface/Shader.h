@@ -503,8 +503,8 @@ inline namespace Shader
 
 #define EXPORTED_SHADER_TYPE(ShaderClass,ShaderMetaTypeShortcut) \
 public:\
-	using ShaderMetaType = platform::Render::##ShaderMetaTypeShortcut##ShaderMeta;\
-	using ShaderMapType = platform::Render::##ShaderMetaTypeShortcut##ShaderMap;\
+	using ShaderMetaType = platform::Render::ShaderMetaTypeShortcut##ShaderMeta;\
+	using ShaderMapType = platform::Render::ShaderMetaTypeShortcut##ShaderMap;\
 	static ShaderMetaType StaticType; \
 	EXPORTED_SHADER_VTABLE(ShaderClass)\
 	ShaderClass(const ShaderMetaType::CompiledShaderInitializer& Initializer);\

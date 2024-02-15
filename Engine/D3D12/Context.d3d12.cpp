@@ -7,7 +7,7 @@
 #include "RenderInterface/ICommandList.h"
 #include "RenderInterface/Effect/CopyEffect.h"
 #include "RenderInterface/PipelineStateUtility.h"
-#include "Runtime/RenderCore/RenderResource.h"
+#include "RenderInterface/RenderResource.h"
 
 #include "Convert.h"
 #include "FrameBuffer.h"

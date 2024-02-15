@@ -112,17 +112,17 @@ void platform::Render::MemcpyResource(RGBuilder& Builder, RGBufferUAV* UAV, RGBu
 		const uint32 NumWaves = std::max(std::min<uint32>(Caps.MaxDispatchThreadGroupsPerDimension.x, white::math::DivideAndRoundUp(Params.Count / Divisor, 64u)), 1u);
 		const uint32 NumElementsPerDispatch = std::min(std::max(NumWaves, 1u) * Divisor * 64, Params.Count - NumElementsProcessed);
 
-		MemcpyCS::Parameters Parameters;
-		Parameters.Common.Size = NumElementsPerDispatch;
-		Parameters.Common.SrcOffset = (Params.SrcOffset + NumElementsProcessed);
-		Parameters.Common.DstOffset = (Params.DstOffset + NumElementsProcessed);
+		auto Parameters = Builder.AllocParameters<MemcpyCS::Parameters>();
+		Parameters->Common.Size = NumElementsPerDispatch;
+		Parameters->Common.SrcOffset = (Params.SrcOffset + NumElementsProcessed);
+		Parameters->Common.DstOffset = (Params.DstOffset + NumElementsProcessed);
 
 		if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::EA_Raw))
 		{
 			ResourceTypeEnum = ByteBufferResourceType::Uint_Buffer;
 
-			Parameters.SrcByteAddressBuffer = SRV;
-			Parameters.Common.DstByteAddressBuffer = UAV;
+			Parameters->SrcByteAddressBuffer = SRV;
+			Parameters->Common.DstByteAddressBuffer = UAV;
 		}
 		else
 		{
@@ -137,7 +137,7 @@ void platform::Render::MemcpyResource(RGBuilder& Builder, RGBufferUAV* UAV, RGBu
 
 		ComputeShaderUtils::AddPass(
 			Builder, 
-			{ "Memcpy(Offset:{} Count:{})",NumElementsProcessed,NumElementsPerDispatch },
+			RGEventName("Memcpy(Offset:{} Count:{})",NumElementsProcessed,NumElementsPerDispatch),
 			ComputeShader, 
 			Parameters, 
 			white::math::int3(NumWaves, 1, 1));
@@ -174,26 +174,26 @@ void  platform::Render::MemsetResource(RenderGraph::RGBuilder& Builder, RenderGr
 		const uint32 NumWaves = std::max(std::min<uint32>(Caps.MaxDispatchThreadGroupsPerDimension.x, white::math::DivideAndRoundUp(Params.Count / Divisor, 64u)), 1u);
 		const uint32 NumElementsPerDispatch = std::min(std::max(NumWaves, 1u) * Divisor * 64, Params.Count - NumElementsProcessed);
 
-		MemsetCS::Parameters Parameters;
-		Parameters.Common.Size = NumElementsPerDispatch / Divisor;
-		Parameters.Common.DstOffset = (Params.DstOffset + NumElementsProcessed) / Divisor;
-		Parameters.Common.Value = Params.Value;
+		auto Parameters = Builder.AllocParameters<MemsetCS::Parameters>();
+		Parameters->Common.Size = NumElementsPerDispatch / Divisor;
+		Parameters->Common.DstOffset = (Params.DstOffset + NumElementsProcessed) / Divisor;
+		Parameters->Common.Value = Params.Value;
 
 		if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::EA_Raw))
 		{
 			ResourceTypeEnum = ByteBufferResourceType::Uint_Buffer;
 
-			Parameters.Common.DstByteAddressBuffer = UAV;
+			Parameters->Common.DstByteAddressBuffer = UAV;
 		}
 		else if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::EA_GPUStructured))
 		{
 			ResourceTypeEnum = ByteBufferResourceType::StructuredBuffer;
-			Parameters.Common.DstStructuredBuffer4x = UAV;
+			Parameters->Common.DstStructuredBuffer4x = UAV;
 		}
 		else
 		{
 			ResourceTypeEnum = ByteBufferResourceType::Float4_Buffer;
-			Parameters.Common.DstBuffer = UAV;
+			Parameters->Common.DstBuffer = UAV;
 		}
 
 		MemsetCS::PermutationDomain PermutationVector;
@@ -202,7 +202,10 @@ void  platform::Render::MemsetResource(RenderGraph::RGBuilder& Builder, RenderGr
 
 		auto ComputeShader = Render::GetBuiltInShaderMap()->GetShader<MemsetCS>(PermutationVector);
 
-		ComputeShaderUtils::AddPass(Builder, ComputeShader, Parameters, white::math::int3(NumWaves, 1, 1));
+		ComputeShaderUtils::AddPass(
+			Builder,
+			RGEventName("Memset(Offset:{} Count:{})",NumElementsProcessed,NumElementsPerDispatch),
+			ComputeShader, Parameters, white::math::int3(NumWaves, 1, 1));
 
 		NumElementsProcessed += NumElementsPerDispatch;
 	}

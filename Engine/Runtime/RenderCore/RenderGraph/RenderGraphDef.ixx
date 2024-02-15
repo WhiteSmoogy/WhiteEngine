@@ -239,7 +239,7 @@ export namespace RenderGraph
 	public:
 		template<typename TStruct>
 		explicit RGParameterStruct(const TStruct* InParameters, const ShaderParametersMetadata* InParameterMetadata)
-			:Contents(InParameters), Contents(InParameterMetadata)
+			:Contents(reinterpret_cast<const uint8*>(InParameters)), Metadata(InParameterMetadata)
 		{}
 
 		const uint8* GetContents() const { return Contents; }
@@ -286,7 +286,7 @@ export namespace RenderGraph
 		template<typename... Types>
 		explicit RGEventName(const std::format_string<Types...> fmt, Types && ... Args)
 		{
-			EventName = std::format(fmt, std::forward<Types>(Args...));
+			EventName = std::format(fmt, std::forward<Types>(Args)...);
 		}
 
 		const char* GetName() const

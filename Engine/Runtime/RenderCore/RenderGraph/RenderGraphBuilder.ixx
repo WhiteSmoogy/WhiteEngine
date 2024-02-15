@@ -1,8 +1,11 @@
 module;
 #include "RenderInterface/ICommandList.h"
 #include "Runtime/RenderCore/Dispatch.h"
+#include "RenderInterface/DeviceCaps.h"
 
 export module RenderGraph:builder;
+
+import "WBase/cassert.h";
 
 import RenderGraphFwd;
 import :definition;
@@ -34,10 +37,19 @@ export namespace RenderGraph
 		{
 			return Name.GetName();
 		}
+
+	protected:
+		virtual void Execute(ComputeCommandList& CmdList) {}
+
 	private:
 		RGEventName Name;
 		RGParameterStruct ParameterStruct;
 		ERGPassFlags Flag;
+
+		RGPassHandle Handle;
+
+		friend RGPassRegistry;
+		friend RGBuilder;
 	};
 
 	using RGPassRef = RGPass*;
@@ -189,6 +201,18 @@ export namespace RenderGraph
 			return AddPassInternal(std::move(Name), RGParameterStruct::GetStructMetadata<ParameterStructType>(), Struct, Flags, std::forward<ExecuteLambdaType>(Lambda));
 		}
 
+		template <typename ExecuteLambdaType>
+		RGPassRef AddPass(
+			RGEventName&& Name,
+			const ShaderParametersMetadata* Metadata,
+			const void* Struct,
+			ERGPassFlags Flags,
+			ExecuteLambdaType&& Lambda
+		)
+		{
+			return AddPassInternal(std::move(Name), Metadata, Struct, Flags, std::forward<ExecuteLambdaType>(Lambda));
+		}
+
 		white::ref_ptr<RGPooledBuffer> ToExternal(RGBufferRef Buffer)
 		{
 			if (!Buffer->bExternal)
@@ -328,6 +352,40 @@ export namespace RenderGraph
 export namespace ComputeShaderUtils
 {
 	using namespace RenderGraph;
+
+	inline void ValidateGroupCount(const white::math::int3& GroupCount)
+	{
+		wassume(GroupCount.x <= Caps.MaxDispatchThreadGroupsPerDimension.x);
+		wassume(GroupCount.y <= Caps.MaxDispatchThreadGroupsPerDimension.y);
+		wassume(GroupCount.z <= Caps.MaxDispatchThreadGroupsPerDimension.z);
+	}
+
+	template<typename TShaderClass>
+	inline RGPassRef AddPass(
+		RGBuilder& GraphBuilder,
+		RGEventName&& PassName,
+		ERGPassFlags PassFlags,
+		const Render::ShaderRef<TShaderClass>& ComputeShader,
+		const Render::ShaderParametersMetadata* ParametersMetadata,
+		typename TShaderClass::Parameters* Parameters,
+		white::math::int3 GroupCount)
+	{
+		WAssert(
+			white::has_anyflags(PassFlags,white::enum_or(ERGPassFlags::Compute,ERGPassFlags::AsyncCompute)) &&
+			!white::has_anyflags(PassFlags, white::enum_or(ERGPassFlags::Copy,ERGPassFlags::Raster)), "AddPass only supports 'Compute' or 'AsyncCompute'.");
+
+		ValidateGroupCount(GroupCount);
+
+		return GraphBuilder.AddPass(
+			std::move(PassName),
+			ParametersMetadata,
+			Parameters,
+			PassFlags,
+			[ParametersMetadata, Parameters, ComputeShader, GroupCount](ComputeCommandList& CmdList)
+			{
+				ComputeShaderUtils::Dispatch(CmdList, ComputeShader, *Parameters, GroupCount);
+			});
+	}
 
 	template <typename TShaderClass>
 	inline RGPassRef AddPass(

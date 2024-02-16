@@ -21,13 +21,12 @@ namespace WhiteEngine
 	class MemStackBase
 	{
 	public:
-		MemStackBase(int32 InMinMarksToAlloc = 1)
+		MemStackBase()
 			: Top(nullptr)
 			, End(nullptr)
 			, TopChunk(nullptr)
 			, TopMark(nullptr)
 			, NumMarks(0)
-			, MinMarksToAlloc(InMinMarksToAlloc)
 			, bShouldEnforceAllocMarks(false)
 		{
 		}
@@ -49,7 +48,6 @@ namespace WhiteEngine
 			wconstraint(AllocSize >= 0);
 			wconstraint((Alignment & (Alignment - 1)) == 0);
 			wconstraint(Top <= End);
-			wconstraint(NumMarks >= MinMarksToAlloc);
 			wconstraint(!bShouldEnforceAllocMarks || NumMarks > 0);
 
 			// Try to get memory from the current chunk.
@@ -80,7 +78,7 @@ namespace WhiteEngine
 
 		void Flush()
 		{
-			wconstraint(!NumMarks && !MinMarksToAlloc);
+			wconstraint(!NumMarks);
 			FreeChunks(nullptr);
 		}
 		int32 GetNumMarks()
@@ -126,10 +124,6 @@ namespace WhiteEngine
 
 		/** The number of marks on this stack. */
 		int32 NumMarks;
-
-		/** Used for a constraint. Most stacks require a mark to allocate. Command lists don't because they never mark, only flush*/
-		int32 MinMarksToAlloc;
-
 	protected:
 		bool bShouldEnforceAllocMarks;
 	};

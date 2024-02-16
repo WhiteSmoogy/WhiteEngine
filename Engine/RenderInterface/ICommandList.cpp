@@ -15,7 +15,7 @@ CommandListExecutor platform::Render::GCommandList;
 
 
 platform::Render::CommandListBase::CommandListBase()
-	:Context(nullptr),MemManager(0)
+	:Context(nullptr),MemManager()
 {
 	Reset();
 }

@@ -303,7 +303,7 @@ namespace platform {
 			white::span<const X::path> pathes;
 			white::span<std::shared_ptr<asset::MeshAsset>> assets;
 			std::vector<std::unique_ptr<MeshSectionLoading>> section_loaders;
-			WhiteEngine::MemStackBase memory {0};
+			WhiteEngine::MemStackBase memory;
 		} mesh_desc;
 	public:
 		explicit BatchMeshLoadingDesc(white::span<const X::path> pathes, white::span<std::shared_ptr<asset::MeshAsset>> asset)

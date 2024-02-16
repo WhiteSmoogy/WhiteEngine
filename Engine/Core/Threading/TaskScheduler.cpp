@@ -25,7 +25,9 @@ namespace
 }
 
 thread_local white::coroutine::ThreadScheduler* thread_local_scheduler = nullptr;
-thread_local white::threading::TaskTag ActiveTag = white::threading::TaskTag::None;
+thread_local white::threading::TaskTag white::threading::ActiveTag = white::threading::TaskTag::None;
+
+using white::threading::ActiveTag;
 
 white::threading::TaskScheduler* task_scheduler = nullptr;
 

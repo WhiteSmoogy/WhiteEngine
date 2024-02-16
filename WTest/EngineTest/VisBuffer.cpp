@@ -131,45 +131,55 @@ void VisBufferTest::OnGUI()
 		ImGui::Text("Loaded");
 }
 
-void VisBufferTest::RenderTrinf(CommandList& CmdList)
+using RenderGraph::RGBufferDesc;
+using RenderGraph::RGBufferUAVDesc;
+using RenderGraph::RGBufferSRVDesc;
+using RenderGraph::RGEventName;
+using RenderGraph::ERGPassFlags;
+
+void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 {
 	auto& device = Context::Instance().GetDevice();
 
 	if (sponza_trinf->State != Trinf::Resources::StreamingState::Resident)
 		return;
 
-	ViewArgs view;
-
-	view.matrixs.mvp = wm::transpose(camera.GetViewMatrix() * projMatrix);
-
-	auto ViewCB = CreateGraphicsBuffeImmediate(view, Buffer::Usage::SingleFrame);
+	auto ViewCB = Builder.CreateCBuffer<ViewArgs>();
+	ViewCB->matrixs.mvp = wm::transpose(camera.GetViewMatrix() * projMatrix);
 
 	auto RWStructAccess = EAccessHint::EA_GPUReadWrite | EAccessHint::EA_GPUStructured | EAccessHint::EA_GPUUnordered;
 
-	auto FliteredIndexBuffer = shared_raw_robject(device.CreateBuffer(Buffer::Usage::SingleFrame,
-		RWStructAccess | EAccessHint::EA_Raw,
-		Trinf::Scene->Index.Allocator.GetMaxSize() * Trinf::Scene->Index.kPageSize, sizeof(uint32), nullptr));
+	auto FliteredIndexBuffer = Builder.CreateBuffer(
+		RGBufferDesc::CreateByteAddressDesc(
+			Trinf::Scene.Index.Allocator.GetMaxSize() * Trinf::Scene.Index.kPageSize),
+		"FliteredIndexBuffer");
+
+	auto UncompactedDrawArgsDesc = RGBufferDesc::CreateStructuredDesc(
+		sizeof(FilterTriangleCS::UncompactedDrawArguments), sponza_trinf->Metadata->TrinfsCount
+	);
 
 	auto UncompactedDrawArgsSize = white::Align(sizeof(FilterTriangleCS::UncompactedDrawArguments) * sponza_trinf->Metadata->TrinfsCount, 16);
-	auto UncompactedDrawArgs = shared_raw_robject(device.CreateBuffer(Buffer::Usage::SingleFrame,
-		RWStructAccess,
-		UncompactedDrawArgsSize, sizeof(FilterTriangleCS::UncompactedDrawArguments), nullptr));
-	auto UncompactedDrawArgsUAV = CmdList.CreateUnorderedAccessView(UncompactedDrawArgs.get());
-	auto UncompactedDrawArgsSRV = CmdList.CreateShaderResourceView(UncompactedDrawArgs.get());
+	auto UncompactedDrawArgs = Builder.CreateBuffer(UncompactedDrawArgsDesc, "UncompactedDrawArgs");
+
+	auto UncompactedDrawArgsUAV = Builder.CreateUAV(RGBufferUAVDesc{ UncompactedDrawArgs });
+	auto UncompactedDrawArgsSRV = Builder.CreateSRV(RGBufferSRVDesc{ UncompactedDrawArgs });
 
 	MemsetResourceParams Params;
-	Params.Count = UncompactedDrawArgsSize;
+	Params.Count = UncompactedDrawArgsDesc.GetSize();
 	Params.DstOffset = 0;
 	Params.Value = 0;
-	MemsetResource(CmdList, UncompactedDrawArgs, Params);
+	MemsetResource(Builder, UncompactedDrawArgsUAV, Params);
 
-	FilterTriangleCS::Parameters Parameters;
+	auto Parameters = Builder.AllocParameters<FilterTriangleCS::Parameters>();
 
-	Parameters.View = ViewCB.Get();
-	Parameters.IndexBuffer = CmdList.CreateShaderResourceView(Trinf::Scene->Index.DataBuffer.get()).get();
-	Parameters.PositionBuffer = CmdList.CreateShaderResourceView(Trinf::Scene->Position.DataBuffer.get()).get();
-	Parameters.FliteredIndexBuffer = CmdList.CreateUnorderedAccessView(FliteredIndexBuffer.get()).get();
-	Parameters.UncompactedDrawArgs = UncompactedDrawArgsUAV.get();
+	auto IndexBuffer = Builder.RegisterExternal(Trinf::Scene.Index.DataBuffer, RenderGraph::ERGBufferFlags::MultiFrame);
+	auto PositionBuffer = Builder.RegisterExternal(Trinf::Scene.Position.DataBuffer, RenderGraph::ERGBufferFlags::MultiFrame);
+
+	Parameters->View = ViewCB.Get();
+	Parameters->IndexBuffer = Builder.CreateSRV({ .Buffer = IndexBuffer });
+	Parameters->PositionBuffer = Builder.CreateSRV({ .Buffer = PositionBuffer });
+	Parameters->FliteredIndexBuffer = Builder.CreateUAV({ .Buffer = FliteredIndexBuffer });
+	Parameters->UncompactedDrawArgs = UncompactedDrawArgsUAV;
 
 	std::vector<FilterTriangleCS::FilterDispatchArgs> BatchTrinfArgs;
 	BatchTrinfArgs.reserve(Caps.MaxDispatchThreadGroupsPerDimension.x);
@@ -186,11 +196,16 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 
 			if (dispatchCount > 0)
 			{
-				auto ArgCB = CreateConstantBuffer(BatchTrinfArgs, Buffer::Usage::SingleFrame);
+				auto ArgCB = Builder.CreateCBuffer(std::span{ BatchTrinfArgs });
 
-				Parameters.DispatchArgs = ArgCB.get();
+				Parameters->DispatchArgs = ArgCB;
 
-				platform::ComputeShaderUtils::Dispatch(CmdList, ComputeShader, Parameters, white::math::int3(dispatchCount, 1, 1));
+				ComputeShaderUtils::AddPass(
+					Builder,
+					RGEventName("DipstachBatch(Count:{})", dispatchCount),
+					ComputeShader,
+					Parameters,
+					white::math::int3(dispatchCount, 1, 1));
 
 				BatchTrinfArgs.clear();
 			}
@@ -239,21 +254,18 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 	DipstachBatch();
 
 	auto CompactedDrawArgsSize = white::Align(sizeof(DrawIndexArguments) * (sponza_trinf->Metadata->TrinfsCount + 1), 16);
-	auto CompactedDrawArgs = shared_raw_robject(device.CreateBuffer(Buffer::Usage::SingleFrame,
-		RWStructAccess | EAccessHint::EA_DrawIndirect | EAccessHint::EA_Raw,
-		CompactedDrawArgsSize, sizeof(uint), nullptr));
+	auto CompactedDrawArgs = Builder.CreateBuffer(RGBufferDesc::CreateStructIndirectDesc(sizeof(DrawIndexArguments), sponza_trinf->Metadata->TrinfsCount + 1), "CompactedDrawArgs");
+	auto CompactedDrawArgsUAV = Builder.CreateUAV({ .Buffer = CompactedDrawArgs });
 	Params.Count = white::Align(sizeof(DrawIndexArguments), 16);
 	Params.DstOffset = 0;
 	Params.Value = 0;
-	MemsetResource(CmdList, CompactedDrawArgs, Params);
-
-	auto CompactedDrawArgsUAV = CmdList.CreateUnorderedAccessView(CompactedDrawArgs.get());
+	MemsetResource(Builder, CompactedDrawArgsUAV, Params);
 
 	{
-		BatchCompactionCS::Parameters compactionPars{};
-		compactionPars.IndrectDrawArgsBuffer = CompactedDrawArgsUAV.get();
-		compactionPars.MaxDraws = sponza_trinf->Metadata->TrinfsCount;
-		compactionPars.UncompactedDrawArgs = UncompactedDrawArgsSRV.get();
+		auto compactionPars = Builder.AllocParameters<BatchCompactionCS::Parameters>();
+		compactionPars->IndrectDrawArgsBuffer = CompactedDrawArgsUAV;
+		compactionPars->MaxDraws = sponza_trinf->Metadata->TrinfsCount;
+		compactionPars->UncompactedDrawArgs = UncompactedDrawArgsSRV;
 
 		BatchCompactionCS::PermutationDomain compactPV;
 
@@ -262,41 +274,56 @@ void VisBufferTest::RenderTrinf(CommandList& CmdList)
 
 		int dispatchCount = static_cast<int>((sponza_trinf->Metadata->TrinfsCount + 255) / 256);
 
-		platform::ComputeShaderUtils::Dispatch(CmdList, compactCS, compactionPars, white::math::int3(dispatchCount, 1, 1));
+		ComputeShaderUtils::AddPass(Builder,
+			RGEventName("Compact(Count:{})", dispatchCount),
+			compactCS,
+			compactionPars,
+			white::math::int3(dispatchCount, 1, 1));
 	}
 
 	auto& screen_frame = render::Context::Instance().GetScreenFrame();
 
+
+
 	auto depth_tex = static_cast<render::Texture2D*>(screen_frame->Attached(render::FrameBuffer::DepthStencil));
-	render::RenderPassInfo visPass(
-		vis_buffer.get(), render::Clear_Store,
-		depth_tex, render::DepthStencilTargetActions::ClearDepthStencil_StoreDepthStencil
-	);
 
-	CmdList.BeginRenderPass(visPass, "VisBuffer");
+	auto VSParas = Builder.AllocParameters<VisTriangleVS::Parameters>();
 
-	auto VisTriVS = GetBuiltInShaderMap()->GetShader<VisTriangleVS>();
-	VisTriangleVS::Parameters VSParas;
-	VSParas.View = ViewCB.Get();
+	Builder.AddPass(
+		RGEventName("VisBuffer"),
+		VSParas,
+		white::enum_or(ERGPassFlags::Raster, ERGPassFlags::NeverCull),
+		[=](CommandList& CmdList)
+		{
+			render::RenderPassInfo visPass(
+				vis_buffer.get(), render::Clear_Store,
+				depth_tex, render::DepthStencilTargetActions::ClearDepthStencil_StoreDepthStencil
+			);
 
-	auto VisTriPS = GetBuiltInShaderMap()->GetShader<VisTrianglePS>();
+			CmdList.BeginRenderPass(visPass, "VisBuffer");
 
-	// Setup pipelinestate
-	render::GraphicsPipelineStateInitializer VisPso{};
-	CmdList.FillRenderTargetsInfo(VisPso);
+			auto VisTriVS = GetBuiltInShaderMap()->GetShader<VisTriangleVS>();
+			VSParas->View = ViewCB.Get();
 
-	VisPso.ShaderPass.VertexShader = VisTriVS.GetVertexShader();
-	VisPso.ShaderPass.VertexDeclaration.push_back(
-		CtorVertexElement(0, 0, Vertex::Usage::Position, 0, EF_BGR32F, sizeof(wm::float3)));
-	VisPso.ShaderPass.PixelShader = VisTriPS.GetPixelShader();
+			auto VisTriPS = GetBuiltInShaderMap()->GetShader<VisTrianglePS>();
 
-	SetGraphicsPipelineState(CmdList, VisPso);
-	render::SetShaderParameters(CmdList, VisTriVS, VisTriVS.GetVertexShader(), VSParas);
+			// Setup pipelinestate
+			render::GraphicsPipelineStateInitializer VisPso{};
+			CmdList.FillRenderTargetsInfo(VisPso);
 
-	CmdList.SetVertexBuffer(0, Trinf::Scene->Position.DataBuffer.get());
+			VisPso.ShaderPass.VertexShader = VisTriVS.GetVertexShader();
+			VisPso.ShaderPass.VertexDeclaration.push_back(
+				CtorVertexElement(0, 0, Vertex::Usage::Position, 0, EF_BGR32F, sizeof(wm::float3)));
+			VisPso.ShaderPass.PixelShader = VisTriPS.GetPixelShader();
 
-	CmdList.SetIndexBuffer(FliteredIndexBuffer.get());
-	CmdList.DrawIndirect(draw_visidSig.get(), sponza_trinf->Metadata->TrinfsCount, CompactedDrawArgs.get(), sizeof(DrawIndexArguments), CompactedDrawArgs.get(), 0);
+			SetGraphicsPipelineState(CmdList, VisPso);
+			render::SetShaderParameters(CmdList, VisTriVS, VisTriVS.GetVertexShader(), *VSParas);
+
+			CmdList.SetVertexBuffer(0, Trinf::Scene.Position.DataBuffer->GetRObject());
+
+			CmdList.SetIndexBuffer(FliteredIndexBuffer->GetRObject());
+			CmdList.DrawIndirect(draw_visidSig.get(), sponza_trinf->Metadata->TrinfsCount, CompactedDrawArgs->GetRObject(), sizeof(DrawIndexArguments), CompactedDrawArgs->GetRObject(), 0);
+		});
 }
 
 class FullScreenVS : public BuiltInShader
@@ -343,7 +370,7 @@ void VisBufferTest::DrawDetph(render::CommandList& CmdList, render::Texture* scr
 	Parameters.DepthTexture = static_cast<Texture2D*>(depthTex);
 	Parameters.DepthSampler.filtering = render::TexFilterOp::Min_Mag_Mip_Point;
 
-	Parameters.InvDeviceZToWorldZTransform =WhiteEngine::CreateInvDeviceZToWorldZTransform(projMatrix);
+	Parameters.InvDeviceZToWorldZTransform = WhiteEngine::CreateInvDeviceZToWorldZTransform(projMatrix);
 	Parameters.NearFar.x = 1;
 	Parameters.NearFar.y = 1 / (1000.0f - 1);
 

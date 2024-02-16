@@ -167,17 +167,9 @@ export namespace RenderGraph
 		}
 
 		template<typename TBufferStruct>
-		RGTConstBufferRef<TBufferStruct> CreateCBuffer(const TBufferStruct* Struct)
-		{
-			auto cb = CBufferers.Allocate<RGTConstBuffer<TBufferStruct>>(Allocator, Struct, __func__);
-
-			return cb;
-		}
-
-		template<typename TBufferStruct>
 		RGTConstBufferRef<TBufferStruct> CreateCBuffer()
 		{
-			return CreateCBuffer(AllocParameters<TBufferStruct>());
+			return CreateCBuffer(AllocParameters<TBufferStruct>(), __func__);
 		}
 
 		template<typename TBufferStruct>
@@ -289,7 +281,8 @@ export namespace RenderGraph
 			return Buffer;
 		}
 
-		void Execute();
+		void Execute()
+		{}
 	private:
 		RGPassHandle GetProloguePassHandle() const
 		{
@@ -318,6 +311,14 @@ export namespace RenderGraph
 			Passes.Insert(Pass);
 
 			return Pass;
+		}
+
+		template<typename TBufferStruct>
+		RGTConstBufferRef<TBufferStruct> CreateCBuffer(TBufferStruct* Struct,const char* Name)
+		{
+			auto cb = CBufferers.Allocate<RGTConstBuffer<TBufferStruct>>(Allocator, Struct, Name);
+
+			return { .CBuffer = cb };
 		}
 
 		void SetRObject(RGBuffer* Buffer, const white::ref_ptr<RGPooledBuffer>& Pooled, RGPassHandle PassHandle)

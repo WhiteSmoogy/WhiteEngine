@@ -67,6 +67,8 @@ private:
 	white::uint32 DoUpdate(white::uint32 pass) override {
 		auto& CmdList = render::CommandListExecutor::GetImmediateCommandList();
 
+		RenderGraph::RGBuilder Builder{ CmdList,RenderGraph::RGEventName{"Frame"} };
+
 		SCOPED_GPU_EVENT(CmdList, Frame);
 
 		CmdList.BeginFrame();
@@ -91,12 +93,17 @@ private:
 
 		{
 			SCOPED_GPU_EVENT(CmdList, Trinf);
-			Trinf::Scene->AddResource(sponza_trinf);
+			Trinf::Scene.AddResource(sponza_trinf);
 
-			Trinf::Scene->BeginAsyncUpdate(CmdList);
+			Trinf::Scene.BeginAsyncUpdate(Builder);
 
-			Trinf::Scene->EndAsyncUpdate(CmdList);
+			Trinf::Scene.EndAsyncUpdate(Builder);
 		}
+
+		RenderTrinf(Builder);
+
+		Builder.Execute();
+
 		DrawDetph(CmdList, screen_tex, depth_tex);
 		OnDrawUI(CmdList, screen_tex);
 		CmdList.EndFrame();
@@ -126,10 +133,6 @@ private:
 		ImGui_ImplWin32_Init(GetNativeHandle());
 
 		platform::imgui::Context_Init(render::Context::Instance());
-
-		Trinf::Scene = std::make_unique<Trinf::StreamingScene>();
-
-		Trinf::Scene->Init();
 
 		auto& Device = render::Context::Instance().GetDevice();
 
@@ -188,9 +191,11 @@ private:
 
 		render::ClearValueBinding invalidId;
 		std::memset(invalidId.Value.Color, 0xFFFFFFFF, sizeof(invalidId.Value));
-		render::ElementInitData data;
-		data.clear_value = &invalidId;
-		vis_buffer = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_R32UI, EAccessHint::EA_GPURead | EAccessHint::EA_RTV, {}, &data));
+
+		platform::Render::ResourceCreateInfo CreateInfo{"VisBuffer"};
+		CreateInfo.clear_value = &invalidId;
+
+		vis_buffer = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_R32UI, EAccessHint::EA_GPURead | EAccessHint::EA_RTV, {}, CreateInfo));
 	}
 
 	void OnGUI();

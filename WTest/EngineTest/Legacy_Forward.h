@@ -654,11 +654,12 @@ private:
 
 		auto& Device = render::Context::Instance().GetDevice();
 
-		render::ElementInitData data;
+		render::ResourceCreateInfo data{"HDROutput"};
 		data.clear_value = &render::ClearValueBinding::Black;
 
-		HDROutput = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, render::EFormat::EF_ABGR16F, render::EA_GPURead | render::EA_RTV, {}, &data));
-		NormalOutput = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, render::EFormat::EF_ABGR16F, render::EA_GPURead | render::EA_RTV, {}, &data));
+		HDROutput = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, render::EFormat::EF_ABGR16F, render::EA_GPURead | render::EA_RTV, {}, data));
+		data.Name = "NormalOutput";
+		NormalOutput = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, render::EFormat::EF_ABGR16F, render::EA_GPURead | render::EA_RTV, {}, data));
 
 		//sync load
 		white::coroutine::SyncWait(platform_ex::AsyncLoadDStorageAsset("sponza_crytek/textures.dsff.asset"));
@@ -701,7 +702,9 @@ private:
 		sun_light.DynamicShadowCascades = 1;
 		sun_light.WholeSceneDynamicShadowRadius = 60;
 
-		pLightConstantBuffer = white::share_raw(Device.CreateBuffer(render::Buffer::Usage::Dynamic, EAccessHint::EA_GPURead | EAccessHint::EA_GPUStructured, sizeof(lights[0]) * lights.size(), static_cast<EFormat>(sizeof(lights[0])), lights.data()));
+		render::ResourceCreateInfoEx lightCreate{ lights.data(),"lights"};
+
+		pLightConstantBuffer = white::share_raw(Device.CreateBuffer(render::Buffer::Usage::Dynamic, EAccessHint::EA_GPURead | EAccessHint::EA_GPUStructured, sizeof(lights[0]) * lights.size(), static_cast<EFormat>(sizeof(lights[0])), lightCreate));
 
 		RayShadowMask = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EAccessHint::EA_GPURead | EAccessHint::EA_GPUWrite | EAccessHint::EA_GPUUnordered, {}));
 		RayShadowMaskDenoiser = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_R32F, EAccessHint::EA_GPURead | EAccessHint::EA_GPUWrite | EAccessHint::EA_GPUUnordered, {}));

@@ -251,6 +251,14 @@ export namespace RenderGraph
 				return TStruct::TypeInfo::GetStructMetadata();
 			return nullptr;
 		}
+
+		uint32 GetSize() const 
+		{ 
+			if(Metadata)
+				return Metadata->GetSize();
+			return 0;
+		}
+
 	private:
 
 		const ShaderParametersMetadata* Metadata = nullptr;

@@ -3,6 +3,8 @@ module;
 #include "Runtime/RenderCore/Dispatch.h"
 #include "RenderInterface/DeviceCaps.h"
 
+#include <span>
+
 export module RenderGraph:builder;
 
 import "WBase/cassert.h";
@@ -176,6 +178,19 @@ export namespace RenderGraph
 		RGTConstBufferRef<TBufferStruct> CreateCBuffer()
 		{
 			return CreateCBuffer(AllocParameters<TBufferStruct>());
+		}
+
+		template<typename TBufferStruct>
+		RGConstBufferRef CreateCBuffer(std::span<TBufferStruct> span)
+		{
+			auto ParametersSize = static_cast<uint32>(span.size_bytes());
+			auto Parameters = Allocator.Alloc(ParametersSize, alignof(TBufferStruct));
+
+			std::memcpy(Parameters, span.data(), ParametersSize);
+
+			auto cb = CBufferers.Allocate<RGConstBuffer>(Allocator, Parameters, ParametersSize,  __func__);
+
+			return cb;
 		}
 
 		RGBufferRef CreateBuffer(const RGBufferDesc& Desc, const char* Name, ERGBufferFlags Flags = ERGBufferFlags::None)

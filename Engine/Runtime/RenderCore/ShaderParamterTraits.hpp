@@ -190,7 +190,7 @@ namespace platform::Render
 		template<typename Struct>
 		struct TShaderParameterTypeInfo<HLSLTraits::ConstantBuffer<Struct>> : ShaderTypeInfo<SPT_ConstantBuffer>
 		{
-			using DeclType = platform::Render::ConstantBuffer*;
+			using DeclType = HLSLTraits::UnionPointer<platform::Render::ConstantBuffer, RenderGraph::RGConstBuffer>;
 
 			template<std::size_t Boundary = 0>
 			static constexpr std::size_t Alignement = sizeof(DeclType);

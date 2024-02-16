@@ -383,17 +383,29 @@ export namespace RenderGraph
 	protected:
 		template<typename TStruct>
 		explicit RGConstBuffer(const TStruct* InParameters, const char* InName)
-			:RGResource(InName), ParameterStruct(InParameters, RGParameterStruct::GetStructMetadata<TStruct>())
+			:RGResource(InName), ParameterStruct(InParameters, RGParameterStruct::GetStructMetadata<TStruct>()) , Size(ParameterStruct.GetSize())
 		{
 		}
+
+		template<typename TStruct>
+		explicit RGConstBuffer(const TStruct* InParameters, uint32 InSize, const char* InName)
+			:RGResource(InName), ParameterStruct(InParameters, RGParameterStruct::GetStructMetadata<TStruct>()) , Size(InSize)
+		{
+		}
+
+		uint32 GetSize() const { return Size; }
+
 	private:
 		RGConstBufferHandle Handle;
 		const RGParameterStruct ParameterStruct;
+		uint32 Size;
 
 		friend RGBuilder;
 		friend RGConstBufferRegistry;
 		friend RGAllocator;
 	};
+
+	using RGConstBufferRef = RGConstBuffer*;
 
 	template<typename TBufferStruct>
 	class RGTConstBuffer : public RGConstBuffer
@@ -445,6 +457,11 @@ export namespace RenderGraph
 		const TBufferStruct* Contents() const
 		{
 			return CBuffer->Contents();
+		}
+
+		RGConstBuffer* Get() const
+		{
+			return CBuffer;
 		}
 	};
 }

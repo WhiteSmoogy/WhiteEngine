@@ -9,6 +9,7 @@ export namespace RenderGraph
 	using white::int32;
 	using white::uint16;
 	using white::uint8;
+	using white::uint32;
 
 	class RGBuilder;
 	class RGAllocator;
@@ -16,6 +17,7 @@ export namespace RenderGraph
 
 	class RGPooledBuffer;
 	class RGBufferPool;
+	class RGConstBuffer;
 
 	class RGUnorderedAccessView;
 	class RGShaderResourceView;

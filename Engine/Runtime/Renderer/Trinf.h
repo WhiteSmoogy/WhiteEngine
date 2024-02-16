@@ -139,7 +139,7 @@ namespace Trinf
 		std::vector<std::shared_ptr<Resources>> Resident;
 		std::vector<std::shared_ptr<Resources>> GpuStreaming;
 
-		DirectStorage& storage_api;
+		DirectStorage* storage_api;
 	};
 
 	extern platform::Render::GlobalResource<StreamingScene> Scene;

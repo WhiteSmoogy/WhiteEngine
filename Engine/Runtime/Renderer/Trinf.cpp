@@ -61,7 +61,6 @@ int32 Trinf::GrowOnlySpanAllocator::SearchFreeList(int32 Num)
 }
 
 StreamingScene::StreamingScene()
-	:storage_api(Context::Instance().GetDevice().GetDStorage())
 {}
 
 template<typename T>
@@ -96,6 +95,8 @@ void StreamingScene::InitRenderResource(platform::Render::CommandListBase&)
 	Position.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(sizeof(wm::float3)), "Trinf.Position");
 	Tangent.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(sizeof(uint32)), "Trinf.Tangent");
 	TexCoord.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(sizeof(wm::float2)), "Trinf.TexCoord");
+
+	storage_api = &Context::Instance().GetDevice().GetDStorage();
 }
 
 void StreamingScene::AddResource(std::shared_ptr<Resources> pResource)
@@ -209,7 +210,7 @@ void StreamingScene::ProcessNewResources(RenderGraph::RGBuilder& Builder)
 			target.Size = index_req.UncompressedSize;
 			target.Target = resource->GpuStream->GetRObject();
 			index_req.Destination = target;
-			storage_api.EnqueueRequest(index_req);
+			storage_api->EnqueueRequest(index_req);
 		}
 
 		{
@@ -218,7 +219,7 @@ void StreamingScene::ProcessNewResources(RenderGraph::RGBuilder& Builder)
 			target.Size = pos_req.UncompressedSize;
 			target.Target = resource->GpuStream->GetRObject();
 			pos_req.Destination = target;
-			storage_api.EnqueueRequest(pos_req);
+			storage_api->EnqueueRequest(pos_req);
 		}
 
 		{
@@ -228,7 +229,7 @@ void StreamingScene::ProcessNewResources(RenderGraph::RGBuilder& Builder)
 			target.Target = resource->GpuStream->GetRObject();
 			tan_req.Destination = target;
 
-			storage_api.EnqueueRequest(tan_req);
+			storage_api->EnqueueRequest(tan_req);
 		}
 
 		{
@@ -238,10 +239,10 @@ void StreamingScene::ProcessNewResources(RenderGraph::RGBuilder& Builder)
 			target.Target = resource->GpuStream->GetRObject();
 			uv_req.Destination = target;
 
-			storage_api.EnqueueRequest(uv_req);
+			storage_api->EnqueueRequest(uv_req);
 		}
 
-		resource->IORequest = storage_api.SubmitUpload(DStorageQueueType::Gpu);
+		resource->IORequest = storage_api->SubmitUpload(DStorageQueueType::Gpu);
 		resource->State = Resources::StreamingState::Streaming;
 
 		Streaming.emplace_back(resource);

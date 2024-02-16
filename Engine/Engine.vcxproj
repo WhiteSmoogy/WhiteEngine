@@ -63,7 +63,7 @@
     <ClCompile Include="Core\Serialization\Archive.cpp" />
     <ClCompile Include="Core\Serialization\BulkData.cpp" />
     <ClCompile Include="Core\Threading\AutoResetEvent.cpp">
-      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</PreprocessToFile>
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
       <ScanSourceForModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ScanSourceForModuleDependencies>
       <TranslateIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TranslateIncludes>
     </ClCompile>

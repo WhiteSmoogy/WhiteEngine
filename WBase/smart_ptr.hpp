@@ -455,7 +455,7 @@ namespace white
 			if (const auto tmp = ref_pointer)
 			{
 				ref_pointer = nullptr;
-				controller::release(ref_pointer);
+				controller::release(tmp);
 			}
 		}
 

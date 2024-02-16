@@ -459,9 +459,9 @@ void CommandContextStateCache::ApplySamplers(const RootSignature* const pRootSig
 	uint32 SamplerHeapSlot = SamplerHeap->ReserveSlots(NumSamplers[ShaderType::NumStandardType]);
 
 #define CONDITIONAL_SET_SAMPLERS(Shader) \
-	if (CurrentShaderDirtySamplerSlots[##Shader]) \
+	if (CurrentShaderDirtySamplerSlots[Shader]) \
 	{ \
-		DescriptorCache.SetSamplers<##Shader>(pRootSignature, Cache, CurrentShaderDirtySamplerSlots[##Shader], NumSamplers[##Shader], SamplerHeapSlot); \
+		DescriptorCache.SetSamplers<Shader>(pRootSignature, Cache, CurrentShaderDirtySamplerSlots[Shader], NumSamplers[Shader], SamplerHeapSlot); \
 	}
 
 	if (StartStage == ShaderType::ComputeShader)
@@ -820,9 +820,9 @@ void CommandContextStateCache::ApplyState()
 		auto& SRVCache = PipelineState.Common.SRVCache;
 
 #define CONDITIONAL_SET_SRVS(Shader) \
-		if (CurrentShaderDirtySRVSlots[ShaderType::##Shader]) \
+		if (CurrentShaderDirtySRVSlots[ShaderType::Shader]) \
 		{ \
-			DescriptorCache.SetSRVs<ShaderType::##Shader>(pRootSignature, SRVCache, CurrentShaderDirtySRVSlots[ShaderType::##Shader], NumSRVs[ShaderType::##Shader], ViewHeapSlot); \
+			DescriptorCache.SetSRVs<ShaderType::Shader>(pRootSignature, SRVCache, CurrentShaderDirtySRVSlots[ShaderType::Shader], NumSRVs[ShaderType::Shader], ViewHeapSlot); \
 		}
 
 		if (PipelineType == CPT_Graphics)
@@ -848,7 +848,7 @@ void CommandContextStateCache::ApplyState()
 #define CONDITIONAL_SET_CBVS(Shader) \
 		if (CurrentShaderDirtyCBVSlots[ShaderType::Shader]) \
 		{ \
-			DescriptorCache.SetConstantBuffers<ShaderType::##Shader>(pRootSignature, CBVCache, CurrentShaderDirtyCBVSlots[ShaderType::##Shader]); \
+			DescriptorCache.SetConstantBuffers<ShaderType::Shader>(pRootSignature, CBVCache, CurrentShaderDirtyCBVSlots[ShaderType::Shader]); \
 		}
 
 		if (PipelineType == CPT_Graphics)

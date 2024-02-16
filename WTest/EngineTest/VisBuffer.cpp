@@ -181,22 +181,20 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 	Parameters->FliteredIndexBuffer = Builder.CreateUAV({ .Buffer = FliteredIndexBuffer });
 	Parameters->UncompactedDrawArgs = UncompactedDrawArgsUAV;
 
-	std::vector<FilterTriangleCS::FilterDispatchArgs> BatchTrinfArgs;
-	BatchTrinfArgs.reserve(Caps.MaxDispatchThreadGroupsPerDimension.x);
 	const int MaxDispatchCount = 2048;
+	auto BatchTrinfArgs = Builder.AllocParameters<FilterTriangleCS::FilterDispatchArgs>(MaxDispatchCount);
 
 	FilterTriangleCS::PermutationDomain PermutationVector;
 	PermutationVector.Set<FilterTriangleCS::CullBackFaceDim >(true);
 	PermutationVector.Set<FilterTriangleCS::CullFrustumFaceDim>(true);
 	auto ComputeShader = GetBuiltInShaderMap()->GetShader<FilterTriangleCS>(PermutationVector);
 
+	int dispatchCount = 0;
 	auto DipstachBatch = [&]()
 		{
-			int dispatchCount = static_cast<int>(BatchTrinfArgs.size());
-
 			if (dispatchCount > 0)
 			{
-				auto ArgCB = Builder.CreateCBuffer(std::span{ BatchTrinfArgs });
+				auto ArgCB = Builder.CreateCBuffer(BatchTrinfArgs);
 
 				Parameters->DispatchArgs = ArgCB;
 
@@ -207,7 +205,7 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 					Parameters,
 					white::math::int3(dispatchCount, 1, 1));
 
-				BatchTrinfArgs.clear();
+				dispatchCount = 0;
 			}
 		};
 
@@ -229,9 +227,9 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 			for (uint32 clusterIndex = 0; clusterIndex < trinf.ClusterCount; ++clusterIndex)
 			{
 				args.ClusterId = clusterIndex;
-				BatchTrinfArgs.push_back(args);
+				BatchTrinfArgs[dispatchCount] = args;
 
-				if (BatchTrinfArgs.size() >= MaxDispatchCount)
+				if (dispatchCount >= MaxDispatchCount)
 					DipstachBatch();
 			}
 		};

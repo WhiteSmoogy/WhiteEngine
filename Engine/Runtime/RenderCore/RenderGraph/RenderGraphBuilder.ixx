@@ -197,6 +197,12 @@ export namespace RenderGraph
 			return Allocator.Alloc<TBufferStruct>();
 		}
 
+		template<typename TBufferStruct>
+		std::span<TBufferStruct> AllocParameters(uint32 Count)
+		{
+			return std::span<TBufferStruct> {Allocator.AllocUninitialized<TBufferStruct>(Count), Count};
+		}
+
 		template <typename ParameterStructType, typename ExecuteLambdaType>
 		RGPassRef AddPass(
 			RGEventName&& Name,

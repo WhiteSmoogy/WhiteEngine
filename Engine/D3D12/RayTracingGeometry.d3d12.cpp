@@ -175,7 +175,7 @@ void D12::CreateAccelerationStructureBuffers(shared_ptr<GraphicsBuffer>& Acceler
 			.Size = static_cast<uint32>(AccelerationStructureBufferDesc.Width),
 			.Stride = 0,
 			.Usage = Buffer::Static,
-			.Access = EAccessHint::EA_AccelerationStructure
+			.Access = white::underlying(EAccessHint::AccelerationStructure)
 	};
 
 	AccelerationStructureBuffer = platform::Render::shared_raw_robject(
@@ -193,7 +193,7 @@ void D12::CreateAccelerationStructureBuffers(shared_ptr<GraphicsBuffer>& Acceler
 			.Size = static_cast<uint32>(ScratchBufferDesc.Width),
 			.Stride = 0,
 			.Usage = Buffer::Static,
-			.Access = EAccessHint::EA_GPUUnordered | EAccessHint::EA_Raw
+			.Access = EAccessHint::GPUUnordered | EAccessHint::Raw
 	};
 
 	CreateInfo.Name = isTopLevel ? "Acceleration structure scratch[Scene]" : "Acceleration structure scratch[Geometry]";

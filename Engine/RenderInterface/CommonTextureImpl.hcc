@@ -12,11 +12,11 @@ void Texture1D::Resize(platform::Render::Texture1D & base_target, const Box1D& d
 	std::unique_ptr<Texture1D> src_cpu;
 	Texture1D* src_cpu_ptr = this;
 	Box1D src_cpu_box {src.width};
-	if (GetAccessMode() & EA_CPURead) {
+	if (white::has_anyflags(GetAccessMode(),EAccessHint::CPURead)) {
 		src_cpu_box = src;
 	}
 	else {
-		src_cpu =white::unique_raw(device.CreateTexture(src.width, 1, 1, GetFormat(), EA_CPURead, GetSampleInfo()));
+		src_cpu =white::unique_raw(device.CreateTexture(src.width, 1, 1, GetFormat(), white::underlying(EAccessHint::CPURead), GetSampleInfo()));
 		src_cpu_ptr = src_cpu.get();
 
 		CopyToSubTexture(*src_cpu,src_cpu_box, src);
@@ -25,12 +25,12 @@ void Texture1D::Resize(platform::Render::Texture1D & base_target, const Box1D& d
 	std::unique_ptr<Texture1D> dst_cpu;
 	Texture1D* dst_cpu_ptr = &target;
 	Box1D dst_cpu_box {dst.width};
-	if (target.GetAccessMode() & EA_CPURead) {
+	if (white::has_anyflags(target.GetAccessMode(),EAccessHint::CPURead)) {
 		dst_cpu_box = dst;
 	}
 	else {
 		dst_cpu =white::unique_raw(device.CreateTexture(dst.width, 1, 1, 
-			target.GetFormat(), EA_CPUWrite, target.GetSampleInfo()));
+			target.GetFormat(), white::underlying(EAccessHint::CPUWrite), target.GetSampleInfo()));
 		dst_cpu_ptr = dst_cpu.get();
 	}
 
@@ -59,14 +59,14 @@ void Texture2D::Resize(platform::Render::Texture2D & base_target, const Box2D& d
 	std::unique_ptr<Texture2D> src_cpu;
 	Texture2D* src_cpu_ptr =this;
 	Box2D src_cpu_box {src.width,src.height};
-	if ((GetAccessMode() & EA_CPURead))
+	if (white::has_anyflags(GetAccessMode(),EAccessHint::CPURead))
 	{
 		src_cpu_box = src;
 	}
 	else
 	{
 		src_cpu =white::unique_raw(device.CreateTexture(src.width, src.height, 1, 1,
-			GetFormat(), EA_CPURead | EA_CPUWrite, GetSampleInfo(), nullptr));
+			GetFormat(), EAccessHint::CPURead | EAccessHint::CPUWrite, GetSampleInfo(), nullptr));
 		src_cpu_ptr = src_cpu.get();
 
 		CopyToSubTexture(*src_cpu, src_cpu_box,
@@ -76,7 +76,7 @@ void Texture2D::Resize(platform::Render::Texture2D & base_target, const Box2D& d
 	std::unique_ptr<Texture2D> dst_cpu;
 	Texture2D* dst_cpu_ptr = &target;
 	Box2D dst_cpu_box {dst.width,dst.height};
-	if ((target.GetAccessMode() & EA_CPUWrite) && !IsCompressedFormat(target.GetFormat()))
+	if (white::has_anyflags(target.GetAccessMode(), EAccessHint::CPUWrite) && !IsCompressedFormat(target.GetFormat()))
 	{
 		dst_cpu_ptr = &target;
 		dst_cpu_box = dst;
@@ -84,7 +84,7 @@ void Texture2D::Resize(platform::Render::Texture2D & base_target, const Box2D& d
 	else
 	{
 		dst_cpu =white::unique_raw(device.CreateTexture(dst.width, dst.height, 1, 1,
-			target.GetFormat(), EA_CPURead | EA_CPUWrite,target.GetSampleInfo(),nullptr));
+			target.GetFormat(), EAccessHint::CPURead | EAccessHint::CPUWrite,target.GetSampleInfo(),nullptr));
 		dst_cpu_ptr = dst_cpu.get();
 	}
 

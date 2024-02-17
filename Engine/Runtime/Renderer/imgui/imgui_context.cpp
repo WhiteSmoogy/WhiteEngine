@@ -74,7 +74,7 @@ void platform::imgui::Context_RenderDrawData(platform::Render::CommandList& CmdL
         GVertexBufferSize = draw_data->TotalVtxCount + 5000;
 
         GVertexBuffer = Context::Instance().GetDevice().CreateVertexBuffer(Buffer::Usage::Dynamic,
-            Render::EAccessHint::EA_GPURead | Render::EAccessHint::EA_CPUWrite,
+            Render::EAccessHint::GPURead | Render::EAccessHint::CPUWrite,
             GVertexBufferSize * sizeof(ImDrawVert),
             Render::EF_Unknown);
     }
@@ -87,7 +87,7 @@ void platform::imgui::Context_RenderDrawData(platform::Render::CommandList& CmdL
         GIndexBufferSize = draw_data->TotalIdxCount + 5000;
 
         GIndexBuffer = Context::Instance().GetDevice().CreateIndexBuffer(Buffer::Usage::Dynamic,
-            Render::EAccessHint::EA_GPURead | Render::EAccessHint::EA_CPUWrite,
+            Render::EAccessHint::GPURead | Render::EAccessHint::CPUWrite,
             GIndexBufferSize * sizeof(ImDrawIdx),
             Render::EF_R16UI);
     }
@@ -267,7 +267,7 @@ void CreateFontsTexture(Render::Context& context)
             static_cast<uint16>(height),
             1,1,
             EF_ARGB8,
-            (uint32)Render::EAccessHint::EA_GPURead,
+            (uint32)Render::EAccessHint::GPURead,
             SampleDesc(1,0),
             CreateInfo
         );

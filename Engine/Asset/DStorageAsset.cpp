@@ -12,6 +12,7 @@ using platform_ex::DStorageFile2GpuRequest;
 using platform_ex::DStorageCompressionFormat;
 using platform_ex::path;
 using namespace platform_ex::DSFileFormat;
+using platform::Render::EAccessHint;
 
 namespace platform
 {
@@ -184,7 +185,7 @@ struct DStorageAssetFile
 	platform::Render::Texture* CreateTexture(platform::Render::Device& device, const platform_ex::DSFileFormat::D3DResourceDesc& desc)
 	{
 		auto format = dds::FromDXGIFormat(desc.Format);
-		auto access = platform::Render::EA_GPURead | platform::Render::EA_Immutable;
+		auto access = EAccessHint::GPURead | EAccessHint::Immutable;
 		platform::Render::SampleDesc sample_info{ desc.SampleDesc.Count,desc.SampleDesc.Quality };
 
 		switch ((platform::Render::TextureType)desc.Dimension)

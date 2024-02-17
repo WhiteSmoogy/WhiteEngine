@@ -18,6 +18,8 @@ constexpr uint32 READBACK_BUFFER_POOL_DEFAULT_POOL_SIZE = 4 * 1024 * 1024;
 constexpr uint32 MIN_PLACED_RESOURCE_SIZE = 64 * 1024;
 constexpr uint32 READBACK_BUFFER_POOL_MAX_ALLOC_SIZE = (64 * 1024);
 
+using platform::Render::EAccessHint;
+
 const char* GetMemoryPoolDebugName(const AllocatorConfig& InConfig)
 {
 	if (white::has_anyflags(InConfig.InitialResourceState, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE))
@@ -264,10 +266,10 @@ AllocatorConfig IPoolAllocator::GetResourceAllocatorInitConfig(D3D12_HEAP_TYPE I
 	InitConfig.ResourceFlags = InResourceFlags;
 
 	// Setup initial resource state depending on the requested buffer flags
-	if (white::has_anyflags(InBufferAccess, EA_AccelerationStructure))
+	if (white::has_anyflags(InBufferAccess, EAccessHint::AccelerationStructure))
 	{
 		// should only have this flag and no other flags
-		wconstraint(InBufferAccess == EA_AccelerationStructure);
+		wconstraint(InBufferAccess == EAccessHint::AccelerationStructure);
 		InitConfig.InitialResourceState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 	}
 	else
@@ -277,7 +279,7 @@ AllocatorConfig IPoolAllocator::GetResourceAllocatorInitConfig(D3D12_HEAP_TYPE I
 		}
 		else
 		{
-			if (white::has_anyflags(InBufferAccess, EA_GPUUnordered))
+			if (white::has_anyflags(InBufferAccess, EAccessHint::GPUUnordered))
 			{
 				wconstraint(InResourceFlags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 			}
@@ -285,7 +287,7 @@ AllocatorConfig IPoolAllocator::GetResourceAllocatorInitConfig(D3D12_HEAP_TYPE I
 		}
 
 	InitConfig.HeapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
-	if (white::has_anyflags(InBufferAccess, EA_DrawIndirect))
+	if (white::has_anyflags(InBufferAccess, EAccessHint::DrawIndirect))
 	{
 		wconstraint(InResourceFlags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 		InitConfig.HeapFlags |= D3D12_HEAP_FLAG_NONE;
@@ -433,11 +435,11 @@ void PoolAllocator<Order, Defrag>::AllocDefaultResource(D3D12_HEAP_TYPE InHeapTy
 	{
 		wconstraint(InCreateState == D3D12_RESOURCE_STATE_GENERIC_READ);
 	}
-	else if (InBufferAccess == EAccessHint::EA_GPUUnordered && InResourceStateMode == ResourceStateMode::Single)
+	else if (InBufferAccess == EAccessHint::GPUUnordered && InResourceStateMode == ResourceStateMode::Single)
 	{
 		wconstraint(InCreateState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	}
-	else if (InBufferAccess & EAccessHint::EA_AccelerationStructure)
+	else if (white::has_anyflags(InBufferAccess ,EAccessHint::AccelerationStructure))
 	{
 		// RayTracing acceleration structures must be created in a particular state and may never transition out of it.
 		wconstraint(InResourceStateMode == ResourceStateMode::Single);
@@ -1317,7 +1319,7 @@ void BufferAllocator::AllocDefaultResource(D3D12_HEAP_TYPE InHeapType, const D3D
 	D3D12_RESOURCE_DESC ResourceDesc = InResourceDesc;
 	ResourceDesc.Flags = ResourceDesc.Flags & (~D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE);
 
-	if (white::has_anyflags(InBuffAccess, EAccessHint::EA_DrawIndirect))
+	if (white::has_anyflags(InBuffAccess, EAccessHint::DrawIndirect))
 	{
 		//Force indirect args to stand alone allocations instead of pooled
 		ResourceLocation.Clear();
@@ -1369,17 +1371,17 @@ D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState(D3D12_HEAP
 	{
 		return D3D12_RESOURCE_STATE_GENERIC_READ;
 	}
-	else if (InBufferAccess == EA_GPUUnordered && mode == ResourceStateMode::Single)
+	else if (InBufferAccess == white::underlying(EAccessHint::GPUUnordered) && mode == ResourceStateMode::Single)
 	{
 		wconstraint(InHeapType == D3D12_HEAP_TYPE_DEFAULT);
 		return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	}
-	else if (InBufferAccess & EA_AccelerationStructure)
+	else if (white::has_anyflags(InBufferAccess, EAccessHint::AccelerationStructure))
 	{
 		wconstraint(InHeapType == D3D12_HEAP_TYPE_DEFAULT);
 		return D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 	}
-	else if (InBufferAccess & EA_DStorage)
+	else if (white::has_anyflags(InBufferAccess ,EAccessHint::DStorage))
 	{
 		return D3D12_RESOURCE_STATE_COPY_DEST;
 	}
@@ -1401,7 +1403,7 @@ template D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState<R
 BufferPool* BufferAllocator::CreateBufferPool(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_FLAGS InResourceFlags, uint32 InBufferAccess, ResourceStateMode InResourceStateMode)
 {
 	auto Device = GetParentDevice();
-	auto Config = BufferPool::GetResourceAllocatorInitConfig(InHeapType, InResourceFlags, static_cast<EAccessHint>(InBufferAccess));
+	auto Config = BufferPool::GetResourceAllocatorInitConfig(InHeapType, InResourceFlags, InBufferAccess);
 
 	const std::string Name= std::format("{}/Pool/{}" ,InHeapType ,DefaultBufferPools.size());
 	auto AllocationStrategy = IPoolAllocator::GetResourceAllocationStrategy(InResourceFlags, InResourceStateMode);

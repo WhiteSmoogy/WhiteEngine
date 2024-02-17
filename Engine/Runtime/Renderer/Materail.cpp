@@ -8,6 +8,7 @@ using namespace platform;
 using namespace scheme;
 using namespace v1;
 using namespace platform::Render::Shader;
+using platform::Render::EAccessHint;
 
 namespace fs = std::filesystem;
 
@@ -37,7 +38,7 @@ platform::Material::Material(const asset::MaterailAsset & asset, const std::stri
 	for (auto& bind_value : bind_values) {
 		if (bind_effects->GetParameter(bind_value.first).GetType() < SPT_textureCUBEArray) {
 			if WB_LIKELY(bind_value.second.type() == white::type_id<std::string>()) {
-				auto pTexture = X::LoadTexture(std::any_cast<std::string>(bind_value.second), Render::EA_GPURead | Render::EA_Immutable);
+				auto pTexture = X::LoadTexture(std::any_cast<std::string>(bind_value.second), EAccessHint::GPURead | EAccessHint::Immutable);
 
 				bind_value.second =Render::TextureSubresource(pTexture, 0, pTexture->GetArraySize(),0, pTexture->GetNumMipMaps());
 			}

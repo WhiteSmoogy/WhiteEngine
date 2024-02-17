@@ -195,7 +195,7 @@ private:
 		platform::Render::ResourceCreateInfo CreateInfo{"VisBuffer"};
 		CreateInfo.clear_value = &invalidId;
 
-		vis_buffer = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_R32UI, EAccessHint::EA_GPURead | EAccessHint::EA_RTV, {}, CreateInfo));
+		vis_buffer = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_R32UI, EAccessHint::GPURead | EAccessHint::RTV, {}, CreateInfo));
 	}
 
 	void OnGUI();

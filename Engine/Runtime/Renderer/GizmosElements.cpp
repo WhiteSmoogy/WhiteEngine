@@ -89,7 +89,7 @@ bool GizmosElements::Draw(platform::Render::CommandList& CmdList, const WhiteEng
 		VertexShader->SetParameters(CmdList, VertexShader,Transform);
 
 		auto VertexBuffer = CreateVertexBuffer(white::make_const_span((std::byte*)Lines.data(), Lines.size() * sizeof(GizmosElementVertex)),
-			Buffer::Usage::Static,EAccessHint::EA_GPURead);
+			Buffer::Usage::Static,white::underlying(EAccessHint::GPURead));
 
 		CmdList.SetVertexBuffer(0, VertexBuffer);
 

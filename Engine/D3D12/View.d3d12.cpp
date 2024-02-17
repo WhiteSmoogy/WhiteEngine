@@ -206,7 +206,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 	uint32 StartOffsetBytes = 0;
 	uint32 NumElements = -1;
 
-	wconstraint(white::has_anyflags(access, EAccessHint::EA_GPURead) || white::has_allflags(access, EAccessHint::EA_AccelerationStructure));
+	wconstraint(white::has_anyflags(access, EAccessHint::GPURead) || white::has_allflags(access, EAccessHint::AccelerationStructure));
 
 	auto CreateShaderResourceView = [&]<typename CommandType>()
 	{
@@ -228,7 +228,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 	};
 
 	//TODO:switch case
-	if (white::has_allflags(access, EAccessHint::EA_AccelerationStructure))
+	if (white::has_allflags(access, EAccessHint::AccelerationStructure))
 	{
 		D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
 
@@ -241,7 +241,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 		srv->CreateView(SRVDesc, Resource, ShaderResourceView::EFlags::None);
 		return shared_raw_robject(srv);
 	}
-	if (!white::has_anyflags(access, EAccessHint::EA_GPUStructured))
+	if (!white::has_anyflags(access, EAccessHint::GPUStructured))
 	{
 		struct D3D12InitializeBufferSRVCommand final : platform::Render::CommandBase
 		{
@@ -272,7 +272,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 
 				if (CreationStride == 0)
 				{
-					if (white::has_anyflags(access, EAccessHint::EA_Raw))
+					if (white::has_anyflags(access, EAccessHint::Raw))
 						CreationStride = 4;
 					else
 					{
@@ -291,7 +291,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 				SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 				SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 
-				if (white::has_anyflags(access, EAccessHint::EA_Raw))
+				if (white::has_anyflags(access, EAccessHint::Raw))
 				{
 					SRVDesc.Format = DXGI_FORMAT_R32_TYPELESS;
 					SRVDesc.Buffer.Flags |= D3D12_BUFFER_SRV_FLAG_RAW;
@@ -337,7 +337,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 				const uint64 Offset = Location.GetOffsetFromBaseOfResource();
 				const D3D12_RESOURCE_DESC& BufferDesc = Location.GetResource()->GetDesc();
 
-				const bool bByteAccessBuffer = white::has_anyflags(StructuredBuffer->access, EAccessHint::EA_Raw);
+				const bool bByteAccessBuffer = white::has_anyflags(StructuredBuffer->access, EAccessHint::Raw);
 				// Create a Shader Resource View
 				D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
 				SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -383,7 +383,7 @@ UAVRIRef Device::CreateUnorderedAccessView(const platform::Render::GraphicsBuffe
 
 	uint32 EffectiveStride = Buffer->Stride;
 
-	const bool bByteAccessBuffer = white::has_anyflags(Buffer->GetAccess(), EAccessHint::EA_Raw);
+	const bool bByteAccessBuffer = white::has_anyflags(Buffer->GetAccess(), EAccessHint::Raw);
 
 	if (bByteAccessBuffer)
 	{
@@ -391,7 +391,7 @@ UAVRIRef Device::CreateUnorderedAccessView(const platform::Render::GraphicsBuffe
 		UAVDesc.Buffer.Flags |= D3D12_BUFFER_UAV_FLAG_RAW;
 		EffectiveStride = 4;
 	}
-	else if (white::has_anyflags(Buffer->GetAccess(), EAccessHint::EA_GPUStructured))
+	else if (white::has_anyflags(Buffer->GetAccess(), EAccessHint::GPUStructured))
 	{
 		UAVDesc.Format = DXGI_FORMAT_UNKNOWN;
 		EffectiveStride = Buffer->Stride;

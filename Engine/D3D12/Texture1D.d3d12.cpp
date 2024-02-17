@@ -85,7 +85,7 @@ void Texture1D::UnMap(const Sub1D& box)
 
 D3D12_SHADER_RESOURCE_VIEW_DESC Texture1D::CreateSRVDesc(uint8 first_array_index, uint8 num_items, uint8 first_level, uint8 num_levels) const
 {
-	WAssert(GetAccessMode() & EA_GPURead, "Access mode must have EA_GPURead flag");
+	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::GPURead), "Access mode must have EA_GPURead flag");
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc;
 	switch (format) {
 	case EF_D16:
@@ -136,7 +136,7 @@ ShaderResourceView* Texture1D::RetriveShaderResourceView()
 
 D3D12_UNORDERED_ACCESS_VIEW_DESC Texture1D::CreateUAVDesc(uint8 first_array_index, uint8 num_items, uint8 level) const
 {
-	WAssert(GetAccessMode() & EA_GPUUnordered, "Access mode must have EA_GPUUnordered flag");
+	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::GPUUnordered), "Access mode must have EA_GPUUnordered flag");
 
 	D3D12_UNORDERED_ACCESS_VIEW_DESC desc{};
 
@@ -158,7 +158,7 @@ D3D12_UNORDERED_ACCESS_VIEW_DESC Texture1D::CreateUAVDesc(uint8 first_array_inde
 
 D3D12_RENDER_TARGET_VIEW_DESC platform_ex::Windows::D3D12::Texture1D::CreateRTVDesc(uint8 first_array_index, uint8 num_items, uint8 level) const
 {
-	WAssert(GetAccessMode() & EA_GPUWrite, "Access mode must have EA_GPUWrite flag");
+	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::GPUWrite), "Access mode must have EA_GPUWrite flag");
 
 	D3D12_RENDER_TARGET_VIEW_DESC desc{};
 

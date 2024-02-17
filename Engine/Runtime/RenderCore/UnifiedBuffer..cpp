@@ -101,7 +101,7 @@ void platform::Render::MemcpyResource(RGBuilder& Builder, RGBufferUAV* UAV, RGBu
 	auto* DstResource = UAV->GetParent();
 	auto* SrcResource = SRV->GetParent();
 
-	const uint32 Divisor = white::has_anyflags(DstResource->GetAccess(), EAccessHint::EA_Raw) ? 4 : 1;
+	const uint32 Divisor = white::has_anyflags(DstResource->GetAccess(), EAccessHint::Raw) ? 4 : 1;
 
 	uint32 NumElementsProcessed = 0;
 
@@ -117,7 +117,7 @@ void platform::Render::MemcpyResource(RGBuilder& Builder, RGBufferUAV* UAV, RGBu
 		Parameters->Common.SrcOffset = (Params.SrcOffset + NumElementsProcessed);
 		Parameters->Common.DstOffset = (Params.DstOffset + NumElementsProcessed);
 
-		if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::EA_Raw))
+		if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::Raw))
 		{
 			ResourceTypeEnum = ByteBufferResourceType::Uint_Buffer;
 
@@ -163,7 +163,7 @@ void  platform::Render::MemsetResource(RenderGraph::RGBuilder& Builder, RenderGr
 {
 	auto* DstResource = UAV->GetParent();
 
-	const uint32 Divisor = white::has_anyflags(DstResource->GetAccess(), EAccessHint::EA_Raw) ? 4 : 16;
+	const uint32 Divisor = white::has_anyflags(DstResource->GetAccess(), EAccessHint::Raw) ? 4 : 16;
 
 	uint32 NumElementsProcessed = 0;
 
@@ -179,13 +179,13 @@ void  platform::Render::MemsetResource(RenderGraph::RGBuilder& Builder, RenderGr
 		Parameters->Common.DstOffset = (Params.DstOffset + NumElementsProcessed) / Divisor;
 		Parameters->Common.Value = Params.Value;
 
-		if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::EA_Raw))
+		if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::Raw))
 		{
 			ResourceTypeEnum = ByteBufferResourceType::Uint_Buffer;
 
 			Parameters->Common.DstByteAddressBuffer = UAV;
 		}
-		else if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::EA_GPUStructured))
+		else if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::GPUStructured))
 		{
 			ResourceTypeEnum = ByteBufferResourceType::StructuredBuffer;
 			Parameters->Common.DstStructuredBuffer4x = UAV;

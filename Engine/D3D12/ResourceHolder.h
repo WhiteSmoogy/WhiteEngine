@@ -111,19 +111,19 @@ namespace platform_ex::Windows {
 			switch (InRHIAccess)
 			{
 				// all single write states
-			case EAccessHint::EA_RTV:					return D3D12_RESOURCE_STATE_RENDER_TARGET;
-			case EAccessHint::EA_GPUUnordered:			return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-			case EAccessHint::EA_DSV:				return D3D12_RESOURCE_STATE_DEPTH_WRITE;
-			case EAccessHint::EA_GPUWrite:				return D3D12_RESOURCE_STATE_COPY_DEST;
-			case EAccessHint::EA_Present:				return D3D12_RESOURCE_STATE_PRESENT;
+			case EAccessHint::RTV:					return D3D12_RESOURCE_STATE_RENDER_TARGET;
+			case EAccessHint::GPUUnordered:			return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			case EAccessHint::DSV:				return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+			case EAccessHint::GPUWrite:				return D3D12_RESOURCE_STATE_COPY_DEST;
+			case EAccessHint::Present:				return D3D12_RESOURCE_STATE_PRESENT;
 
 				// Generic read for mask read states
-			case EAccessHint::EA_GPURead:
+			case EAccessHint::GPURead:
 				return D3D12_RESOURCE_STATE_GENERIC_READ;
 			default:
 			{
 				// Special case for DSV read & write (Depth write allows depth read as well in D3D)
-				if (InRHIAccess == EAccessHint::EA_DSV)
+				if (InRHIAccess == EAccessHint::DSV)
 				{
 					return D3D12_RESOURCE_STATE_DEPTH_WRITE;
 				}
@@ -132,35 +132,35 @@ namespace platform_ex::Windows {
 					D3D12_RESOURCE_STATES State = D3D12_RESOURCE_STATE_COMMON;
 
 					// Translate the requested after state to a D3D state
-					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_SRV) && !InIsAsyncCompute)
+					if (white::has_allflags(InRHIAccess, EAccessHint::SRV) && !InIsAsyncCompute)
 					{
 						State |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 					}
-					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_Compute))
+					if (white::has_anyflags(InRHIAccess, EAccessHint::Compute))
 					{
 						State |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 					}
-					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_VertexOrIndexBuffer))
+					if (white::has_anyflags(InRHIAccess, EAccessHint::VertexOrIndexBuffer))
 					{
 						State |= D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_INDEX_BUFFER;
 					}
-					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_CopySrc))
+					if (white::has_allflags(InRHIAccess, EAccessHint::CopySrc))
 					{
 						State |= D3D12_RESOURCE_STATE_COPY_SOURCE;
 					}
-					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_DrawIndirect))
+					if (white::has_anyflags(InRHIAccess, EAccessHint::DrawIndirect))
 					{
 						State |= D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
 					}
-					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_ResolveSrc))
+					if (white::has_allflags(InRHIAccess, EAccessHint::ResolveSrc))
 					{
 						State |= D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
 					}
-					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_DSVRead))
+					if (white::has_allflags(InRHIAccess, EAccessHint::DSVRead))
 					{
 						State |= D3D12_RESOURCE_STATE_DEPTH_READ;
 					}
-					if (white::has_anyflags(InRHIAccess, EAccessHint::EA_ShadingRateSource))
+					if (white::has_anyflags(InRHIAccess, EAccessHint::ShadingRateSource))
 					{
 						State |= D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
 					}
@@ -256,7 +256,7 @@ namespace platform_ex::Windows {
 				{
 					// Ignore the requested resource state for non tracked resource because RHI will assume it's always in default resource 
 					// state then when a transition is required (will transition via scoped push/pop to requested state)
-					if (!bSRVOnly && InResourceState != 0 && InResourceState != EAccessHint::EA_Discard)
+					if (!bSRVOnly && InResourceState != 0 && InResourceState != EAccessHint::Discard)
 					{
 						bool bAsyncCompute = false;
 						return GetD3D12ResourceState(InResourceState, bAsyncCompute);

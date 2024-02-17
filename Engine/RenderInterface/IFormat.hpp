@@ -6,6 +6,7 @@
 #define WE_RENDER_IFormat_hpp 1
 
 #include <WBase/winttype.hpp>
+#include <WBase/enum.hpp>
 #include <format>
 #include <utility>
 
@@ -468,50 +469,76 @@ namespace platform::Render {
 			return format;
 		}
 
-
 		/*
 		\brief ElementAccess元素访问方式
 		*/
-		enum EAccessHint :uint32 {
-			EA_CPURead = 1U << 0,
-			EA_CPUWrite = 1U << 1,
-			EA_GPURead = 1U << 2,
-			EA_GPUWrite = 1U << 3,
-			EA_GPUUnordered = 1U << 4,
-			EA_GPUStructured = 1UL << 5,
-			EA_GenMips = 1U << 6,//Generate_Mips
-			EA_Immutable = 1U << 7,
+		enum class EAccessHint :uint32 {
+			CPURead = 1U << 0,
+			CPUWrite = 1U << 1,
+			GPURead = 1U << 2,
+			GPUWrite = 1U << 3,
+
+			GPUUnordered = 1U << 4,
+			GPUStructured = 1UL << 5,
+			GenMips = 1U << 6,//Generate_Mips
+			Immutable = 1U << 7,
 
 			//ByteAddressBuffer
-			EA_Raw = 1U << 8,
+			Raw = 1U << 8,
 
-			EA_RTV = (1U << 9) | EA_GPUWrite,
-			EA_DSV = (1U << 10) | EA_GPUWrite,
-			EA_SRV = (1U << 11) | EA_GPURead,
+			RTV = (1U << 9) | GPUWrite,
+			DSV = (1U << 10) | GPUWrite,
+			UAV = (1U << 11) | GPUWrite,
+			SRV = GPURead,
 
-			EA_DrawIndirect = 1U << 12,
+			DrawIndirect = 1U << 12,
 
-			EA_AccelerationStructure = 1U << 13,
+			AccelerationStructure = 1U << 13,
 
-			EA_GPUReadWrite = EA_GPURead | EA_GPUWrite,
+			GPUReadWrite = GPURead | GPUWrite,
 
-			EA_Present = 1u << 14,
+			Present = 1u << 14,
 
-			EA_Compute = 1u << 15,
+			Compute = 1u << 15,
 
-			EA_VertexOrIndexBuffer = 1u << 16,
+			VertexOrIndexBuffer = 1u << 16,
 
 			// Invalid released state (transient resources)
-			EA_Discard = 1 << 17,
+			Discard = 1 << 17,
 
-			EA_CopySrc = 1 << 18 | EA_GPURead,
-			EA_ResolveSrc = 1 << 19 | EA_GPURead,
-			EA_DSVRead = 1 << 20 |EA_GPURead,
+			CopySrc = 1 << 18 | GPURead,
+			ResolveSrc = 1 << 19 | GPURead,
+			DSVRead = 1 << 20 | GPURead,
 
-			EA_ShadingRateSource = 1 << 21,
+			ShadingRateSource = 1 << 21,
 
-			EA_DStorage = 1 << 22,
+			DStorage = 1 << 22,
 		};
+
+		inline uint32 operator|(EAccessHint l, EAccessHint r)
+		{
+			return white::underlying(white::enum_or(l, r));
+		}
+
+		inline uint32 operator|(uint32 l, EAccessHint r)
+		{
+			return l | white::underlying(r);
+		}
+
+		inline uint32& operator|=(uint32& l, EAccessHint r)
+		{
+			return l |= white::underlying(r);
+		}
+
+		inline bool operator !=(EAccessHint l, uint32 r)
+		{
+			return white::underlying(l) != r;
+		}
+
+		inline bool operator ==(uint32 l, EAccessHint r)
+		{
+			return white::underlying(r) == l;
+		}
 
 		enum class ClearBinding
 		{

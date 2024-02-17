@@ -99,7 +99,7 @@ namespace tc {
 		if (uncompressed_tex->GetFormat() != decoded_fmt_)
 		{
 			uncompressed_tex =white::share_raw(Context::Instance().GetDevice().CreateTexture(width, height,
-				1, 1, decoded_fmt_, EA_CPURead | EA_CPUWrite, {1,0}));
+				1, 1, decoded_fmt_,EAccessHint::CPURead | EAccessHint::CPUWrite, {1,0}));
 			in_tex->CopyToTexture(*uncompressed_tex);
 		}
 		else
@@ -125,7 +125,7 @@ namespace tc {
 		if (out_tex->GetFormat() != decoded_fmt_)
 		{
 			decoded_tex = white::share_raw(Context::Instance().GetDevice().CreateTexture(width, height,
-				1, 1, decoded_fmt_, EA_CPURead | EA_CPUWrite, {1,0}));
+				1, 1, decoded_fmt_, EAccessHint::CPURead | EAccessHint::CPUWrite, {1,0}));
 		}
 		else
 		{

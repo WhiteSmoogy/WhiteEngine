@@ -19,6 +19,7 @@ namespace Vertex = platform::Render::Vertex;
 namespace Buffer = platform::Render::Buffer;
 
 using std::make_shared;
+using platform::Render::EAccessHint;
 
 namespace platform_ex::Windows::D3D12 {
 	Device::Device(DXGI::Adapter & InAdapter)
@@ -132,7 +133,7 @@ namespace platform_ex::Windows::D3D12 {
 		if (!init_data.WithoutNativeResource)
 			texture->HWResourceCreate(init_data);
 
-		if ((access & platform::Render::EA_RTV) == platform::Render::EA_RTV)
+		if (white::has_allflags(access,EAccessHint::RTV))
 		{
 			texture->SetNumRenderTargetViews(1);
 
@@ -151,7 +152,7 @@ namespace platform_ex::Windows::D3D12 {
 			texture->SetRenderTargetViewIndex(rtv, RTVIndex);
 		}
 
-		if ((access & platform::Render::EA_DSV) == platform::Render::EA_DSV)
+		if (white::has_allflags(access, EAccessHint::DSV))
 		{
 			// Create a depth-stencil-view for the texture.
 			D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = {};
@@ -180,7 +181,7 @@ namespace platform_ex::Windows::D3D12 {
 		if (!init_data.WithoutNativeResource)
 			texture->HWResourceCreate(init_data);
 
-		if ((Initializer.Access & platform::Render::EA_RTV) == platform::Render::EA_RTV)
+		if (white::has_allflags(Initializer.Access, EAccessHint::RTV))
 		{
 			texture->SetNumRenderTargetViews(1);
 
@@ -279,7 +280,7 @@ namespace platform_ex::Windows::D3D12 {
 	{
 		wconstraint(size_in_byte > 0);
 		wconstraint(size_in_byte <= 65536);
-		wconstraint(Align(size_in_byte,16) == size_in_byte);
+		wconstraint(white::Align(size_in_byte,16) == size_in_byte);
 		usage = white::enum_and(usage ,Buffer::Usage::LifeTimeMask);
 		auto buffer = new ConstantBuffer(GetNodeDevice(0), usage, size_in_byte);
 
@@ -809,7 +810,7 @@ namespace platform_ex::Windows::D3D12 {
 
 			platform::Render::ResourceCreateInfoEx CreateInfo{ postprocess_pos,"PostProcesVertex" };
 
-			postprocess_layout->BindVertexStream(share_raw(CreateVertexBuffer(Buffer::Usage::Static, EAccessHint::EA_GPURead | EAccessHint::EA_Immutable, sizeof(postprocess_pos), EFormat::EF_Unknown, CreateInfo)), { Vertex::Element{ Vertex::Position,0,EFormat::EF_GR32F } });
+			postprocess_layout->BindVertexStream(share_raw(CreateVertexBuffer(Buffer::Usage::Static,EAccessHint::GPURead | EAccessHint::Immutable, sizeof(postprocess_pos), EFormat::EF_Unknown, CreateInfo)), { Vertex::Element{ Vertex::Position,0,EFormat::EF_GR32F } });
 		}
 		return platform::Deref(postprocess_layout);
 	}

@@ -209,7 +209,7 @@ void Display::UpdateFramewBufferView()
 			1u,
 			stereo ? 2u : 1u,
 			depth_stencil_format,
-			EA_GPURead | EA_GPUWrite,
+			EAccessHint::GPURead | EAccessHint::GPUWrite,
 			render_targets_texs[0]->GetSampleInfo(),
 			CreateInfo
 		));

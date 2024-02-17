@@ -30,11 +30,11 @@ namespace platform_ex::Windows::D3D12 {
 		src_barrier_before.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 		D3D12_HEAP_TYPE src_heap_type;
 
-		if (access == EAccessHint::EA_CPURead) {
+		if (white::has_allflags(access,EAccessHint::CPURead)) {
 			src_barrier_before.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
 			src_heap_type = D3D12_HEAP_TYPE_READBACK;
 		}
-		else if ((rhs.GetAccess() & EAccessHint::EA_CPURead) || (rhs.GetAccess() & EAccessHint::EA_CPUWrite)) {
+		else if (white::has_anyflags(rhs.GetAccess() ,EAccessHint::CPURead) || white::has_anyflags(rhs.GetAccess(), EAccessHint::CPUWrite)) {
 			src_barrier_before.Transition.StateBefore = D3D12_RESOURCE_STATE_GENERIC_READ;
 			src_heap_type = D3D12_HEAP_TYPE_UPLOAD;
 		}
@@ -49,11 +49,11 @@ namespace platform_ex::Windows::D3D12 {
 		dst_barrier_before.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		dst_barrier_before.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 		D3D12_HEAP_TYPE dst_heap_type;
-		if (rhs.GetAccess() == EAccessHint::EA_CPURead) {
+		if (white::has_allflags(access, EAccessHint::CPURead)) {
 			src_barrier_before.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
 			src_heap_type = D3D12_HEAP_TYPE_READBACK;
 		}
-		else if ((rhs.GetAccess() & EAccessHint::EA_CPURead) || (rhs.GetAccess() & EAccessHint::EA_CPUWrite)) {
+		else if (white::has_anyflags(rhs.GetAccess(), EAccessHint::CPURead) || white::has_anyflags(rhs.GetAccess(), EAccessHint::CPUWrite)) {
 			dst_barrier_before.Transition.StateBefore = D3D12_RESOURCE_STATE_GENERIC_READ;
 			dst_heap_type = D3D12_HEAP_TYPE_UPLOAD;
 		}
@@ -92,23 +92,24 @@ namespace platform_ex::Windows::D3D12 {
 	{
 		D3D12_RESOURCE_DESC ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(BufferDesc.Size);
 
-		if (BufferDesc.Access & EA_GPUUnordered)
+		if (white::has_anyflags(BufferDesc.Access,EAccessHint::GPUUnordered))
 		{
 			ResourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 		}
 
-		if ((BufferDesc.Access & EA_SRV) == 0)
+		if (white::has_anyflags(BufferDesc.Access, EAccessHint::SRV))
 		{
 			ResourceDesc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 		}
 
-		if (BufferDesc.Access & EA_DrawIndirect)
+		if (white::has_anyflags(BufferDesc.Access, EAccessHint::DrawIndirect))
 		{
 			ResourceDesc.Flags |= D3D12_RESOURCE_FLAG_NONE;
 		}
 
 		// Structured buffers, non-ByteAddress buffers, need to be aligned to their stride to ensure that they can be addressed correctly with element based offsets.
-		uint32 Alignment = (BufferDesc.Stride > 0) && (((BufferDesc.Access & EA_GPUStructured) != 0) || ((BufferDesc.Access & (EA_Raw | EA_DrawIndirect)) == 0)) ? BufferDesc.Stride : 4;
+		uint32 Alignment = (BufferDesc.Stride > 0) && (white::has_anyflags(BufferDesc.Access, EAccessHint::GPUStructured) 
+			|| white::has_anyflags(BufferDesc.Access,white::enum_or(EAccessHint::Raw , EAccessHint::DrawIndirect))) ? BufferDesc.Stride : 4;
 
 		return { ResourceDesc,Alignment };
 	}
@@ -177,7 +178,7 @@ namespace platform_ex::Windows::D3D12 {
 
 	const char* GetDebugBufferName(Buffer::Usage usage, white::uint32 access, uint32 size)
 	{
-		if (white::has_anyflags(access, EAccessHint::EA_GPUStructured))
+		if (white::has_anyflags(access, EAccessHint::GPUStructured))
 			std::format_to(DebugNames, "StructBuffer({}x{})_{}", (uint32)usage, access, size);
 		else
 			std::format_to(DebugNames, "Buffer({}x{})_{}", (uint32)usage, access, size);
@@ -217,9 +218,9 @@ namespace platform_ex::Windows::D3D12 {
 		auto [Desc, Alignment] = GetResourceDescAndAlignment(BufferDesc);
 		Desc.Format = format;
 
-		if (white::has_allflags(BufferDesc.Access,EA_AccelerationStructure))
+		if (white::has_allflags(BufferDesc.Access, EAccessHint::AccelerationStructure))
 			return CreateBuffer<ResourceStateMode::Single>(Cmdlist, Desc, InitialState, BufferDesc, Alignment, CreateInfo, Allocator);
-		else if(white::has_allflags(BufferDesc.Access, EA_DStorage))
+		else if(white::has_allflags(BufferDesc.Access, EAccessHint::DStorage))
 			return CreateBuffer<ResourceStateMode::Multi>(Cmdlist, Desc, InitialState, BufferDesc, Alignment, CreateInfo, Allocator);
 		else
 			return CreateBuffer<ResourceStateMode::Default>(Cmdlist, Desc, InitialState, BufferDesc, Alignment, CreateInfo, Allocator);

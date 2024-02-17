@@ -352,7 +352,7 @@ private:
 
 		auto& Device = render::Context::Instance().GetDevice();
 		if (!ShadowMap || ShadowMap->GetWidth(0) < LayoutWidth || ShadowMap->GetHeight(0) < LayoutHeight)
-			ShadowMap = white::share_raw(Device.CreateTexture(LayoutWidth, LayoutHeight, 1, 1, render::EFormat::EF_D32F, render::EA_GPURead | render::EA_DSV, {}));
+			ShadowMap = white::share_raw(Device.CreateTexture(LayoutWidth, LayoutHeight, 1, 1, render::EFormat::EF_D32F, EAccessHint::GPURead | EAccessHint::DSV, {}));
 
 		//Frustum Cull
 		std::vector<std::vector<const Entity*>> Subjects{ ShadowInfos.size() };
@@ -657,9 +657,9 @@ private:
 		render::ResourceCreateInfo data{"HDROutput"};
 		data.clear_value = &render::ClearValueBinding::Black;
 
-		HDROutput = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, render::EFormat::EF_ABGR16F, render::EA_GPURead | render::EA_RTV, {}, data));
+		HDROutput = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, render::EFormat::EF_ABGR16F, EAccessHint::GPURead | EAccessHint::RTV, {}, data));
 		data.Name = "NormalOutput";
-		NormalOutput = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, render::EFormat::EF_ABGR16F, render::EA_GPURead | render::EA_RTV, {}, data));
+		NormalOutput = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, render::EFormat::EF_ABGR16F, EAccessHint::GPURead | EAccessHint::RTV, {}, data));
 
 		//sync load
 		white::coroutine::SyncWait(platform_ex::AsyncLoadDStorageAsset("sponza_crytek/textures.dsff.asset"));
@@ -704,17 +704,17 @@ private:
 
 		render::ResourceCreateInfoEx lightCreate{ lights.data(),"lights"};
 
-		pLightConstantBuffer = white::share_raw(Device.CreateBuffer(render::Buffer::Usage::Dynamic, EAccessHint::EA_GPURead | EAccessHint::EA_GPUStructured, sizeof(lights[0]) * lights.size(), static_cast<EFormat>(sizeof(lights[0])), lightCreate));
+		pLightConstantBuffer = white::share_raw(Device.CreateBuffer(render::Buffer::Usage::Dynamic, EAccessHint::GPURead | EAccessHint::GPUStructured, sizeof(lights[0]) * lights.size(), static_cast<EFormat>(sizeof(lights[0])), lightCreate));
 
-		RayShadowMask = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EAccessHint::EA_GPURead | EAccessHint::EA_GPUWrite | EAccessHint::EA_GPUUnordered, {}));
-		RayShadowMaskDenoiser = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_R32F, EAccessHint::EA_GPURead | EAccessHint::EA_GPUWrite | EAccessHint::EA_GPUUnordered, {}));
+		RayShadowMask = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EAccessHint::GPURead | EAccessHint::GPUWrite | EAccessHint::GPUUnordered, {}));
+		RayShadowMaskDenoiser = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_R32F, EAccessHint::GPURead | EAccessHint::GPUWrite | EAccessHint::GPUUnordered, {}));
 
-		ShadowMapMask = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EAccessHint::EA_GPURead | EAccessHint::EA_RTV, {}));
+		ShadowMapMask = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EAccessHint::GPURead | EAccessHint::RTV, {}));
 
 		RayShadowMaskUAV = white::share_raw(Device.CreateUnorderedAccessView(RayShadowMask.get()));
 		RayShadowMaskDenoiserUAV = white::share_raw(Device.CreateUnorderedAccessView(RayShadowMaskDenoiser.get()));
 
-		ShadowMap = white::share_raw(Device.CreateTexture(4096, 4096, 1, 1, EFormat::EF_D32F, EAccessHint::EA_GPURead | EAccessHint::EA_DSV, {}));
+		ShadowMap = white::share_raw(Device.CreateTexture(4096, 4096, 1, 1, EFormat::EF_D32F, EAccessHint::GPURead | EAccessHint::DSV, {}));
 
 		GetMessageMap()[WM_MOUSEMOVE] += [&](::WPARAM wParam, ::LPARAM lParam) {
 			static auto lastxPos = GET_X_LPARAM(lParam);

@@ -99,13 +99,13 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 	tex_desc.SampleDesc.Quality = 0;
 	tex_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	tex_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-	if (base_this->GetAccessMode() & EA_GPUWrite) {
+	if (white::has_anyflags(base_this->GetAccessMode(),EAccessHint::GPUWrite)) {
 		if (IsDepthFormat(base_this->GetFormat()))
 			tex_desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 		else
 			tex_desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 	}
-	if (base_this->GetAccessMode() & EA_GPUUnordered)
+	if (white::has_anyflags(base_this->GetAccessMode(), EAccessHint::GPUUnordered))
 		tex_desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
 	D3D12_HEAP_PROPERTIES heap_prop;
@@ -117,7 +117,7 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 
 	D3D12_RESOURCE_STATES curr_state = D3D12_RESOURCE_STATE_COMMON;
 	D3D12_RESOURCE_STATES init_state = D3D12_RESOURCE_STATE_COMMON;
-	if (IsDepthFormat(base_this->GetFormat()) && (base_this->GetAccessMode() & EA_GPUWrite))
+	if (IsDepthFormat(base_this->GetFormat()) && white::has_anyflags(base_this->GetAccessMode(), EAccessHint::GPUWrite))
 	{
 		init_state = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 		curr_state = init_state;
@@ -539,7 +539,7 @@ void Texture::DoHWCopyToTexture(_type& src, _type & dst, ResourceStateTransition
 	auto& context = Context::Instance();
 	auto& cmd_list = context.GetCommandList(Device::Command_Resource);
 
-	if ((src.GetAccessMode() & EA_CPUWrite) && (dst.GetAccessMode() & EA_GPURead))
+	if (white::has_anyflags(src.GetAccessMode(),EAccessHint::CPUWrite) && white::has_anyflags(dst.GetAccessMode() ,EAccessHint::GPURead))
 		context.SyncCPUGPU();
 
 	D3D12_RESOURCE_BARRIER barrier_src;
@@ -584,7 +584,7 @@ void Texture::DoHWCopyToSubTexture(_type & src, _type & target,
 	auto& context = Context::Instance();
 	auto& cmd_list = context.GetCommandList(Device::Command_Resource);
 
-	if ((src.GetAccessMode() & EA_CPUWrite) && (target.GetAccessMode() & EA_GPURead))
+	if (white::has_anyflags(src.GetAccessMode(), EAccessHint::CPUWrite) && white::has_anyflags(target.GetAccessMode(), EAccessHint::GPURead))
 		context.SyncCPUGPU();
 
 	D3D12_RESOURCE_BARRIER barrier_src;

@@ -6,6 +6,7 @@
 
 using namespace platform;
 using namespace platform::Render::Shader;
+using platform::Render::EAccessHint;
 
 IMPLEMENT_BUILTIN_SHADER(WriteToSliceVS, "PostProcess/VolumeRendering.wsl", "WriteToSliceMainVS", platform::Render::VertexShader);
 IMPLEMENT_BUILTIN_SHADER(WriteToSliceGS, "PostProcess/VolumeRendering.wsl", "WriteToSliceMainGS", platform::Render::GeometryShader);
@@ -41,7 +42,7 @@ std::shared_ptr<Render::GraphicsBuffer> platform::GVolumeRasterizeVertexBuffer()
 			platform::Render::ResourceCreateInfo CreateInfo{ &InitData,"VolumeRasterizeVertex" };
 
 			VertexBuffer = white::share_raw(Render::Context::Instance().GetDevice().CreateVertexBuffer(Render::Buffer::Usage::Static,
-				Render::EAccessHint::EA_GPURead | Render::EAccessHint::EA_Immutable,
+				EAccessHint::GPURead | EAccessHint::Immutable,
 				sizeof(DestVertex),
 				Render::EF_Unknown, CreateInfo));
 		}

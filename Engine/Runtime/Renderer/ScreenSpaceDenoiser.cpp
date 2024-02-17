@@ -10,6 +10,7 @@
 #include "RenderInterface/RenderObject.h"
 
 using namespace platform;
+using platform::Render::EAccessHint;
 
 constexpr auto TILE_SIZE = 8;
 
@@ -305,7 +306,7 @@ void platform::ScreenSpaceDenoiser::DenoiseShadowVisibilityMasks(Render::Command
 		SCOPED_GPU_EVENT(CmdList, ShadowInjest);
 		auto injeset = Render::shared_raw_robject(Device.CreateTexture(FullResW, FullResH,
 
-			1, 1, Render::EF_R32UI, Render::EA_GPURead | Render::EA_GPUUnordered | Render::EA_GPUWrite, {}));
+			1, 1, Render::EF_R32UI, EAccessHint::GPURead | EAccessHint::GPUUnordered | EAccessHint::GPUWrite, {}));
 		auto InjestShader = Render::GetBuiltInShaderMap()->GetShader<Shadow::SSDInjestCS>();
 
 		Shadow::SSDInjestCS::Parameters Parameters;
@@ -352,7 +353,7 @@ void platform::ScreenSpaceDenoiser::DenoiseShadowVisibilityMasks(Render::Command
 		SCOPED_GPU_EVENT(CmdList, SSDSpatialAccumulation_Reconstruction);
 
 		auto spatial_reconst = Render::shared_raw_robject(Device.CreateTexture(FullResW, FullResH,
-			1, 1, Render::EF_ABGR16F, Render::EA_GPURead | Render::EA_GPUUnordered | Render::EA_GPUWrite, {}));
+			1, 1, Render::EF_ABGR16F, EAccessHint::GPURead | EAccessHint::GPUUnordered | EAccessHint::GPUWrite, {}));
 
 		SSDSpatialAccumulationCS::Parameters Parameters;
 
@@ -389,7 +390,7 @@ void platform::ScreenSpaceDenoiser::DenoiseShadowVisibilityMasks(Render::Command
 	{
 
 		auto convolution = Render::shared_raw_robject(Device.CreateTexture(FullResW, FullResH,
-			1, 1, Render::EF_ABGR16F, Render::EA_GPURead | Render::EA_GPUUnordered | Render::EA_GPUWrite, {}));
+			1, 1, Render::EF_ABGR16F, EAccessHint::GPURead | EAccessHint::GPUUnordered | EAccessHint::GPUWrite, {}));
 
 		SSDSpatialAccumulationCS::Parameters Parameters;
 

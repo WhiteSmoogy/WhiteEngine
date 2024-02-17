@@ -147,7 +147,7 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 	auto ViewCB = Builder.CreateCBuffer<ViewArgs>();
 	ViewCB->matrixs.mvp = wm::transpose(camera.GetViewMatrix() * projMatrix);
 
-	auto RWStructAccess = EAccessHint::EA_GPUReadWrite | EAccessHint::EA_GPUStructured | EAccessHint::EA_GPUUnordered;
+	auto RWStructAccess = EAccessHint::GPUReadWrite | EAccessHint::GPUStructured | EAccessHint::GPUUnordered;
 
 	auto FliteredIndexBuffer = Builder.CreateBuffer(
 		RGBufferDesc::CreateByteAddressDesc(

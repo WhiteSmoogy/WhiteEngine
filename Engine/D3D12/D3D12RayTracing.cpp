@@ -31,7 +31,7 @@ void RayTracingShaderTable::UploadToGPU(D3D12::CommandContext& Context)
 			.Size = static_cast<uint32>(Data.size()),
 			.Stride =0,
 			.Usage = platform::Render::Buffer::Static,
-			.Access = platform::Render::EAccessHint::EA_GPURead
+			.Access = white::underlying(platform::Render::EAccessHint::GPURead)
 	};
 
 	Buffer = white::share_raw(

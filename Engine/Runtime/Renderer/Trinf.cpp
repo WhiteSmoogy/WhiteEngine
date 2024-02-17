@@ -202,7 +202,7 @@ void StreamingScene::ProcessNewResources(RenderGraph::RGBuilder& Builder)
 		GpuStreamingSize += resource->Metadata->Tangent.UncompressedSize;
 		GpuStreamingSize += resource->Metadata->TexCoord.UncompressedSize;
 
-		resource->GpuStream = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(GpuStreamingSize) | pr::EAccessHint::EA_DStorage, "Trinf.ResourceStream");
+		resource->GpuStream = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(GpuStreamingSize) | pr::EAccessHint::DStorage, "Trinf.ResourceStream");
 
 		{
 			auto index_req = resource->BuildRequestForRegion(resource->Metadata->Index);

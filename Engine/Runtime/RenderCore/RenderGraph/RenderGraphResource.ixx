@@ -343,7 +343,6 @@ export namespace RenderGraph
 		friend RGAllocator;
 	};
 
-	using RGBufferUAVRef = RGBufferUAV*;
 
 	using RGBufferSRVDesc = RGBufferUAVDesc;
 
@@ -370,7 +369,6 @@ export namespace RenderGraph
 		friend RGAllocator;
 	};
 
-	using RGBufferSRVRef = RGBufferSRV*;
 
 	class RGConstBuffer : public RGResource
 	{

@@ -86,16 +86,21 @@ inline namespace Shader
 
 		ShaderParametersMetadata(
 			uint32 InSize,
-			const std::vector<Member>& InMembers);
+			std::vector<Member>&& InMembers);
 
 		const std::vector<Member>& GetMembers() const { return Members; }
 
 		uint32 GetSize() const { return Size; }
+		uint32 GetBufferParameterCount() const { return BufferCount; }
+		uint32 GetTextureParameterCount() const { return TextureCount; }
 	private:
 		/** Size of the entire struct in bytes. */
 		const uint32 Size;
-
 		std::vector<Member> Members;
+
+		const uint32 BufferCount;
+		const uint32 TextureCount;
+
 	};
 }
 PR_NAMESPACE_END

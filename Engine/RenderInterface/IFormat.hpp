@@ -473,6 +473,8 @@ namespace platform::Render {
 		\brief ElementAccess元素访问方式
 		*/
 		enum class EAccessHint :uint32 {
+			None = 0,
+
 			CPURead = 1U << 0,
 			CPUWrite = 1U << 1,
 			GPURead = 1U << 2,

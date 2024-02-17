@@ -21,4 +21,16 @@ export namespace RenderGraph
 
 	class RGUnorderedAccessView;
 	class RGShaderResourceView;
+
+	class RGBufferUAV;
+	using RGBufferUAVRef = RGBufferUAV*;
+
+	class RGBufferSRV;
+	using RGBufferSRVRef = RGBufferSRV*;
+
+	class RGTextureUAV;
+	using RGTextureUAVRef = RGTextureUAV*;
+
+	class RGTextureSRV;
+	using RGTextureSRVRef = RGTextureSRV*;
 }

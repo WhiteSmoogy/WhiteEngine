@@ -180,6 +180,16 @@ namespace platform::Render {
 			return static_cast<ShaderBaseType>(type >> 16) & SBT_ELEMTYPE;
 		}
 
+		constexpr bool IsBufferType(ShaderParamType type)
+		{
+			return white::has_allflags(static_cast<ShaderBaseType>(type >> 16),SBT_BUFFER);
+		}
+
+		constexpr bool IsTextureType(ShaderParamType type)
+		{
+			return white::has_allflags(static_cast<ShaderBaseType>(type >> 16), SBT_TEXTURE);
+		}
+
 		constexpr bool IsNumberType(ShaderParamType type)
 		{
 			auto base_type = GetBaseType(type);

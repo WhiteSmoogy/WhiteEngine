@@ -12,6 +12,7 @@ import :allocator;
 export namespace RenderGraph
 {
 	using platform::Render::ShaderParametersMetadata;
+	using platform::Render::ShaderBaseType;
 
 	template <typename LocalObjectType, typename LocalIndexType>
 	class RGHandle
@@ -234,6 +235,49 @@ export namespace RenderGraph
 	template <typename TStruct>
 	concept IsRGParameterStruct = requires{ TStruct::TypeInfo::GetStructMetadata; };
 
+	class RGParameter
+	{
+	public:
+		RGParameter(const ShaderParametersMetadata::Member* InMember, const uint8* InMemberPtr)
+			:Member(InMember), MemberPtr(InMemberPtr)
+		{}
+
+		RGTextureSRVRef GetAsTextureSRV() const
+		{
+			return *GetAs<RGTextureSRVRef>();
+		}
+
+		RGBufferSRVRef GetAsBufferSRV() const
+		{
+			return *GetAs<RGBufferSRVRef>();
+		}
+
+		RGTextureUAVRef GetAsTextureUAV() const
+		{
+			return *GetAs<RGTextureUAVRef>();
+		}
+
+		RGBufferUAVRef GetAsBufferUAV() const
+		{
+			return *GetAs<RGBufferUAVRef>();
+		}
+
+		ShaderBaseType GetShaderBaseType() const
+		{
+			return platform::Render::GetBaseType(Member->GetShaderType());
+		}
+
+	private:
+		template <typename T>
+		const T* GetAs() const
+		{
+			return reinterpret_cast<const T*>(MemberPtr);
+		}
+
+		const ShaderParametersMetadata::Member* Member;
+		const uint8* MemberPtr;
+	};
+
 	class RGParameterStruct
 	{
 	public:
@@ -259,12 +303,50 @@ export namespace RenderGraph
 			return 0;
 		}
 
-		uint32 GetBufferParameterCount()
+		uint32 GetBufferParameterCount() const
 		{
 			if (!Metadata)
 				return 0;
 
-			return 0;
+			return Metadata->GetBufferParameterCount();
+		}
+
+		uint32 GetTextureParameterCount() const
+		{
+			if (!Metadata)
+				return 0;
+
+			return Metadata->GetTextureParameterCount();
+		}
+
+		template<typename FunctionType>
+		void EnumerateBuffers(FunctionType Function) const
+		{
+			if (!Metadata)
+				return;
+
+			for (auto& member : Metadata->GetMembers())
+			{
+				if (IsBufferType(member.GetShaderType()))
+				{
+					Function(RGParameter{ &member,Contents + member.GetOffset() });
+				}
+			}
+		}
+
+		template <typename FunctionType>
+		void EnumerateTextures(FunctionType Function) const
+		{
+			if (!Metadata)
+				return;
+
+			for (auto& member : Metadata->GetMembers())
+			{
+				if (IsTextureType(member.GetShaderType()))
+				{
+					Function(RGParameter{ &member,Contents + member.GetOffset() });
+				}
+			}
 		}
 
 	private:

@@ -18,6 +18,8 @@ export namespace RenderGraph
 {
 	using platform::Render::ComputeCommandList;
 	using platform::Render::EPipeline;
+	using platform::Render::EAccessHint;
+	using platform::Render::ShaderBaseType;
 
 	enum class ERGPassFlags
 	{
@@ -155,6 +157,62 @@ export namespace RenderGraph
 		/** Allows the builder to parallelize execution of passes. Without this flag, all passes execute on the render thread. */
 		AllowParallelExecute = 1 << 0
 	};
+
+	inline void GetPassAccess(ERGPassFlags PassFlags, EAccessHint& SRVAccess, EAccessHint& UAVAccess)
+	{
+		SRVAccess = EAccessHint::None;
+		UAVAccess = EAccessHint::None;
+
+		if (white::has_anyflags(PassFlags, ERGPassFlags::Raster))
+		{
+			SRVAccess = white::enum_or(SRVAccess, EAccessHint::SRVGraphics);
+			UAVAccess = white::enum_or(UAVAccess, EAccessHint::UAVGraphics);
+		}
+
+		if (white::has_anyflags(PassFlags, white::enum_or(ERGPassFlags::AsyncCompute,ERGPassFlags::Compute)))
+		{
+			SRVAccess =  white::enum_or(SRVAccess, EAccessHint::SRVCompute);
+			UAVAccess =  white::enum_or(SRVAccess, EAccessHint::UAVCompute);
+		}
+
+		if (white::has_anyflags(PassFlags, ERGPassFlags::Copy))
+		{
+			SRVAccess = white::enum_or(SRVAccess, EAccessHint::CopySrc);
+		}
+	}
+
+	template <typename TAccessFunction>
+	void EnumerateBufferAccess(RGParameterStruct PassParameters, ERGPassFlags PassFlags, TAccessFunction AccessFunction)
+	{
+		EAccessHint SRVAccess, UAVAccess;
+		GetPassAccess(PassFlags, SRVAccess, UAVAccess);
+
+		PassParameters.EnumerateBuffers([&](RGParameter Parameter)
+			{
+				auto baseType = Parameter.GetShaderBaseType();
+
+				if (white::has_anyflags(baseType, SBT_SRV))
+				{
+					if (auto SRV = Parameter.GetAsBufferSRV())
+					{
+						auto Buffer = SRV->GetParent();
+						auto BufferAccess = SRVAccess;
+
+						AccessFunction(SRV, Buffer, BufferAccess);
+					}
+				}
+				else if (white::has_anyflags(baseType, SBT_UAV))
+				{
+					if (auto UAV = Parameter.GetAsBufferUAV())
+					{
+						auto Buffer = UAV->GetParent();
+
+						AccessFunction(UAV, Buffer, UAVAccess);
+					}
+				}
+			}
+		);
+	}
 
 	class RGBuilder :RGAllocatorScope
 	{
@@ -426,8 +484,13 @@ export namespace RenderGraph
 						Pass->Views.emplace_back(View->Handle);
 					}
 				};
-		}
 
+			Pass->Views.reserve(PassParameters.GetBufferParameterCount() + PassParameters.GetTextureParameterCount());
+
+			EnumerateBufferAccess(PassParameters, PassFlags, [&](RGViewRef BufferView, RGBufferRef Buffer, EAccessHint Access)
+				{
+				});
+		}
 
 	private:
 		CommandListImmediate& CmdList;

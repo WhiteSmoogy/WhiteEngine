@@ -111,9 +111,13 @@ export namespace RenderGraph
 		ERGViewType Type;
 		RGViewHandle Handle;
 
+		RGPassHandle LastPass;
+
 		friend RGViewRegistry;
 		friend RGBuilder;
 	};
+
+	using RGViewRef = RGView*;
 
 	enum class ERGUnorderedAccessViewFlags : white::uint8
 	{

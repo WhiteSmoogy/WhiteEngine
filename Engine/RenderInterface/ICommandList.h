@@ -12,6 +12,12 @@ namespace platform::Render {
 	class CommandListBase;
 	class Display;
 
+	enum class EPipeline: uint32
+	{
+		Graphics = EAccessHint::Graphics,
+		Compute = EAccessHint::Compute,
+	};
+
 	struct CommandListContext
 	{};
 

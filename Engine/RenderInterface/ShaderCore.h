@@ -88,16 +88,19 @@ namespace platform::Render {
 		{
 			SBT_INVALID,
 
-			SBT_SRV,
-			SBT_UAV,
-			SBT_SAMPLER,
-			SBT_CBUFFER,
+			SBT_SRV = 1 << 0,
+			SBT_UAV = 1 << 1,
+			SBT_SAMPLER = 1 << 2,
+			SBT_CBUFFER = 1 << 3,
 
-			SBT_BOOL,
+			SBT_BOOL = 1 << 4,
 
-			SBT_INT32,
-			SBT_UINT32,
-			SBT_FLOAT32,
+			SBT_INT32 = 1 << 5,
+			SBT_UINT32 = 1 << 6,
+			SBT_FLOAT32 = 1 << 7,
+
+			SBT_TEXTURE = 1 << 13,
+			SBT_BUFFER = 1<<14,
 
 			SBT_ELEMTYPE = 1<<15,
 		};
@@ -110,7 +113,7 @@ namespace platform::Render {
 
 		enum ShaderParamType :uint32
 		{
-			SPT_texture1D = MakeShaderFormat<SBT_SRV| SBT_ELEMTYPE,1,1,0>,
+			SPT_texture1D = MakeShaderFormat<SBT_SRV| SBT_ELEMTYPE | SBT_TEXTURE,1,1,0>,
 			SPT_texture2D,
 			SPT_texture3D,
 			SPT_textureCUBE,
@@ -118,20 +121,24 @@ namespace platform::Render {
 			SPT_texture2DArray,
 			SPT_texture3DArray,
 			SPT_textureCUBEArray,
-			SPT_ConstantBuffer = MakeShaderFormat<SBT_CBUFFER| SBT_ELEMTYPE, 1, 1, 0>,
-			SPT_buffer = MakeShaderFormat<SBT_SRV| SBT_ELEMTYPE, 1, 1, 8>,
-			SPT_StructuredBuffer,
-			SPT_rwbuffer = MakeShaderFormat<SBT_UAV| SBT_ELEMTYPE, 1, 1, 0>,
-			SPT_rwstructured_buffer,
-			SPT_rwtexture1D,
+			SPT_rwtexture1D = MakeShaderFormat<SBT_UAV | SBT_ELEMTYPE | SBT_TEXTURE, 1, 1, 0>,
 			SPT_rwtexture2D,
 			SPT_rwtexture3D,
 			SPT_rwtexture1DArray,
 			SPT_rwtexture2DArray,
+
+			SPT_ConstantBuffer = MakeShaderFormat<SBT_CBUFFER| SBT_ELEMTYPE, 1, 1, 0>,
+
+			SPT_byteAddressBuffer = MakeShaderFormat<SBT_SRV | SBT_BUFFER, 1, 1, 0>,
+			SPT_buffer = MakeShaderFormat<SBT_SRV| SBT_ELEMTYPE | SBT_BUFFER, 1, 1, 0>,
+			SPT_StructuredBuffer,
+			SPT_ConsumeStructuredBuffer,
+
+			SPT_rwbyteAddressBuffer = MakeShaderFormat<SBT_UAV | SBT_BUFFER, 1, 1, 0>,
+			SPT_rwbuffer = MakeShaderFormat<SBT_UAV| SBT_ELEMTYPE | SBT_BUFFER, 1, 1, 0>,
+			SPT_rwstructured_buffer,
 			SPT_AppendStructuredBuffer,
-			SPT_ConsumeStructuredBuffer = MakeShaderFormat<SBT_SRV| SBT_ELEMTYPE, 1, 1, 10>,
-			SPT_byteAddressBuffer = MakeShaderFormat<SBT_SRV , 1, 1, 10>,
-			SPT_rwbyteAddressBuffer = MakeShaderFormat<SBT_UAV, 1, 1, 8>,
+
 			SPT_RaytracingAccelerationStructure = MakeShaderFormat<SBT_SRV, 1, 1, 12>,
 			SPT_sampler = MakeShaderFormat<SBT_SAMPLER, 1, 1, 0>,
 			SPT_shader = MakeShaderFormat<SBT_INVALID, 1, 1, 0>,

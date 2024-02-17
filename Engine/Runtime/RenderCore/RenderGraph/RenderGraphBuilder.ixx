@@ -17,6 +17,7 @@ import :resourcepool;
 export namespace RenderGraph
 {
 	using platform::Render::ComputeCommandList;
+	using platform::Render::EPipeline;
 
 	enum class ERGPassFlags
 	{
@@ -32,12 +33,18 @@ export namespace RenderGraph
 	{
 	public:
 		RGPass(RGEventName&& InName, RGParameterStruct InParameterStruct, ERGPassFlags InFlag)
-			:Name(std::move(InName)), ParameterStruct(InParameterStruct), Flag(InFlag)
+			:Name(std::move(InName)), ParameterStruct(InParameterStruct), Flags(InFlag)
+			, Pipeline(white::has_anyflags(Flags, ERGPassFlags::AsyncCompute)? EPipeline::Compute:EPipeline::Graphics)
 		{}
 
 		const char* GetName() const
 		{
 			return Name.GetName();
+		}
+
+		RGParameterStruct GetParameters() const
+		{
+			return ParameterStruct;
 		}
 
 	protected:
@@ -46,9 +53,21 @@ export namespace RenderGraph
 	private:
 		RGEventName Name;
 		RGParameterStruct ParameterStruct;
-		ERGPassFlags Flag;
+		ERGPassFlags Flags;
 
+		EPipeline Pipeline;
+			 
 		RGPassHandle Handle;
+
+		RGPassHandle GraphicsForkPass;
+		RGPassHandle GraphicsJoinPass;
+		RGPassHandle PrologueBarrierPass;
+		RGPassHandle EpilogueBarrierPass;
+
+		RGArray<RGPass*> ResourcesToBegin;
+		RGArray<RGPass*> ResourcesToEnd;
+
+		RGArray<RGViewHandle> Views;
 
 		friend RGPassRegistry;
 		friend RGBuilder;
@@ -315,6 +334,7 @@ export namespace RenderGraph
 			);
 
 			Passes.Insert(Pass);
+			SetupParameterPass(Pass);
 
 			return Pass;
 		}
@@ -350,6 +370,65 @@ export namespace RenderGraph
 				SetRObject(Buffer, GRenderGraphResourcePool.FindFreeBuffer(Buffer->Desc, Buffer->Name, Alignment), PassHandle);
 			}
 		}
+
+		RGPass* SetupParameterPass(RGPass* Pass)
+		{
+			SetupPassInternals(Pass);
+
+			if (bParallelSetupEnabled)
+			{
+				throw white::unimplemented();
+			}
+			else
+			{
+				SetupPassResources(Pass);
+			}
+
+			return Pass;
+		}
+
+		void SetupPassInternals(RGPass* Pass)
+		{
+			const auto PassHandle = Pass->Handle;
+			const auto PassFlags = Pass->Flags;
+			const auto PassPipeline = Pass->Pipeline;
+
+			Pass->GraphicsForkPass = PassHandle;
+			Pass->GraphicsJoinPass = PassHandle;
+			Pass->PrologueBarrierPass = PassHandle;
+			Pass->EpilogueBarrierPass = PassHandle;
+
+			if (Pass->Pipeline == EPipeline::Graphics)
+			{
+				Pass->ResourcesToBegin.emplace_back(Pass);
+				Pass->ResourcesToEnd.emplace_back(Pass);
+			}
+
+			AsyncComputePassCount += white::has_anyflags(PassFlags, ERGPassFlags::AsyncCompute) ? 1 : 0;
+			RasterPassCount += white::has_anyflags(PassFlags, ERGPassFlags::Raster) ? 1 : 0;
+		}
+
+
+		void SetupPassResources(RGPass* Pass)
+		{
+			const auto PassParameters = Pass->GetParameters();
+			const auto PassHandle = Pass->Handle;
+			const auto PassFlags = Pass->Flags;
+			const auto PassPipeline = Pass->Pipeline;
+
+			bool bRenderPassOnlyWrites = true;
+
+			const auto TryAddView = [&](RGViewRef View)
+				{
+					if (View && View->LastPass != PassHandle)
+					{
+						View->LastPass = PassHandle;
+						Pass->Views.emplace_back(View->Handle);
+					}
+				};
+		}
+
+
 	private:
 		CommandListImmediate& CmdList;
 		const RGEventName BuilderName;
@@ -368,6 +447,9 @@ export namespace RenderGraph
 			std::hash<GraphicsBuffer*>,
 			std::equal_to<GraphicsBuffer*>,
 			RGSTLAllocator<std::pair<GraphicsBuffer* const, RGBufferRef>>> ExternalBuffers;
+
+		uint32 AsyncComputePassCount;
+		uint32 RasterPassCount;
 	};
 }
 

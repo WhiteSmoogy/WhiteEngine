@@ -137,5 +137,8 @@ export namespace RenderGraph
 
 	private:
 	};
+
+	template<class T>
+	using RGArray = std::vector<T, RGSTLAllocator<T>>;
 }
 

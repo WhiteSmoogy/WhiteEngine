@@ -259,6 +259,14 @@ export namespace RenderGraph
 			return 0;
 		}
 
+		uint32 GetBufferParameterCount()
+		{
+			if (!Metadata)
+				return 0;
+
+			return 0;
+		}
+
 	private:
 
 		const ShaderParametersMetadata* Metadata = nullptr;

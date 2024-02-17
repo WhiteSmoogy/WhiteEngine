@@ -32,6 +32,10 @@ namespace platform{
 			bool IsDebugLayerEnabled = false;
 
 			bool IsInitialized = false;
+
+			EAccessHint MergeableAccessMask = white::enum_or(EAccessHint::ReadOnlyMask, EAccessHint::UAV);
+
+			EAccessHint MultiPipelineMergeableAccessMask = EAccessHint::ReadOnlyExclusiveMask;
 		};
 
 		extern DeviceCaps Caps;

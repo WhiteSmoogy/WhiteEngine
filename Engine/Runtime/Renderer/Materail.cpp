@@ -38,7 +38,7 @@ platform::Material::Material(const asset::MaterailAsset & asset, const std::stri
 	for (auto& bind_value : bind_values) {
 		if (bind_effects->GetParameter(bind_value.first).GetType() < SPT_textureCUBEArray) {
 			if WB_LIKELY(bind_value.second.type() == white::type_id<std::string>()) {
-				auto pTexture = X::LoadTexture(std::any_cast<std::string>(bind_value.second), EAccessHint::GPURead | EAccessHint::Immutable);
+				auto pTexture = X::LoadTexture(std::any_cast<std::string>(bind_value.second), EAccessHint::SRV | EAccessHint::Immutable);
 
 				bind_value.second =Render::TextureSubresource(pTexture, 0, pTexture->GetArraySize(),0, pTexture->GetNumMipMaps());
 			}

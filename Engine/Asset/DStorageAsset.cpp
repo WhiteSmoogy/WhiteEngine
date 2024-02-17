@@ -185,7 +185,7 @@ struct DStorageAssetFile
 	platform::Render::Texture* CreateTexture(platform::Render::Device& device, const platform_ex::DSFileFormat::D3DResourceDesc& desc)
 	{
 		auto format = dds::FromDXGIFormat(desc.Format);
-		auto access = EAccessHint::GPURead | EAccessHint::Immutable;
+		auto access = EAccessHint::SRV | EAccessHint::Immutable;
 		platform::Render::SampleDesc sample_info{ desc.SampleDesc.Count,desc.SampleDesc.Quality };
 
 		switch ((platform::Render::TextureType)desc.Dimension)

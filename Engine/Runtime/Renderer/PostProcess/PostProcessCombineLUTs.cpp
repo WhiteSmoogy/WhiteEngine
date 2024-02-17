@@ -131,7 +131,7 @@ std::shared_ptr<Render::Texture> platform::CombineLUTPass(Render::CommandList& C
 	initializer.ArraySize = 1;
 	initializer.NumMipmaps = 1;
 	initializer.Format = Render::EF_ABGR16F;
-	initializer.Access = EAccessHint::GPURead | EAccessHint::RTV;
+	initializer.Access = EAccessHint::SRV | EAccessHint::RTV;
 	initializer.NumSamples = 1;
 
 	Render::ResourceCreateInfo CreateInfo;

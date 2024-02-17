@@ -44,7 +44,7 @@ std::shared_ptr<GraphicsBuffer> platform::Render::GScreenRectangleVertexBuffer()
 			platform::Render::ResourceCreateInfoEx CreateInfo(Vertices, "ScreenRectangleVertexBuffer");
 
 			VertexBuffer = white::share_raw(Render::Context::Instance().GetDevice().CreateVertexBuffer(Render::Buffer::Usage::Static,
-				Render::EAccessHint::GPURead | Render::EAccessHint::Immutable,
+				Render::EAccessHint::VertexOrIndexBuffer | Render::EAccessHint::Immutable,
 				sizeof(Vertices),
 				Render::EF_Unknown, CreateInfo));
 		}
@@ -67,7 +67,7 @@ std::shared_ptr<GraphicsBuffer> platform::Render::GScreenRectangleIndexBuffer()
 			platform::Render::ResourceCreateInfoEx CreateInfo(Indices, "ScreenRectangleIndexBuffer");
 
 			IndexBuffer = white::share_raw(Render::Context::Instance().GetDevice().CreateIndexBuffer(Render::Buffer::Usage::Static,
-				Render::EAccessHint::GPURead | Render::EAccessHint::Immutable,
+				Render::EAccessHint::VertexOrIndexBuffer | Render::EAccessHint::Immutable,
 				sizeof(Indices),
 				Render::EF_R16UI, CreateInfo));
 		}

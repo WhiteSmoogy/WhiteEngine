@@ -20,7 +20,7 @@ namespace platform_ex::Windows {
 
 		class ResourceLocation;
 
-	
+
 		enum class ResourceStateMode
 		{
 			Default,
@@ -112,64 +112,62 @@ namespace platform_ex::Windows {
 			{
 				// all single write states
 			case EAccessHint::RTV:					return D3D12_RESOURCE_STATE_RENDER_TARGET;
-			case EAccessHint::UAV:			return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-			case EAccessHint::DSV:				return D3D12_RESOURCE_STATE_DEPTH_WRITE;
-			case EAccessHint::GPUWrite:				return D3D12_RESOURCE_STATE_COPY_DEST;
+			case EAccessHint::UAV:
+			case EAccessHint::UAVCompute:
+			case EAccessHint::UAVGraphics:
+				return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			case EAccessHint::DSV:
+			case EAccessHint::DSVWrite:
+				return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+			case EAccessHint::CopyDst:				return D3D12_RESOURCE_STATE_COPY_DEST;
 			case EAccessHint::Present:				return D3D12_RESOURCE_STATE_PRESENT;
 
 				// Generic read for mask read states
-			case EAccessHint::GPURead:
+			case EAccessHint::ReadOnlyMask:
+			case EAccessHint::ReadOnlyExclusiveMask:
 				return D3D12_RESOURCE_STATE_GENERIC_READ;
 			default:
 			{
-				// Special case for DSV read & write (Depth write allows depth read as well in D3D)
-				if (InRHIAccess == EAccessHint::DSV)
+				D3D12_RESOURCE_STATES State = D3D12_RESOURCE_STATE_COMMON;
+
+				// Translate the requested after state to a D3D state
+				if (white::has_anyflags(InRHIAccess, EAccessHint::SRVGraphics) && !InIsAsyncCompute)
 				{
-					return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+					State |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 				}
-				else
+				if (white::has_anyflags(InRHIAccess, EAccessHint::SRVCompute))
 				{
-					D3D12_RESOURCE_STATES State = D3D12_RESOURCE_STATE_COMMON;
-
-					// Translate the requested after state to a D3D state
-					if (white::has_allflags(InRHIAccess, EAccessHint::SRV) && !InIsAsyncCompute)
-					{
-						State |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-					}
-					if (white::has_anyflags(InRHIAccess, EAccessHint::Compute))
-					{
-						State |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-					}
-					if (white::has_anyflags(InRHIAccess, EAccessHint::VertexOrIndexBuffer))
-					{
-						State |= D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_INDEX_BUFFER;
-					}
-					if (white::has_allflags(InRHIAccess, EAccessHint::CopySrc))
-					{
-						State |= D3D12_RESOURCE_STATE_COPY_SOURCE;
-					}
-					if (white::has_anyflags(InRHIAccess, EAccessHint::DrawIndirect))
-					{
-						State |= D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
-					}
-					if (white::has_allflags(InRHIAccess, EAccessHint::ResolveSrc))
-					{
-						State |= D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
-					}
-					if (white::has_allflags(InRHIAccess, EAccessHint::DSVRead))
-					{
-						State |= D3D12_RESOURCE_STATE_DEPTH_READ;
-					}
-					if (white::has_anyflags(InRHIAccess, EAccessHint::ShadingRateSource))
-					{
-						State |= D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
-					}
-
-					// Should have at least one valid state
-					wassume(State != D3D12_RESOURCE_STATE_COMMON);
-
-					return State;
+					State |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 				}
+				if (white::has_anyflags(InRHIAccess, EAccessHint::VertexOrIndexBuffer))
+				{
+					State |= D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_INDEX_BUFFER;
+				}
+				if (white::has_allflags(InRHIAccess, EAccessHint::CopySrc))
+				{
+					State |= D3D12_RESOURCE_STATE_COPY_SOURCE;
+				}
+				if (white::has_anyflags(InRHIAccess, EAccessHint::DrawIndirect))
+				{
+					State |= D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
+				}
+				if (white::has_allflags(InRHIAccess, EAccessHint::ResolveSrc))
+				{
+					State |= D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
+				}
+				if (white::has_allflags(InRHIAccess, EAccessHint::DSVRead))
+				{
+					State |= D3D12_RESOURCE_STATE_DEPTH_READ;
+				}
+				if (white::has_anyflags(InRHIAccess, EAccessHint::ShadingRateSource))
+				{
+					State |= D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
+				}
+
+				// Should have at least one valid state
+				wassume(State != D3D12_RESOURCE_STATE_COMMON);
+
+				return State;
 			}
 			}
 
@@ -224,7 +222,7 @@ namespace platform_ex::Windows {
 			uint16 GetArraySize() const { return (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D) ? 1 : desc.DepthOrArraySize; }
 			uint16 GetPlaneCount() const { return  platform_ex::Windows::D3D12::GetPlaneCount(desc.Format); }
 
-			uint16 GetSubresourceCount() const {return SubresourceCount;}
+			uint16 GetSubresourceCount() const { return SubresourceCount; }
 
 			bool RequiresResourceStateTracking() const { return bRequiresResourceStateTracking; }
 

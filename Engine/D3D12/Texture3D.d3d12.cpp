@@ -82,7 +82,7 @@ void Texture3D::UnMap(const Sub1D& box) {
 
 
 D3D12_SHADER_RESOURCE_VIEW_DESC Texture3D::CreateSRVDesc(uint8 first_array_index, uint8 num_items, uint8 first_level, uint8 num_levels) const{
-	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::GPURead), "Access mode must have EA_GPURead flag");
+	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::SRV), "Access mode must have EA_GPURead flag");
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
 	switch (format) {
 	case EF_D16:
@@ -149,7 +149,7 @@ D3D12_RENDER_TARGET_VIEW_DESC  Texture3D::CreateRTVDesc(uint8 array_index, uint1
 
 D3D12_DEPTH_STENCIL_VIEW_DESC  Texture3D::CreateDSVDesc(uint8 array_index, uint16 first_slice, uint16 num_slices, uint8 level) const{
 
-	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::GPUWrite), "Access mode must have EA_GPUWrite flag");
+	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::DSVWrite), "Access mode must have EA_GPUWrite flag");
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
 

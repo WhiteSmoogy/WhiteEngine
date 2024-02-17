@@ -17,6 +17,7 @@ namespace D3D12 = platform_ex::Windows::D3D12 ;
 using platform::Render::ShaderType;
 using platform::Render::CommandListExecutor;
 using platform::Render::BufferDesc;
+using platform::Render::EAccessHint;
 
 void RayTracingShaderTable::UploadToGPU(D3D12::CommandContext& Context)
 {
@@ -31,7 +32,7 @@ void RayTracingShaderTable::UploadToGPU(D3D12::CommandContext& Context)
 			.Size = static_cast<uint32>(Data.size()),
 			.Stride =0,
 			.Usage = platform::Render::Buffer::Static,
-			.Access = white::underlying(platform::Render::EAccessHint::GPURead)
+			.Access = EAccessHint::SRV | EAccessHint::CopyDst
 	};
 
 	Buffer = white::share_raw(

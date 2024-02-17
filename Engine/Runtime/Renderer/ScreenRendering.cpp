@@ -20,7 +20,7 @@ std::shared_ptr<platform::Render::GraphicsBuffer> WhiteEngine::GFullScreenVertex
 
 	static std::shared_ptr<platform::Render::GraphicsBuffer> ClearVertexBuffer
 		 = white::share_raw(Render::Context::Instance().GetDevice().CreateVertexBuffer(Render::Buffer::Usage::Static,
-			 Render::EAccessHint::GPURead | Render::EAccessHint::Immutable,
+			 Render::EAccessHint::VertexOrIndexBuffer | Render::EAccessHint::Immutable,
 			 sizeof(DestVertex),
 			 Render::EF_Unknown, CreateInfo));
 

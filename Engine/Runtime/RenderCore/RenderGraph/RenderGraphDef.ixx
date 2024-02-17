@@ -21,9 +21,9 @@ export namespace RenderGraph
 		using ObjectType = LocalObjectType;
 		using IndexType = LocalIndexType;
 
-		static const RGHandle Null;
+		static RGHandle Null;
 
-		RGHandle() = default;
+		constexpr RGHandle() = default;
 
 		explicit inline RGHandle(white::int32 InIndex)
 		{
@@ -108,6 +108,9 @@ export namespace RenderGraph
 			return Handle.GetIndex();
 		}
 	};
+
+	template <typename LocalObjectType, typename LocalIndexType>
+	RGHandle<LocalObjectType, LocalIndexType> RGHandle<LocalObjectType, LocalIndexType>::Null;
 
 	enum class ERGHandleRegistryDestructPolicy
 	{
@@ -230,6 +233,42 @@ export namespace RenderGraph
 
 	private:
 		std::vector<ObjectType*, RGSTLAllocator<ObjectType*>> Array;
+	};
+
+	template <typename HandleType>
+	class RGTHandleUniqueFilter
+	{
+	public:
+		RGTHandleUniqueFilter() = default;
+
+		RGTHandleUniqueFilter(HandleType InHandle)
+		{
+			AddHandle(InHandle);
+		}
+
+		void Reset()
+		{
+			Handle = HandleType::Null;
+			bUnique = false;
+		}
+
+		void AddHandle(HandleType InHandle)
+		{
+			if (Handle != InHandle && InHandle.IsValid())
+			{
+				bUnique = Handle.IsNull();
+				Handle = InHandle;
+			}
+		}
+
+		HandleType GetUniqueHandle() const
+		{
+			return bUnique ? Handle : HandleType::Null;
+		}
+
+	private:
+		HandleType Handle;
+		bool bUnique = false;
 	};
 
 	template <typename TStruct>
@@ -396,4 +435,6 @@ export namespace RenderGraph
 
 		std::string EventName;
 	};
+
+	constexpr bool GRDGOverlapUAVs = true;
 }

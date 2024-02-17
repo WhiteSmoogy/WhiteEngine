@@ -42,7 +42,7 @@ std::shared_ptr<Render::GraphicsBuffer> platform::GVolumeRasterizeVertexBuffer()
 			platform::Render::ResourceCreateInfo CreateInfo{ &InitData,"VolumeRasterizeVertex" };
 
 			VertexBuffer = white::share_raw(Render::Context::Instance().GetDevice().CreateVertexBuffer(Render::Buffer::Usage::Static,
-				EAccessHint::GPURead | EAccessHint::Immutable,
+				EAccessHint::VertexOrIndexBuffer | EAccessHint::Immutable,
 				sizeof(DestVertex),
 				Render::EF_Unknown, CreateInfo));
 		}

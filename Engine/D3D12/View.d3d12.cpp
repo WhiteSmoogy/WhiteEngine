@@ -206,7 +206,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 	uint32 StartOffsetBytes = 0;
 	uint32 NumElements = -1;
 
-	wconstraint(white::has_anyflags(access, EAccessHint::GPURead) || white::has_allflags(access, EAccessHint::AccelerationStructure));
+	wconstraint(white::has_anyflags(access, EAccessHint::SRV) || white::has_allflags(access, EAccessHint::AccelerationStructure));
 
 	auto CreateShaderResourceView = [&]<typename CommandType>()
 	{

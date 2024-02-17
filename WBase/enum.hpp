@@ -129,6 +129,13 @@ namespace white {
 
 	template<typename Enum>
 		requires std::is_enum_v<Enum>
+	constexpr Enum enum_compl(Enum A)
+	{
+		return static_cast<Enum>(~underlying(A));
+	}
+
+	template<typename Enum>
+		requires std::is_enum_v<Enum>
 	constexpr Enum enum_or(Enum A, Enum B)
 	{
 		return static_cast<Enum>(underlying(A) | underlying(B));

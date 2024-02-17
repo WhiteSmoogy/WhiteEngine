@@ -810,7 +810,7 @@ namespace platform_ex::Windows::D3D12 {
 
 			platform::Render::ResourceCreateInfoEx CreateInfo{ postprocess_pos,"PostProcesVertex" };
 
-			postprocess_layout->BindVertexStream(share_raw(CreateVertexBuffer(Buffer::Usage::Static,EAccessHint::GPURead | EAccessHint::Immutable, sizeof(postprocess_pos), EFormat::EF_Unknown, CreateInfo)), { Vertex::Element{ Vertex::Position,0,EFormat::EF_GR32F } });
+			postprocess_layout->BindVertexStream(share_raw(CreateVertexBuffer(Buffer::Usage::Static,EAccessHint::VertexOrIndexBuffer | EAccessHint::Immutable, sizeof(postprocess_pos), EFormat::EF_Unknown, CreateInfo)), { Vertex::Element{ Vertex::Position,0,EFormat::EF_GR32F } });
 		}
 		return platform::Deref(postprocess_layout);
 	}

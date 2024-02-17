@@ -39,12 +39,12 @@ static EFormat ConvertWrap(DXGI_FORMAT format) {
 }
 
 static white::uint32 ResloveEAccessHint(const D3D12_RESOURCE_DESC& desc) {
-	white::uint32 access = white::underlying(EAccessHint::GPURead);
+	white::uint32 access = white::underlying(EAccessHint::SRV);
 	if (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) {
-		access |= EAccessHint::GPUWrite;
+		access |= EAccessHint::DSVWrite;
 	}
 	if (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) {
-		access |= EAccessHint::GPUWrite;
+		access |= EAccessHint::RTV;
 	}
 	if (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) {
 		access |= EAccessHint::UAV;
@@ -132,7 +132,7 @@ void Texture2D::UnMap(const Sub1D& sub)
 
 D3D12_SHADER_RESOURCE_VIEW_DESC Texture2D::CreateSRVDesc(uint8 first_array_index, uint8 num_items, uint8 first_level, uint8 num_levels) const
 {
-	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::GPURead), "Access mode must have EA_GPURead flag");
+	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::SRV), "Access mode must have EA_GPURead flag");
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
 	switch (format) {
 	case EF_D16:
@@ -214,7 +214,7 @@ D3D12_UNORDERED_ACCESS_VIEW_DESC Texture2D::CreateUAVDesc(uint8 first_array_inde
 
 D3D12_RENDER_TARGET_VIEW_DESC Texture2D::CreateRTVDesc(uint8 first_array_index, uint8 num_items, uint8 level) const
 {
-	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::GPUWrite), "Access mode must have EA_GPUWrite flag");
+	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::RTV), "Access mode must have EA_GPUWrite flag");
 
 	D3D12_RENDER_TARGET_VIEW_DESC desc{};
 
@@ -249,7 +249,7 @@ D3D12_RENDER_TARGET_VIEW_DESC Texture2D::CreateRTVDesc(uint8 first_array_index, 
 
 D3D12_DEPTH_STENCIL_VIEW_DESC Texture2D::CreateDSVDesc(uint8 first_array_index, uint8 num_items, uint8 level) const
 {
-	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::GPUWrite), "Access mode must have EA_GPUWrite flag");
+	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::DSVWrite), "Access mode must have EA_GPUWrite flag");
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC desc{};
 

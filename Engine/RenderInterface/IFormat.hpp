@@ -477,54 +477,58 @@ namespace platform::Render {
 
 			CPURead = 1U << 0,
 			CPUWrite = 1U << 1,
-			GPURead = 1U << 2,
-			GPUWrite = 1U << 3,
 
-			GenMips = 1U << 4,//Generate_Mips
-			Immutable = 1U << 5,
-
-			//ByteAddressBuffer
-			Raw = 1U << 6,
-			Structured = 1UL << 7,
-
-			DSV = (1U << 9),
-			DSVRead = DSV | GPURead,
+			SRVGraphics = 1U << 2,
+			DSVRead = 1U << 3,
+			Present = 1U << 4,
+			DrawIndirect = 1U << 5,
+			CopySrc = 1U << 6,
+			ResolveSrc = 1U << 7,
+			VertexOrIndexBuffer = 1U << 8,
+			SRVCompute = 1U << 9,
 
 			// Read-write states
-			RTV = (1U << 8)  | GPUWrite,
-			UAV = (1U << 10) | GPUWrite,
-			DSVWrite = DSV   | GPUWrite,
+			RTV = 1U << 12,
+			UAVGraphics = 1U << 13,
+			DSVWrite = 1U << 14,
+			UAVCompute = 1U << 15,
+			CopyDst = 1U << 16,
+			ResolveDst = 1U << 17,
 
-			SRV = GPURead,
+			//ByteAddressBuffer
+			Raw = 1U << 20,
+			Structured = 1UL << 21,
 
-			DrawIndirect = 1U << 11,
-
-			AccelerationStructure = 1U << 12,
-
-			GPUReadWrite = GPURead | GPUWrite,
-
-			Present = 1u << 13,
-
-			Compute = 1u << 14,
-			Graphics = 1 << 15,
-
-			VertexOrIndexBuffer = 1u << 16,
-
+			AccelerationStructure = 1U << 22,
 			// Invalid released state (transient resources)
-			Discard = 1 << 17,
+			Discard = 1 << 23,
+			ShadingRateSource = 1 << 24,
 
-			CopySrc = 1 << 18 | GPURead,
-			ResolveSrc = 1 << 19 | GPURead,
+			GenMips = 1U << 27,//Generate_Mips
+			Immutable = 1U << 28,
 
-			ShadingRateSource = 1 << 21,
+			Compute =  1U << 29,
+			Graphics = 1U << 30,
 
-			DStorage = 1 << 22,
+			DStorage = 1U << 31,
 
-			SRVCompute = Compute | SRV,
-			SRVGraphics = Graphics | SRV,
+			SRV = SRVGraphics | SRVCompute,
+			UAV = UAVGraphics | UAVCompute,
+			DSV = DSVRead | DSVWrite,
 
-			UAVCompute = Compute | UAV,
-			UAVGraphics = Graphics | UAV,
+			ReadOnlyExclusiveMask = CPURead | Present | DrawIndirect | VertexOrIndexBuffer | SRV | CopySrc | ResolveSrc | AccelerationStructure | ShadingRateSource,
+
+			ReadOnlyExclusiveComputeMask = CPURead | DrawIndirect | SRVCompute | CopySrc | AccelerationStructure,
+
+			ReadOnlyMask = ReadOnlyExclusiveMask | DSVRead | ShadingRateSource,
+
+			ReadableMask = ReadOnlyMask | UAV,
+
+			WriteOnlyExclusiveMask = RTV | CopyDst | ResolveDst,
+
+			WriteOnlyMask = WriteOnlyExclusiveMask | DSVWrite,
+
+			WritableMask = WriteOnlyMask | UAV,
 		};
 
 		inline uint32 operator|(EAccessHint l, EAccessHint r)
@@ -550,6 +554,16 @@ namespace platform::Render {
 		inline bool operator ==(uint32 l, EAccessHint r)
 		{
 			return white::underlying(r) == l;
+		}
+
+		constexpr bool HasReadOnlyExclusiveFlag(EAccessHint access)
+		{
+			return white::has_anyflags(access, EAccessHint::ReadOnlyExclusiveComputeMask);
+		}
+
+		constexpr bool HasWriteOnlyExclusiveFlag(EAccessHint access)
+		{
+			return white::has_anyflags(access, EAccessHint::WriteOnlyExclusiveMask);
 		}
 
 		enum class ClearBinding

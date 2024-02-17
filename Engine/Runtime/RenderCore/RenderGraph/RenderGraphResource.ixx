@@ -16,9 +16,12 @@ import "WBase/cassert.h";
 
 export namespace RenderGraph
 {
+	using namespace platform::Render;
+
 	class RGView;
 	using RGViewHandle = RGHandle<RGView, uint16>;
 	using RGViewRegistry = RGHandleRegistry<RGViewHandle, ERGHandleRegistryDestructPolicy::Never>;
+	using RGViewUniqueFilter = RGTHandleUniqueFilter<RGViewHandle>;
 
 	class RGBuffer;
 	using RGBufferHandle = RGHandle<RGBuffer, white::uint16>;
@@ -32,7 +35,151 @@ export namespace RenderGraph
 	using RGPassHandle = RGHandle<RGPass, uint16>;
 	using RGPassRegistry = RGHandleRegistry<RGPassHandle>;
 
-	using namespace platform::Render;
+	using  RGPassHandleByPipeline = PipelineArray<RGPassHandle>;
+
+	enum class ERGViewableResourceType : uint8
+	{
+		Texture,
+		Buffer,
+		MAX
+	};
+
+	struct RGSubresourceState;
+	bool SkipUAVBarrier(const RGSubresourceState& Previous, const RGSubresourceState& Next);
+
+	struct RGSubresourceState
+	{
+		/** Given a before and after state, returns whether a resource barrier is required. */
+		static bool IsTransitionRequired(const RGSubresourceState& Previous, const RGSubresourceState& Next)
+		{
+			if (Previous.Access != Next.Access || Previous.GetPipelines() != Next.GetPipelines() || Previous.Flags != Next.Flags)
+			{
+				return true;
+			}
+
+			// UAV is a special case as a barrier may still be required even if the states match.
+			if (white::has_allflags(Next.Access, EAccessHint::UAV) && !SkipUAVBarrier(Previous, Next))
+			{
+				return true;
+			}
+
+			return false;
+		}
+
+		/** Given a before and after state, returns whether they can be merged into a single state. */
+		static bool IsMergeAllowed(ERGViewableResourceType ResourceType, const RGSubresourceState& Previous, const RGSubresourceState& Next)
+		{
+			const EAccessHint AccessUnion =white::enum_or(Previous.Access ,Next.Access);
+			const EAccessHint DSVMask = white::enum_or(EAccessHint::DSVRead, EAccessHint::DSVWrite);
+
+			// If we have the same access between the two states, we don't need to check for invalid access combinations.
+			if (Previous.Access != Next.Access)
+			{
+				// Not allowed to merge read-only and writable states.
+				if (HasReadOnlyExclusiveFlag(Previous.Access) && white::has_anyflags(Next.Access, EAccessHint::WritableMask))
+				{
+					return false;
+				}
+
+				// Not allowed to merge write-only and readable states.
+				if (HasWriteOnlyExclusiveFlag(Previous.Access) && white::has_anyflags(Next.Access, EAccessHint::ReadableMask))
+				{
+					return false;
+				}
+
+				// UAVs will filter through the above checks because they are both read and write. UAV can only merge it itself.
+				if (white::has_anyflags(AccessUnion, EAccessHint::UAV) && !white::has_allflags(AccessUnion, EAccessHint::UAV))
+				{
+					return false;
+				}
+
+				// Depth Read / Write should never merge with anything other than itself.
+				if (white::has_allflags(AccessUnion, DSVMask) && white::has_anyflags(AccessUnion,white::enum_compl(DSVMask)))
+				{
+					return false;
+				}
+
+				// Filter out platform-specific unsupported mergeable states.
+				if (white::has_anyflags(AccessUnion, white::enum_compl(Caps.MergeableAccessMask)))
+				{
+					return false;
+				}
+			}
+
+			// Not allowed if the resource is being used as a UAV and needs a barrier.
+			if (white::has_allflags(Next.Access, EAccessHint::UAV) && !SkipUAVBarrier(Previous, Next))
+			{
+				return false;
+			}
+
+			// Filter out unsupported platform-specific multi-pipeline merged accesses.
+			if (white::has_anyflags(AccessUnion, white::enum_compl(Caps.MultiPipelineMergeableAccessMask)) && Previous.GetPipelines() != Next.GetPipelines())
+			{
+				return false;
+			}
+
+			// Not allowed to merge differing flags.
+			if (Previous.Flags != Next.Flags)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		RGSubresourceState() = default;
+
+		explicit RGSubresourceState(EAccessHint InAccess)
+			: Access(InAccess)
+		{}
+
+		void SetPass(EPipeline Pipeline, RGPassHandle PassHandle);
+
+		void Finalize();
+
+		void Validate();
+
+		bool IsUsedBy(EPipeline Pipeline) const;
+
+		RGPassHandle GetLastPass() const;
+
+		RGPassHandle GetFirstPass() const;
+
+		EPipeline GetPipelines() const;
+
+		/** The last used access on the pass. */
+		EAccessHint Access = EAccessHint::None;
+
+		/** The last used transition flags on the pass. */
+		EResourceTransitionFlags Flags = EResourceTransitionFlags::None;
+
+		/** The first pass in this state. */
+		RGPassHandleByPipeline FirstPass;
+
+		/** The last pass in this state. */
+		RGPassHandleByPipeline LastPass;
+
+		/** The last no-UAV barrier to be used by this subresource. */
+		RGViewUniqueFilter NoUAVBarrierFilter;
+	};
+
+	bool SkipUAVBarrier(RGViewHandle PreviousHandle, RGViewHandle NextHandle)
+	{
+		// Barrier if previous / next don't have a matching valid skip-barrier UAV handle.
+		if (GRDGOverlapUAVs && NextHandle.IsValid() && PreviousHandle == NextHandle)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	bool SkipUAVBarrier(const RGSubresourceState& Previous, const RGSubresourceState& Next)
+	{
+		return SkipUAVBarrier(Previous.NoUAVBarrierFilter.GetUniqueHandle(), Next.NoUAVBarrierFilter.GetUniqueHandle());
+	}
+
+
 	class RGResource
 	{
 	public:
@@ -62,12 +209,6 @@ export namespace RenderGraph
 		friend RGBuilder;
 	};
 
-	enum class ERGViewableResourceType : uint8
-	{
-		Texture,
-		Buffer,
-		MAX
-	};
 
 	class RGViewableResource :public RGResource
 	{
@@ -188,7 +329,7 @@ export namespace RenderGraph
 		static RGBufferDesc CreateStructIndirectDesc(uint32 BytesPerElement, uint32 NumElements)
 		{
 			RGBufferDesc Desc;
-			Desc.Usage = EAccessHint::DrawIndirect | EAccessHint::GPUReadWrite | EAccessHint::Structured | EAccessHint::UAV;
+			Desc.Usage = EAccessHint::DrawIndirect | EAccessHint::SRV | EAccessHint::Structured | EAccessHint::UAV;
 			Desc.BytesPerElement = BytesPerElement;
 			Desc.NumElements = NumElements;
 			return Desc;
@@ -198,7 +339,7 @@ export namespace RenderGraph
 		{
 			wassume(NumBytes % 4 == 0);
 			RGBufferDesc Desc;
-			Desc.Usage = EAccessHint::Raw | EAccessHint::GPUReadWrite | EAccessHint::Structured | EAccessHint::UAV;
+			Desc.Usage = EAccessHint::Raw | EAccessHint::SRV | EAccessHint::Structured | EAccessHint::UAV;
 			Desc.BytesPerElement = 4;
 			Desc.NumElements = NumBytes / 4;
 			return Desc;
@@ -207,7 +348,7 @@ export namespace RenderGraph
 		static RGBufferDesc CreateStructuredDesc(uint32 BytesPerElement, uint32 NumElements)
 		{
 			RGBufferDesc Desc;
-			Desc.Usage = EAccessHint::GPUReadWrite | EAccessHint::Structured | EAccessHint::UAV;
+			Desc.Usage = EAccessHint::SRV | EAccessHint::Structured | EAccessHint::UAV;
 			Desc.BytesPerElement = BytesPerElement;
 			Desc.NumElements = NumElements;
 			return Desc;

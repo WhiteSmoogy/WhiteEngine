@@ -22,7 +22,7 @@ namespace platform {
 		ResourceCreateInfo CreateInfo{ &InitData ,ibname.c_str() };
 		auto index_stream = white::share_raw(
 			device.CreateIndexBuffer(
-				Buffer::Usage::Static, EAccessHint::GPURead | EAccessHint::Immutable,
+				Buffer::Usage::Static, EAccessHint::VertexOrIndexBuffer | EAccessHint::Immutable,
 				NumFormatBytes(asset.GetIndexFormat()) * asset.GetIndexCount(),
 				asset.GetIndexFormat(), CreateInfo));
 
@@ -38,7 +38,7 @@ namespace platform {
 			auto vertex_stream = white::share_raw(
 				device.CreateVertexBuffer(
 					Buffer::Usage::Static,
-					EAccessHint::GPURead | EAccessHint::Immutable,
+					EAccessHint::VertexOrIndexBuffer | EAccessHint::Immutable,
 					element.GetElementSize()*asset.GetVertexCount(),
 					element.format, CreateInfo));
 			input_layout->BindVertexStream(vertex_stream, { element });

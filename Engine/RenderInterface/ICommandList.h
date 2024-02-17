@@ -18,6 +18,51 @@ namespace platform::Render {
 		Compute = EAccessHint::Compute,
 	};
 
+	inline constexpr uint32 GetPipelineIndex(EPipeline Pipeline)
+	{
+		switch (Pipeline)
+		{
+		case EPipeline::Graphics:
+			return 0;
+		default:
+			return 1;
+		}
+	}
+
+	constexpr uint32 GetPipelineCount()
+	{
+		return 2;
+	}
+
+	template<typename ElementType>
+	class PipelineArray
+	{
+	public:
+		ElementType& operator[](EPipeline Pipeline)
+		{
+			return Elements[GetPipelineIndex(Pipeline)];
+		}
+
+		const ElementType& operator[](EPipeline Pipeline) const
+		{
+			return Elements[GetPipelineIndex(Pipeline)];
+		}
+	private:
+		ElementType Elements[GetPipelineCount()];
+	};
+
+	enum class EResourceTransitionFlags
+	{
+		None = 0,
+
+		MaintainCompression = 1 << 0, // Specifies that the transition should not decompress the resource, allowing us to read a compressed resource directly in its compressed state.
+		Discard = 1 << 1, // Specifies that the data in the resource should be discarded during the transition - used for transient resource acquire when the resource will be fully overwritten
+		Clear = 1 << 2, // Specifies that the data in the resource should be cleared during the transition - used for transient resource acquire when the resource might not be fully overwritten
+
+		Last = Clear,
+		Mask = (Last << 1) - 1
+	};
+
 	struct CommandListContext
 	{};
 

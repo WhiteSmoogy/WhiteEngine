@@ -185,7 +185,7 @@ void  platform::Render::MemsetResource(RenderGraph::RGBuilder& Builder, RenderGr
 
 			Parameters->Common.DstByteAddressBuffer = UAV;
 		}
-		else if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::GPUStructured))
+		else if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::Structured))
 		{
 			ResourceTypeEnum = ByteBufferResourceType::StructuredBuffer;
 			Parameters->Common.DstStructuredBuffer4x = UAV;

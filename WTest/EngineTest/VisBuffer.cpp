@@ -147,8 +147,6 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 	auto ViewCB = Builder.CreateCBuffer<ViewArgs>();
 	ViewCB->matrixs.mvp = wm::transpose(camera.GetViewMatrix() * projMatrix);
 
-	auto RWStructAccess = EAccessHint::GPUReadWrite | EAccessHint::GPUStructured | EAccessHint::GPUUnordered;
-
 	auto FliteredIndexBuffer = Builder.CreateBuffer(
 		RGBufferDesc::CreateByteAddressDesc(
 			Trinf::Scene.Index.Allocator.GetMaxSize() * Trinf::Scene.Index.kPageSize),

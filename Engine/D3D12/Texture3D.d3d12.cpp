@@ -122,7 +122,7 @@ D3D12_UNORDERED_ACCESS_VIEW_DESC  Texture3D::CreateUAVDesc(uint8 first_array_ind
 	return CreateUAVDesc(first_array_index, 0, depth, level);
 }
 D3D12_UNORDERED_ACCESS_VIEW_DESC Texture3D::CreateUAVDesc(uint8 array_index, uint16 first_slice, uint16 num_slices, uint8 level) const{
-	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::GPUUnordered), "Access mode must have EA_GPUUnordered flag");
+	WAssert(white::has_allflags(GetAccessMode(), EAccessHint::UAV), "Access mode must have EA_GPUUnordered flag");
 
 	D3D12_UNORDERED_ACCESS_VIEW_DESC desc{};
 

@@ -184,7 +184,7 @@ export namespace RenderGraph
 		static RGBufferDesc CreateStructIndirectDesc(uint32 BytesPerElement, uint32 NumElements)
 		{
 			RGBufferDesc Desc;
-			Desc.Usage = EAccessHint::DrawIndirect | EAccessHint::GPUReadWrite | EAccessHint::GPUStructured | EAccessHint::GPUUnordered;
+			Desc.Usage = EAccessHint::DrawIndirect | EAccessHint::GPUReadWrite | EAccessHint::Structured | EAccessHint::UAV;
 			Desc.BytesPerElement = BytesPerElement;
 			Desc.NumElements = NumElements;
 			return Desc;
@@ -194,7 +194,7 @@ export namespace RenderGraph
 		{
 			wassume(NumBytes % 4 == 0);
 			RGBufferDesc Desc;
-			Desc.Usage = EAccessHint::Raw | EAccessHint::GPUReadWrite | EAccessHint::GPUStructured | EAccessHint::GPUUnordered;
+			Desc.Usage = EAccessHint::Raw | EAccessHint::GPUReadWrite | EAccessHint::Structured | EAccessHint::UAV;
 			Desc.BytesPerElement = 4;
 			Desc.NumElements = NumBytes / 4;
 			return Desc;
@@ -203,7 +203,7 @@ export namespace RenderGraph
 		static RGBufferDesc CreateStructuredDesc(uint32 BytesPerElement, uint32 NumElements)
 		{
 			RGBufferDesc Desc;
-			Desc.Usage = EAccessHint::GPUReadWrite | EAccessHint::GPUStructured | EAccessHint::GPUUnordered;
+			Desc.Usage = EAccessHint::GPUReadWrite | EAccessHint::Structured | EAccessHint::UAV;
 			Desc.BytesPerElement = BytesPerElement;
 			Desc.NumElements = NumElements;
 			return Desc;

@@ -279,7 +279,7 @@ AllocatorConfig IPoolAllocator::GetResourceAllocatorInitConfig(D3D12_HEAP_TYPE I
 		}
 		else
 		{
-			if (white::has_anyflags(InBufferAccess, EAccessHint::GPUUnordered))
+			if (white::has_allflags(InBufferAccess, EAccessHint::UAV))
 			{
 				wconstraint(InResourceFlags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 			}
@@ -435,7 +435,7 @@ void PoolAllocator<Order, Defrag>::AllocDefaultResource(D3D12_HEAP_TYPE InHeapTy
 	{
 		wconstraint(InCreateState == D3D12_RESOURCE_STATE_GENERIC_READ);
 	}
-	else if (InBufferAccess == EAccessHint::GPUUnordered && InResourceStateMode == ResourceStateMode::Single)
+	else if (InBufferAccess == EAccessHint::UAV && InResourceStateMode == ResourceStateMode::Single)
 	{
 		wconstraint(InCreateState == D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	}
@@ -1371,7 +1371,7 @@ D3D12_RESOURCE_STATES BufferAllocator::GetDefaultInitialResourceState(D3D12_HEAP
 	{
 		return D3D12_RESOURCE_STATE_GENERIC_READ;
 	}
-	else if (InBufferAccess == white::underlying(EAccessHint::GPUUnordered) && mode == ResourceStateMode::Single)
+	else if (InBufferAccess == white::underlying(EAccessHint::UAV) && mode == ResourceStateMode::Single)
 	{
 		wconstraint(InHeapType == D3D12_HEAP_TYPE_DEFAULT);
 		return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;

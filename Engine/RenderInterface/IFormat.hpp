@@ -478,28 +478,33 @@ namespace platform::Render {
 			GPURead = 1U << 2,
 			GPUWrite = 1U << 3,
 
-			GPUUnordered = 1U << 4,
-			GPUStructured = 1UL << 5,
-			GenMips = 1U << 6,//Generate_Mips
-			Immutable = 1U << 7,
+			GenMips = 1U << 4,//Generate_Mips
+			Immutable = 1U << 5,
 
 			//ByteAddressBuffer
-			Raw = 1U << 8,
+			Raw = 1U << 6,
+			Structured = 1UL << 7,
 
-			RTV = (1U << 9) | GPUWrite,
-			DSV = (1U << 10) | GPUWrite,
-			UAV = (1U << 11) | GPUWrite,
+			DSV = (1U << 9),
+			DSVRead = DSV | GPURead,
+
+			// Read-write states
+			RTV = (1U << 8)  | GPUWrite,
+			UAV = (1U << 10) | GPUWrite,
+			DSVWrite = DSV   | GPUWrite,
+
 			SRV = GPURead,
 
-			DrawIndirect = 1U << 12,
+			DrawIndirect = 1U << 11,
 
-			AccelerationStructure = 1U << 13,
+			AccelerationStructure = 1U << 12,
 
 			GPUReadWrite = GPURead | GPUWrite,
 
-			Present = 1u << 14,
+			Present = 1u << 13,
 
-			Compute = 1u << 15,
+			Compute = 1u << 14,
+			Graphics = 1 << 15,
 
 			VertexOrIndexBuffer = 1u << 16,
 
@@ -508,11 +513,16 @@ namespace platform::Render {
 
 			CopySrc = 1 << 18 | GPURead,
 			ResolveSrc = 1 << 19 | GPURead,
-			DSVRead = 1 << 20 | GPURead,
 
 			ShadingRateSource = 1 << 21,
 
 			DStorage = 1 << 22,
+
+			SRVCompute = Compute | SRV,
+			SRVGraphics = Graphics | SRV,
+
+			UAVCompute = Compute | UAV,
+			UAVGraphics = Graphics | UAV,
 		};
 
 		inline uint32 operator|(EAccessHint l, EAccessHint r)

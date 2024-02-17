@@ -241,7 +241,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 		srv->CreateView(SRVDesc, Resource, ShaderResourceView::EFlags::None);
 		return shared_raw_robject(srv);
 	}
-	if (!white::has_anyflags(access, EAccessHint::GPUStructured))
+	if (!white::has_anyflags(access, EAccessHint::Structured))
 	{
 		struct D3D12InitializeBufferSRVCommand final : platform::Render::CommandBase
 		{
@@ -391,7 +391,7 @@ UAVRIRef Device::CreateUnorderedAccessView(const platform::Render::GraphicsBuffe
 		UAVDesc.Buffer.Flags |= D3D12_BUFFER_UAV_FLAG_RAW;
 		EffectiveStride = 4;
 	}
-	else if (white::has_anyflags(Buffer->GetAccess(), EAccessHint::GPUStructured))
+	else if (white::has_anyflags(Buffer->GetAccess(), EAccessHint::Structured))
 	{
 		UAVDesc.Format = DXGI_FORMAT_UNKNOWN;
 		EffectiveStride = Buffer->Stride;

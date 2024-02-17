@@ -105,7 +105,7 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 		else
 			tex_desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 	}
-	if (white::has_anyflags(base_this->GetAccessMode(), EAccessHint::GPUUnordered))
+	if (white::has_allflags(base_this->GetAccessMode(), EAccessHint::UAV))
 		tex_desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
 	D3D12_HEAP_PROPERTIES heap_prop;

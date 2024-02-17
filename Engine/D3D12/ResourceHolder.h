@@ -112,7 +112,7 @@ namespace platform_ex::Windows {
 			{
 				// all single write states
 			case EAccessHint::RTV:					return D3D12_RESOURCE_STATE_RENDER_TARGET;
-			case EAccessHint::GPUUnordered:			return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			case EAccessHint::UAV:			return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 			case EAccessHint::DSV:				return D3D12_RESOURCE_STATE_DEPTH_WRITE;
 			case EAccessHint::GPUWrite:				return D3D12_RESOURCE_STATE_COPY_DEST;
 			case EAccessHint::Present:				return D3D12_RESOURCE_STATE_PRESENT;

@@ -92,7 +92,7 @@ namespace platform_ex::Windows::D3D12 {
 	{
 		D3D12_RESOURCE_DESC ResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(BufferDesc.Size);
 
-		if (white::has_anyflags(BufferDesc.Access,EAccessHint::GPUUnordered))
+		if (white::has_allflags(BufferDesc.Access,EAccessHint::UAV))
 		{
 			ResourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 		}
@@ -108,7 +108,7 @@ namespace platform_ex::Windows::D3D12 {
 		}
 
 		// Structured buffers, non-ByteAddress buffers, need to be aligned to their stride to ensure that they can be addressed correctly with element based offsets.
-		uint32 Alignment = (BufferDesc.Stride > 0) && (white::has_anyflags(BufferDesc.Access, EAccessHint::GPUStructured) 
+		uint32 Alignment = (BufferDesc.Stride > 0) && (white::has_anyflags(BufferDesc.Access, EAccessHint::Structured) 
 			|| white::has_anyflags(BufferDesc.Access,white::enum_or(EAccessHint::Raw , EAccessHint::DrawIndirect))) ? BufferDesc.Stride : 4;
 
 		return { ResourceDesc,Alignment };
@@ -178,7 +178,7 @@ namespace platform_ex::Windows::D3D12 {
 
 	const char* GetDebugBufferName(Buffer::Usage usage, white::uint32 access, uint32 size)
 	{
-		if (white::has_anyflags(access, EAccessHint::GPUStructured))
+		if (white::has_anyflags(access, EAccessHint::Structured))
 			std::format_to(DebugNames, "StructBuffer({}x{})_{}", (uint32)usage, access, size);
 		else
 			std::format_to(DebugNames, "Buffer({}x{})_{}", (uint32)usage, access, size);

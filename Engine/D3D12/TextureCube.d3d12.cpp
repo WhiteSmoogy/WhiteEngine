@@ -123,7 +123,7 @@ D3D12_UNORDERED_ACCESS_VIEW_DESC TextureCube::CreateUAVDesc(uint8 first_array_in
 	return CreateUAVDesc(first_array_index, num_items, CubeFaces::Positive_X, 6, level);
 }
 D3D12_UNORDERED_ACCESS_VIEW_DESC TextureCube::CreateUAVDesc(uint8 first_array_index, uint8 num_items, TextureCubeFaces first_face, uint8 num_faces, uint8 level) const{
-	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::GPUUnordered), "Access mode must have EA_GPUUnordered flag");
+	WAssert(white::has_allflags(GetAccessMode(), EAccessHint::UAV), "Access mode must have EA_GPUUnordered flag");
 
 	D3D12_UNORDERED_ACCESS_VIEW_DESC desc{};
 

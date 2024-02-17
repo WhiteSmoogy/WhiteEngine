@@ -704,10 +704,10 @@ private:
 
 		render::ResourceCreateInfoEx lightCreate{ lights.data(),"lights"};
 
-		pLightConstantBuffer = white::share_raw(Device.CreateBuffer(render::Buffer::Usage::Dynamic, EAccessHint::GPURead | EAccessHint::GPUStructured, sizeof(lights[0]) * lights.size(), static_cast<EFormat>(sizeof(lights[0])), lightCreate));
+		pLightConstantBuffer = white::share_raw(Device.CreateBuffer(render::Buffer::Usage::Dynamic, EAccessHint::GPURead | EAccessHint::Structured, sizeof(lights[0]) * lights.size(), static_cast<EFormat>(sizeof(lights[0])), lightCreate));
 
-		RayShadowMask = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EAccessHint::GPURead | EAccessHint::GPUWrite | EAccessHint::GPUUnordered, {}));
-		RayShadowMaskDenoiser = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_R32F, EAccessHint::GPURead | EAccessHint::GPUWrite | EAccessHint::GPUUnordered, {}));
+		RayShadowMask = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EAccessHint::GPURead | EAccessHint::GPUWrite | EAccessHint::UAV, {}));
+		RayShadowMaskDenoiser = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_R32F, EAccessHint::GPURead | EAccessHint::GPUWrite | EAccessHint::UAV, {}));
 
 		ShadowMapMask = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_ABGR16F, EAccessHint::GPURead | EAccessHint::RTV, {}));
 

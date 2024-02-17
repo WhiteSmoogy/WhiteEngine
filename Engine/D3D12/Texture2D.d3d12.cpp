@@ -47,7 +47,7 @@ static white::uint32 ResloveEAccessHint(const D3D12_RESOURCE_DESC& desc) {
 		access |= EAccessHint::GPUWrite;
 	}
 	if (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) {
-		access |= EAccessHint::GPUUnordered;
+		access |= EAccessHint::UAV;
 	}
 
 	return access;
@@ -191,7 +191,7 @@ ShaderResourceView* Texture2D::RetriveShaderResourceView()
 
 D3D12_UNORDERED_ACCESS_VIEW_DESC Texture2D::CreateUAVDesc(uint8 first_array_index, uint8 num_items, uint8 level) const
 {
-	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::GPUUnordered), "Access mode must have EA_GPUUnordered flag");
+	WAssert(white::has_allflags(GetAccessMode(), EAccessHint::UAV), "Access mode must have EA_GPUUnordered flag");
 
 	D3D12_UNORDERED_ACCESS_VIEW_DESC desc{};
 

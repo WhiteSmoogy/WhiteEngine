@@ -364,7 +364,7 @@ protected:
         SPDLOG_TRY
         {
 #ifdef SPDLOG_USE_STD_FORMAT
-            memory_buf_t buf = std::vformat(fmt, std::make_format_args(std::forward<Args>(args)...));
+            memory_buf_t buf = std::vformat(fmt, std::make_format_args(args...));
 #else
             memory_buf_t buf;
             fmt::detail::vformat_to(buf, fmt, fmt::make_format_args(std::forward<Args>(args)...));

@@ -99,7 +99,7 @@ void Texture::DoCreateHWResource(D3D12_RESOURCE_DIMENSION dim, uint16 width, uin
 	tex_desc.SampleDesc.Quality = 0;
 	tex_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	tex_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-	if (white::has_anyflags(base_this->GetAccessMode(),EAccessHint::DSVWrite)) {
+	if (white::has_anyflags(base_this->GetAccessMode(),white::enum_or(EAccessHint::DSVWrite, EAccessHint::RTV))) {
 		if (IsDepthFormat(base_this->GetFormat()))
 			tex_desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 		else

@@ -66,6 +66,7 @@ namespace platform_ex::Windows::D3D12 {
 				GpuCrashDumpCallback,
 				nullptr,
 				nullptr,
+				nullptr,
 				this
 			);
 		}
@@ -398,8 +399,7 @@ void GpuCrashDumpCallback(const void* pGpuCrashDump, const uint32_t gpuCrashDump
 		nullptr,
 		nullptr,
 		nullptr,
-		nullptr,
-		nullptr,
+		pUserData,
 		&jsonSize));
 	// Step 2: Allocate a buffer and fetch the generated JSON.
 	std::vector<char> json(jsonSize);

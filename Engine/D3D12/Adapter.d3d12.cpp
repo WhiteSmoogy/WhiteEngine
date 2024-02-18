@@ -498,7 +498,7 @@ namespace platform_ex::Windows::D3D12 {
 			Flags |= GFSDK_Aftermath_FeatureFlags_EnableMarkers;
 			Flags |= GFSDK_Aftermath_FeatureFlags_CallStackCapturing;
 			Flags |= GFSDK_Aftermath_FeatureFlags_EnableResourceTracking;
-			Flags |= GFSDK_Aftermath_FeatureFlags_Maximum;
+			Flags |= GFSDK_Aftermath_FeatureFlags_EnableShaderErrorReporting;
 
 			GFSDK_Aftermath_Result Result = GFSDK_Aftermath_DX12_Initialize(GFSDK_Aftermath_Version_API, (GFSDK_Aftermath_FeatureFlags)Flags, d3d_device.Get());
 			if (Result == GFSDK_Aftermath_Result_Success)

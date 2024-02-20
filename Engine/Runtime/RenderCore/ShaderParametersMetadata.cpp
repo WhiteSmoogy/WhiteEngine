@@ -26,6 +26,18 @@ uint32 GetTextureCount(const std::vector<ShaderParametersMetadata::Member>& Memb
 	return Count;
 }
 
+uint32 GetCBufferCount(const std::vector<ShaderParametersMetadata::Member>& Members)
+{
+	uint32 Count = 0;
+	for (auto& member : Members)
+	{
+		if (member.GetShaderType() == SPT_ConstantBuffer)
+			++Count;
+	}
+
+	return Count;
+}
+
 ShaderParametersMetadata::ShaderParametersMetadata(
 	uint32 InSize, 
 	std::vector<Member>&& InMembers)
@@ -33,5 +45,6 @@ ShaderParametersMetadata::ShaderParametersMetadata(
 	,Members(InMembers)
 	, BufferCount(GetBufferCount(Members))
 	, TextureCount(GetTextureCount(Members))
+	, CBufferCount(GetCBufferCount(Members))
 {
 }

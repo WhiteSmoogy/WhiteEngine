@@ -9,7 +9,7 @@ module;
 
 export module RenderGraph:resource;
 
-import RenderGraphFwd;
+import "RenderGraphFwd.h";
 import :definition;
 
 import "WBase/cassert.h";
@@ -29,6 +29,7 @@ export namespace RenderGraph
 
 	class RGConstBuffer;
 	using RGConstBufferHandle = RGHandle<RGConstBuffer, white::uint16>;
+	using RGConstBufferRegistry = RGHandleRegistry<RGConstBufferHandle>;
 	using RGConstBufferRegistry = RGHandleRegistry<RGConstBufferHandle>;
 
 	class RGPass;
@@ -133,7 +134,13 @@ export namespace RenderGraph
 			: Access(InAccess)
 		{}
 
-		void SetPass(EPipeline Pipeline, RGPassHandle PassHandle);
+		void SetPass(EPipeline Pipeline, RGPassHandle PassHandle)
+		{
+			FirstPass = {};
+			LastPass = {};
+			FirstPass[Pipeline] = PassHandle;
+			LastPass[Pipeline] = PassHandle;
+		}
 
 		void Finalize()
 		{

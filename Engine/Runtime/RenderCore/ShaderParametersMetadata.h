@@ -93,6 +93,8 @@ inline namespace Shader
 		uint32 GetSize() const { return Size; }
 		uint32 GetBufferParameterCount() const { return BufferCount; }
 		uint32 GetTextureParameterCount() const { return TextureCount; }
+		uint32 GetCBufferParameterCount() const { return CBufferCount; }
+
 	private:
 		/** Size of the entire struct in bytes. */
 		const uint32 Size;
@@ -100,6 +102,7 @@ inline namespace Shader
 
 		const uint32 BufferCount;
 		const uint32 TextureCount;
+		const uint32 CBufferCount;
 
 	};
 }

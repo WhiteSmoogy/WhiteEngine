@@ -38,6 +38,10 @@ namespace platform::Render {
 	class PipelineArray
 	{
 	public:
+		PipelineArray()
+			:Elements()
+		{}
+
 		ElementType& operator[](EPipeline Pipeline)
 		{
 			return Elements[GetPipelineIndex(Pipeline)];

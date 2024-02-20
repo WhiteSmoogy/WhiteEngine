@@ -2,14 +2,15 @@ module;
 #include "RenderInterface/ICommandList.h"
 #include "Runtime/RenderCore/Dispatch.h"
 #include "RenderInterface/DeviceCaps.h"
+#include "WBase/wmathtype.hpp"
 
 #include <span>
 
 export module RenderGraph:builder;
 
 import "WBase/cassert.h";
+import "RenderGraphFwd.h";
 
-import RenderGraphFwd;
 import :definition;
 import :resource;
 import :resourcepool;
@@ -87,6 +88,10 @@ export namespace RenderGraph
 		
 		RGArray<RGViewHandle> Views;
 		RGArray<RGConstBufferHandle> CBuffers;
+
+		bool bEmptyParameters : 1;
+		bool bRenderPassOnlyWrites : 1;
+		bool bHasExternalOutputs : 1;
 		
 		friend RGPassRegistry;
 		friend RGBuilder;
@@ -444,7 +449,7 @@ export namespace RenderGraph
 			Passes.Insert(Pass);
 			SetupParameterPass(Pass);
 
-			return Pass;
+			return nullptr;
 		}
 
 		template<typename TBufferStruct>
@@ -573,6 +578,20 @@ export namespace RenderGraph
 						}
 					}
 				});
+
+			Pass->bEmptyParameters = Pass->BufferStates.empty();
+			Pass->bRenderPassOnlyWrites = bRenderPassOnlyWrites;
+
+			Pass->CBuffers.reserve(PassParameters.GetCBufferCount());
+			PassParameters.EnumerateCBuffers([&](RGUniformBufferBinding UniformBuffer)
+				{
+					Pass->CBuffers.emplace_back(UniformBuffer.GetCBuffer()->Handle);
+				});
+
+			if (bParallelSetupEnabled)
+			{
+
+			}
 		}
 
 	private:
@@ -626,14 +645,16 @@ export namespace ComputeShaderUtils
 
 		ValidateGroupCount(GroupCount);
 
+		return nullptr;
+
 		return GraphBuilder.AddPass(
 			std::move(PassName),
 			ParametersMetadata,
 			Parameters,
 			PassFlags,
-			[ParametersMetadata, Parameters, ComputeShader, GroupCount](ComputeCommandList& CmdList)
+			[ParametersMetadata, Parameters, ComputeShader, GroupCount](platform::Render::ComputeCommandList& CmdList)
 			{
-				ComputeShaderUtils::Dispatch(CmdList, ComputeShader, *Parameters, GroupCount);
+				 ComputeShaderUtils::Dispatch(CmdList, ComputeShader, *Parameters, GroupCount);
 			});
 	}
 
@@ -647,5 +668,7 @@ export namespace ComputeShaderUtils
 	{
 		auto* ParametersMetadata = TShaderClass::Parameters::TypeInfo::GetStructMetadata();
 		return AddPass(GraphBuilder, std::move(PassName), ERGPassFlags::Compute, ComputeShader, ParametersMetadata, Parameters, GroupCount);
+
+		return nullptr;
 	}
 }

@@ -4,15 +4,15 @@ module;
 export module RenderGraph:definition;
 
 import "WBase/cassert.h";
-import <concepts>;
+import "RenderGraphFwd.h";
 
-import RenderGraphFwd;
 import :allocator;
 
 export namespace RenderGraph
 {
 	using platform::Render::ShaderParametersMetadata;
 	using platform::Render::ShaderBaseType;
+	using platform::Render::ShaderParamType;
 
 	template <typename LocalObjectType, typename LocalIndexType>
 	class RGHandle
@@ -306,7 +306,7 @@ export namespace RenderGraph
 			return platform::Render::GetBaseType(Member->GetShaderType());
 		}
 
-	private:
+	protected:
 		template <typename T>
 		const T* GetAs() const
 		{
@@ -315,6 +315,19 @@ export namespace RenderGraph
 
 		const ShaderParametersMetadata::Member* Member;
 		const uint8* MemberPtr;
+	};
+
+	class RGUniformBufferBinding :protected RGParameter
+	{
+	public:
+		RGUniformBufferBinding(const ShaderParametersMetadata::Member* InMember, const uint8* InMemberPtr)
+			:RGParameter(InMember,InMemberPtr)
+		{}
+
+		RGConstBuffer* GetCBuffer() const
+		{
+			return *GetAs<RGConstBuffer*>();
+		}
 	};
 
 	class RGParameterStruct
@@ -358,6 +371,14 @@ export namespace RenderGraph
 			return Metadata->GetTextureParameterCount();
 		}
 
+		uint32 GetCBufferCount() const
+		{
+			if (!Metadata)
+				return 0;
+
+			return Metadata->GetCBufferParameterCount();
+		}
+
 		template<typename FunctionType>
 		void EnumerateBuffers(FunctionType Function) const
 		{
@@ -369,6 +390,21 @@ export namespace RenderGraph
 				if (IsBufferType(member.GetShaderType()))
 				{
 					Function(RGParameter{ &member,Contents + member.GetOffset() });
+				}
+			}
+		}
+
+		template<typename FunctionType>
+		void EnumerateCBuffers(FunctionType Function) const
+		{
+			if (!Metadata)
+				return;
+
+			for (auto& member : Metadata->GetMembers())
+			{
+				if (member.GetShaderType() == ShaderParamType::SPT_ConstantBuffer)
+				{
+					Function(RGUniformBufferBinding{ &member,Contents + member.GetOffset() });
 				}
 			}
 		}

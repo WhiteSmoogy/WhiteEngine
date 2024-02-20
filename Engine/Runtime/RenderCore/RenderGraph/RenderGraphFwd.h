@@ -1,16 +1,7 @@
-module;
-#include "WBase/winttype.hpp"
+#pragma once
 
-export module RenderGraphFwd;
-
-export namespace RenderGraph
+namespace RenderGraph
 {
-	using white::int64;
-	using white::int32;
-	using white::uint16;
-	using white::uint8;
-	using white::uint32;
-
 	class RGBuilder;
 	class RGAllocator;
 	class RGPass;

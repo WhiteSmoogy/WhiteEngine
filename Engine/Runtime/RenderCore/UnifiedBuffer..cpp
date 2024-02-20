@@ -202,11 +202,12 @@ void  platform::Render::MemsetResource(RenderGraph::RGBuilder& Builder, RenderGr
 
 		auto ComputeShader = Render::GetBuiltInShaderMap()->GetShader<MemsetCS>(PermutationVector);
 
-		ComputeShaderUtils::AddPass(
+		ComputeShaderUtils::AddPass<MemsetCS>(
 			Builder,
-			RGEventName("Memset(Offset:{} Count:{})",NumElementsProcessed,NumElementsPerDispatch),
+			RenderGraph::RGEventName{ "Memset(Offset:{} Count:{})",NumElementsProcessed,NumElementsPerDispatch },
 			ComputeShader, Parameters, white::math::int3(NumWaves, 1, 1));
 
 		NumElementsProcessed += NumElementsPerDispatch;
 	}
 }
+

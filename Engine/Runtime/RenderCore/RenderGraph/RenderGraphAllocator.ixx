@@ -1,14 +1,21 @@
 module;
 #include "Runtime/MemStack.h"
+#include "WBase/winttype.hpp"
 
 export module RenderGraph:allocator;
 
-import RenderGraphFwd;
+import "RenderGraphFwd.h";
 
 #pragma warning(disable:4291)
 
 export namespace RenderGraph
 {
+	using white::int64;
+	using white::int32;
+	using white::uint16;
+	using white::uint8;
+	using white::uint32;
+
 	class RGAllocator
 	{
 	public:

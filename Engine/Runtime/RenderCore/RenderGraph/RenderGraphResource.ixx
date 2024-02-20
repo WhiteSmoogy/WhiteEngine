@@ -135,17 +135,42 @@ export namespace RenderGraph
 
 		void SetPass(EPipeline Pipeline, RGPassHandle PassHandle);
 
-		void Finalize();
+		void Finalize()
+		{
+			auto LocalAccess = Access;
 
-		void Validate();
+			*this = {};
 
-		bool IsUsedBy(EPipeline Pipeline) const;
+			Access = LocalAccess;
+		}
 
-		RGPassHandle GetLastPass() const;
+		bool IsUsedBy(EPipeline Pipeline) const
+		{
+			return FirstPass[Pipeline].IsValid();
+		}
 
-		RGPassHandle GetFirstPass() const;
+		RGPassHandle GetLastPass() const
+		{
+			return LastPass;
+		}
 
-		EPipeline GetPipelines() const;
+		RGPassHandle GetFirstPass() const
+		{
+			return FirstPass;
+		}
+
+		EPipeline GetPipelines() const
+		{
+			bool has_graphics = FirstPass[EPipeline::Graphics].IsValid();
+			bool has_compute = FirstPass[EPipeline::Compute].IsValid();
+
+			if (has_graphics && has_compute)
+				return white::enum_or(EPipeline::Graphics,EPipeline::Compute);
+			else if(has_graphics)
+				return EPipeline::Graphics;
+			else
+				return EPipeline::Compute;
+		}
 
 		/** The last used access on the pass. */
 		EAccessHint Access = EAccessHint::None;

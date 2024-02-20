@@ -52,6 +52,19 @@ export namespace RenderGraph
 	protected:
 		virtual void Execute(ComputeCommandList& CmdList) {}
 
+		struct BufferState
+		{
+			BufferState() = default;
+
+			BufferState(RGBufferRef InBuffer)
+			: Buffer(InBuffer)
+			{}
+
+			RGBufferRef Buffer = nullptr;
+			RGSubresourceState State;
+			RGSubresourceState* MergeState = nullptr;
+			uint16 ReferenceCount = 0;
+		};
 	private:
 		RGEventName Name;
 		RGParameterStruct ParameterStruct;
@@ -69,8 +82,12 @@ export namespace RenderGraph
 		RGArray<RGPass*> ResourcesToBegin;
 		RGArray<RGPass*> ResourcesToEnd;
 
-		RGArray<RGViewHandle> Views;
 
+		RGArray<BufferState> BufferStates;
+		
+		RGArray<RGViewHandle> Views;
+		RGArray<RGConstBufferHandle> CBuffers;
+		
 		friend RGPassRegistry;
 		friend RGBuilder;
 	};

@@ -231,6 +231,39 @@ export namespace RenderGraph
 		);
 	}
 
+	RGViewHandle GetHandleIfNoUAVBarrier(RGViewRef Resource)
+	{
+		if (Resource && (Resource->Type == ERGViewType::BufferUAV || Resource->Type == ERGViewType::TextureUAV))
+		{
+			if (white::has_anyflags(static_cast<RGUnorderedAccessViewRef>(Resource)->Flags, ERGUnorderedAccessViewFlags::SkipBarrier))
+			{
+				return Resource->GetHandle();
+			}
+		}
+		return RGViewHandle::Null;
+	}
+
+	EAccessHint MakeValidAccess(EAccessHint AccessOld, EAccessHint AccessNew)
+	{
+		const EAccessHint AccessUnion = white::enum_or(AccessOld ,AccessNew);
+		const EAccessHint NonMergeableAccessMask = white::enum_compl(Caps.MergeableAccessMask);
+
+		// Return the union of new and old if they are okay to merge.
+		if (!white::has_anyflags(AccessUnion, NonMergeableAccessMask))
+		{
+			return IsWritableAccess(AccessUnion) ? white::enum_and(AccessUnion , white::enum_compl(EAccessHint::ReadOnlyExclusiveMask)) : AccessUnion;
+		}
+
+		// Keep the old one if it can't be merged.
+		if (white::has_anyflags(AccessOld, NonMergeableAccessMask))
+		{
+			return AccessOld;
+		}
+
+		// Replace with the new one if it can't be merged.
+		return AccessNew;
+	}
+
 	class RGBuilder :RGAllocatorScope
 	{
 	public:
@@ -506,6 +539,39 @@ export namespace RenderGraph
 
 			EnumerateBufferAccess(PassParameters, PassFlags, [&](RGViewRef BufferView, RGBufferRef Buffer, EAccessHint Access)
 				{
+					TryAddView(BufferView);
+
+					const auto NoUAVBarrierHandle = GetHandleIfNoUAVBarrier(BufferView);
+
+					RGPass::BufferState* PassState;
+
+					if (Buffer->LastPass != PassHandle)
+					{
+						Buffer->LastPass = PassHandle;
+						Buffer->PassStateIndex = static_cast<int>(Pass->BufferStates.size());
+
+						PassState = &Pass->BufferStates.emplace_back(Buffer);
+					}
+					else
+					{
+						PassState = &Pass->BufferStates[Buffer->PassStateIndex];
+					}
+
+					PassState->ReferenceCount++;
+					PassState->State.Access = MakeValidAccess(PassState->State.Access, Access);
+					PassState->State.NoUAVBarrierFilter.AddHandle(NoUAVBarrierHandle);
+					PassState->State.SetPass(PassPipeline, PassHandle);
+
+					if (IsWritableAccess(Access))
+					{
+						bRenderPassOnlyWrites = false;
+
+						// When running in parallel this is set via MarkResourcesAsProduced. We also can't touch this as its a bitfield and not atomic.
+						if (!bParallelSetupEnabled)
+						{
+							Buffer->bProduced = true;
+						}
+					}
 				});
 		}
 

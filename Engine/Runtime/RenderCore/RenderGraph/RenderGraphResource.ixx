@@ -273,6 +273,11 @@ export namespace RenderGraph
 		RGView(const char* InName, ERGViewType InType)
 			:RGResource(InName), Type(InType)
 		{}
+
+		RGViewHandle GetHandle() const
+		{
+			return Handle;
+		}
 	private:
 		ERGViewType Type;
 		RGViewHandle Handle;
@@ -281,6 +286,8 @@ export namespace RenderGraph
 
 		friend RGViewRegistry;
 		friend RGBuilder;
+
+		friend RGViewHandle GetHandleIfNoUAVBarrier(RGView* Resource);
 	};
 
 	using RGViewRef = RGView*;
@@ -331,6 +338,8 @@ export namespace RenderGraph
 
 		friend RGBuilder;
 	};
+
+	using RGUnorderedAccessViewRef = RGUnorderedAccessView*;
 
 	class RGShaderResourceView : public RGView
 	{
@@ -472,6 +481,11 @@ export namespace RenderGraph
 		white::ref_ptr<RGPooledBuffer> Allocation;
 
 		RGPassHandle FirstPass;
+
+		int PassStateIndex;
+		RGPassHandle LastPass;
+
+		bool bProduced : 1;
 
 		friend RGBuilder;
 		friend RGBufferRegistry;

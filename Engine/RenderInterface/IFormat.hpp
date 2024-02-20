@@ -566,6 +566,11 @@ namespace platform::Render {
 			return white::has_anyflags(access, EAccessHint::WriteOnlyExclusiveMask);
 		}
 
+		constexpr bool IsWritableAccess(EAccessHint access)
+		{
+			return white::has_anyflags(access, EAccessHint::WritableMask);
+		}
+
 		enum class ClearBinding
 		{
 			NoneBound, //no clear color associated with this target.  Target will not do hardware clears on most platforms

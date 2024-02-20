@@ -151,12 +151,12 @@ export namespace RenderGraph
 
 		RGPassHandle GetLastPass() const
 		{
-			return LastPass;
+			return RGPassHandle::Max(LastPass[EPipeline::Graphics],LastPass[EPipeline::Compute]);
 		}
 
 		RGPassHandle GetFirstPass() const
 		{
-			return FirstPass;
+			return RGPassHandle::Min(FirstPass[EPipeline::Graphics],FirstPass[EPipeline::Compute]);
 		}
 
 		EPipeline GetPipelines() const

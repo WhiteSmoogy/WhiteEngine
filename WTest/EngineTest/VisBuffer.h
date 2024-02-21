@@ -125,13 +125,6 @@ private:
 
 		render::Context::Instance().CreateDeviceAndDisplay(display_setting);
 
-		ImGuiIO& io = ImGui::GetIO(); (void)io;
-		// Setup Dear ImGui style
-		ImGui::StyleColorsDark();
-
-
-		ImGui_ImplWin32_Init(GetNativeHandle());
-
 		platform::imgui::Context_Init(render::Context::Instance());
 
 		auto& Device = render::Context::Instance().GetDevice();

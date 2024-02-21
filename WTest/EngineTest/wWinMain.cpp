@@ -114,13 +114,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR cmdLine, int nCmdShow)
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
 	//ForwardTest Test(L"Forward");
 	VisBufferTest Test(L"VisBuffer");
+	ImGui_ImplWin32_Init(Test.GetNativeHandle());
+
 	Test.Create();
 	Test.Run();
-
-	RenderGraph::GetAllocator();
 
 	return 0;
 }

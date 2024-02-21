@@ -640,16 +640,6 @@ private:
 
 		render::Context::Instance().CreateDeviceAndDisplay(display_setting);
 
-		ImGuiIO& io = ImGui::GetIO(); (void)io;
-		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-		// Setup Dear ImGui style
-		ImGui::StyleColorsDark();
-
-
-		ImGui_ImplWin32_Init(GetNativeHandle());
-
 		platform::imgui::Context_Init(render::Context::Instance());
 
 		auto& Device = render::Context::Instance().GetDevice();

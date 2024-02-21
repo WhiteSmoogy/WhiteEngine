@@ -9,7 +9,7 @@ module;
 export module RenderGraph:builder;
 
 import "WBase/cassert.h";
-import "RenderGraphFwd.h";
+import :fwd;
 
 import :definition;
 import :resource;

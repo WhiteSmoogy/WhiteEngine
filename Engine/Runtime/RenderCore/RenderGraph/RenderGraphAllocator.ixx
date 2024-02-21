@@ -4,7 +4,7 @@ module;
 
 export module RenderGraph:allocator;
 
-import "RenderGraphFwd.h";
+import :fwd;
 
 #pragma warning(disable:4291)
 

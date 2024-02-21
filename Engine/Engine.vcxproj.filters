@@ -467,6 +467,9 @@
     <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphResourcePool.ixx">
       <Filter>Runtime\RenderCore\RenderGraph</Filter>
     </ClCompile>
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\Fwd.ixx">
+      <Filter>Runtime\RenderCore\RenderGraph</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset\CompressionBC.hpp">

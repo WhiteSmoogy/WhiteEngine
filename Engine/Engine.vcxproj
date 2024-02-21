@@ -179,6 +179,7 @@
     <ClCompile Include="Runtime\Compression.cpp" />
     <ClCompile Include="Runtime\MemStack.cpp" />
     <ClCompile Include="Runtime\Path.cpp" />
+    <ClCompile Include="Runtime\RenderCore\RenderGraph\Fwd.ixx" />
     <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphAllocator.ixx" />
     <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphBuilder.ixx" />
     <ClCompile Include="Runtime\RenderCore\RenderGraph\RenderGraphDef.ixx" />
@@ -421,7 +422,6 @@
     <ClInclude Include="Runtime\PlatformAtomics.h" />
     <ClInclude Include="Runtime\PlatformMemory.h" />
     <ClInclude Include="Runtime\RenderCore\Dispatch.h" />
-    <ClInclude Include="Runtime\RenderCore\RenderGraph\RenderGraphFwd.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderDB.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderParameters.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderParametersMetadata.h" />

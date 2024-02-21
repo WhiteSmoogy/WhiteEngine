@@ -3,7 +3,7 @@
 #include <WBase/wmathtype.hpp>
 #include "ShaderParametersMetadata.h"
 #include "RenderInterface/IGPUResourceView.h"
-#include "RenderGraph/RenderGraphFwd.h"
+import RenderGraph;
 
 namespace platform::Render
 {

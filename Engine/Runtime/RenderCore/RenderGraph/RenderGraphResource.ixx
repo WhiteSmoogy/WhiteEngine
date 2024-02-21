@@ -211,6 +211,17 @@ export namespace RenderGraph
 		return SkipUAVBarrier(Previous.NoUAVBarrierFilter.GetUniqueHandle(), Next.NoUAVBarrierFilter.GetUniqueHandle());
 	}
 
+	struct RGProducerState
+	{
+		RGProducerState() = default;
+
+		RGPass* Pass = nullptr;
+		RGPass* PassIfSkipUAVBarrier = nullptr;
+		EAccessHint Access = EAccessHint::None;
+		RGViewHandle NoUAVBarrierHandle;
+	};
+
+	using RGProducerStatesByPipeline = PipelineArray<RGProducerState>;
 
 	class RGResource
 	{
@@ -250,12 +261,21 @@ export namespace RenderGraph
 	protected:
 		/** Whether this is an externally registered resource. */
 		uint8 bExternal : 1 = 0;
+		uint8 bProduced : 1 = 0;
 
 		uint8 bForceNonTransient : 1 = 0;
 
 		uint8 bTransient : 1 = 0;
 
 		uint8 bQueuedForUpload : 1 = 0;
+
+		RGPassHandle FirstPass;
+		RGPassHandle LastPass;
+
+		uint16 ReferenceCount = 0;
+
+		/** Scratch index allocated for the resource in the pass being setup. */
+		uint16 PassStateIndex = 0;
 
 		RGViewableResource(const char* Name, ERGViewableResourceType InType)
 			:RGResource(Name), Type(InType)
@@ -487,12 +507,14 @@ export namespace RenderGraph
 
 		white::ref_ptr<RGPooledBuffer> Allocation;
 
-		RGPassHandle FirstPass;
+		/** Cached state pointer from the pooled / transient buffer. */
+		RGSubresourceState* State = nullptr;
 
-		int PassStateIndex;
-		RGPassHandle LastPass;
+		/** Tracks the merged subresource state as the graph is built. */
+		RGSubresourceState* MergeState = nullptr;
 
-		bool bProduced : 1;
+		/** Tracks the last pass that produced this resource as the graph is built. */
+		RGProducerStatesByPipeline LastProducer;
 
 		friend RGBuilder;
 		friend RGBufferRegistry;

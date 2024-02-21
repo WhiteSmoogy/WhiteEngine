@@ -312,9 +312,7 @@ export namespace RenderGraph
 
 			std::memcpy(Parameters, span.data(), ParametersSize);
 
-			auto cb = CBufferers.Allocate<RGConstBuffer>(Allocator, Parameters, ParametersSize,  __func__);
-
-			return cb;
+			return CreateCBuffer(Parameters, __func__).Get();
 		}
 
 		RGBufferRef CreateBuffer(const RGBufferDesc& Desc, const char* Name, ERGBufferFlags Flags = ERGBufferFlags::None)
@@ -585,7 +583,10 @@ export namespace RenderGraph
 			Pass->CBuffers.reserve(PassParameters.GetCBufferCount());
 			PassParameters.EnumerateCBuffers([&](RGUniformBufferBinding UniformBuffer)
 				{
-					Pass->CBuffers.emplace_back(UniformBuffer.GetCBuffer()->Handle);
+					if (auto cbuffer = UniformBuffer.GetCBuffer())
+					{
+						Pass->CBuffers.emplace_back(cbuffer->Handle);
+					}
 				});
 
 			if (bParallelSetupEnabled)

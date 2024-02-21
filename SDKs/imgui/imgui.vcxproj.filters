@@ -6,6 +6,10 @@
     <ClCompile Include="imgui_widgets.cpp" />
     <ClCompile Include="implot.cpp" />
     <ClCompile Include="implot_items.cpp" />
+    <ClCompile Include="imgui_tables.cpp" />
+    <ClCompile Include="backends\imgui_impl_win32.cpp">
+      <Filter>backends</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imconfig.h" />
@@ -16,5 +20,13 @@
     <ClInclude Include="imstb_truetype.h" />
     <ClInclude Include="implot.h" />
     <ClInclude Include="implot_internal.h" />
+    <ClInclude Include="backends\imgui_impl_win32.h">
+      <Filter>backends</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="backends">
+      <UniqueIdentifier>{f3cb47e1-6d9d-46ba-8ae1-1ecd54c9bda0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

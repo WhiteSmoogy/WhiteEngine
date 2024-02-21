@@ -149,19 +149,20 @@ struct ScrollingBuffer {
 };
 
 void Demo_RealtimePlots() {
-	static ScrollingBuffer sdata1;
+	static ScrollingBuffer sdata1(1000);
 	static float t = 0;
-	t += ImGui::GetIO().DeltaTime;
-	sdata1.AddPoint(t, ImGui::GetIO().DeltaTime);	
+	auto dt = ImGui::GetIO().DeltaTime * 1000;
+	t += dt;
+	sdata1.AddPoint(t, dt);
 
 	static ImPlotAxisFlags flags = ImPlotAxisFlags_NoTickLabels;
 
 	if (ImPlot::BeginPlot("##Scrolling", ImVec2(-1, 150), ImPlotFlags_NoMouseText)) {
 		ImPlot::SetupAxes(nullptr, nullptr, flags, 0);
 		ImPlot::SetupAxisLimits(ImAxis_X1, sdata1.Data[sdata1.Offset].x, t, ImGuiCond_Always);
-		ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 0.016f);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 16);
 		ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
-		ImPlot::PlotShaded("FrameTime", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, 0, 0, 2 * sizeof(float));
+		ImPlot::PlotLine("FrameTime", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), 0, 0, 2 * sizeof(float));
 		ImPlot::EndPlot();
 	}
 }

@@ -4,6 +4,7 @@
 #include "Runtime/RenderCore/UnifiedBuffer.h"
 #include "Runtime/RenderCore/Dispatch.h"
 #include "Runtime/Renderer/SceneInfo.h"
+#include "imgui/implot.h"
 
 using namespace platform::Render;
 
@@ -122,6 +123,49 @@ class VisTrianglePS :public BuiltInShader
 };
 IMPLEMENT_BUILTIN_SHADER(VisTrianglePS, "VisTriangle.hlsl", "VisTrianglePS", platform::Render::PixelShader);
 
+struct ScrollingBuffer {
+	int MaxSize;
+	int Offset;
+	ImVector<ImVec2> Data;
+	ScrollingBuffer(int max_size = 2000) {
+		MaxSize = max_size;
+		Offset = 0;
+		Data.reserve(MaxSize);
+	}
+	void AddPoint(float x, float y) {
+		if (Data.size() < MaxSize)
+			Data.push_back(ImVec2(x, y));
+		else {
+			Data[Offset] = ImVec2(x, y);
+			Offset = (Offset + 1) % MaxSize;
+		}
+	}
+	void Erase() {
+		if (Data.size() > 0) {
+			Data.shrink(0);
+			Offset = 0;
+		}
+	}
+};
+
+void Demo_RealtimePlots() {
+	static ScrollingBuffer sdata1;
+	static float t = 0;
+	t += ImGui::GetIO().DeltaTime;
+	sdata1.AddPoint(t, ImGui::GetIO().DeltaTime);	
+
+	static ImPlotAxisFlags flags = ImPlotAxisFlags_NoTickLabels;
+
+	if (ImPlot::BeginPlot("##Scrolling", ImVec2(-1, 150), ImPlotFlags_NoMouseText)) {
+		ImPlot::SetupAxes(nullptr, nullptr, flags, 0);
+		ImPlot::SetupAxisLimits(ImAxis_X1, sdata1.Data[sdata1.Offset].x, t, ImGuiCond_Always);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 0.016f);
+		ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
+		ImPlot::PlotShaded("FrameTime", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, 0, 0, 2 * sizeof(float));
+		ImPlot::EndPlot();
+	}
+}
+
 
 void VisBufferTest::OnGUI()
 {
@@ -129,6 +173,8 @@ void VisBufferTest::OnGUI()
 		ImGui::Text("Loading...");
 	else
 		ImGui::Text("Loaded");
+
+	Demo_RealtimePlots();
 }
 
 using RenderGraph::RGBufferDesc;

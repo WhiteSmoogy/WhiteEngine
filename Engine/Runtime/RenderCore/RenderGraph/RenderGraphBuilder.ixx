@@ -92,12 +92,23 @@ export namespace RenderGraph
 		bool bEmptyParameters : 1;
 		bool bRenderPassOnlyWrites : 1;
 		bool bHasExternalOutputs : 1;
+		bool bSentinel :1 ;
 		
 		friend RGPassRegistry;
 		friend RGBuilder;
 	};
 
 	using RGPassRef = RGPass*;
+
+	class RGSentinelPass : public RGPass
+	{
+	public:
+		RGSentinelPass(RGEventName&& Name, ERGPassFlags InPassFlagsToAdd = ERGPassFlags::None)
+			:RGPass(std::move(Name), RGParameterStruct((uint8_t*)nullptr,nullptr),white::enum_or(ERGPassFlags::NeverCull ,InPassFlagsToAdd))
+		{
+			bSentinel = 1;
+		}
+	}
 
 	template <typename ParameterStructType, typename ExecuteLambdaType>
 	class RGTLambdaPass
@@ -276,7 +287,9 @@ export namespace RenderGraph
 			:CmdList(InCmdList), BuilderName(InName)
 			, bParallelSetupEnabled(white::has_anyflags(Flags, ERGBuilderFlags::AllowParallelExecute))
 			, bParallelExecuteEnabled(white::has_anyflags(Flags, ERGBuilderFlags::AllowParallelExecute))
-		{}
+		{
+			AddProloguePass();
+		}
 
 		RGBuilder(const RGBuilder&) = delete;
 		~RGBuilder()
@@ -420,6 +433,11 @@ export namespace RenderGraph
 		void Execute()
 		{}
 	private:
+		void AddProloguePass()
+		{
+			ProloguePass = SetupEmptyPass(Passes.Allocate<RGSentinelPass>(Allocator, RGEventName("Graph Prologue (Graphics)")));
+		}
+
 		RGPassHandle GetProloguePassHandle() const
 		{
 			return RGPassHandle(0);
@@ -595,6 +613,17 @@ export namespace RenderGraph
 			}
 		}
 
+		void SetupEmptyPass(RGPass* Pass)
+		{
+			Pass->bEmptyParameters = true;
+			SetupPassInternals(Pass);
+			SetupAuxiliaryPasses(Pass);
+			return Pass;
+		}
+
+		void SetupAuxiliaryPasses(RGPass* Pass)
+		{
+		}
 	private:
 		CommandListImmediate& CmdList;
 		const RGEventName BuilderName;
@@ -616,6 +645,8 @@ export namespace RenderGraph
 
 		uint32 AsyncComputePassCount;
 		uint32 RasterPassCount;
+
+		RGPassRef ProloguePass;
 	};
 }
 

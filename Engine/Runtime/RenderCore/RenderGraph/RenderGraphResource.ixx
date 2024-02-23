@@ -198,7 +198,7 @@ export namespace RenderGraph
 	bool SkipUAVBarrier(RGViewHandle PreviousHandle, RGViewHandle NextHandle)
 	{
 		// Barrier if previous / next don't have a matching valid skip-barrier UAV handle.
-		if (GRDGOverlapUAVs && NextHandle.IsValid() && PreviousHandle == NextHandle)
+		if (GRGOverlapUAVs && NextHandle.IsValid() && PreviousHandle == NextHandle)
 		{
 			return true;
 		}

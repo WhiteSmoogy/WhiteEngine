@@ -89,10 +89,11 @@ export namespace RenderGraph
 		RGArray<RGViewHandle> Views;
 		RGArray<RGConstBufferHandle> CBuffers;
 
-		bool bEmptyParameters : 1;
-		bool bRenderPassOnlyWrites : 1;
-		bool bHasExternalOutputs : 1;
-		bool bSentinel :1 ;
+		bool bEmptyParameters : 1 = 0;
+		bool bRenderPassOnlyWrites : 1 = 0;
+		bool bHasExternalOutputs : 1 = 0;
+		bool bSentinel :1  = 0;
+		bool bCulled : 1 = 0;
 		
 		friend RGPassRegistry;
 		friend RGBuilder;
@@ -431,8 +432,94 @@ export namespace RenderGraph
 		}
 
 		void Execute()
-		{}
+		{
+			Compile();
+		}
 	private:
+		void Compile()
+		{
+			const auto ProloguePassHandle = GetProloguePassHandle();
+			const auto EpiloguePassHandle = GetEpiloguePassHandle();
+
+			const uint32 CompilePassCount = Passes.Num();
+
+			if (bParallelSetupEnabled)
+			{
+				//Flush([RGPass* Pass]{SetupPassResources(Pass);});
+			}
+
+			auto bCullPassed = GRGCullPasses;
+
+			if (bCullPassed)
+				CullPassStack.reserve(CompilePassCount);
+
+			if (bCullPasses || AsyncComputePassCount > 0)
+			{
+				if (!bParallelSetupEnabled)
+				{
+					for (auto PassHandle = ProloguePassHandle + 1; PassHandle < EpiloguePassHandle; ++PassHandle)
+					{
+						SetupPassDependencies(Passes[PassHandle]);
+					}
+				}
+
+				const auto AddLastProducersToCullStack = [&](const RGProducerStatesByPipeline& LastProducers)
+				{
+					for (const auto& LastProducer : LastProducers)
+					{
+						if (LastProducer.Pass)
+						{
+							CullPassStack.emplace_back(LastProducer.Pass->Handle);
+						}
+					}
+				};
+
+				for(auto& pair :ExternalBuffers)
+				{
+					AddLastProducersToCullStack(pair.second->LastProducers);
+				}
+			}
+
+			if (bCullPasses)
+			{
+				CullPassStack.emplace_back(EpiloguePassHandle);
+
+				// Mark the epilogue pass as culled so that it is traversed.
+				EpiloguePass->bCulled = 1;
+
+				// Manually mark the prologue passes as not culled.
+				ProloguePass->bCulled = 0;
+
+				while (!CullPassStack.empty())
+				{
+					auto* Pass = Passes[white::pop(CullPassStack)];
+
+					if (Pass->bCulled)
+					{
+						Pass->bCulled = 0;
+
+						white::append(CullPassStack,Pass->Producers);
+					}
+				}
+
+				for (auto PassHandle = ProloguePassHandle + 1; PassHandle < EpiloguePassHandle; ++PassHandle)
+				{
+					auto* Pass = Passes[PassHandle];
+
+					if (!Pass->bCulled)
+					{
+						continue;
+					}
+
+
+					for (auto& PassState : Pass->BufferStates)
+					{
+						PassState.Buffer->ReferenceCount -= PassState.ReferenceCount;
+					}
+				}
+			}
+		}
+
 		void AddProloguePass()
 		{
 			ProloguePass = SetupEmptyPass(Passes.Allocate<RGSentinelPass>(Allocator, RGEventName("Graph Prologue (Graphics)")));
@@ -624,6 +711,18 @@ export namespace RenderGraph
 		void SetupAuxiliaryPasses(RGPass* Pass)
 		{
 		}
+
+		void SetupPassDependencies(RGPass* Pass)
+		{
+			const bool bCullPasses = GRGCullPasses;
+			Pass->bCulled = bCullPasses;
+
+			if (bCullPasses && (Pass->bHasExternalOutputs || white::has_anyflags(Pass->Flags, ERGPassFlags::NeverCull)))
+			{
+				CullPassStack.emplace_back(Pass->Handle);
+			}
+		}
+
 	private:
 		CommandListImmediate& CmdList;
 		const RGEventName BuilderName;
@@ -647,6 +746,8 @@ export namespace RenderGraph
 		uint32 RasterPassCount;
 
 		RGPassRef ProloguePass;
+
+		RGArray<RGPassHandle> CullPassStack;
 	};
 }
 

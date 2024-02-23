@@ -472,5 +472,6 @@ export namespace RenderGraph
 		std::string EventName;
 	};
 
-	constexpr bool GRDGOverlapUAVs = true;
+	constexpr bool GRGOverlapUAVs = true;
+	constexpr bool GRGCullPasses = true;
 }

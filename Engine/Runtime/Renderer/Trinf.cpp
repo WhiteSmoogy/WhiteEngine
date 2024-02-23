@@ -81,7 +81,7 @@ RenderGraph::RGBufferRef StreamingScene::TrinfBuffer<T>::ResizeByteAddressBuffer
 		};
 
 		platform::Render::MemcpyResource(Builder, NewDataBuffer, InternalBufferOld, params);
-		Builder.ToExternal(NewDataBuffer);
+		DataBuffer = Builder.ToExternal(NewDataBuffer);
 
 		return NewDataBuffer;
 	}

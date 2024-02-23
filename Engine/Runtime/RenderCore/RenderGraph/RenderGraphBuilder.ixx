@@ -789,8 +789,6 @@ export namespace ComputeShaderUtils
 
 		ValidateGroupCount(GroupCount);
 
-		return nullptr;
-
 		return GraphBuilder.AddPass(
 			std::move(PassName),
 			ParametersMetadata,
@@ -812,7 +810,5 @@ export namespace ComputeShaderUtils
 	{
 		auto* ParametersMetadata = TShaderClass::Parameters::TypeInfo::GetStructMetadata();
 		return AddPass(GraphBuilder, std::move(PassName), ERGPassFlags::Compute, ComputeShader, ParametersMetadata, Parameters, GroupCount);
-
-		return nullptr;
 	}
 }

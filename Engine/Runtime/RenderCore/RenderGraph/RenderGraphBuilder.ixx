@@ -66,7 +66,7 @@ export namespace RenderGraph
 			RGSubresourceState* MergeState = nullptr;
 			uint16 ReferenceCount = 0;
 		};
-	private:
+	protected:
 		RGEventName Name;
 		RGParameterStruct ParameterStruct;
 		ERGPassFlags Flags;
@@ -108,7 +108,7 @@ export namespace RenderGraph
 		{
 			bSentinel = 1;
 		}
-	}
+	};
 
 	template <typename ParameterStructType, typename ExecuteLambdaType>
 	class RGTLambdaPass
@@ -613,7 +613,7 @@ export namespace RenderGraph
 			}
 		}
 
-		void SetupEmptyPass(RGPass* Pass)
+		RGPass* SetupEmptyPass(RGPass* Pass)
 		{
 			Pass->bEmptyParameters = true;
 			SetupPassInternals(Pass);

@@ -37,6 +37,7 @@ export namespace RenderGraph
 	using RGPassRegistry = RGHandleRegistry<RGPassHandle>;
 
 	using  RGPassHandleByPipeline = PipelineArray<RGPassHandle>;
+	using  RGPassHandleArray = RGArray<RGPassHandle>;
 
 	enum class ERGViewableResourceType : uint8
 	{

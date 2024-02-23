@@ -55,4 +55,10 @@ namespace white
 		std::swap(vec[Index], vec[vec.size() - 1]);
 		vec.pop_back();
 	}
+
+	template<typename T, typename XAllocator,  typename YAllocator>
+	void append(std::vector<T, XAllocator>& range, std::vector<T, YAllocator>& nextrange)
+	{
+		range.insert(range.end(), nextrange.begin(), nextrange.end());
+	}
 }

@@ -3,6 +3,7 @@ module;
 #include "Runtime/RenderCore/Dispatch.h"
 #include "RenderInterface/DeviceCaps.h"
 #include "WBase/wmathtype.hpp"
+#include "Core/Container/vector.hpp"
 
 #include <span>
 
@@ -94,6 +95,8 @@ export namespace RenderGraph
 		bool bHasExternalOutputs : 1 = 0;
 		bool bSentinel :1  = 0;
 		bool bCulled : 1 = 0;
+
+		RGPassHandleArray Producers;
 		
 		friend RGPassRegistry;
 		friend RGBuilder;
@@ -433,6 +436,8 @@ export namespace RenderGraph
 
 		void Execute()
 		{
+			SetupEmptyPass(EpiloguePass = Passes.Allocate<RGSentinelPass>(Allocator, RGEventName("Graph Epilogue")));
+
 			Compile();
 		}
 	private:
@@ -448,9 +453,9 @@ export namespace RenderGraph
 				//Flush([RGPass* Pass]{SetupPassResources(Pass);});
 			}
 
-			auto bCullPassed = GRGCullPasses;
+			auto bCullPasses = GRGCullPasses;
 
-			if (bCullPassed)
+			if (bCullPasses)
 				CullPassStack.reserve(CompilePassCount);
 
 			if (bCullPasses || AsyncComputePassCount > 0)
@@ -476,7 +481,7 @@ export namespace RenderGraph
 
 				for(auto& pair :ExternalBuffers)
 				{
-					AddLastProducersToCullStack(pair.second->LastProducers);
+					AddLastProducersToCullStack(pair.second->LastProducer);
 				}
 			}
 
@@ -528,6 +533,11 @@ export namespace RenderGraph
 		RGPassHandle GetProloguePassHandle() const
 		{
 			return RGPassHandle(0);
+		}
+
+		RGPassHandle GetEpiloguePassHandle() const
+		{
+			return Passes.Last();
 		}
 
 		template <typename ParameterStructType, typename ExecuteLambdaType>
@@ -746,6 +756,7 @@ export namespace RenderGraph
 		uint32 RasterPassCount;
 
 		RGPassRef ProloguePass;
+		RGPassRef EpiloguePass;
 
 		RGArray<RGPassHandle> CullPassStack;
 	};

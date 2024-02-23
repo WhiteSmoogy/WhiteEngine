@@ -51,6 +51,27 @@ namespace platform::Render {
 		{
 			return Elements[GetPipelineIndex(Pipeline)];
 		}
+
+
+		ElementType* begin()
+		{
+			return Elements;
+		}
+
+		ElementType* end()
+		{
+			return Elements + GetPipelineCount();
+		}
+
+		const ElementType* begin() const
+		{
+			return Elements;
+		}	
+
+		const ElementType* end() const
+		{
+			return Elements + GetPipelineCount();
+		}
 	private:
 		ElementType Elements[GetPipelineCount()];
 	};

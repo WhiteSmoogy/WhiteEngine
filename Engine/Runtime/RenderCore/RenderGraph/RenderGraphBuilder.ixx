@@ -33,6 +33,35 @@ export namespace RenderGraph
 		NeverCull = 1 << 4,
 	};
 
+	const char* RGPassTypeToString(ERGPassFlags PassType)
+	{
+		if (white::has_anyflags(PassType, ERGPassFlags::Raster))
+		{
+			if (white::has_anyflags(PassType, ERGPassFlags::NeverCull))
+				return "Raster | NeverCull";
+			return "Raster";
+		}
+		else if (white::has_anyflags(PassType, ERGPassFlags::Compute))
+		{
+			if (white::has_anyflags(PassType, ERGPassFlags::NeverCull))
+		   		return "Compute | NeverCull";
+			return "Compute";
+		}
+		else if (white::has_anyflags(PassType, ERGPassFlags::AsyncCompute))
+		{
+			if (white::has_anyflags(PassType, ERGPassFlags::NeverCull))
+				return "AsyncCompute | NeverCull";
+			return "AsyncCompute";
+		}
+		else if (white::has_anyflags(PassType, ERGPassFlags::Copy))
+		{
+			if (white::has_anyflags(PassType, ERGPassFlags::NeverCull))
+				return "Copy | NeverCull";
+			return "Copy";
+		}
+		return "Unknown";
+	}
+
 	class RGPass
 	{
 	public:
@@ -49,6 +78,11 @@ export namespace RenderGraph
 		RGParameterStruct GetParameters() const
 		{
 			return ParameterStruct;
+		}
+
+		bool IsCulled() const
+		{
+			return bCulled;
 		}
 
 	protected:
@@ -448,6 +482,110 @@ export namespace RenderGraph
 			SetupEmptyPass(EpiloguePass = Passes.Allocate<RGSentinelPass>(Allocator, RGEventName("Graph Epilogue")));
 
 			Compile();
+		}
+
+		void Dump(const char* graphfilename)
+		{
+			static struct GraphVizStyle
+			{
+				char const* rank_dir{ "TB" };
+				struct
+				{
+					char const* name{ "helvetica" };
+					int32       size{ 10 };
+				} font;
+				struct
+				{
+					struct
+					{
+						char const* executed{ "orange" };
+						char const* culled{ "lightgray" };
+					} pass;
+					struct
+					{
+						char const* imported{ "lightsteelblue" };
+						char const* transient{ "skyblue" };
+					} resource;
+					struct
+					{
+						char const* read{ "olivedrab3" };
+						char const* write{ "orangered" };
+					} edge;
+				} color;
+			} style;
+
+			struct GraphViz
+			{
+				std::string defaults;
+				std::string declarations;
+				std::string dependencies;
+			} graphviz;
+
+			graphviz.defaults += std::format("graph [style=invis, rankdir=\"{}\", ordering=out, splines=spline]\n", style.rank_dir);
+			graphviz.defaults += std::format("node [shape=record, fontname=\"{}\", fontsize={}, margin=\"0.2,0.03\"]\n", style.font.name, style.font.size);
+
+			std::unordered_set<RGBuffer*> declared_buffers;
+
+			auto DeclareBuffer = [&declared_buffers, &graphviz, this](RGBuffer* buffer)
+				{
+					if (!declared_buffers.contains(buffer))
+					{
+						graphviz.declarations += std::format("B{} ", buffer->Handle.GetIndex());
+						std::string label = std::format("<{}<br/>dimension: Buffer<br/>size: {} bytes>",
+							buffer->Name, buffer->Desc.GetSize());
+						graphviz.declarations += std::format("[shape=\"box\", style=\"filled\",fillcolor={}, label={}] \n", buffer->bExternal ? style.color.resource.imported : style.color.resource.transient, label);
+						declared_buffers.insert(buffer);
+					}
+				};
+
+			const auto ProloguePassHandle = GetProloguePassHandle();
+			const auto EpiloguePassHandle = GetEpiloguePassHandle();
+
+			for (auto PassHandle = ProloguePassHandle + 1; PassHandle < EpiloguePassHandle; ++PassHandle)
+			{
+				auto* Pass = Passes[PassHandle];
+
+				graphviz.declarations += std::format("P{} ", Pass->Handle.GetIndex());
+				std::string label = std::format("<{}<br/> type: {}<br/> culled: {}>", Pass->GetName(), RGPassTypeToString(Pass->Flags), Pass->IsCulled() ? "Yes" : "No");
+				graphviz.declarations += std::format("[shape=\"ellipse\", style=\"rounded,filled\",fillcolor={}, label={}] \n",
+					Pass->IsCulled() ? style.color.pass.culled : style.color.pass.executed, label);
+
+				std::string read_dependencies = "{";
+				std::string write_dependencies = "{";
+
+				for (auto& BufferState : Pass->BufferStates)
+				{
+					auto name = std::format("B{} ", BufferState.Buffer->Handle.GetIndex());
+					DeclareBuffer(BufferState.Buffer);
+
+					if (IsWritableAccess(BufferState.State.Access))
+					{
+						write_dependencies += name;
+						write_dependencies += ",";
+					}
+					else
+					{
+						read_dependencies += name;
+						read_dependencies += ",";
+					}
+				}
+
+				if (read_dependencies.back() == ',') read_dependencies.pop_back();
+				read_dependencies += "}";
+				if (write_dependencies.back() == ',') write_dependencies.pop_back();
+				write_dependencies += "}";
+
+				graphviz.dependencies += std::format("{}->P{} [color=olivedrab3]\n", read_dependencies, Pass->Handle.GetIndex());
+				graphviz.dependencies += std::format("P{}->{} [color=orangered]\n", Pass->Handle.GetIndex(), write_dependencies);
+			}
+
+			std::ofstream graph_file(graphfilename);
+			graph_file << "digraph RenderGraph{ \n";
+			graph_file << graphviz.defaults << "\n";
+			graph_file << graphviz.declarations << "\n";
+			graph_file << graphviz.dependencies << "\n";
+			graph_file << "}";
+			graph_file.close();
 		}
 	private:
 		void Compile()

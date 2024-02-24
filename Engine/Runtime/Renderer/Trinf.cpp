@@ -138,10 +138,13 @@ void StreamingScene::BeginAsyncUpdate(RenderGraph::RGBuilder& Builder)
 
 void StreamingScene::EndAsyncUpdate(RenderGraph::RGBuilder& Builder)
 {
-	auto index = Builder.RegisterExternal(Index.DataBuffer, RenderGraph::ERGBufferFlags::MultiFrame);
-	auto position = Builder.RegisterExternal(Position.DataBuffer, RenderGraph::ERGBufferFlags::MultiFrame);
-	auto tangent = Builder.RegisterExternal(Tangent.DataBuffer, RenderGraph::ERGBufferFlags::MultiFrame);
-	auto texcoord = Builder.RegisterExternal(TexCoord.DataBuffer, RenderGraph::ERGBufferFlags::MultiFrame);
+	if (GpuStreaming.empty())
+		return;
+
+	auto index = Position.ResizeByteAddressBufferIfNeeded(Builder);
+	auto position = Tangent.ResizeByteAddressBufferIfNeeded(Builder);
+	auto tangent = TexCoord.ResizeByteAddressBufferIfNeeded(Builder);
+	auto texcoord = Index.ResizeByteAddressBufferIfNeeded(Builder);
 
 	for (auto itr = GpuStreaming.begin(); itr != GpuStreaming.end();)
 	{
@@ -185,11 +188,6 @@ void StreamingScene::EndAsyncUpdate(RenderGraph::RGBuilder& Builder)
 
 void StreamingScene::ProcessNewResources(RenderGraph::RGBuilder& Builder)
 {
-	Position.ResizeByteAddressBufferIfNeeded(Builder);
-	Tangent.ResizeByteAddressBufferIfNeeded(Builder);
-	TexCoord.ResizeByteAddressBufferIfNeeded(Builder);
-	Index.ResizeByteAddressBufferIfNeeded(Builder);
-
 	for (auto resource : PendingAdds)
 	{
 		auto key = Keys[resource->TrinfKey];

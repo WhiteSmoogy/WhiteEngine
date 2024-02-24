@@ -1,5 +1,6 @@
 module;
 #include "Runtime/RenderCore/ShaderParametersMetadata.h"
+#include "RenderInterface/IFormat.hpp"
 #include <format>
 export module RenderGraph:definition;
 
@@ -13,6 +14,7 @@ export namespace RenderGraph
 	using platform::Render::ShaderParametersMetadata;
 	using platform::Render::ShaderBaseType;
 	using platform::Render::ShaderParamType;
+	using platform::Render::EAccessHint;
 
 	template <typename LocalObjectType, typename LocalIndexType>
 	class RGHandle
@@ -274,6 +276,48 @@ export namespace RenderGraph
 	template <typename TStruct>
 	concept IsRGParameterStruct = requires{ TStruct::TypeInfo::GetStructMetadata; };
 
+	struct RGBufferAccess
+	{
+		RGBufferAccess() = default;
+
+		RGBufferAccess(RGBuffer* InBuffer, EAccessHint InAccess)
+			: Buffer(InBuffer)
+			, Access(InAccess)
+		{
+		}
+
+		RGBuffer* GetBuffer()
+		{
+			return Buffer;
+		}
+
+		EAccessHint GetAccess()
+		{
+			return Access;
+		}
+
+		operator bool() const
+		{
+			return Buffer != nullptr;
+		}
+
+		operator RGBuffer* () const
+		{
+			return Buffer;
+		}
+
+		RGBuffer* operator->() const
+		{
+			return Buffer;
+		}
+
+		auto operator<=>(const RGBufferAccess&) const = default;
+
+		RGBuffer* Buffer = nullptr;
+		EAccessHint Access = EAccessHint::None;
+	};
+
+
 	class RGParameter
 	{
 	public:
@@ -306,6 +350,16 @@ export namespace RenderGraph
 			return platform::Render::GetBaseType(Member->GetShaderType());
 		}
 
+		ShaderParamType GetShaderType() const
+		{
+			return Member->GetShaderType();
+		}
+
+		RGBufferAccess GetAsBufferAccess() const
+		{
+			return *GetAs<RGBufferAccess>();
+		}
+
 	protected:
 		template <typename T>
 		const T* GetAs() const
@@ -329,6 +383,7 @@ export namespace RenderGraph
 			return *GetAs<RGConstBuffer*>();
 		}
 	};
+
 
 	class RGParameterStruct
 	{

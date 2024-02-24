@@ -249,6 +249,13 @@ export namespace RenderGraph
 						AccessFunction(UAV, Buffer, UAVAccess);
 					}
 				}
+				else if(baseType == SBT_BUFFER)
+				{
+					if (auto Access = Parameter.GetAsBufferAccess())
+					{
+						AccessFunction(nullptr, Access.GetBuffer(), Access.GetAccess());
+					}
+				}
 			}
 		);
 	}

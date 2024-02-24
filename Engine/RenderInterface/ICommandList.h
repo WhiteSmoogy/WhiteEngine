@@ -76,7 +76,7 @@ namespace platform::Render {
 		ElementType Elements[GetPipelineCount()];
 	};
 
-	std::array< EPipeline, 2> GetPipelines()
+	inline std::array< EPipeline, 2> GetPipelines()
 	{
 		return { EPipeline::Graphics, EPipeline::Compute };
 	}

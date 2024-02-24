@@ -168,6 +168,7 @@ namespace platform::Render {
 
 			SPT_ElemEmpty = MakeShaderFormat<SBT_INVALID, 1, 1, 2>,
 			SPT_StructInclude,
+			SPT_BufferAccess = MakeShaderFormat<SBT_BUFFER, 1, 1, 0>,
 		};
 
 		constexpr ShaderBaseType GetBaseType(ShaderParamType type)

@@ -30,6 +30,20 @@ namespace platform::Render
 		template<typename Struct>
 		struct StructuredBuffer {};
 
+
+		template<EAccessHint InAccess>
+		struct RGBufferTAccess  : RenderGraph::RGBufferAccess
+		{
+			RGBufferTAccess()
+				: RGBufferAccess(nullptr, InAccess)
+			{}
+
+			RGBufferTAccess(RenderGraph::RGBuffer* InBuffer)
+				: RGBufferAccess(InBuffer, InAccess)
+			{
+			}
+		};
+
 		template<typename _type0, typename _type1>
 		struct UnionPointer
 		{
@@ -212,6 +226,15 @@ namespace platform::Render
 
 		template<typename TypeParameter>
 		struct TShaderTextureTypeInfo;
+
+		template<EAccessHint Access>
+		struct TShaderParameterTypeInfo<HLSLTraits::RGBufferTAccess<Access>> : ShaderTypeInfo<SPT_BufferAccess>
+		{
+			using DeclType = HLSLTraits::RGBufferTAccess<Access>;
+
+			template<std::size_t Boundary = 0>
+			static constexpr std::size_t Alignement = sizeof(DeclType);
+		};
 	}
 }
 
@@ -359,3 +382,15 @@ namespace platform::Render
 		*/
 #define SHADER_PARAMETER_STRUCT_INCLUDE(StructType,MemberName) \
 	INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::SPT_StructInclude, StructType::TypeInfo, StructType, MemberName)
+
+/** Informs the RG pass to transition the buffer into the requested state.
+ *
+ *  Example:
+ *  BEGIN_SHADER_PARAMETER_STRUCT(FParameters,)
+ *      RG_BUFFER_ACCESS(MyBuffer)
+ *      // ...
+ *  END_SHADER_PARAMETER_STRUCT()
+ *
+ **/
+#define RG_BUFFER_ACCESS(MemberName,Access) \
+	INTERNAL_SHADER_PARAMETER_EXPLICIT(platform::Render::SPT_BufferAccess, platform::Render::TShaderParameterTypeInfo<platform::Render::HLSLTraits::RGBufferTAccess<Access>>,platform::Render::HLSLTraits::RGBufferTAccess<Access>,MemberName)

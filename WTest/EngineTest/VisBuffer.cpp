@@ -113,6 +113,8 @@ class VisTriangleVS :public BuiltInShader
 
 	BEGIN_SHADER_PARAMETER_STRUCT(Parameters)
 		SHADER_PARAMETER_CBUFFER(ViewArgs, View)
+		RG_BUFFER_ACCESS(IndirectArgs, EAccessHint::DrawIndirect)
+		RG_BUFFER_ACCESS(FilterIndexBuffer, EAccessHint::VertexOrIndexBuffer)
 		END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_BUILTIN_SHADER(VisTriangleVS, "VisTriangle.hlsl", "VisTriangleVS", platform::Render::VertexShader);
@@ -331,6 +333,9 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 	auto depth_tex = static_cast<render::Texture2D*>(screen_frame->Attached(render::FrameBuffer::DepthStencil));
 
 	auto VSParas = Builder.AllocParameters<VisTriangleVS::Parameters>();
+	VSParas->View = ViewCB.Get();
+	VSParas->IndirectArgs = CompactedDrawArgs;
+	VSParas->FilterIndexBuffer = FliteredIndexBuffer;
 
 	Builder.AddPass(
 		RGEventName("VisBuffer"),
@@ -346,8 +351,6 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 			CmdList.BeginRenderPass(visPass, "VisBuffer");
 
 			auto VisTriVS = GetBuiltInShaderMap()->GetShader<VisTriangleVS>();
-			VSParas->View = ViewCB.Get();
-
 			auto VisTriPS = GetBuiltInShaderMap()->GetShader<VisTrianglePS>();
 
 			// Setup pipelinestate
@@ -364,8 +367,8 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 
 			CmdList.SetVertexBuffer(0, Trinf::Scene.Position.DataBuffer->GetRObject());
 
-			CmdList.SetIndexBuffer(FliteredIndexBuffer->GetRObject());
-			CmdList.DrawIndirect(draw_visidSig.get(), sponza_trinf->Metadata->TrinfsCount, CompactedDrawArgs->GetRObject(), sizeof(DrawIndexArguments), CompactedDrawArgs->GetRObject(), 0);
+			CmdList.SetIndexBuffer(VSParas->FilterIndexBuffer->GetRObject());
+			CmdList.DrawIndirect(draw_visidSig.get(), sponza_trinf->Metadata->TrinfsCount, VSParas->IndirectArgs->GetRObject(), sizeof(DrawIndexArguments), VSParas->IndirectArgs->GetRObject(), 0);
 		});
 }
 

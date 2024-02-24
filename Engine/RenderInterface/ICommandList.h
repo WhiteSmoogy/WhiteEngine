@@ -76,6 +76,11 @@ namespace platform::Render {
 		ElementType Elements[GetPipelineCount()];
 	};
 
+	std::array< EPipeline, 2> GetPipelines()
+	{
+		return { EPipeline::Graphics, EPipeline::Compute };
+	}
+
 	enum class EResourceTransitionFlags
 	{
 		None = 0,

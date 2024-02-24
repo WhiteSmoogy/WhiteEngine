@@ -97,7 +97,9 @@ export namespace RenderGraph
 		bool bCulled : 1 = 0;
 
 		RGPassHandleArray Producers;
-		
+		RGPassHandleArray CrossPipelineConsumers;
+		RGPassHandle CrossPipelineProducer;
+
 		friend RGPassRegistry;
 		friend RGBuilder;
 	};
@@ -724,12 +726,120 @@ export namespace RenderGraph
 
 		void SetupPassDependencies(RGPass* Pass)
 		{
+			for (auto& PassState : Pass->BufferStates)
+			{
+				auto Buffer = PassState.Buffer;
+				const auto& SubresourceState = PassState.State;
+
+				Buffer->ReferenceCount += PassState.ReferenceCount;
+
+				RGProducerState ProducerState;
+				ProducerState.Pass = Pass;
+				ProducerState.Access = SubresourceState.Access;
+				ProducerState.NoUAVBarrierHandle = SubresourceState.NoUAVBarrierFilter.GetUniqueHandle();
+
+				AddCullingDependency(Buffer->LastProducer, ProducerState, Pass->Pipeline);
+			}
+
 			const bool bCullPasses = GRGCullPasses;
 			Pass->bCulled = bCullPasses;
 
 			if (bCullPasses && (Pass->bHasExternalOutputs || white::has_anyflags(Pass->Flags, ERGPassFlags::NeverCull)))
 			{
 				CullPassStack.emplace_back(Pass->Handle);
+			}
+		}
+
+		void AddCullingDependency(RGProducerStatesByPipeline& LastProducers,const RGProducerState& NextState, EPipeline NextPipeline)
+		{
+			for (auto LastPipeline : GetPipelines())
+			{
+				auto & LastProducer = LastProducers[LastPipeline];
+
+				if (LastProducer.Access != EAccessHint::None)
+				{
+					auto LastProducerPass = LastProducer.Pass;
+
+					if (LastPipeline != NextPipeline)
+					{
+						auto MultiPipelineUAVMask = white::enum_and(EAccessHint::UAV, Caps.MultiPipelineMergeableAccessMask);
+
+						if (white::has_anyflags(NextState.Access, MultiPipelineUAVMask) && SkipUAVBarrier(LastProducer.NoUAVBarrierHandle, NextState.NoUAVBarrierHandle))
+						{
+							LastProducerPass = LastProducer.PassIfSkipUAVBarrier;
+						}
+					}
+
+					if (LastProducerPass)
+					{
+						AddPassDependency(LastProducerPass, NextState.Pass);
+					}
+				}
+			}
+
+			if (IsWritableAccess(NextState.Access))
+			{
+				auto& LastProducer = LastProducers[NextPipeline];
+
+				// A separate producer pass is tracked for UAV -> UAV dependencies that are skipped. Consider the following scenario:
+				//
+				//     Graphics:       A   ->    B         ->         D      ->     E       ->        G         ->            I
+				//                   (UAV)   (SkipUAV0)           (SkipUAV1)    (SkipUAV1)          (SRV)                   (UAV2)
+				//
+				// Async Compute:                           C                ->               F       ->         H
+				//                                      (SkipUAV0)                        (SkipUAV1)           (SRV)
+				//
+				// Expected Cross Pipe Dependencies: [A -> C], C -> D, [B -> F], F -> G, E -> H, F -> I. The dependencies wrapped in
+				// braces are only introduced properly by tracking a different producer for cross-pipeline skip UAV dependencies, which
+				// is only updated if skip UAV is inactive, or if transitioning from one skip UAV set to another (or another writable resource).
+
+				if (LastProducer.NoUAVBarrierHandle.IsNull())
+				{
+					if (NextState.NoUAVBarrierHandle.IsNull())
+					{
+						// Assigns the next producer when no skip UAV sets are active.
+						LastProducer.PassIfSkipUAVBarrier = NextState.Pass;
+					}
+				}
+				else if (LastProducer.NoUAVBarrierHandle != NextState.NoUAVBarrierHandle)
+				{
+					// Assigns the last producer in the prior skip UAV barrier set when moving out of a skip UAV barrier set.
+					LastProducer.PassIfSkipUAVBarrier = LastProducer.Pass;
+				}
+
+				LastProducer.Access = NextState.Access;
+				LastProducer.Pass = NextState.Pass;
+				LastProducer.NoUAVBarrierHandle = NextState.NoUAVBarrierHandle;
+			}
+		}
+
+		void AddPassDependency(RGPass* Producer, RGPass* Consumer)
+		{
+			auto& Producers = Consumer->Producers;
+
+			if (std::find(Producers.begin(), Producers.end(), Producer->Handle) == Producers.end())
+			{
+				const auto BinarySearchOrAdd = [](RGPassHandleArray& Range, RGPassHandle Handle)
+					{
+						const auto LowerBound = std::lower_bound(Range.begin(),Range.end(), Handle);
+						if (LowerBound != Range.end())
+						{
+							if (*LowerBound == Handle)
+							{
+								return;
+							}
+						}
+						Range.insert(LowerBound, Handle);
+					};
+
+				BinarySearchOrAdd(Producer->CrossPipelineConsumers, Consumer->Handle);
+
+				if (Consumer->CrossPipelineProducer.IsNull() || Producer->Handle > Consumer->CrossPipelineProducer)
+				{
+					Consumer->CrossPipelineProducer = Producer->Handle;
+				}
+
+				Producers.emplace_back(Producer->Handle);
 			}
 		}
 

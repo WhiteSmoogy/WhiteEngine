@@ -95,6 +95,18 @@ inline namespace Shader
 		uint32 GetTextureParameterCount() const { return TextureCount; }
 		uint32 GetCBufferParameterCount() const { return CBufferCount; }
 
+		template<typename FunctionType>
+		void EnumerateMembers(FunctionType Function, uint32 ParentOffset = 0) const
+		{
+			for (auto& member : GetMembers())
+			{
+				Function(member, member.GetOffset() + ParentOffset);
+				if (auto ChildStruct = member.GetStructMetadata())
+				{
+					ChildStruct->EnumerateMembers(Function, member.GetOffset() + ParentOffset);
+				}
+			}
+		}
 	private:
 		/** Size of the entire struct in bytes. */
 		const uint32 Size;

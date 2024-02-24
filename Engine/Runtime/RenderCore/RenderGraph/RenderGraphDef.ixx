@@ -440,13 +440,13 @@ export namespace RenderGraph
 			if (!Metadata)
 				return;
 
-			for (auto& member : Metadata->GetMembers())
-			{
-				if (IsBufferType(member.GetShaderType()))
+			Metadata->EnumerateMembers([&](const ShaderParametersMetadata::Member& member, uint32 Offset)
 				{
-					Function(RGParameter{ &member,Contents + member.GetOffset() });
-				}
-			}
+					if (IsBufferType(member.GetShaderType()))
+					{
+						Function(RGParameter{ &member,Contents + Offset });
+					}
+				});
 		}
 
 		template<typename FunctionType>
@@ -455,13 +455,13 @@ export namespace RenderGraph
 			if (!Metadata)
 				return;
 
-			for (auto& member : Metadata->GetMembers())
-			{
-				if (member.GetShaderType() == ShaderParamType::SPT_ConstantBuffer)
+			Metadata->EnumerateMembers([&](const ShaderParametersMetadata::Member& member, uint32 Offset)
 				{
-					Function(RGUniformBufferBinding{ &member,Contents + member.GetOffset() });
-				}
-			}
+					if (member.GetShaderType() == ShaderParamType::SPT_ConstantBuffer)
+					{
+						Function(RGUniformBufferBinding{ &member,Contents + Offset });
+					}
+				});
 		}
 
 		template <typename FunctionType>
@@ -470,13 +470,13 @@ export namespace RenderGraph
 			if (!Metadata)
 				return;
 
-			for (auto& member : Metadata->GetMembers())
-			{
-				if (IsTextureType(member.GetShaderType()))
+			Metadata->EnumerateMembers([&](const ShaderParametersMetadata::Member& member, uint32 Offset)
 				{
-					Function(RGParameter{ &member,Contents + member.GetOffset() });
-				}
-			}
+					if (IsTextureType(member.GetShaderType()))
+					{
+						Function(RGParameter{ &member,Contents + Offset });
+					}
+				});
 		}
 
 	private:

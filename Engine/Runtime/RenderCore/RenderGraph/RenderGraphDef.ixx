@@ -576,4 +576,5 @@ export namespace RenderGraph
 
 	constexpr bool GRGOverlapUAVs = true;
 	constexpr bool GRGCullPasses = true;
+	constexpr bool GRGTransientAllocator = false;
 }

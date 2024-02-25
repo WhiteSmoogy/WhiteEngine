@@ -344,6 +344,11 @@ export namespace RenderGraph
 
 		}
 
+		static void Tick()
+		{
+			GRenderGraphResourcePool.Tick();
+		}
+
 		RGBufferUAVRef CreateUAV(const RGBufferUAVDesc& Desc, ERGUnorderedAccessViewFlags InFlags = ERGUnorderedAccessViewFlags::None)
 		{
 			auto UAV = Views.Allocate<RGBufferUAV>(Allocator, Desc.Buffer->Name, Desc, InFlags);
@@ -839,6 +844,9 @@ export namespace RenderGraph
 
 		bool IsTransientInternal(RGViewableResource* Resource)
 		{
+			if (!GRGTransientAllocator)
+				return false;
+
 			if (Resource->bForceNonTransient)
 			{
 				return false;

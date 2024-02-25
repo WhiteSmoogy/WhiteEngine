@@ -506,6 +506,55 @@ export namespace RenderGraph
 		}
 	};
 
+	class RGString
+	{
+	public:
+		using value_type = char;
+
+		const char* c_str() const
+		{
+			return Buffer;
+		}
+
+		void push_back(char c)
+		{
+			if (Length + 1 >= Capacity)
+			{
+				Reserve(Growth(Length+1, Capacity));
+			}
+
+			Buffer[Length++] = c;
+			Buffer[Length] = 0;
+		}
+	private:
+		uint32 Growth(uint32 Requested, uint32 Old)
+		{
+			auto Mask = Requested | 0xF;
+
+			return std::max(Mask, Old + Old / 2);
+		}
+
+		void Reserve(uint32 NewCapacity)
+		{
+			if (NewCapacity <= Capacity)
+			{
+				return;
+			}
+
+			char* NewBuffer = GetAllocator().AllocUninitialized<char>(NewCapacity);
+			if (Buffer)
+			{
+				memcpy(NewBuffer, Buffer, Length);
+			}
+			Buffer = NewBuffer;
+			Capacity = NewCapacity;
+		}
+	private:
+		char* Buffer = nullptr;
+		uint32 Length = 0;
+		uint32 Capacity = 0; 
+	};
+
 	class RGEventName final
 	{
 	public:
@@ -514,7 +563,7 @@ export namespace RenderGraph
 		template<typename... Types>
 		explicit RGEventName(const std::format_string<Types...> fmt, Types && ... Args)
 		{
-			EventName = std::format(fmt, std::forward<Types>(Args)...);
+			std::format_to(std::back_inserter(EventName), fmt, std::forward<Types>(Args)...);
 		}
 
 		const char* GetName() const
@@ -522,9 +571,7 @@ export namespace RenderGraph
 			return EventName.c_str();
 		}
 	private:
-		const char* EventFormat;
-
-		std::string EventName;
+		RGString EventName;
 	};
 
 	constexpr bool GRGOverlapUAVs = true;

@@ -96,8 +96,6 @@ namespace platform::Render {
 
 	using DStorage = platform_ex::DirectStorage;
 
-	
-
 	class Device {
 	public:
 		virtual Texture1D* CreateTexture(uint16 width, uint8 num_mipmaps, uint8 array_size,
@@ -141,6 +139,8 @@ namespace platform::Render {
 
 		virtual DStorage& GetDStorage() = 0;
 	};
+
+	extern Device* GDevice;
 }
 
 #endif

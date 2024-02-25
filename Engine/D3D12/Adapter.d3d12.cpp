@@ -117,6 +117,8 @@ namespace platform_ex::Windows::D3D12 {
 		dstorage = std::make_unique<DirectStorage>(this);
 
 		dstorage->CreateUploadQueue(d3d_device.Get());
+
+		platform::Render::GDevice = this;
 	}
 
 	Texture1D* Device::CreateTexture(uint16 width, uint8 num_mipmaps, uint8 array_size, EFormat format, uint32 access, SampleDesc sample_info, ResourceCreateInfo CreateInfo)

@@ -103,6 +103,8 @@ namespace Trinf
 		template<typename T>
 		struct TrinfBuffer
 		{
+			const char* Name = "TrinfBuffer";
+
 			static constexpr uint32 kPageSize = 64 * 1024;
 
 			GrowOnlySpanAllocator Allocator;
@@ -116,10 +118,10 @@ namespace Trinf
 			RenderGraph::RGBufferRef ResizeByteAddressBufferIfNeeded(RenderGraph::RGBuilder& Builder);
 		};
 
-		TrinfBuffer<wm::float3> Position;
-		TrinfBuffer<uint32> Tangent;
-		TrinfBuffer<wm::float2> TexCoord;
-		TrinfBuffer<uint32> Index;
+		TrinfBuffer<wm::float3> Position {.Name = "Trinf.Position"};
+		TrinfBuffer<uint32> Tangent{ .Name = "Trinf.Tangent" };
+		TrinfBuffer<wm::float2> TexCoord{ .Name = "Trinf.TexCoord" };
+		TrinfBuffer<uint32> Index{ .Name = "Trinf.Index" };
 	private:
 		struct TrinfKey
 		{

@@ -121,6 +121,8 @@ namespace platform::Render {
 	};
 
 	GraphicsBuffer* CreateVertexBuffer(white::span<const std::byte> Contents, Buffer::Usage Usage,white::uint32 Access);
+
+	GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, uint32 stride, ResourceCreateInfo init_data = {});
 }
 
 #endif

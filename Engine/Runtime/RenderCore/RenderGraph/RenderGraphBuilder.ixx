@@ -481,7 +481,32 @@ export namespace RenderGraph
 		{
 			SetupEmptyPass(EpiloguePass = Passes.Allocate<RGSentinelPass>(Allocator, RGEventName("Graph Epilogue")));
 
+			const auto ProloguePassHandle = GetProloguePassHandle();
+			const auto EpiloguePassHandle = GetEpiloguePassHandle();
+
 			Compile();
+			CompilePassBarriers();
+
+			for (const auto& Pair : ExternalBuffers)
+			{
+				auto Buffer = Pair.second;
+
+				if (Buffer->IsCulled())
+				{
+					EndResource(ProloguePassHandle, Buffer, 0);
+				}
+			}
+
+			for (auto PassHandle = ProloguePassHandle; PassHandle <= EpiloguePassHandle; ++PassHandle)
+			{
+				auto* Pass = Passes[PassHandle];
+
+				if (!Pass->bCulled)
+				{
+					BeginResources(Pass, PassHandle);
+					EndResources(Pass, PassHandle);
+				}
+			}
 		}
 
 		void Dump(const char* graphfilename)
@@ -672,6 +697,64 @@ export namespace RenderGraph
 			}
 		}
 
+		void CompilePassBarriers()
+		{
+
+		}
+
+		void EndResource(RGPassHandle PassHandle, RGBufferRef Buffer, uint32 ReferenceCount)
+		{
+			wassume(Buffer->ReferenceCount != RGViewableResource::DeallocatedReferenceCount);
+			wassume(Buffer->ReferenceCount >= ReferenceCount);
+			Buffer->ReferenceCount -= ReferenceCount;
+
+			if (Buffer->ReferenceCount == 0)
+			{
+				if (Buffer->bTransient)
+				{
+					Buffer->TransientBuffer.reset();
+				}
+				else
+				{
+					Buffer->Allocation = nullptr;
+				}
+
+				Buffer->LastPass = PassHandle;
+				Buffer->ReferenceCount = RGViewableResource::DeallocatedReferenceCount;
+			}
+		}
+
+		void BeginResources(RGPass* ResourcePass, RGPassHandle ExecutePassHandle)
+		{
+			for (auto PassToBegin : ResourcePass->ResourcesToBegin)
+			{
+				for (const auto& PassState : PassToBegin->BufferStates)
+				{
+					BeginResource(ExecutePassHandle, PassState.Buffer);
+				}
+
+				for (auto CBufferHandle : PassToBegin->CBuffers)
+				{
+					if (auto* CBuffer = CBuffers[CBufferHandle]; !CBuffer->bQueuedForCreate)
+					{
+						CBuffer->bQueuedForCreate = 1;
+						CBuffersToCreate.emplace_back(CBufferHandle);
+					}
+				}
+
+				for (auto ViewHandle : PassToBegin->Views)
+				{
+					InitRObject(Views[ViewHandle]);
+				}
+			}
+		}
+
+		void EndResources(RGPass* ResourcePass, RGPassHandle ExecutePassHandle)
+		{
+
+		}
+
+
 		void AddProloguePass()
 		{
 			ProloguePass = SetupEmptyPass(Passes.Allocate<RGSentinelPass>(Allocator, RGEventName("Graph Prologue (Graphics)")));
@@ -715,7 +798,7 @@ export namespace RenderGraph
 		template<typename TBufferStruct>
 		RGTConstBufferRef<TBufferStruct> CreateCBuffer(TBufferStruct* Struct,const char* Name)
 		{
-			auto cb = CBufferers.Allocate<RGTConstBuffer<TBufferStruct>>(Allocator, Struct, Name);
+			auto cb = CBuffers.Allocate<RGTConstBuffer<TBufferStruct>>(Allocator, Struct, Name);
 
 			return { .CBuffer = cb };
 		}
@@ -729,12 +812,65 @@ export namespace RenderGraph
 			Buffer->FirstPass = PassHandle;
 		}
 
+		void SetRObject(RGBuffer* Buffer, GraphicsBufferRef TransientBuffer, RGPassHandle PassHandle)
+		{
+			Buffer->RealObj = TransientBuffer.get();
+			Buffer->bTransient = 1;
+			Buffer->FirstPass = PassHandle;
+			Buffer->TransientBuffer = TransientBuffer;
+			Buffer->State = Allocator.AllocNoDestruct<RGSubresourceState>();
+		}
+
+		void InitRObject(RGViewRef View)
+		{
+			if (View->HasRObject())
+			{
+				return;
+			}
+
+			if (View->Type == ERGViewType::BufferSRV)
+			{
+				
+			}
+			else if (View->Type == ERGViewType::BufferUAV)
+			{
+			}
+		}
+
+		bool IsTransientInternal(RGViewableResource* Resource)
+		{
+			if (Resource->bForceNonTransient)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		bool IsTransient(RGBufferRef Buffer)
+		{
+			if (!IsTransientInternal(Buffer))
+				return false;
+
+			if (white::has_anyflags(Buffer->Desc.Usage, EAccessHint::DrawIndirect))
+				return false;
+
+			return white::has_anyflags(Buffer->Desc.Usage, EAccessHint::UAV);
+		}
+
 		void BeginResource(RGPassHandle PassHandle, RGBufferRef Buffer)
 		{
 			if (Buffer->HasRObject())
 				return;
 
 			//transient create
+			if (IsTransient(Buffer))
+			{
+				ResourceCreateInfo CreateInfo(Buffer->Name);
+
+				GraphicsBufferRef TransientBuffer = platform::Render::CreateBuffer(Buffer::Usage::SingleFrame, Buffer->Desc.Usage, Buffer->Desc.GetSize(), Buffer->Desc.BytesPerElement, CreateInfo);
+				SetRObject(Buffer, TransientBuffer, PassHandle);
+			}
 
 			if (!Buffer->bTransient)
 			{
@@ -997,8 +1133,11 @@ export namespace RenderGraph
 
 		RGPassRegistry Passes;
 		RGViewRegistry Views;
-		RGConstBufferRegistry CBufferers;
+		RGConstBufferRegistry CBuffers;
 		RGBufferRegistry Buffers;
+
+		RGArray<RGConstBufferHandle> CBuffersToCreate;
+
 
 		std::unordered_map<
 			GraphicsBuffer*,

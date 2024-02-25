@@ -259,6 +259,12 @@ export namespace RenderGraph
 	public:
 		const ERGViewableResourceType Type;
 
+		bool IsCulled() const
+		{
+			return ReferenceCount == 0;
+		}
+
+		constexpr static const uint16 DeallocatedReferenceCount = 65535;
 	protected:
 		/** Whether this is an externally registered resource. */
 		uint8 bExternal : 1 = 0;
@@ -508,6 +514,7 @@ export namespace RenderGraph
 
 		white::ref_ptr<RGPooledBuffer> Allocation;
 
+		GraphicsBufferRef TransientBuffer;
 		/** Cached state pointer from the pooled / transient buffer. */
 		RGSubresourceState* State = nullptr;
 
@@ -611,6 +618,8 @@ export namespace RenderGraph
 		RGConstBufferHandle Handle;
 		const RGParameterStruct ParameterStruct;
 		uint32 Size;
+
+		uint8 bQueuedForCreate:1 = 0;
 
 		friend RGBuilder;
 		friend RGConstBufferRegistry;

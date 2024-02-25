@@ -71,7 +71,7 @@ RenderGraph::RGBufferRef StreamingScene::TrinfBuffer<T>::ResizeByteAddressBuffer
 
 	if (DataBuffer->GetSize() < target_size)
 	{
-		auto NewDataBuffer = Builder.CreateBuffer(RGBufferDesc::CreateByteAddressDesc(target_size), __func__);
+		auto NewDataBuffer = Builder.CreateBuffer(RGBufferDesc::CreateByteAddressDesc(target_size), Name);
 
 		platform::Render::MemcpyResourceParams params =
 		{
@@ -91,10 +91,10 @@ RenderGraph::RGBufferRef StreamingScene::TrinfBuffer<T>::ResizeByteAddressBuffer
 
 void StreamingScene::InitRenderResource(platform::Render::CommandListBase&)
 {
-	Index.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(4), "Trinf.Index");
-	Position.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(sizeof(wm::float3)), "Trinf.Position");
-	Tangent.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(sizeof(uint32)), "Trinf.Tangent");
-	TexCoord.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(sizeof(wm::float2)), "Trinf.TexCoord");
+	Index.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(4), Index.Name);
+	Position.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(sizeof(wm::float3)), Position.Name);
+	Tangent.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(sizeof(uint32)), Tangent.Name);
+	TexCoord.DataBuffer = RenderGraph::AllocatePooledBuffer(RGBufferDesc::CreateByteAddressDesc(sizeof(wm::float2)), TexCoord.Name);
 
 	storage_api = &Context::Instance().GetDevice().GetDStorage();
 }

@@ -17,6 +17,8 @@ namespace platform_ex {
 	}
 }
 
+platform::Render::Device* platform::Render::GDevice = nullptr;
+
 namespace platform::Render {
 	HardwareShader::~HardwareShader() = default;
 
@@ -53,10 +55,13 @@ namespace platform::Render {
 
 	GraphicsBuffer* CreateVertexBuffer(white::span<const std::byte> Contents, Buffer::Usage Usage, uint32 Access)
 	{
-		auto& Device = Context::Instance().GetDevice();
-
 		ResourceCreateInfoEx CreateInfo(Contents.data(), "VertexBuffer");
 
-		return Device.CreateVertexBuffer(Usage, Access,static_cast<uint32>(Contents.size()), EFormat::EF_Unknown, CreateInfo);
+		return GDevice->CreateVertexBuffer(Usage, Access,static_cast<uint32>(Contents.size()), EFormat::EF_Unknown, CreateInfo);
+	}
+
+	GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, uint32 stride, ResourceCreateInfo init_data)
+	{
+		return GDevice->CreateBuffer(usage, access, size_in_byte, stride, init_data);
 	}
 }

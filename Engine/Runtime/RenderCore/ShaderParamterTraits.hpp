@@ -2,7 +2,7 @@
 
 #include <WBase/wmathtype.hpp>
 #include "ShaderParametersMetadata.h"
-#include "RenderInterface/IGPUResourceView.h"
+#include "RenderInterface/IGraphicsBuffer.hpp"
 import RenderGraph;
 
 namespace platform::Render

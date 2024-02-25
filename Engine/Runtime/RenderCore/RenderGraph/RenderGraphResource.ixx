@@ -524,6 +524,8 @@ export namespace RenderGraph
 		/** Tracks the last pass that produced this resource as the graph is built. */
 		RGProducerStatesByPipeline LastProducer;
 
+		BufferViewCache* ViewCache = nullptr;
+
 		friend RGBuilder;
 		friend RGBufferRegistry;
 		friend RGAllocator;
@@ -531,10 +533,9 @@ export namespace RenderGraph
 
 	using RGBufferRef = RGBuffer*;
 
-	struct RGBufferUAVDesc
+	struct RGBufferUAVDesc : BufferUAVCreateInfo
 	{
 		RGBufferRef Buffer = nullptr;
-		EFormat Format = EFormat::EF_Unknown;
 	};
 
 	class RGBufferUAV final :public RGUnorderedAccessView
@@ -560,8 +561,10 @@ export namespace RenderGraph
 		friend RGAllocator;
 	};
 
-
-	using RGBufferSRVDesc = RGBufferUAVDesc;
+	struct RGBufferSRVDesc : BufferSRVCreateInfo
+	{
+		RGBufferRef Buffer = nullptr;
+	};
 
 	class RGBufferSRV final :public RGShaderResourceView
 	{

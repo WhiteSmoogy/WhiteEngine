@@ -10,8 +10,10 @@
 #include <WBase/wmacro.h>
 #include <WBase/span.hpp>
 #include "RenderObject.h"
+#include "IGPUResourceView.h"
 
 namespace platform::Render {
+	class CommandListBase;
 	class CommandList;
 	class CommandListImmediate;
 
@@ -123,6 +125,37 @@ namespace platform::Render {
 	GraphicsBuffer* CreateVertexBuffer(white::span<const std::byte> Contents, Buffer::Usage Usage,white::uint32 Access);
 
 	GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, uint32 stride, ResourceCreateInfo init_data = {});
+
+	struct BufferUAVCreateInfo
+	{
+		EFormat Format = EFormat::EF_Unknown;
+		bool bSupportsAtomicCounter = false;
+		bool bSupportsAppendBuffer = false;
+	};
+
+	struct BufferSRVCreateInfo
+	{
+		EFormat Format = EFormat::EF_Unknown;
+
+		uint32 StartOffsetBytes = 0;
+
+		/** Number of elements (whole buffer by default) */
+		uint32 NumElements = std::numeric_limits<uint32>::max();
+	};
+
+	class BufferViewCache
+	{
+	public:
+		// Finds a UAV matching the descriptor in the cache or creates a new one and updates the cache.
+		UnorderedAccessView* GetOrCreateUAV(CommandListBase& RHICmdList, GraphicsBuffer* Buffer, const BufferUAVCreateInfo& CreateInfo);
+
+		// Finds a SRV matching the descriptor in the cache or creates a new one and updates the cache.
+		ShaderResourceView* GetOrCreateSRV(CommandListBase& RHICmdList, GraphicsBuffer* Buffer, const BufferSRVCreateInfo& CreateInfo);
+
+	private:
+		std::vector<std::pair<BufferUAVCreateInfo, UAVRIRef>> UAVs;
+		std::vector<std::pair<BufferSRVCreateInfo, SRVRIRef>> SRVs;
+	};
 }
 
 #endif

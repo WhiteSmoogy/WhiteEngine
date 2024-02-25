@@ -38,7 +38,7 @@ namespace platform_ex::Windows::D3D12 {
 
 		std::shared_ptr<GraphicsBuffer> AccelerationStructureBuffer;
 
-		white::shared_ptr<ShaderResourceView> AccelerationStructureView;
+		white::ref_ptr<ShaderResourceView,platform::Render::RObjectController> AccelerationStructureView;
 	};
 }
 

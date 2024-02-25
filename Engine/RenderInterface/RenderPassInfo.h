@@ -2,8 +2,10 @@
 
 #include "IGPUResourceView.h"
 #include "DeviceCaps.h"
+#include "ITexture.hpp"
 
 namespace platform::Render {
+
 	enum class RenderTargetLoadAction
 	{
 		NoAction,

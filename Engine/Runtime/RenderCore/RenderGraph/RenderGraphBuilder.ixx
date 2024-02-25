@@ -835,11 +835,25 @@ export namespace RenderGraph
 
 			if (View->Type == ERGViewType::BufferSRV)
 			{
-				
+				InitRObject(static_cast<RGBufferSRVRef>(View));
 			}
 			else if (View->Type == ERGViewType::BufferUAV)
 			{
+				InitRObject(static_cast<RGBufferUAVRef>(View));
 			}
+		}
+
+		void InitRObject(RGBufferSRVRef SRV)
+		{
+			if (SRV->HasRObject())
+			{
+				return;
+			}
+
+			auto Buffer = SRV->GetParent();
+			auto BufferObj = Buffer->GetRObject();
+
+			SRV->RealObj = Buffer->ViewCache->GetOrCreateSRV(CmdList, BufferObj, SRV->Desc);
 		}
 
 		bool IsTransientInternal(RGViewableResource* Resource)

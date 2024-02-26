@@ -217,6 +217,11 @@ namespace platform::Render {
 		}
 
 		bool IsExecuting() { return bExecuting; }
+
+		UnorderedAccessView* CreateUAV(GraphicsBuffer* Buffer, const BufferUAVCreateInfo& CreateInfo);
+
+		// Finds a SRV matching the descriptor in the cache or creates a new one and updates the cache.
+		ShaderResourceView* CreateSRV(GraphicsBuffer* Buffer, const BufferSRVCreateInfo& CreateInfo);
 	protected:
 		CommandBase* Root;
 		CommandBase** CommandLink;

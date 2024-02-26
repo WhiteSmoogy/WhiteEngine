@@ -131,6 +131,8 @@ namespace platform::Render {
 		EFormat Format = EFormat::EF_Unknown;
 		bool bSupportsAtomicCounter = false;
 		bool bSupportsAppendBuffer = false;
+
+		auto operator<=>(const BufferUAVCreateInfo&) const = default;
 	};
 
 	struct BufferSRVCreateInfo
@@ -141,16 +143,18 @@ namespace platform::Render {
 
 		/** Number of elements (whole buffer by default) */
 		uint32 NumElements = std::numeric_limits<uint32>::max();
+
+		auto operator<=>(const BufferSRVCreateInfo&) const = default;
 	};
 
 	class BufferViewCache
 	{
 	public:
 		// Finds a UAV matching the descriptor in the cache or creates a new one and updates the cache.
-		UnorderedAccessView* GetOrCreateUAV(CommandListBase& RHICmdList, GraphicsBuffer* Buffer, const BufferUAVCreateInfo& CreateInfo);
+		UnorderedAccessView* GetOrCreateUAV(CommandListBase& CmdList, GraphicsBuffer* Buffer, const BufferUAVCreateInfo& CreateInfo);
 
 		// Finds a SRV matching the descriptor in the cache or creates a new one and updates the cache.
-		ShaderResourceView* GetOrCreateSRV(CommandListBase& RHICmdList, GraphicsBuffer* Buffer, const BufferSRVCreateInfo& CreateInfo);
+		ShaderResourceView* GetOrCreateSRV(CommandListBase& CmdList, GraphicsBuffer* Buffer, const BufferSRVCreateInfo& CreateInfo);
 
 	private:
 		std::vector<std::pair<BufferUAVCreateInfo, UAVRIRef>> UAVs;

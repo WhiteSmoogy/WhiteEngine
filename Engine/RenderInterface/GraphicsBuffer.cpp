@@ -14,3 +14,37 @@ platform::Render::GraphicsBuffer::GraphicsBuffer(Buffer::Usage usage_, white::ui
 
 platform::Render::GraphicsBuffer::~GraphicsBuffer() {
 }
+
+platform::Render::UnorderedAccessView* platform::Render::BufferViewCache::GetOrCreateUAV(CommandListBase& CmdList, GraphicsBuffer* Buffer, const BufferUAVCreateInfo& CreateInfo)
+{
+	for (const auto& KeyValue : UAVs)
+	{
+		if (KeyValue.first == CreateInfo)
+		{
+			return KeyValue.second.get();
+		}
+	}
+
+	auto View = CmdList.CreateUAV(Buffer, CreateInfo);
+
+	UAVs.emplace_back(CreateInfo, View);
+
+	return View;
+}
+
+platform::Render::ShaderResourceView* platform::Render::BufferViewCache::GetOrCreateSRV(CommandListBase& CmdList, GraphicsBuffer* Buffer, const BufferSRVCreateInfo& CreateInfo)
+{
+	for (const auto& KeyValue : SRVs)
+	{
+		if (KeyValue.first == CreateInfo)
+		{
+			return KeyValue.second.get();
+		}
+	}
+
+	auto View = CmdList.CreateSRV(Buffer, CreateInfo);
+
+	UAVs.emplace_back(CreateInfo, View);
+
+	return View;
+}

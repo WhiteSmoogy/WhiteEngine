@@ -78,14 +78,18 @@ void platform::Render::CommandList::Present(Display* display)
 	GRenderIF->AdvanceDisplayBuffer();
 }
 
-SRVRIRef platform::Render::CommandList::CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format)
+
+UnorderedAccessView* CommandListBase::CreateUAV(GraphicsBuffer* Buffer, const BufferUAVCreateInfo& CreateInfo)
 {
-	return GRenderIF->GetDevice().CreateShaderResourceView(InBuffer, format);
+	return GDevice->CreateUnorderedAccessView(Buffer, CreateInfo);
 }
-UAVRIRef platform::Render::CommandList::CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format)
+
+// Finds a SRV matching the descriptor in the cache or creates a new one and updates the cache.
+ShaderResourceView* CommandListBase::CreateSRV(GraphicsBuffer* Buffer, const BufferSRVCreateInfo& CreateInfo)
 {
-	return GRenderIF->GetDevice().CreateUnorderedAccessView(InBuffer, format);
+	return GDevice->CreateShaderResourceView(Buffer, CreateInfo);
 }
+
 
 using RIFenceTypeRef = std::shared_ptr<CommandListImmediate::RIFenceType>;
 

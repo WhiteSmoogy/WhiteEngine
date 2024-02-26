@@ -132,8 +132,8 @@ namespace platform::Render {
 		virtual HardwareShader* CreateGeometryShader(const white::span<const uint8>& Code) = 0;
 		virtual HardwareShader* CreateComputeShader(const white::span<const uint8>& Code) = 0;
 
-		virtual SRVRIRef CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format = EF_Unknown) = 0;
-		virtual UAVRIRef CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format = EF_Unknown) = 0;
+		virtual ShaderResourceView* CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, const BufferSRVCreateInfo& Info = {}) = 0;
+		virtual UnorderedAccessView* CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, const BufferUAVCreateInfo& Info = {}) = 0;
 
 		virtual CommandSignature* CreateCommandSignature(const CommandSignatureDesc& desc) = 0;
 

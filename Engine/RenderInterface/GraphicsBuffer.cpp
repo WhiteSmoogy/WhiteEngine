@@ -25,11 +25,11 @@ platform::Render::UnorderedAccessView* platform::Render::BufferViewCache::GetOrC
 		}
 	}
 
-	auto View = CmdList.CreateUAV(Buffer, CreateInfo);
+	UAVRIRef View = CmdList.CreateUAV(Buffer, CreateInfo);
 
 	UAVs.emplace_back(CreateInfo, View);
 
-	return View;
+	return View.get();
 }
 
 platform::Render::ShaderResourceView* platform::Render::BufferViewCache::GetOrCreateSRV(CommandListBase& CmdList, GraphicsBuffer* Buffer, const BufferSRVCreateInfo& CreateInfo)
@@ -42,9 +42,9 @@ platform::Render::ShaderResourceView* platform::Render::BufferViewCache::GetOrCr
 		}
 	}
 
-	auto View = CmdList.CreateSRV(Buffer, CreateInfo);
+	SRVRIRef View = CmdList.CreateSRV(Buffer, CreateInfo);
 
-	UAVs.emplace_back(CreateInfo, View);
+	SRVs.emplace_back(CreateInfo, View);
 
-	return View;
+	return View.get();
 }

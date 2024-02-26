@@ -36,6 +36,8 @@ namespace platform_ex::Windows::D3D12 {
 	using platform::Render::UAVRIRef;
 
 	using platform::Render::ResourceCreateInfo;
+	using platform::Render::BufferUAVCreateInfo;
+	using platform::Render::BufferSRVCreateInfo;
 
 	class IResourceAllocator;
 
@@ -111,8 +113,8 @@ namespace platform_ex::Windows::D3D12 {
 
 		UnorderedAccessView* CreateUnorderedAccessView(platform::Render::Texture2D* InTexture) override;
 
-		SRVRIRef CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format);
-		UAVRIRef CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format);
+		ShaderResourceView* CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, const BufferSRVCreateInfo& Info) override;
+		UnorderedAccessView* CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, const BufferUAVCreateInfo& Info) override;
 
 		platform::Render::Effect::CopyEffect& BiltEffect();
 

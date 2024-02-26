@@ -510,9 +510,6 @@ namespace platform::Render {
 		void EndFrame();
 
 		void Present(Display* display);
-
-		SRVRIRef CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format = EF_Unknown);
-		UAVRIRef CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format = EF_Unknown);
 	protected:
 		
 

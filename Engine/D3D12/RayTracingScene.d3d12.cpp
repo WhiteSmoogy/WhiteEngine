@@ -51,7 +51,7 @@ void RayTracingScene::BuildAccelerationStructure(CommandContext& CommandContext)
 	//scratch buffers should be created in UAV state from the start
 	CommandContext.TransitionResource(ScratchBuffer->GetResource(),D3D12_RESOURCE_STATE_TBD, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 0);
 
-	AccelerationStructureView = Adapter->CreateShaderResourceView(AccelerationStructureBuffer.get(), EF_Unknown).cast<ShaderResourceView>();
+	AccelerationStructureView = Adapter->CreateShaderResourceView(AccelerationStructureBuffer.get(), {});
 
 	// Create and fill instance buffer
 	const uint32 NumSceneInstances =static_cast<uint32>(Instances.size());

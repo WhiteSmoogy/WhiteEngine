@@ -197,14 +197,14 @@ void UnorderedAccessView::UpdateDescriptor()
 	OfflineHandle.IncrementVersion();
 }
 
-SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format)
+ShaderResourceView* Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer* InBuffer, const BufferSRVCreateInfo& Info)
 {
 	auto Resource = static_cast<GraphicsBuffer*>(const_cast<platform::Render::GraphicsBuffer*>(InBuffer));
 	auto access = InBuffer->GetAccess();
 	auto usage = InBuffer->GetUsage();
 
-	uint32 StartOffsetBytes = 0;
-	uint32 NumElements = -1;
+	uint32 StartOffsetBytes = Info.StartOffsetBytes;
+	uint32 NumElements = Info.NumElements;
 
 	wconstraint(white::has_anyflags(access, EAccessHint::SRV) || white::has_allflags(access, EAccessHint::AccelerationStructure));
 
@@ -216,15 +216,15 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 
 		if (!CmdList.IsExecuting() && white::has_anyflags(usage, Buffer::Dynamic))
 		{
-			CL_ALLOC_COMMAND(CmdList, CommandType) { Resource, srv, StartOffsetBytes, NumElements, format };
+			CL_ALLOC_COMMAND(CmdList, CommandType) { Resource, srv, StartOffsetBytes, NumElements, Info.Format};
 		}
 		else
 		{
-			CommandType Command{ Resource,srv,StartOffsetBytes,NumElements, format };
+			CommandType Command{ Resource,srv,StartOffsetBytes,NumElements, Info.Format };
 			Command.ExecuteNoCmdList();
 		}
 
-		return shared_raw_robject(srv);
+		return srv;
 	};
 
 	//TODO:switch case
@@ -239,7 +239,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 
 		auto srv = new ShaderResourceView(GetNodeDevice(0));
 		srv->CreateView(SRVDesc, Resource, ShaderResourceView::EFlags::None);
-		return shared_raw_robject(srv);
+		return srv;
 	}
 	if (!white::has_anyflags(access, EAccessHint::Structured))
 	{
@@ -373,7 +373,7 @@ SRVRIRef Device::CreateShaderResourceView(const platform::Render::GraphicsBuffer
 	}
 }
 
-UAVRIRef Device::CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, EFormat format)
+UnorderedAccessView* Device::CreateUnorderedAccessView(const platform::Render::GraphicsBuffer* InBuffer, const BufferUAVCreateInfo& Info)
 {
 	auto Buffer = static_cast<GraphicsBuffer*>(const_cast<platform::Render::GraphicsBuffer*>(InBuffer));
 	auto& Location = Buffer->Location;
@@ -398,8 +398,8 @@ UAVRIRef Device::CreateUnorderedAccessView(const platform::Render::GraphicsBuffe
 	}
 	else
 	{
-		UAVDesc.Format = FindUnorderedAccessDXGIFormat(Convert(format));
-		EffectiveStride = NumFormatBytes(format);
+		UAVDesc.Format = FindUnorderedAccessDXGIFormat(Convert(Info.Format));
+		EffectiveStride = NumFormatBytes(Info.Format);
 	}
 
 	UAVDesc.Buffer.FirstElement = Location.GetOffsetFromBaseOfResource() / EffectiveStride;
@@ -410,5 +410,5 @@ UAVRIRef Device::CreateUnorderedAccessView(const platform::Render::GraphicsBuffe
 
 	uav->CreateView(UAVDesc, Buffer, UnorderedAccessView::EFlags::None);
 
-	return shared_raw_robject(uav);
+	return uav;
 }

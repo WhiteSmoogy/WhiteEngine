@@ -1123,9 +1123,10 @@ ed::EditorContext::~EditorContext()
     m_Splitter.ClearFreeMemory();
 }
 
-void ed::EditorContext::Begin(const char* id, const ImVec2& size)
+void ed::EditorContext::Begin(const char* id, const ImVec2& size, EditorFlags Flags)
 {
     m_EditorActiveId = ImGui::GetID(id);
+    m_Flags = Flags;
     ImGui::PushID(id);
 
     auto availableContentSize = ImGui::GetContentRegionAvail();
@@ -1357,17 +1358,17 @@ void ed::EditorContext::End()
             return false;
         };
 
-        if (accept(m_ContextMenuAction))
+        if (!IsImmutable() && accept(m_ContextMenuAction))
             m_CurrentAction = &m_ContextMenuAction;
-        else if (accept(m_ShortcutAction))
+        else if (!IsImmutable() && accept(m_ShortcutAction))
             m_CurrentAction = &m_ShortcutAction;
-        else if (accept(m_SizeAction))
+        else if (!IsImmutable() && accept(m_SizeAction))
             m_CurrentAction = &m_SizeAction;
-        else if (accept(m_DragAction))
+        else if (!IsImmutable() && accept(m_DragAction))
             m_CurrentAction = &m_DragAction;
-        else if (accept(m_CreateItemAction))
+        else if (!IsImmutable() && accept(m_CreateItemAction))
             m_CurrentAction = &m_CreateItemAction;
-        else if (accept(m_DeleteItemsAction))
+        else if (!IsImmutable() && accept(m_DeleteItemsAction))
             m_CurrentAction = &m_DeleteItemsAction;
         else if (accept(m_SelectAction))
             m_CurrentAction = &m_SelectAction;

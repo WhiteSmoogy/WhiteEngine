@@ -1298,7 +1298,7 @@ struct EditorContext
 
     Style& GetStyle() { return m_Style; }
 
-    void Begin(const char* id, const ImVec2& size = ImVec2(0, 0));
+    void Begin(const char* id, const ImVec2& size = ImVec2(0, 0), EditorFlags Flags);
     void End();
 
     bool DoLink(LinkId id, PinId startPinId, PinId endPinId, ImU32 color, float thickness);
@@ -1473,6 +1473,7 @@ struct EditorContext
 
     ImDrawList* GetDrawList() { return m_DrawList; }
 
+    bool IsImmutable() const {return (m_Flags & EditorFlags::Immutable) == EditorFlags::Immutable;}
 private:
     void LoadSettings();
     void SaveSettings();
@@ -1539,6 +1540,7 @@ private:
 
     bool                m_IsInitialized;
     Settings            m_Settings;
+    EditorFlags         m_Flags;
 
     ImDrawList*         m_DrawList;
     int                 m_ExternalChannel;

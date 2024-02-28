@@ -79,6 +79,16 @@ enum class SaveReasonFlags: uint32_t
 inline SaveReasonFlags operator |(SaveReasonFlags lhs, SaveReasonFlags rhs) { return static_cast<SaveReasonFlags>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs)); }
 inline SaveReasonFlags operator &(SaveReasonFlags lhs, SaveReasonFlags rhs) { return static_cast<SaveReasonFlags>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs)); }
 
+enum class EditorFlags: uint32_t
+{
+    None = 0x00000000,
+    Immutable = 0x00000001,
+    SugiyamaLayout = 0x00000002,
+};
+
+inline EditorFlags operator |(EditorFlags lhs, EditorFlags rhs) { return static_cast<EditorFlags>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs)); }
+inline EditorFlags operator &(EditorFlags lhs, EditorFlags rhs) { return static_cast<EditorFlags>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs)); }
+
 using ConfigSaveSettings     = bool   (*)(const char* data, size_t size, SaveReasonFlags reason, void* userPointer);
 using ConfigLoadSettings     = size_t (*)(char* data, void* userPointer);
 
@@ -303,7 +313,7 @@ IMGUI_NODE_EDITOR_API void PushStyleVar(StyleVar varIndex, const ImVec2& value);
 IMGUI_NODE_EDITOR_API void PushStyleVar(StyleVar varIndex, const ImVec4& value);
 IMGUI_NODE_EDITOR_API void PopStyleVar(int count = 1);
 
-IMGUI_NODE_EDITOR_API void Begin(const char* id, const ImVec2& size = ImVec2(0, 0));
+IMGUI_NODE_EDITOR_API void Begin(const char* id, const ImVec2& size = ImVec2(0, 0), EditorFlags Flags = EditorFlags::None);
 IMGUI_NODE_EDITOR_API void End();
 
 IMGUI_NODE_EDITOR_API void BeginNode(NodeId id);

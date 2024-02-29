@@ -10,6 +10,16 @@
     <ClCompile Include="backends\imgui_impl_win32.cpp">
       <Filter>backends</Filter>
     </ClCompile>
+    <ClCompile Include="backends\imgui_impl_win32.h" />
+    <ClCompile Include="imgui_canvas.cpp">
+      <Filter>nodeeditor</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_node_editor.cpp">
+      <Filter>nodeeditor</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_node_editor_api.cpp">
+      <Filter>nodeeditor</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imconfig.h" />
@@ -20,13 +30,39 @@
     <ClInclude Include="imstb_truetype.h" />
     <ClInclude Include="implot.h" />
     <ClInclude Include="implot_internal.h" />
-    <ClInclude Include="backends\imgui_impl_win32.h">
-      <Filter>backends</Filter>
+    <ClInclude Include="imgui_bezier_math.h">
+      <Filter>nodeeditor</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_canvas.h">
+      <Filter>nodeeditor</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_extra_math.h">
+      <Filter>nodeeditor</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_node_editor.h">
+      <Filter>nodeeditor</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_node_editor_internal.h">
+      <Filter>nodeeditor</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="backends">
       <UniqueIdentifier>{f3cb47e1-6d9d-46ba-8ae1-1ecd54c9bda0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="nodeeditor">
+      <UniqueIdentifier>{d530b7c9-ded7-4fb7-ad27-36a40dbe1a47}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="imgui_bezier_math.inl">
+      <Filter>nodeeditor</Filter>
+    </None>
+    <None Include="imgui_extra_math.inl">
+      <Filter>nodeeditor</Filter>
+    </None>
+    <None Include="imgui_node_editor_internal.inl">
+      <Filter>nodeeditor</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -15,7 +15,7 @@
 
 
 //------------------------------------------------------------------------------
-# include <imgui.h>
+# include "imgui.h"
 # include <cstdint> // std::uintXX_t
 # include <utility> // std::move
 
@@ -83,7 +83,6 @@ enum class EditorFlags: uint32_t
 {
     None = 0x00000000,
     Immutable = 0x00000001,
-    SugiyamaLayout = 0x00000002,
 };
 
 inline EditorFlags operator |(EditorFlags lhs, EditorFlags rhs) { return static_cast<EditorFlags>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs)); }
@@ -119,7 +118,7 @@ struct Config
     float                   SmoothZoomPower;
 
     Config()
-        : SettingsFile("NodeEditor.json")
+        : SettingsFile()
         , BeginSaveSession(nullptr)
         , EndSaveSession(nullptr)
         , SaveSettings(nullptr)
@@ -296,10 +295,8 @@ struct EditorContext;
 
 
 //------------------------------------------------------------------------------
-IMGUI_NODE_EDITOR_API void SetCurrentEditor(EditorContext* ctx);
-IMGUI_NODE_EDITOR_API EditorContext* GetCurrentEditor();
-IMGUI_NODE_EDITOR_API EditorContext* CreateEditor(const Config* config = nullptr);
-IMGUI_NODE_EDITOR_API void DestroyEditor(EditorContext* ctx);
+IMGUI_NODE_EDITOR_API EditorContext* CreateEditor(const char* id,const Config* config = nullptr);
+IMGUI_NODE_EDITOR_API void DestroyEditor(const char* id);
 IMGUI_NODE_EDITOR_API const Config& GetConfig(EditorContext* ctx = nullptr);
 
 IMGUI_NODE_EDITOR_API Style& GetStyle();
@@ -441,10 +438,12 @@ IMGUI_NODE_EDITOR_API ImVec2 CanvasToScreen(const ImVec2& pos);
 IMGUI_NODE_EDITOR_API int GetNodeCount();                                // Returns number of submitted nodes since Begin() call
 IMGUI_NODE_EDITOR_API int GetOrderedNodeIds(NodeId* nodes, int size);    // Fills an array with node id's in order they're drawn; up to 'size` elements are set. Returns actual size of filled id's.
 
+enum LayoutFlags
+{
+    None,
+};
 
-
-
-
+IMGUI_NODE_EDITOR_API void Layout(LayoutFlags Flags = LayoutFlags::None);
 
 
 //------------------------------------------------------------------------------

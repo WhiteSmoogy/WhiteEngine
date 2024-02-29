@@ -22,13 +22,11 @@
 
 
 //------------------------------------------------------------------------------
-# include <imgui.h>
-# include <imgui_internal.h>
+# include "imgui.h"
+# include "imgui_internal.h"
 # include "imgui_extra_math.h"
 # include "imgui_bezier_math.h"
 # include "imgui_canvas.h"
-
-# include "crude_json.h"
 
 # include <vector>
 # include <string>
@@ -42,7 +40,6 @@ namespace Detail {
 
 //------------------------------------------------------------------------------
 namespace ed = ax::NodeEditor::Detail;
-namespace json = crude_json;
 
 
 //------------------------------------------------------------------------------
@@ -518,10 +515,9 @@ struct NodeSettings
     void ClearDirty();
     void MakeDirty(SaveReasonFlags reason);
 
-    json::value Serialize();
-
     static bool Parse(const std::string& string, NodeSettings& settings);
-    static bool Parse(const json::value& data, NodeSettings& result);
+
+    std::string Serialize();
 };
 
 struct Settings
@@ -1298,7 +1294,7 @@ struct EditorContext
 
     Style& GetStyle() { return m_Style; }
 
-    void Begin(const char* id, const ImVec2& size = ImVec2(0, 0), EditorFlags Flags);
+    void Begin(const char* id, const ImVec2& size, EditorFlags Flags);
     void End();
 
     bool DoLink(LinkId id, PinId startPinId, PinId endPinId, ImU32 color, float thickness);
@@ -1430,6 +1426,8 @@ struct EditorContext
     ImU32 GetColor(StyleColor colorIndex, float alpha) const;
 
     int GetNodeIds(NodeId* nodes, int size) const;
+
+    void Layout(LayoutFlags flags);
 
     void NavigateTo(const ImRect& bounds, bool zoomIn = false, float duration = -1)
     {

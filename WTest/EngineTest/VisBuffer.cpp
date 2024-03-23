@@ -208,8 +208,8 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 	auto UncompactedDrawArgsSize = white::Align(sizeof(FilterTriangleCS::UncompactedDrawArguments) * sponza_trinf->Metadata->TrinfsCount, 16);
 	auto UncompactedDrawArgs = Builder.CreateBuffer(UncompactedDrawArgsDesc, "UncompactedDrawArgs");
 
-	auto UncompactedDrawArgsUAV = Builder.CreateUAV(RGBufferUAVDesc{ UncompactedDrawArgs });
-	auto UncompactedDrawArgsSRV = Builder.CreateSRV(RGBufferSRVDesc{ UncompactedDrawArgs });
+	auto UncompactedDrawArgsUAV = Builder.CreateUAV(RGBufferUAVDesc{.Buffer = UncompactedDrawArgs });
+	auto UncompactedDrawArgsSRV = Builder.CreateSRV(RGBufferSRVDesc{.Buffer = UncompactedDrawArgs });
 
 	MemsetResourceParams Params;
 	Params.Count = UncompactedDrawArgsDesc.GetSize();

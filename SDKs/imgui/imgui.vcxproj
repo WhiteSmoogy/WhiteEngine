@@ -19,9 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="backends\imgui_impl_win32.cpp" /> 
+    <ClCompile Include="backends\imgui_impl_win32.cpp" />
     <ClCompile Include="imgui.cpp" />
+    <ClCompile Include="imgui_canvas.cpp" />
     <ClCompile Include="imgui_draw.cpp" />
+    <ClCompile Include="imgui_node_editor.cpp" />
+    <ClCompile Include="imgui_node_editor_api.cpp" />
     <ClCompile Include="imgui_tables.cpp" />
     <ClCompile Include="imgui_widgets.cpp" />
     <ClCompile Include="implot.cpp" />
@@ -31,12 +34,22 @@
     <ClCompile Include="backends\imgui_impl_win32.h" />
     <ClInclude Include="imconfig.h" />
     <ClInclude Include="imgui.h" />
+    <ClInclude Include="imgui_bezier_math.h" />
+    <ClInclude Include="imgui_canvas.h" />
+    <ClInclude Include="imgui_extra_math.h" />
     <ClInclude Include="imgui_internal.h" />
+    <ClInclude Include="imgui_node_editor.h" />
+    <ClInclude Include="imgui_node_editor_internal.h" />
     <ClInclude Include="implot.h" />
     <ClInclude Include="implot_internal.h" />
     <ClInclude Include="imstb_rectpack.h" />
     <ClInclude Include="imstb_textedit.h" />
     <ClInclude Include="imstb_truetype.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="imgui_bezier_math.inl" />
+    <None Include="imgui_extra_math.inl" />
+    <None Include="imgui_node_editor_internal.inl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

@@ -222,6 +222,8 @@ namespace platform::Render {
 
 		// Finds a SRV matching the descriptor in the cache or creates a new one and updates the cache.
 		ShaderResourceView* CreateSRV(GraphicsBuffer* Buffer, const BufferSRVCreateInfo& CreateInfo);
+
+		ConstantBuffer* CreateConstantBuffer(uint32 size_in_byte, const void* init_data, const char* Name, Buffer::Usage usage = Buffer::Usage::SingleFrame);
 	protected:
 		CommandBase* Root;
 		CommandBase** CommandLink;

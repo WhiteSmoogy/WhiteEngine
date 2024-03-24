@@ -14,7 +14,7 @@ ConstantBuffer* platform::Render::CreateConstantBuffer(const void* Contents, Buf
 
 	Usage = static_cast<Buffer::Usage>(Usage | Buffer::Usage::Static);
 
-	return Device.CreateConstantBuffer(Usage, Layout.GetSize(), Contents);
+	return Device.CreateConstantBuffer(Layout.GetSize(), Contents, __func__, Usage);
 }
 
 enum class ByteBufferResourceType

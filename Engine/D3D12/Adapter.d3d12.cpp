@@ -278,7 +278,7 @@ namespace platform_ex::Windows::D3D12 {
 		return uav;
 	}
 
-	ConstantBuffer * Device::CreateConstantBuffer(Buffer::Usage usage, uint32 size_in_byte,const void* init_data)
+	ConstantBuffer * Device::CreateConstantBuffer(uint32 size_in_byte, const void* init_data, const char* Name, Buffer::Usage usage)
 	{
 		wconstraint(size_in_byte > 0);
 		wconstraint(size_in_byte <= 65536);

@@ -111,7 +111,7 @@ namespace platform::Render {
 
 		virtual ShaderCompose* CreateShaderCompose(std::unordered_map<ShaderType,const asset::ShaderBlobAsset*> pShaderBlob, Effect::Effect* pEffect) = 0;
 
-		virtual ConstantBuffer* CreateConstantBuffer(Buffer::Usage usage,uint32 size_in_byte,const void*  init_data = nullptr) = 0;
+		virtual ConstantBuffer* CreateConstantBuffer(uint32 size_in_byte, const void* init_data, const char* Name, Buffer::Usage usage) = 0;
 
 		virtual GraphicsBuffer* CreateBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, uint32 stride, ResourceCreateInfo init_data = {}) = 0;
 

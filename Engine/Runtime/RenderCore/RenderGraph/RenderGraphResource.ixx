@@ -247,7 +247,7 @@ export namespace RenderGraph
 		{
 			return RealObj != nullptr;
 		}
-	private:
+	protected:
 		RObject* RealObj = nullptr;
 
 		friend RGBuilder;
@@ -604,6 +604,14 @@ export namespace RenderGraph
 		const RGParameterStruct& GetParameters() const
 		{
 			return ParameterStruct;
+		}
+
+		void Create(CommandList& Cmd)
+		{
+			if (!HasRObject())
+			{
+				RealObj = Cmd.CreateConstantBuffer(Size, ParameterStruct.GetContents(), Name);
+			}
 		}
 	protected:
 		template<typename TStruct>

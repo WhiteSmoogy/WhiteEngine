@@ -512,6 +512,8 @@ export namespace RenderGraph
 					EndResources(Pass, PassHandle);
 				}
 			}
+
+			CreateCBuffers();
 		}
 
 		void Dump(const char* graphfilename)
@@ -1160,6 +1162,15 @@ export namespace RenderGraph
 				}
 
 				Producers.emplace_back(Producer->Handle);
+			}
+		}
+
+		void CreateCBuffers()
+		{
+			for (auto handle : CBuffersToCreate)
+			{
+				auto* CBuffer = CBuffers[handle];
+				CBuffer->Create(CmdList);
 			}
 		}
 

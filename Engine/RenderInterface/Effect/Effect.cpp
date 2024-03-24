@@ -76,9 +76,9 @@ namespace platform::Render::Effect {
 		return value;
 	}
 
-	Parameter & Parameter::operator=(const std::any & val)
+	Parameter& Parameter::operator=(const std::any& val)
 	{
-		static std::unordered_map<ShaderParamType, std::function<void(Parameter &, const std::any &)>> map_fuctors;
+		static std::unordered_map<ShaderParamType, std::function<void(Parameter&, const std::any&)>> map_fuctors;
 		struct InitBlock final
 		{
 			InitBlock() {
@@ -112,7 +112,7 @@ namespace platform::Render::Effect {
 			}
 		};
 
-		static white::call_once_init<InitBlock, std::once_flag> init {};
+		static white::call_once_init<InitBlock, std::once_flag> init{};
 
 
 		if (!var.bind.target)
@@ -120,35 +120,35 @@ namespace platform::Render::Effect {
 		else {
 			auto search = map_fuctors.find(type);
 			if (search != map_fuctors.end())
-				std::invoke(search->second,*this, val);
+				std::invoke(search->second, *this, val);
 			else
 				throw white::unsupported("the type is not a value class");
 		}
 		return *this;
 	}
 
-	const Pass & platform::Render::Effect::Technique::GetPass(white::uint8 index) const
+	const Pass& platform::Render::Effect::Technique::GetPass(white::uint8 index) const
 	{
 		return passes[index];
 	}
 
-	Pass & platform::Render::Effect::Technique::GetPass(white::uint8 index)
+	Pass& platform::Render::Effect::Technique::GetPass(white::uint8 index)
 	{
 		return passes[index];
 	}
-	
-	ShaderCompose& Pass::GetShader(const Effect & effect) const
+
+	ShaderCompose& Pass::GetShader(const Effect& effect) const
 	{
 		return effect.GetShader(bind_index);
 	}
-	const PipleState & Pass::GetState() const
+	const PipleState& Pass::GetState() const
 	{
 		return Deref(state);
 	}
 
 	platform::Render::ConstantBuffer* ConstantBuffer::GetGraphicsBuffer() const wnothrow {
 		return gpu_buffer.get();
-		
+
 	}
 }
 
@@ -165,27 +165,27 @@ namespace platform::Render::Effect {
 		return *shaders[index];
 	}
 
-	const Technique & Effect::GetTechnique(const std::string & name) const
+	const Technique& Effect::GetTechnique(const std::string& name) const
 	{
 		auto hash = white::constfn_hash(name);
 		return GetTechnique(hash);
 	}
 
-	const Technique & Effect::GetTechnique(size_t hash) const
+	const Technique& Effect::GetTechnique(size_t hash) const
 	{
 		return Deref(std::find_if(techniques.begin(), techniques.end(), [&](const NameKey& key) {
 			return key.Hash == hash;
-		}));
+			}));
 	}
 
-	const Technique & Effect::GetTechniqueByIndex(size_t index) const
+	const Technique& Effect::GetTechniqueByIndex(size_t index) const
 	{
 		return techniques[index];
 	}
 
 
 	//effect will be discard
-	Parameter & Effect::GetParameter(const std::string_view & name)
+	Parameter& Effect::GetParameter(const std::string_view& name)
 	{
 #if 1
 		auto hash = white::constfn_hash(name);
@@ -193,12 +193,12 @@ namespace platform::Render::Effect {
 		if (itr != parameters.end())
 			return itr->second;
 		WF_Trace(platform::Descriptions::Warning, "GetParameter Failed:Effect(%s) ctor pseudo paramter(%s) for robust,It's waste memory!", GetName().c_str(), name.data());
-		return parameters.emplace(hash,Parameter(name,ShaderParamType::SPT_ElemEmpty)).first->second;
+		return parameters.emplace(hash, Parameter(name, ShaderParamType::SPT_ElemEmpty)).first->second;
 #endif
 		return GetParameter(white::constfn_hash(name));
 	}
 
-	Parameter & Effect::GetParameter(size_t hash)
+	Parameter& Effect::GetParameter(size_t hash)
 	{
 		return parameters.find(hash)->second;
 	}
@@ -215,7 +215,7 @@ namespace platform::Render::Effect {
 	}
 
 
-	ConstantBuffer & Effect::GetConstantBuffer(size_t index)
+	ConstantBuffer& Effect::GetConstantBuffer(size_t index)
 	{
 		return Deref(constantbuffs[index]);
 	}
@@ -227,20 +227,20 @@ namespace platform::Render::Effect {
 	size_t Effect::ConstantBufferIndex(size_t hash) {
 		return std::distance(constantbuffs.begin(), std::find_if(constantbuffs.begin(), constantbuffs.end(), [&](const std::shared_ptr<ConstantBuffer>& key) {
 			return key->Hash == hash;
-		}));
+			}));
 	}
 
-	Technique & Effect::GetTechnique(const std::string & name)
+	Technique& Effect::GetTechnique(const std::string& name)
 	{
 		auto hash = white::constfn_hash(name);
 		return Deref(std::find_if(techniques.begin(), techniques.end(), [&](const NameKey& key) {
 			return key.Hash == hash;
-		}));
+			}));
 	}
 }
 
 namespace platform::Render::Effect {
-	Effect::Effect(const std::string & name)
+	Effect::Effect(const std::string& name)
 		:NameKey(name)
 	{
 		//TODO Name Rule
@@ -255,11 +255,11 @@ namespace platform::Render::Effect {
 	{
 		std::set<size_t> expect_parameters;
 		auto asset_params = pEffectAsset->GetParams();
-		for (auto & cbuff : pEffectAsset->GetCBuffersRef()) {
+		for (auto& cbuff : pEffectAsset->GetCBuffersRef()) {
 			auto OptionalCBInfo = pEffectAsset->GetInfo<ShaderInfo::ConstantBufferInfo>(cbuff.GetName());
 			if (OptionalCBInfo.has_value()) {
 				auto ConstantBufferInfo = OptionalCBInfo.value();
-				auto pGPUBuffer = GRenderIF->GetDevice().CreateConstantBuffer(platform::Render::Buffer::MultiFrame,  ConstantBufferInfo.size);
+				auto pGPUBuffer = GRenderIF->GetDevice().CreateConstantBuffer(ConstantBufferInfo.size, nullptr, cbuff.GetName().c_str(), platform::Render::Buffer::MultiFrame);
 
 				auto pConstantBuffer = std::make_shared<ConstantBuffer>(cbuff.GetName(), cbuff.GetNameHash());
 
@@ -341,7 +341,7 @@ namespace platform::Render::Effect {
 						break;
 					case SPT_float4x2:
 						value = 32;
-						break; 
+						break;
 					case SPT_float3x3:
 						value = 36;
 						break;
@@ -355,7 +355,7 @@ namespace platform::Render::Effect {
 					default:
 						break;
 					}
-					if(asset_param.GetArraySize() != 0)
+					if (asset_param.GetArraySize() != 0)
 						value *= asset_param.GetArraySize();
 					uint32 stride;
 					if (asset_param.GetArraySize() != 0) {
@@ -372,9 +372,9 @@ namespace platform::Render::Effect {
 					}
 
 					pseudo_strides.emplace_back(stride);
-					
-					auto init_ceil16 = (init + 15)&(~15);
-					if(init + value > init_ceil16)
+
+					auto init_ceil16 = (init + 15) & (~15);
+					if (init + value > init_ceil16)
 						init = init_ceil16;
 
 					ShaderInfo::ConstantBufferInfo::VariableInfo VariableInfo;
@@ -383,8 +383,8 @@ namespace platform::Render::Effect {
 					pseudo_varinfos.emplace_back(VariableInfo);
 
 					return init + value;
-				});
-				auto pGPUBuffer = GRenderIF->GetDevice().CreateConstantBuffer(platform::Render::Buffer::Usage::SingleFrame,cbuff_size,nullptr);
+					});
+				auto pGPUBuffer = GRenderIF->GetDevice().CreateConstantBuffer(cbuff_size, nullptr, cbuff.GetName().c_str(), platform::Render::Buffer::Usage::SingleFrame);
 
 				auto pConstantBuffer = std::make_shared<ConstantBuffer>(cbuff.GetName(), cbuff.GetNameHash());
 
@@ -407,7 +407,7 @@ namespace platform::Render::Effect {
 					}
 				}
 				constantbuffs.emplace_back(pConstantBuffer);
-				WF_Trace(platform::Descriptions::Warning, "The Effect(%s) ctor pseudo constanbuffer[name:%s,size:%d] ,It's waste videomemory!", pEffectAsset->GetName().c_str(),cbuff.GetName().c_str(),cbuff_size);
+				WF_Trace(platform::Descriptions::Warning, "The Effect(%s) ctor pseudo constanbuffer[name:%s,size:%d] ,It's waste videomemory!", pEffectAsset->GetName().c_str(), cbuff.GetName().c_str(), cbuff_size);
 			}
 		}
 
@@ -437,7 +437,7 @@ namespace platform::Render::Effect {
 
 				auto& asset_blob_hashs = asset_pass.GetBlobs();
 				std::unordered_map<ShaderType, const asset::ShaderBlobAsset*> asset_blobs;
-				for (auto&pair : asset_blob_hashs) {
+				for (auto& pair : asset_blob_hashs) {
 					asset_blobs.emplace(pair.first, &pEffectAsset->GetBlob(pair.second));
 				}
 				ShaderCompose* pCompose = Context::Instance().GetDevice().CreateShaderCompose(asset_blobs, this);
@@ -473,7 +473,7 @@ namespace platform::Render::Effect {
 	std::shared_ptr<Effect> EffectsHolder::FindResource(const std::string& name) {
 		std::shared_lock lock{ CS };
 
-		for(auto& pair : loaded_effects)
+		for (auto& pair : loaded_effects)
 		{
 			if (pair.second->GetName() == name)
 				return pair.second;
@@ -504,7 +504,7 @@ namespace platform {
 	using namespace Render::Effect;
 
 	template<>
-	std::shared_ptr<Effect> AssetResourceScheduler::SyncSpawnResource<Effect,const std::string&>(const std::string& name) {
+	std::shared_ptr<Effect> AssetResourceScheduler::SyncSpawnResource<Effect, const std::string&>(const std::string& name) {
 		if (auto pEffect = EffectsHolder::Instance().FindResource(name))
 			return pEffect;
 		auto pAsset = X::LoadEffectAsset(name + ".wsl");

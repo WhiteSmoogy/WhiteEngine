@@ -85,7 +85,7 @@ namespace platform_ex::Windows::D3D12 {
 			ResourceCreateInfo& CreateInfo,
 			IResourceAllocator* ResourceAllocator);
 
-		ConstantBuffer* CreateConstantBuffer(Buffer::Usage usage, uint32 size_in_byte,const void*  init_data) override;
+		ConstantBuffer* CreateConstantBuffer(uint32 size_in_byte, const void* init_data, const char* Name, Buffer::Usage usage) override;
 		GraphicsBuffer* CreateVertexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, ResourceCreateInfo init_data) override;
 		GraphicsBuffer* CreateIndexBuffer(Buffer::Usage usage, white::uint32 access, uint32 size_in_byte, EFormat format, ResourceCreateInfo init_data) override;
 

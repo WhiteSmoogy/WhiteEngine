@@ -90,6 +90,11 @@ ShaderResourceView* CommandListBase::CreateSRV(GraphicsBuffer* Buffer, const Buf
 	return GDevice->CreateShaderResourceView(Buffer, CreateInfo);
 }
 
+ConstantBuffer* CommandListBase::CreateConstantBuffer(uint32 size_in_byte, const void* init_data, const char* Name, Buffer::Usage usage)
+{
+	return GDevice->CreateConstantBuffer(size_in_byte, init_data, Name, usage);
+}
+
 
 using RIFenceTypeRef = std::shared_ptr<CommandListImmediate::RIFenceType>;
 

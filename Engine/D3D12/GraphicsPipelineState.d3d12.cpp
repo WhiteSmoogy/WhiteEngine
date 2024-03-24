@@ -719,7 +719,7 @@ void D3D12::D3DCommandSignature::Init(const platform::Render::CommandSignatureDe
 
 	D3D12_COMMAND_SIGNATURE_DESC commandSignatureDesc = {};
 	commandSignatureDesc.pArgumentDescs = argumentDescs.data();
-	commandSignatureDesc.NumArgumentDescs = argumentDescs.size();
+	commandSignatureDesc.NumArgumentDescs = static_cast<UINT>(argumentDescs.size());
 	commandSignatureDesc.ByteStride = commandStride;
 	commandSignatureDesc.NodeMask = GetParentDevice()->GetGPUMask().GetNative();
 

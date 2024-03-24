@@ -718,6 +718,7 @@ export namespace RenderGraph
 				if (Buffer->bTransient)
 				{
 					Buffer->TransientBuffer.reset();
+					delete Buffer->ViewCache;
 				}
 				else
 				{
@@ -815,6 +816,7 @@ export namespace RenderGraph
 			Buffer->RealObj = BufferObj;
 			Buffer->Allocation = Pooled;
 			Buffer->FirstPass = PassHandle;
+			Buffer->ViewCache = &Pooled->ViewCache;
 		}
 
 		void SetRObject(RGBuffer* Buffer, GraphicsBufferRef TransientBuffer, RGPassHandle PassHandle)
@@ -824,6 +826,8 @@ export namespace RenderGraph
 			Buffer->FirstPass = PassHandle;
 			Buffer->TransientBuffer = TransientBuffer;
 			Buffer->State = Allocator.AllocNoDestruct<RGSubresourceState>();
+			Buffer->ViewCache = new BufferViewCache();
+			Buffer->Allocation = nullptr;
 		}
 
 		void InitRObject(RGViewRef View)
@@ -854,6 +858,19 @@ export namespace RenderGraph
 			auto BufferObj = Buffer->GetRObject();
 
 			SRV->RealObj = Buffer->ViewCache->GetOrCreateSRV(CmdList, BufferObj, SRV->Desc);
+		}
+
+		void InitRObject(RGBufferUAVRef UAV)
+		{
+			if (UAV->HasRObject())
+			{
+				return;
+			}
+
+			auto Buffer = UAV->GetParent();
+			auto BufferObj = Buffer->GetRObject();
+
+			UAV->RealObj = Buffer->ViewCache->GetOrCreateUAV(CmdList, BufferObj, UAV->Desc);
 		}
 
 		bool IsTransientInternal(RGViewableResource* Resource)
@@ -1184,9 +1201,9 @@ export namespace ComputeShaderUtils
 
 	inline void ValidateGroupCount(const white::math::int3& GroupCount)
 	{
-		wassume(GroupCount.x <= Caps.MaxDispatchThreadGroupsPerDimension.x);
-		wassume(GroupCount.y <= Caps.MaxDispatchThreadGroupsPerDimension.y);
-		wassume(GroupCount.z <= Caps.MaxDispatchThreadGroupsPerDimension.z);
+		wassume((uint)GroupCount.x <= Caps.MaxDispatchThreadGroupsPerDimension.x);
+		wassume((uint)GroupCount.y <= Caps.MaxDispatchThreadGroupsPerDimension.y);
+		wassume((uint)GroupCount.z <= Caps.MaxDispatchThreadGroupsPerDimension.z);
 	}
 
 	template<typename TShaderClass>

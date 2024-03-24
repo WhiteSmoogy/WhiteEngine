@@ -476,6 +476,8 @@ export namespace RenderGraph
 		uint32 AlignNumElements;
 
 		GraphicsBufferRef Buffer;
+		BufferViewCache ViewCache;
+
 		const char* Name = nullptr;
 
 		uint32 LastUsedFrame = 0;
@@ -509,6 +511,7 @@ export namespace RenderGraph
 		RGBuffer(const char* Name, const RGBufferDesc& InDesc, ERGBufferFlags InFlags)
 			:RGViewableResource(Name, StaticType), Desc(InDesc), Flags(InFlags)
 		{}
+
 
 		RGBufferHandle Handle;
 

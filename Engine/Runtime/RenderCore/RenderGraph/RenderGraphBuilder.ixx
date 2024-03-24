@@ -514,7 +514,53 @@ export namespace RenderGraph
 			}
 
 			CreateCBuffers();
+
+			//CreatePassBarriers
+
+			//ParallelExecuteEnabled
+
+			for(auto PassHandle = ProloguePassHandle; PassHandle <= EpiloguePassHandle; ++PassHandle)
+			{
+				auto* Pass = Passes[PassHandle];
+
+				if (Pass->bCulled)
+				{
+					continue;
+				}
+
+				if (!Pass->bSentinel)
+				{
+					CompilePassOps(Pass);
+				}
+
+
+				ExecutePass(Pass, CmdList);
+			}
+
+			RasterPassCount = 0;
+			AsyncComputePassCount = 0;
 		}
+
+		void CompilePassOps(RGPass* Pass)
+		{
+
+		}
+
+		void ExecutePass(RGPass* Pass, ComputeCommandList& CmdList)
+		{
+			ExecutePassPrologue(Pass, CmdList);
+			Pass->Execute(CmdList);
+			ExecutePassEpilogue(Pass, CmdList);
+		}
+
+		void ExecutePassPrologue(RGPass* Pass, ComputeCommandList& CmdList)
+		{
+		}
+
+		void ExecutePassEpilogue(RGPass* Pass, ComputeCommandList& CmdList)
+		{
+		}
+
 
 		void Dump(const char* graphfilename)
 		{

@@ -132,7 +132,7 @@ void Texture2D::UnMap(const Sub1D& sub)
 
 D3D12_SHADER_RESOURCE_VIEW_DESC Texture2D::CreateSRVDesc(uint8 first_array_index, uint8 num_items, uint8 first_level, uint8 num_levels) const
 {
-	WAssert(white::has_anyflags(GetAccessMode(), EAccessHint::SRV), "Access mode must have EA_GPURead flag");
+	WAssert(white::has_anyflags(GetAccessMode(), white::enum_or(EAccessHint::SRV , EAccessHint::DSVRead)), "Access mode must have EA_GPURead flag");
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
 	switch (format) {
 	case EF_D16:

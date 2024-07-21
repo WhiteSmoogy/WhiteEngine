@@ -359,7 +359,7 @@ export namespace RenderGraph
 
 		UnorderedAccessView* GetRObject() const
 		{
-			return static_cast<UnorderedAccessView*>(GetRObject());
+			return static_cast<UnorderedAccessView*>(RGView::GetRObject());
 		}
 
 	protected:
@@ -379,7 +379,7 @@ export namespace RenderGraph
 	public:
 		ShaderResourceView* GetRObject() const
 		{
-			return static_cast<ShaderResourceView*>(GetRObject());
+			return static_cast<ShaderResourceView*>(RGView::GetRObject());
 		}
 	protected:
 		RGShaderResourceView(const char* InName, ERGViewType InType)

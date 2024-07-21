@@ -4,6 +4,9 @@
 #include "ShaderParamterTraits.hpp"
 
 namespace platform::Render {
+	template<class... Ts>
+	struct overloads : Ts... { using Ts::operator()...; };
+
 	template<typename TCommandList,typename TShaderClass, THardwareShader TShader>
 	inline void SetShaderParameters(TCommandList& cmdlist, const ShaderRef<TShaderClass>& Shader, TShader* ShaderRHI, const typename TShaderClass::Parameters& Parameters)
 	{
@@ -35,7 +38,10 @@ namespace platform::Render {
 		{
 			auto ShaderParameterRef = *(SRVDeclType*)(Base + SRVBinding.ByteOffset);
 
-			cmdlist.SetShaderResourceView(ShaderRHI, SRVBinding.BaseIndex, ShaderParameterRef);
+			auto srv = [&](ShaderResourceView* srv) {cmdlist.SetShaderResourceView(ShaderRHI, SRVBinding.BaseIndex, srv); };
+			auto rgsrv = [&](RenderGraph::RGShaderResourceView* srv) {cmdlist.SetShaderResourceView(ShaderRHI, SRVBinding.BaseIndex, srv->GetRObject()); };
+
+			ShaderParameterRef.visit(overloads{ srv ,rgsrv });
 		}
 
 		// ConstantBuffer
@@ -43,7 +49,10 @@ namespace platform::Render {
 		{
 			auto ShaderParameterRef = *(CBVDeclType*)(Base + CBBinding.ByteOffset);
 
-			cmdlist.SetShaderConstantBuffer(ShaderRHI, CBBinding.BaseIndex, ShaderParameterRef);
+			auto cbv = [&](ConstantBuffer* cbv) {cmdlist.SetShaderConstantBuffer(ShaderRHI, CBBinding.BaseIndex, cbv); };
+			auto rgcbv = [&](RenderGraph::RGConstBuffer* cbv) {cmdlist.SetShaderConstantBuffer(ShaderRHI, CBBinding.BaseIndex, cbv->GetRObject()); };
+
+			ShaderParameterRef.visit(overloads{ cbv ,rgcbv });
 		}
 
 		//Samplers
@@ -61,7 +70,10 @@ namespace platform::Render {
 			{
 				auto ShaderParameterRef = *(UAVDeclType*)(Base + UAVBinding.ByteOffset);
 
-				cmdlist.SetUAVParameter(ShaderRHI, UAVBinding.BaseIndex, ShaderParameterRef);
+				auto uav = [&](UnorderedAccessView* uav) {cmdlist.SetUAVParameter(ShaderRHI, UAVBinding.BaseIndex, uav); };
+				auto rguav = [&](RenderGraph::RGUnorderedAccessView* uav){ cmdlist.SetUAVParameter(ShaderRHI, UAVBinding.BaseIndex, uav->GetRObject()); };
+
+				ShaderParameterRef.visit(overloads{ uav ,rguav });
 			}
 		}
 	}

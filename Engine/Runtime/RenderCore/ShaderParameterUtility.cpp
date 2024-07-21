@@ -59,7 +59,7 @@ struct ShaderParameterStructBinding
 			RenderShaderParameterBindings::ResourceParameter Parameter;
 			Parameter.BaseIndex = BaseIndex;
 			Parameter.ByteOffset = ByteOffset;
-			const bool bIsSRVType = GetBaseType(ShaderType) == SBT_SRV;
+			const bool bIsSRVType = IsSRVType(ShaderType);
 
 			if (bIsSRVType)
 			{
@@ -85,7 +85,7 @@ struct ShaderParameterStructBinding
 				Bindings->Constants.emplace_back(Parameter);
 			}
 
-			const bool bIsUAVType = GetBaseType(ShaderType) == SBT_UAV;
+			const bool bIsUAVType = IsUAVType(ShaderType);
 
 			if (bIsUAVType)
 			{

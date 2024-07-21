@@ -171,29 +171,39 @@ namespace platform::Render {
 			SPT_BufferAccess = MakeShaderFormat<SBT_BUFFER, 1, 1, 0>,
 		};
 
-		constexpr ShaderBaseType GetBaseType(ShaderParamType type)
+		constexpr ShaderBaseType GetShaderBaseType(ShaderParamType type)
 		{
-			return static_cast<ShaderBaseType>((type >> 16) & ~SBT_ELEMTYPE);
+			return static_cast<ShaderBaseType>(type >> 16);
 		}
 
 		constexpr bool IsElemType(ShaderParamType type)
 		{
-			return static_cast<ShaderBaseType>(type >> 16) & SBT_ELEMTYPE;
+			return GetShaderBaseType(type) & SBT_ELEMTYPE;
 		}
 
 		constexpr bool IsBufferType(ShaderParamType type)
 		{
-			return white::has_allflags(static_cast<ShaderBaseType>(type >> 16),SBT_BUFFER);
+			return white::has_allflags(GetShaderBaseType(type), SBT_BUFFER);
+		}
+
+		constexpr bool IsSRVType(ShaderParamType type)
+		{
+			return white::has_allflags(GetShaderBaseType(type), SBT_SRV);
+		}
+
+		constexpr bool IsUAVType(ShaderParamType type)
+		{
+			return white::has_allflags(GetShaderBaseType(type), SBT_UAV);
 		}
 
 		constexpr bool IsTextureType(ShaderParamType type)
 		{
-			return white::has_allflags(static_cast<ShaderBaseType>(type >> 16), SBT_TEXTURE);
+			return white::has_allflags(GetShaderBaseType(type), SBT_TEXTURE);
 		}
 
 		constexpr bool IsNumberType(ShaderParamType type)
 		{
-			auto base_type = GetBaseType(type);
+			auto base_type = GetShaderBaseType(type);
 
 			return base_type == SBT_INT32 || base_type == SBT_UINT32 || base_type == SBT_FLOAT32;
 		}

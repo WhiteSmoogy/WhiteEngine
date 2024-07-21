@@ -190,16 +190,7 @@ bool asset::RequireStructElemType(ShaderParamType type)
 
 bool asset::RequireElemType(ShaderParamType type)
 {
-	if (GetBaseType(type) == SBT_UAV && type != SPT_rwbyteAddressBuffer)
-		return true;
-
-	if (RequireStructElemType(type))
-		return true;
-
-	if (type == SPT_buffer || type == SPT_rwbuffer)
-		return true;
-
-	return false;
+	return IsElemType(type);
 }
 
 std::string asset::ShadersAsset::GenHLSLShader() const

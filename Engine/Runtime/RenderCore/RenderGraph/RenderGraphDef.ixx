@@ -347,7 +347,7 @@ export namespace RenderGraph
 
 		ShaderBaseType GetShaderBaseType() const
 		{
-			return platform::Render::GetBaseType(Member->GetShaderType());
+			return platform::Render::GetShaderBaseType(Member->GetShaderType());
 		}
 
 		ShaderParamType GetShaderType() const

@@ -74,6 +74,8 @@ public:
 		SHADER_PARAMETER(uint32, DstOffset)
 		SHADER_PARAMETER_UAV(RWByteAddressBuffer, DstByteAddressBuffer)
 		SHADER_PARAMETER_UAV(RWStructuredBuffer<wm::uint4>, DstStructuredBuffer4x)
+		SHADER_PARAMETER_UAV(RWStructuredBuffer<wm::uint2>, DstStructuredBuffer2x)
+		SHADER_PARAMETER_UAV(RWStructuredBuffer<uint32>, DstStructuredBuffer1x)
 		SHADER_PARAMETER_UAV(RWBuffer<wm::float4>, DstBuffer)
 		END_SHADER_PARAMETER_STRUCT()
 };
@@ -86,6 +88,10 @@ public:
 	BEGIN_SHADER_PARAMETER_STRUCT(Parameters)
 		SHADER_PARAMETER_STRUCT_INCLUDE(ByteBufferShader::Parameters, Common)
 		SHADER_PARAMETER_SRV(ByteAddressBuffer, SrcByteAddressBuffer)
+		SHADER_PARAMETER_SRV(StructuredBuffer<wm::uint4>, SrcStructuredBuffer4x)
+		SHADER_PARAMETER_SRV(StructuredBuffer<wm::uint2>, SrcStructuredBuffer2x)
+		SHADER_PARAMETER_SRV(StructuredBuffer<uint32>, SrcStructuredBuffer1x)
+		SHADER_PARAMETER_SRV(Buffer<wm::float4>, DstBuffer)
 		END_SHADER_PARAMETER_STRUCT()
 };
 

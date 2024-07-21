@@ -28,6 +28,9 @@ namespace platform::Render
 		struct RWBuffer {};
 
 		template<typename Struct>
+		struct Buffer {};
+
+		template<typename Struct>
 		struct StructuredBuffer {};
 
 
@@ -107,7 +110,7 @@ namespace platform::Render
 		{
 			static constexpr ShaderParamType ShaderType = ShaderType;
 
-			static constexpr ShaderBaseType BaseType = GetBaseType(ShaderType);
+			static constexpr ShaderBaseType BaseType = GetShaderBaseType(ShaderType);
 			static constexpr uint32 NumRows = GetNumRows(ShaderType);
 			static constexpr uint32 NumColumns = GetNumColumns(ShaderType);
 			static constexpr uint32 NumElements = NumElements;
@@ -247,6 +250,11 @@ namespace platform::Render
 
 		template<typename Struct>
 		struct TShaderParameterTypeInfo<HLSLTraits::StructuredBuffer<Struct>> : TShaderParameterSRVType<SPT_StructuredBuffer>
+		{
+		};
+
+		template<typename Struct>
+		struct TShaderParameterTypeInfo<HLSLTraits::Buffer<Struct>> : TShaderParameterSRVType<SPT_buffer>
 		{
 		};
 

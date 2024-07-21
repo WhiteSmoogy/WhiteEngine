@@ -617,6 +617,8 @@ export namespace RenderGraph
 		explicit RGConstBuffer(const TStruct* InParameters, const char* InName)
 			:RGResource(InName), ParameterStruct(InParameters, RGParameterStruct::GetStructMetadata<TStruct>()) , Size(ParameterStruct.GetSize())
 		{
+			if (Size == 0)
+				Size = sizeof(TStruct);
 		}
 
 		template<typename TStruct>
@@ -632,7 +634,7 @@ export namespace RenderGraph
 		const RGParameterStruct ParameterStruct;
 		uint32 Size;
 
-		uint8 bQueuedForCreate:1 = 0;
+		bool bQueuedForCreate = false;
 
 		friend RGBuilder;
 		friend RGConstBufferRegistry;

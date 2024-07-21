@@ -377,7 +377,7 @@ export namespace RenderGraph
 
 			std::memcpy(Parameters, span.data(), ParametersSize);
 
-			return CreateCBuffer(Parameters, __func__).Get();
+			return CreateCBuffer(Parameters, ParametersSize, __func__);
 		}
 
 		RGBufferRef CreateBuffer(const RGBufferDesc& Desc, const char* Name, ERGBufferFlags Flags = ERGBufferFlags::None)
@@ -791,7 +791,7 @@ export namespace RenderGraph
 				{
 					if (auto* CBuffer = CBuffers[CBufferHandle]; !CBuffer->bQueuedForCreate)
 					{
-						CBuffer->bQueuedForCreate = 1;
+						CBuffer->bQueuedForCreate = true;
 						CBuffersToCreate.emplace_back(CBufferHandle);
 					}
 				}
@@ -855,6 +855,12 @@ export namespace RenderGraph
 			auto cb = CBuffers.Allocate<RGTConstBuffer<TBufferStruct>>(Allocator, Struct, Name);
 
 			return { .CBuffer = cb };
+		}
+
+		RGConstBufferRef CreateCBuffer(const void* InParameters, uint32 InSize, const char* InName)
+		{
+			auto cb = CBuffers.Allocate<RGConstBuffer>(Allocator, InParameters, InSize, InName);
+			return cb;
 		}
 
 		void SetRObject(RGBuffer* Buffer, const white::ref_ptr<RGPooledBuffer>& Pooled, RGPassHandle PassHandle)

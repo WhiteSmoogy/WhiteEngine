@@ -1,7 +1,7 @@
 module;
 #include "RenderInterface/ICommandList.h"
-#include "Runtime/RenderCore/Dispatch.h"
 #include "RenderInterface/DeviceCaps.h"
+#include "RenderInterface/Shader.h"
 #include "WBase/wmathtype.hpp"
 #include "Core/Container/vector.hpp"
 
@@ -1250,55 +1250,4 @@ export namespace RenderGraph
 
 		RGArray<RGPassHandle> CullPassStack;
 	};
-}
-
-export namespace ComputeShaderUtils
-{
-	using namespace RenderGraph;
-
-	inline void ValidateGroupCount(const white::math::int3& GroupCount)
-	{
-		wassume((uint)GroupCount.x <= Caps.MaxDispatchThreadGroupsPerDimension.x);
-		wassume((uint)GroupCount.y <= Caps.MaxDispatchThreadGroupsPerDimension.y);
-		wassume((uint)GroupCount.z <= Caps.MaxDispatchThreadGroupsPerDimension.z);
-	}
-
-	template<typename TShaderClass>
-	inline RGPassRef AddPass(
-		RGBuilder& GraphBuilder,
-		RGEventName&& PassName,
-		ERGPassFlags PassFlags,
-		const Render::ShaderRef<TShaderClass>& ComputeShader,
-		const Render::ShaderParametersMetadata* ParametersMetadata,
-		typename TShaderClass::Parameters* Parameters,
-		white::math::int3 GroupCount)
-	{
-		WAssert(
-			white::has_anyflags(PassFlags,white::enum_or(ERGPassFlags::Compute,ERGPassFlags::AsyncCompute)) &&
-			!white::has_anyflags(PassFlags, white::enum_or(ERGPassFlags::Copy,ERGPassFlags::Raster)), "AddPass only supports 'Compute' or 'AsyncCompute'.");
-
-		ValidateGroupCount(GroupCount);
-
-		return GraphBuilder.AddPass(
-			std::move(PassName),
-			ParametersMetadata,
-			Parameters,
-			PassFlags,
-			[ParametersMetadata, Parameters, ComputeShader, GroupCount](platform::Render::ComputeCommandList& CmdList)
-			{
-				 ComputeShaderUtils::Dispatch(CmdList, ComputeShader, *Parameters, GroupCount);
-			});
-	}
-
-	template <typename TShaderClass>
-	inline RGPassRef AddPass(
-		RGBuilder& GraphBuilder,
-		RGEventName&& PassName,
-		const Render::ShaderRef<TShaderClass>& ComputeShader,
-		typename TShaderClass::Parameters* Parameters,
-		white::math::int3 GroupCount)
-	{
-		auto* ParametersMetadata = TShaderClass::Parameters::TypeInfo::GetStructMetadata();
-		return AddPass(GraphBuilder, std::move(PassName), ERGPassFlags::Compute, ComputeShader, ParametersMetadata, Parameters, GroupCount);
-	}
 }

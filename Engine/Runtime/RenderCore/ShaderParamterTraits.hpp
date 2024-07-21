@@ -51,27 +51,47 @@ namespace platform::Render
 				_type0* v0;
 				_type1* v1;
 			};
+			uint32 index;
+
+			UnionPointer()
+				:index(0)
+			{
+			}
+
+			UnionPointer(_type0* value)
+				:index(0),v0(value)
+			{
+			}
+
+			UnionPointer(_type1* value)
+				:index(1), v1(value)
+			{
+			}
 
 			_type0*& operator=(_type0* value)
 			{
 				v0 = value;
+				index = 0;
 				return v0;
 			}
 
 			_type1*& operator=(_type1* value)
 			{
 				v1 = value;
+				index = 1;
 				return v1;
 			}
 
-			operator _type0* () const
+			template<typename visitor>
+			void visit(visitor&& vis)
 			{
-				return v0;
-			}
-
-			operator _type1* () const
-			{
-				return v0;
+				switch (index)
+				{
+				case 0:
+					vis(v0);
+				case 1:
+					vis(v1);
+				}
 			}
 		};
 	}
@@ -167,19 +187,23 @@ namespace platform::Render
 			using DeclType = white::math::uint2;
 		};
 
+		using UAVDeclType = HLSLTraits::UnionPointer<platform::Render::UnorderedAccessView, RenderGraph::RGUnorderedAccessView>;
+
 		template<ShaderParamType ShaderType>
 		struct TShaderParameterUAVType : ShaderTypeInfo<ShaderType>
 		{
-			using DeclType = HLSLTraits::UnionPointer<platform::Render::UnorderedAccessView, RenderGraph::RGUnorderedAccessView>;
+			using DeclType = UAVDeclType;
 
 			template<std::size_t Boundary = 0>
 			static constexpr std::size_t Alignement = sizeof(DeclType);
 		};
 
+		using SRVDeclType = HLSLTraits::UnionPointer<platform::Render::ShaderResourceView, RenderGraph::RGShaderResourceView>;
+
 		template<ShaderParamType ShaderType>
 		struct TShaderParameterSRVType : ShaderTypeInfo<ShaderType>
 		{
-			using DeclType = HLSLTraits::UnionPointer<platform::Render::ShaderResourceView, RenderGraph::RGShaderResourceView>;
+			using DeclType = SRVDeclType;
 
 			template<std::size_t Boundary = 0>
 			static constexpr std::size_t Alignement = sizeof(DeclType);
@@ -200,10 +224,12 @@ namespace platform::Render
 		{
 		};
 
+		using CBVDeclType = HLSLTraits::UnionPointer<platform::Render::ConstantBuffer, RenderGraph::RGConstBuffer>;
+
 		template<typename Struct>
 		struct TShaderParameterTypeInfo<HLSLTraits::ConstantBuffer<Struct>> : ShaderTypeInfo<SPT_ConstantBuffer>
 		{
-			using DeclType = HLSLTraits::UnionPointer<platform::Render::ConstantBuffer, RenderGraph::RGConstBuffer>;
+			using DeclType = CBVDeclType;
 
 			template<std::size_t Boundary = 0>
 			static constexpr std::size_t Alignement = sizeof(DeclType);

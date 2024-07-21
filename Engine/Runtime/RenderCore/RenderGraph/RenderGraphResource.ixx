@@ -4,7 +4,6 @@ module;
 #include "RenderInterface/RenderObject.h"
 #include "RenderInterface/IGPUResourceView.h"
 #include "RenderInterface/IGraphicsBuffer.hpp"
-#include "Runtime/RenderCore/ShaderParametersMetadata.h"
 #include "RenderInterface/ICommandList.h"
 
 export module RenderGraph:resource;

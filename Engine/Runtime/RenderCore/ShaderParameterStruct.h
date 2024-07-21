@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ShaderParameters.h"
+#include "ShaderParamterTraits.hpp"
 
 namespace platform::Render {
 	template<typename TCommandList,typename TShaderClass, THardwareShader TShader>
@@ -32,7 +33,7 @@ namespace platform::Render {
 		// SRV
 		for (auto& SRVBinding : Bindings.SRVs)
 		{
-			auto ShaderParameterRef = *(ShaderResourceView**)(Base + SRVBinding.ByteOffset);
+			auto ShaderParameterRef = *(SRVDeclType*)(Base + SRVBinding.ByteOffset);
 
 			cmdlist.SetShaderResourceView(ShaderRHI, SRVBinding.BaseIndex, ShaderParameterRef);
 		}
@@ -40,7 +41,7 @@ namespace platform::Render {
 		// ConstantBuffer
 		for (auto& CBBinding : Bindings.Constants)
 		{
-			auto ShaderParameterRef = *(ConstantBuffer**)(Base + CBBinding.ByteOffset);
+			auto ShaderParameterRef = *(CBVDeclType*)(Base + CBBinding.ByteOffset);
 
 			cmdlist.SetShaderConstantBuffer(ShaderRHI, CBBinding.BaseIndex, ShaderParameterRef);
 		}
@@ -58,7 +59,7 @@ namespace platform::Render {
 			//UAVS
 			for (auto& UAVBinding : Bindings.UAVs)
 			{
-				auto ShaderParameterRef = *(UnorderedAccessView**)(Base + UAVBinding.ByteOffset);
+				auto ShaderParameterRef = *(UAVDeclType*)(Base + UAVBinding.ByteOffset);
 
 				cmdlist.SetUAVParameter(ShaderRHI, UAVBinding.BaseIndex, ShaderParameterRef);
 			}

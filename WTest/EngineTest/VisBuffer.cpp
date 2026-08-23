@@ -100,7 +100,7 @@ public:
 
 	BEGIN_SHADER_PARAMETER_STRUCT(Parameters)
 		SHADER_PARAMETER_SRV(StructuredBuffer<FilterTriangleCS::UncompactedDrawArguments>, UncompactedDrawArgs)
-		SHADER_PARAMETER_UAV(RWStructuredBuffer<uint32>, IndrectDrawArgsBuffer)
+		SHADER_PARAMETER_UAV(RWStructuredBuffer<DrawIndexArguments>, IndrectDrawArgsBuffer)
 		SHADER_PARAMETER(uint32, MaxDraws)
 		END_SHADER_PARAMETER_STRUCT()
 };
@@ -301,7 +301,7 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 	auto CompactedDrawArgsSize = white::Align(sizeof(DrawIndexArguments) * (sponza_trinf->Metadata->TrinfsCount + 1), 16);
 	auto CompactedDrawArgs = Builder.CreateBuffer(RGBufferDesc::CreateStructIndirectDesc(sizeof(DrawIndexArguments), sponza_trinf->Metadata->TrinfsCount + 1), "CompactedDrawArgs");
 	auto CompactedDrawArgsUAV = Builder.CreateUAV({ .Buffer = CompactedDrawArgs });
-	Params.Count = static_cast<uint32>(white::Align(sizeof(DrawIndexArguments), 16));
+	Params.Count = sizeof(DrawIndexArguments);
 	Params.DstOffset = 0;
 	Params.Value = 0;
 	MemsetResource(Builder, CompactedDrawArgsUAV, Params);

@@ -14,6 +14,11 @@ public:
 	int32 Allocate(RenderResource* Resource)
 	{
 		std::unique_lock lock{ Mutex };
+		if (Resource->ListIndex != white::INDEX_NONE)
+		{
+			return Resource->ListIndex;
+		}
+
 		int32 Index;
 		if (FreeIndexList.empty())
 		{
@@ -25,12 +30,18 @@ public:
 			Index = white::pop(FreeIndexList);
 			ResourceList[Index] = Resource;
 		}
+		Resource->ListIndex = Index;
 		return Index;
 	}
 
-	void Deallocate(int32 Index)
+	void Deallocate(int32 Index, RenderResource* Resource)
 	{
 		std::unique_lock lock{ Mutex };
+		if (Index < 0 || Index >= ResourceList.size() || ResourceList[Index] != Resource)
+		{
+			return;
+		}
+
 		FreeIndexList.emplace_back(Index);
 		ResourceList[Index] = nullptr;
 	}
@@ -42,18 +53,10 @@ public:
 		ResourceList.clear();
 	}
 
-	template<typename FunctionType>
-	void ForEach(const FunctionType& Function)
+	std::vector<RenderResource*> Snapshot()
 	{
 		std::unique_lock lock{ Mutex };
-		for (int32 Index = 0; Index < ResourceList.size(); ++Index)
-		{
-			auto* Resource = ResourceList[Index];
-			if (Resource)
-			{
-				Function(Resource);
-			}
-		}
+		return ResourceList;
 	}
 
 	template<typename FunctionType>
@@ -81,50 +84,53 @@ void RenderResource::InitResources()
 {
 	auto& CmdList = GetCommandList();
 
-	auto& ResourceList = RenderResourceList::Get();
+	for (RenderResource* Resource : RenderResourceList::Get().Snapshot())
+	{
+		if (Resource)
+		{
+			Resource->InitResource(CmdList);
+		}
+	}
+}
 
-	const auto Lambda = [&](RenderResource* Resource) { Resource->InitResource(CmdList); };
-
-	ResourceList.ForEach(Lambda);
+void RenderResource::RegisterResource()
+{
+	if (ListIndex == white::INDEX_NONE)
+	{
+		RenderResourceList::Get().Allocate(this);
+	}
 }
 
 void RenderResource::InitResource(CommandListBase& CmdList)
 {
-	if (ListIndex == white::INDEX_NONE)
+	RegisterResource();
+
+	bool Expected = false;
+	if (Caps.IsInitialized && Initialized.compare_exchange_strong(Expected, true))
 	{
-		int LocalListIndex = white::INDEX_NONE;
-
-		if (!Caps.IsInitialized)
-		{
-			LocalListIndex = RenderResourceList::Get().Allocate(this);
-		}
-		else
-		{
-			LocalListIndex = 0;
-		}
-
-		if (Caps.IsInitialized)
+		try
 		{
 			InitRenderResource(CmdList);
 		}
-
-		ListIndex = LocalListIndex;
+		catch (...)
+		{
+			Initialized = false;
+			throw;
+		}
 	}
 }
 
-
 void RenderResource::ReleaseResource()
 {
-	if (ListIndex != white::INDEX_NONE)
+	if (Initialized.exchange(false))
 	{
-		if (Caps.IsInitialized)
-		{
-			ReleaseRenderResource();
-		}
+		ReleaseRenderResource();
+	}
 
-		RenderResourceList::Get().Deallocate(ListIndex);
-
-		ListIndex = white::INDEX_NONE;
+	const int32 LocalListIndex = ListIndex.exchange(white::INDEX_NONE);
+	if (LocalListIndex != white::INDEX_NONE)
+	{
+		RenderResourceList::Get().Deallocate(LocalListIndex, this);
 	}
 }
 
@@ -149,5 +155,11 @@ struct CommandRenderResource final : platform::Render::CommandBase
 
 void platform::Render::BeginInitResource(RenderResource* Resource)
 {
+	Resource->RegisterResource();
+	if (!Caps.IsInitialized)
+	{
+		return;
+	}
+
 	CL_ALLOC_COMMAND(RenderResource::GetCommandList(), CommandRenderResource)(Resource);
 }

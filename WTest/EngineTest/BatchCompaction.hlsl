@@ -1,7 +1,16 @@
 
 #define COMPACTION_THREADS 256
 
-RWBuffer<uint> IndrectDrawArgsBuffer;
+struct DrawIndexArguments
+{
+    uint IndexCountPerInstance;
+    uint InstanceCount;
+    uint StartIndexLocation;
+    int BaseVertexLocation;
+    uint StartInstanceLocation;
+};
+
+RWStructuredBuffer<DrawIndexArguments> IndrectDrawArgsBuffer;
 
 struct UncompactedDrawArguments
 {
@@ -26,12 +35,14 @@ void BatchCompactionCS(uint3 DrawId: SV_DispatchThreadID)
 
     uint slot = 0;
 
-    InterlockedAdd(IndrectDrawArgsBuffer[0], 1, slot);
+    InterlockedAdd(IndrectDrawArgsBuffer[0].IndexCountPerInstance, 1, slot);
 
-    IndrectDrawArgsBuffer[(slot + 1) * INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS + 0] = numIndices;
-    IndrectDrawArgsBuffer[(slot + 1) * INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS + 1] = 1;
-    IndrectDrawArgsBuffer[(slot + 1) * INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS + 2] = DrawArg.startIndex;
-    IndrectDrawArgsBuffer[(slot + 1) * INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS + 3] = 0;
-    IndrectDrawArgsBuffer[(slot + 1) * INDIRECT_DRAW_ARGUMENTS_STRUCT_NUM_ELEMENTS + 4] = 0;
+    DrawIndexArguments Args;
+    Args.IndexCountPerInstance = numIndices;
+    Args.InstanceCount = 1;
+    Args.StartIndexLocation = DrawArg.startIndex;
+    Args.BaseVertexLocation = 0;
+    Args.StartInstanceLocation = 0;
+    IndrectDrawArgsBuffer[slot + 1] = Args;
 
 }

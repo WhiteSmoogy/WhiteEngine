@@ -292,6 +292,9 @@ template <ShaderType ShaderStage>
 void DescriptorCache::SetSRVs(const RootSignature* RootSignature, ShaderResourceViewCache& Cache, const SRVSlotMask& SlotsNeededMask, uint32 SlotsNeeded, uint32& HeapSlot)
 {
 	static_assert(ShaderStage < ShaderType::NumStandardType, "Unexpected shader frequency.");
+	constexpr D3D12_RESOURCE_STATES ShaderResourceState = ShaderStage == ShaderType::ComputeShader
+		? D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+		: D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
 	SRVSlotMask& CurrentDirtySlotMask = Cache.DirtySlotMask[ShaderStage];
 	wconstraint(CurrentDirtySlotMask != 0);	// All dirty slots for the current shader stage.
@@ -315,7 +318,7 @@ void DescriptorCache::SetSRVs(const RootSignature* RootSignature, ShaderResource
 
 			if (SRVs[SlotIndex]->GetResource()->IsDepthStencilResource())
 			{
-				Context.TransitionResource(SRVs[SlotIndex], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_DEPTH_READ);
+				Context.TransitionResource(SRVs[SlotIndex], ShaderResourceState | D3D12_RESOURCE_STATE_DEPTH_READ);
 			}
 			/*else if (SRVs[SlotIndex]->GetSkipFastClearFinalize())
 			{
@@ -323,7 +326,7 @@ void DescriptorCache::SetSRVs(const RootSignature* RootSignature, ShaderResource
 			}*/
 			else
 			{
-				Context.TransitionResource(SRVs[SlotIndex], D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+				Context.TransitionResource(SRVs[SlotIndex], ShaderResourceState);
 			}
 		}
 		else
@@ -929,5 +932,4 @@ void LocalOnlineHeap::CloseCommandList()
 		}
 	}
 }
-
 

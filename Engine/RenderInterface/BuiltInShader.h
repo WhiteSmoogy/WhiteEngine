@@ -155,7 +155,7 @@ inline namespace Shader
 		BuiltInShaderMapSection* FindSection(const FHashedName& HashedShaderFilename);
 		BuiltInShaderMapSection* FindOrAddSection(const ShaderMeta* ShaderType);
 	private:
-		std::shared_mutex MapMutex;
+		mutable std::shared_mutex MapMutex;
 		std::unordered_map<std::size_t, BuiltInShaderMapSection*> SectionMap;
 	};
 

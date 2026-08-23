@@ -20,6 +20,13 @@ namespace platform::Render
 		static void InitResources();
 
 		std::atomic<int32> ListIndex = white::INDEX_NONE;
+
+	private:
+		void RegisterResource();
+
+		std::atomic<bool> Initialized = false;
+
+		friend void BeginInitResource(RenderResource* Resource);
 	};
 
 	void BeginInitResource(RenderResource* Resource);

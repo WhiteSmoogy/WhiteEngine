@@ -7,6 +7,21 @@
 #define STRUCTURED_ELEMENT_SIZE_UINT1 (0)
 #define STRUCTURED_ELEMENT_SIZE_UINT2 (1)
 #define STRUCTURED_ELEMENT_SIZE_UINT4 (2)
+#define STRUCTURED_ELEMENT_SIZE_UINT5 (3)
+
+struct StructuredUint5
+{
+	uint4 Head;
+	uint Tail;
+};
+
+StructuredUint5 MakeStructuredUint5(uint Input)
+{
+	StructuredUint5 Result;
+	Result.Head = uint4(Input, Input, Input, Input);
+	Result.Tail = Input;
+	return Result;
+}
 
 uint Value;
 uint Size;
@@ -23,6 +38,9 @@ uint Float4sPerLine;
 #elif STRUCTURED_ELEMENT_SIZE_UINT4 == STRUCTURED_ELEMENT_SIZE
 	#define STRUCTURED_BUFFER_ACCESS(BufferName, Index) BufferName##4x[(Index)]
 	#define STRUCTURED_VALUE uint4(Value,Value,Value,Value)
+#elif STRUCTURED_ELEMENT_SIZE_UINT5 == STRUCTURED_ELEMENT_SIZE
+	#define STRUCTURED_BUFFER_ACCESS(BufferName, Index) BufferName##5x[(Index)]
+	#define STRUCTURED_VALUE MakeStructuredUint5(Value)
 #endif
 
 #if RESOURCE_TYPE == RESOURCE_TYPE_FLOAT4_BUFFER
@@ -40,10 +58,12 @@ uint Float4sPerLine;
 	StructuredBuffer<uint>		SrcStructuredBuffer1x;
 	StructuredBuffer<uint2>		SrcStructuredBuffer2x;
 	StructuredBuffer<uint4>		SrcStructuredBuffer4x;
+	StructuredBuffer<StructuredUint5> SrcStructuredBuffer5x;
 
 	RWStructuredBuffer<uint>	DstStructuredBuffer1x;
 	RWStructuredBuffer<uint2>	DstStructuredBuffer2x;
 	RWStructuredBuffer<uint4>	DstStructuredBuffer4x;
+	RWStructuredBuffer<StructuredUint5> DstStructuredBuffer5x;
 	
 #elif RESOURCE_TYPE == RESOURCE_TYPE_FLOAT4_TEXTURE
 	StructuredBuffer<uint>			ScatterStructuredBuffer;

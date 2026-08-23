@@ -31,8 +31,16 @@ enum class ByteBufferStructuredSize
 	Uint1,
 	Uint2,
 	Uint4,
+	Uint5,
 	MAX
 };
+
+struct ByteBufferUint5
+{
+	uint32 Values[5];
+};
+
+static_assert(sizeof(ByteBufferUint5) == 20);
 
 class ByteBufferShader :public BuiltInShader
 {
@@ -76,6 +84,7 @@ public:
 		SHADER_PARAMETER_UAV(RWStructuredBuffer<wm::uint4>, DstStructuredBuffer4x)
 		SHADER_PARAMETER_UAV(RWStructuredBuffer<wm::uint2>, DstStructuredBuffer2x)
 		SHADER_PARAMETER_UAV(RWStructuredBuffer<uint32>, DstStructuredBuffer1x)
+		SHADER_PARAMETER_UAV(RWStructuredBuffer<ByteBufferUint5>, DstStructuredBuffer5x)
 		SHADER_PARAMETER_UAV(RWBuffer<wm::float4>, DstBuffer)
 		END_SHADER_PARAMETER_STRUCT()
 };
@@ -91,6 +100,7 @@ public:
 		SHADER_PARAMETER_SRV(StructuredBuffer<wm::uint4>, SrcStructuredBuffer4x)
 		SHADER_PARAMETER_SRV(StructuredBuffer<wm::uint2>, SrcStructuredBuffer2x)
 		SHADER_PARAMETER_SRV(StructuredBuffer<uint32>, SrcStructuredBuffer1x)
+		SHADER_PARAMETER_SRV(StructuredBuffer<ByteBufferUint5>, SrcStructuredBuffer5x)
 		SHADER_PARAMETER_SRV(Buffer<wm::float4>, SrcBuffer)
 		END_SHADER_PARAMETER_STRUCT()
 };
@@ -141,6 +151,7 @@ void platform::Render::MemcpyResource(RGBuilder& Builder, RGBufferUAV* UAV, RGBu
 		case 4: StructuredSize = ByteBufferStructuredSize::Uint1; break;
 		case 8: StructuredSize = ByteBufferStructuredSize::Uint2; break;
 		case 16: StructuredSize = ByteBufferStructuredSize::Uint4; break;
+		case 20: StructuredSize = ByteBufferStructuredSize::Uint5; break;
 		default: wassume(false); return;
 		}
 	}
@@ -192,6 +203,10 @@ void platform::Render::MemcpyResource(RGBuilder& Builder, RGBufferUAV* UAV, RGBu
 			case ByteBufferStructuredSize::Uint4:
 				Parameters->SrcStructuredBuffer4x = SRV;
 				Parameters->Common.DstStructuredBuffer4x = UAV;
+				break;
+			case ByteBufferStructuredSize::Uint5:
+				Parameters->SrcStructuredBuffer5x = SRV;
+				Parameters->Common.DstStructuredBuffer5x = UAV;
 				break;
 			default: wassume(false); return;
 			}
@@ -266,6 +281,7 @@ void  platform::Render::MemsetResource(RenderGraph::RGBuilder& Builder, RenderGr
 		case 4: StructuredSize = ByteBufferStructuredSize::Uint1; break;
 		case 8: StructuredSize = ByteBufferStructuredSize::Uint2; break;
 		case 16: StructuredSize = ByteBufferStructuredSize::Uint4; break;
+		case 20: StructuredSize = ByteBufferStructuredSize::Uint5; break;
 		default: wassume(false); return;
 		}
 	}
@@ -307,6 +323,7 @@ void  platform::Render::MemsetResource(RenderGraph::RGBuilder& Builder, RenderGr
 			case ByteBufferStructuredSize::Uint1: Parameters->Common.DstStructuredBuffer1x = UAV; break;
 			case ByteBufferStructuredSize::Uint2: Parameters->Common.DstStructuredBuffer2x = UAV; break;
 			case ByteBufferStructuredSize::Uint4: Parameters->Common.DstStructuredBuffer4x = UAV; break;
+			case ByteBufferStructuredSize::Uint5: Parameters->Common.DstStructuredBuffer5x = UAV; break;
 			default: wassume(false); return;
 			}
 			break;

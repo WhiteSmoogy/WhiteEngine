@@ -170,8 +170,8 @@ namespace platform_ex::Windows::D3D12 {
 
 		InitializeSubmissionPipe();
 
-		platform::Render::RenderResource::InitResources();
 		platform::Render::Caps.IsInitialized = true;
+		platform::Render::RenderResource::InitResources();
 	}
 
 	Fence & Context::GetFence(Device::CommandType index)

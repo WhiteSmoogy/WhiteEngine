@@ -28,21 +28,12 @@ void BatchCompactionCS(uint3 DrawId: SV_DispatchThreadID)
         return;
 
     UncompactedDrawArguments DrawArg = UncompactedDrawArgs[DrawId.x];
-    uint numIndices = DrawArg.numIndices;
-
-    if (numIndices == 0)
-        return;
-
-    uint slot = 0;
-
-    InterlockedAdd(IndrectDrawArgsBuffer[0].IndexCountPerInstance, 1, slot);
-
-    DrawIndexArguments Args;
-    Args.IndexCountPerInstance = numIndices;
-    Args.InstanceCount = 1;
+    DrawIndexArguments Args = (DrawIndexArguments)0;
+    Args.IndexCountPerInstance = DrawArg.numIndices;
+    Args.InstanceCount = DrawArg.numIndices > 0 ? 1 : 0;
     Args.StartIndexLocation = DrawArg.startIndex;
     Args.BaseVertexLocation = 0;
     Args.StartInstanceLocation = 0;
-    IndrectDrawArgsBuffer[slot + 1] = Args;
+    IndrectDrawArgsBuffer[DrawId.x] = Args;
 
 }

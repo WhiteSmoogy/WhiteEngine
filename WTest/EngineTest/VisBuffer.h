@@ -48,6 +48,8 @@ public:
 	std::shared_ptr<Trinf::Resources> sponza_trinf;
 	std::shared_ptr<render::CommandSignature> draw_visidSig;
 	std::shared_ptr<render::Texture2D> vis_buffer;
+	std::shared_ptr<render::Texture2D> normal_buffer;
+	std::shared_ptr<render::Texture2D> albedo_buffer;
 private:
 	bool SubWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override
 	{
@@ -104,7 +106,7 @@ private:
 
 		Builder.Execute();
 
-		DrawDetph(CmdList, screen_tex, depth_tex);
+		DrawLighting(CmdList, screen_tex, depth_tex);
 		OnDrawUI(CmdList, screen_tex);
 		CmdList.EndFrame();
 
@@ -132,14 +134,17 @@ private:
 		white::coroutine::SyncWait(platform_ex::AsyncLoadDStorageAsset("sponza_crytek/textures.dsff.asset"));
 		sponza_trinf = std::static_pointer_cast<Trinf::Resources>(white::coroutine::SyncWait(platform_ex::AsyncLoadDStorageAsset("sponza_crytek/trinf.ds.asset")));
 
-		white::math::float3 up_vec{ 0,1.f,0 };
-		white::math::float3 view_vec{ 0.94f,-0.1f,0.2f };
+		// Crytek Sponza is Y-up and its long atrium runs along X in this asset.
+		// Start inside the atrium instead of above the roof looking at the origin.
+		const white::math::float3 up_vec{ 0, 1.f, 0 };
+		const white::math::float3 eye{ -45.f, 6.f, -2.f };
+		const white::math::float3 target{ 10.f, 9.f, 0.f };
+		camera.SetViewMatrix(WhiteEngine::X::look_at_lh(eye, target, up_vec));
 
-		white::math::float3 eye{ 0,110,-90 };
-
-		camera.SetViewMatrix(WhiteEngine::X::look_at_lh(eye, white::math::float3(0, 0, 0), up_vec));
-
-		pCameraMainpulator = std::make_unique<WhiteEngine::Core::TrackballCameraManipulator>(10.0f);
+		// The manipulator's target distance must match the look-at point. The old
+		// hard-coded value (10) made rotations orbit an unrelated point.
+		const float look_at_distance = white::math::length(target - eye);
+		pCameraMainpulator = std::make_unique<WhiteEngine::Core::TrackballCameraManipulator>(look_at_distance);
 		pCameraMainpulator->Attach(camera);
 		pCameraMainpulator->SetSpeed(0.005f, 0.1f);
 
@@ -162,12 +167,11 @@ private:
 			}
 			};
 
-		float aspect = 1280;
-		aspect /= 720;
-
-		float fov = atan(1 / aspect);
-
-		projMatrix = WhiteEngine::X::perspective_fov_lh(fov * 2, aspect, 1, 1000);
+		auto& screen_frame = render::Context::Instance().GetScreenFrame();
+		auto* screen_tex = static_cast<render::Texture2D*>(screen_frame->Attached(render::FrameBuffer::Target0));
+		const float aspect = static_cast<float>(screen_tex->GetWidth(0)) / screen_tex->GetHeight(0);
+		const float vertical_fov = 2.f * std::atan(1.f / aspect); // 90 degree horizontal FOV.
+		projMatrix = WhiteEngine::X::perspective_fov_lh(vertical_fov, aspect, 0.5f, 250.f);
 
 		//Indirect Draw CommandSig
 		render::IndirectArgumentDescriptor indirctArguments[1] =
@@ -188,7 +192,17 @@ private:
 		platform::Render::ResourceCreateInfo CreateInfo{"VisBuffer"};
 		CreateInfo.clear_value = &invalidId;
 
-		vis_buffer = white::share_raw(Device.CreateTexture(1280, 720, 1, 1, EFormat::EF_R32UI, EAccessHint::SRV | EAccessHint::RTV, {}, CreateInfo));
+		const auto width = screen_tex->GetWidth(0);
+		const auto height = screen_tex->GetHeight(0);
+		vis_buffer = white::share_raw(Device.CreateTexture(width, height, 1, 1, EFormat::EF_R32UI, EAccessHint::SRV | EAccessHint::RTV, {}, CreateInfo));
+
+		platform::Render::ResourceCreateInfo normalCreateInfo{ "GBuffer.Normal" };
+		normalCreateInfo.clear_value = &render::ClearValueBinding::Black;
+		normal_buffer = white::share_raw(Device.CreateTexture(width, height, 1, 1, EFormat::EF_ABGR8, EAccessHint::SRV | EAccessHint::RTV, {}, normalCreateInfo));
+
+		platform::Render::ResourceCreateInfo albedoCreateInfo{ "GBuffer.Albedo" };
+		albedoCreateInfo.clear_value = &render::ClearValueBinding::Black;
+		albedo_buffer = white::share_raw(Device.CreateTexture(width, height, 1, 1, EFormat::EF_ABGR8, EAccessHint::SRV | EAccessHint::RTV, {}, albedoCreateInfo));
 	}
 
 	void OnGUI();
@@ -203,7 +217,7 @@ private:
 		platform::imgui::Context_RenderDrawData(CmdList, ImGui::GetDrawData());
 	}
 
-	void DrawDetph(render::CommandList& CmdList, render::Texture* screenTex, render::Texture* depthTex);
+	void DrawLighting(render::CommandList& CmdList, render::Texture* screenTex, render::Texture* depthTex);
 };
 
 

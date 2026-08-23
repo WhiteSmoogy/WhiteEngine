@@ -113,8 +113,11 @@ class VisTriangleVS :public BuiltInShader
 
 	BEGIN_SHADER_PARAMETER_STRUCT(Parameters)
 		SHADER_PARAMETER_CBUFFER(ViewArgs, View)
+		SHADER_PARAMETER(uint32, DrawId)
 		RG_BUFFER_ACCESS(IndirectArgs, EAccessHint::DrawIndirect)
 		RG_BUFFER_ACCESS(FilterIndexBuffer, EAccessHint::VertexOrIndexBuffer)
+		RG_BUFFER_ACCESS(TangentBuffer, EAccessHint::VertexOrIndexBuffer)
+		RG_BUFFER_ACCESS(TexCoordBuffer, EAccessHint::VertexOrIndexBuffer)
 		END_SHADER_PARAMETER_STRUCT()
 };
 IMPLEMENT_BUILTIN_SHADER(VisTriangleVS, "VisTriangle.hlsl", "VisTriangleVS", platform::Render::VertexShader);
@@ -221,6 +224,8 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 
 	auto IndexBuffer = Builder.RegisterExternal(Trinf::Scene.Index.DataBuffer, RenderGraph::ERGBufferFlags::MultiFrame);
 	auto PositionBuffer = Builder.RegisterExternal(Trinf::Scene.Position.DataBuffer, RenderGraph::ERGBufferFlags::MultiFrame);
+	auto TangentBuffer = Builder.RegisterExternal(Trinf::Scene.Tangent.DataBuffer, RenderGraph::ERGBufferFlags::MultiFrame);
+	auto TexCoordBuffer = Builder.RegisterExternal(Trinf::Scene.TexCoord.DataBuffer, RenderGraph::ERGBufferFlags::MultiFrame);
 
 	Parameters->View = ViewCB.Get();
 	Parameters->IndexBuffer = Builder.CreateSRV({ .Buffer = IndexBuffer });
@@ -298,13 +303,9 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 
 	DipstachBatch();
 
-	auto CompactedDrawArgsSize = white::Align(sizeof(DrawIndexArguments) * (sponza_trinf->Metadata->TrinfsCount + 1), 16);
-	auto CompactedDrawArgs = Builder.CreateBuffer(RGBufferDesc::CreateStructIndirectDesc(sizeof(DrawIndexArguments), sponza_trinf->Metadata->TrinfsCount + 1), "CompactedDrawArgs");
+	auto CompactedDrawArgsSize = white::Align(sizeof(DrawIndexArguments) * sponza_trinf->Metadata->TrinfsCount, 16);
+	auto CompactedDrawArgs = Builder.CreateBuffer(RGBufferDesc::CreateStructIndirectDesc(sizeof(DrawIndexArguments), sponza_trinf->Metadata->TrinfsCount), "IndirectDrawArgs");
 	auto CompactedDrawArgsUAV = Builder.CreateUAV({ .Buffer = CompactedDrawArgs });
-	Params.Count = sizeof(DrawIndexArguments);
-	Params.DstOffset = 0;
-	Params.Value = 0;
-	MemsetResource(Builder, CompactedDrawArgsUAV, Params);
 
 	{
 		auto compactionPars = Builder.AllocParameters<BatchCompactionCS::Parameters>();
@@ -320,7 +321,7 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 		int dispatchCount = static_cast<int>((sponza_trinf->Metadata->TrinfsCount + 255) / 256);
 
 		ComputeShaderUtils::AddPass(Builder,
-			RGEventName("Compact(Count:{})", dispatchCount),
+			RGEventName("BuildIndirectArgs(Count:{})", dispatchCount),
 			compactCS,
 			compactionPars,
 			white::math::int3(dispatchCount, 1, 1));
@@ -334,11 +335,14 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 
 	auto VSParas = Builder.AllocParameters<VisTriangleVS::Parameters>();
 	VSParas->View = ViewCB.Get();
+	VSParas->DrawId = 0;
 	VSParas->IndirectArgs = CompactedDrawArgs;
 	VSParas->FilterIndexBuffer = FliteredIndexBuffer;
+	VSParas->TangentBuffer = TangentBuffer;
+	VSParas->TexCoordBuffer = TexCoordBuffer;
 
 	Builder.AddPass(
-		RGEventName("VisBuffer"),
+		RGEventName("VisibilityGBuffer"),
 		VSParas,
 		white::enum_or(ERGPassFlags::Raster, ERGPassFlags::NeverCull),
 		[=](CommandList& CmdList)
@@ -347,8 +351,16 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 				vis_buffer.get(), render::Clear_Store,
 				depth_tex, render::DepthStencilTargetActions::ClearDepthStencil_StoreDepthStencil
 			);
+			visPass.ColorRenderTargets[1].RenderTarget = normal_buffer.get();
+			visPass.ColorRenderTargets[1].ArraySlice = -1;
+			visPass.ColorRenderTargets[1].MipIndex = 0;
+			visPass.ColorRenderTargets[1].Action = render::Clear_Store;
+			visPass.ColorRenderTargets[2].RenderTarget = albedo_buffer.get();
+			visPass.ColorRenderTargets[2].ArraySlice = -1;
+			visPass.ColorRenderTargets[2].MipIndex = 0;
+			visPass.ColorRenderTargets[2].Action = render::Clear_Store;
 
-			CmdList.BeginRenderPass(visPass, "VisBuffer");
+			CmdList.BeginRenderPass(visPass, "VisibilityGBuffer");
 
 			auto VisTriVS = GetBuiltInShaderMap()->GetShader<VisTriangleVS>();
 			auto VisTriPS = GetBuiltInShaderMap()->GetShader<VisTrianglePS>();
@@ -360,15 +372,32 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 			VisPso.ShaderPass.VertexShader = VisTriVS.GetVertexShader();
 			VisPso.ShaderPass.VertexDeclaration.push_back(
 				CtorVertexElement(0, 0, Vertex::Usage::Position, 0, EF_BGR32F, sizeof(wm::float3)));
+			VisPso.ShaderPass.VertexDeclaration.push_back(
+				CtorVertexElement(1, 0, Vertex::Usage::Tangent, 0, EF_ABGR8, sizeof(uint32)));
+			VisPso.ShaderPass.VertexDeclaration.push_back(
+				CtorVertexElement(2, 0, Vertex::Usage::TextureCoord, 0, EF_GR32F, sizeof(wm::float2)));
 			VisPso.ShaderPass.PixelShader = VisTriPS.GetPixelShader();
 
 			SetGraphicsPipelineState(CmdList, VisPso);
-			render::SetShaderParameters(CmdList, VisTriVS, VisTriVS.GetVertexShader(), *VSParas);
 
 			CmdList.SetVertexBuffer(0, Trinf::Scene.Position.DataBuffer->GetRObject());
+			CmdList.SetVertexBuffer(1, VSParas->TangentBuffer->GetRObject());
+			CmdList.SetVertexBuffer(2, VSParas->TexCoordBuffer->GetRObject());
 
 			CmdList.SetIndexBuffer(VSParas->FilterIndexBuffer->GetRObject());
-			CmdList.DrawIndirect(draw_visidSig.get(), sponza_trinf->Metadata->TrinfsCount, VSParas->IndirectArgs->GetRObject(), sizeof(DrawIndexArguments), VSParas->IndirectArgs->GetRObject(), 0);
+			for (uint32 drawId = 0; drawId < sponza_trinf->Metadata->TrinfsCount; ++drawId)
+			{
+				auto DrawParameters = *VSParas;
+				DrawParameters.DrawId = drawId;
+				render::SetShaderParameters(CmdList, VisTriVS, VisTriVS.GetVertexShader(), DrawParameters);
+				CmdList.DrawIndirect(
+					draw_visidSig.get(),
+					1,
+					VSParas->IndirectArgs->GetRObject(),
+					drawId * sizeof(DrawIndexArguments),
+					nullptr,
+					0);
+			}
 		});
 }
 
@@ -380,29 +409,31 @@ public:
 
 IMPLEMENT_BUILTIN_SHADER(FullScreenVS, "Debug.hlsl", "FullScreenVS", platform::Render::VertexShader);
 
-BEGIN_SHADER_PARAMETER_STRUCT(DebugParameters)
+BEGIN_SHADER_PARAMETER_STRUCT(LightingParameters)
 SHADER_PARAMETER_TEXTURE(Texture2D, DepthTexture)
-SHADER_PARAMETER(white::math::float4, InvDeviceZToWorldZTransform)
-SHADER_PARAMETER(white::math::float2, NearFar)
-SHADER_PARAMETER_SAMPLER(TextureSampleDesc, DepthSampler)
+SHADER_PARAMETER_TEXTURE(Texture2D, NormalTexture)
+SHADER_PARAMETER_TEXTURE(Texture2D, AlbedoTexture)
+SHADER_PARAMETER(white::math::float4, LightDirectionAndIntensity)
+SHADER_PARAMETER(white::math::float4, LightColorAndAmbient)
+SHADER_PARAMETER_SAMPLER(TextureSampleDesc, GBufferSampler)
 END_SHADER_PARAMETER_STRUCT()
 
-class LinearDepthPS : public BuiltInShader
+class VisibilityLightingPS : public BuiltInShader
 {
 public:
-	using Parameters = DebugParameters;
-	EXPORTED_BUILTIN_SHADER(LinearDepthPS);
+	using Parameters = LightingParameters;
+	EXPORTED_BUILTIN_SHADER(VisibilityLightingPS);
 };
 
-IMPLEMENT_BUILTIN_SHADER(LinearDepthPS, "Debug.hlsl", "LinearDepthPS", platform::Render::PixelShader);
+IMPLEMENT_BUILTIN_SHADER(VisibilityLightingPS, "Debug.hlsl", "VisibilityLightingPS", platform::Render::PixelShader);
 
 
-void VisBufferTest::DrawDetph(render::CommandList& CmdList, render::Texture* screenTex, render::Texture* depthTex)
+void VisBufferTest::DrawLighting(render::CommandList& CmdList, render::Texture* screenTex, render::Texture* depthTex)
 {
-	auto PixelShader = render::GetBuiltInShaderMap()->GetShader<LinearDepthPS>();
+	auto PixelShader = render::GetBuiltInShaderMap()->GetShader<VisibilityLightingPS>();
 
-	platform::Render::RenderPassInfo passInfo(screenTex, render::RenderTargetActions::Load_Store);
-	CmdList.BeginRenderPass(passInfo, "DrawDetph");
+	platform::Render::RenderPassInfo passInfo(screenTex, render::RenderTargetActions::Clear_Store);
+	CmdList.BeginRenderPass(passInfo, "Lighting");
 
 	render::GraphicsPipelineStateInitializer GraphicsPSOInit{};
 	render::PixelShaderUtils::InitFullscreenPipelineState(CmdList, PixelShader, GraphicsPSOInit);
@@ -412,13 +443,13 @@ void VisBufferTest::DrawDetph(render::CommandList& CmdList, render::Texture* scr
 
 	SetGraphicsPipelineState(CmdList, GraphicsPSOInit);
 
-	DebugParameters Parameters;
+	LightingParameters Parameters;
 	Parameters.DepthTexture = static_cast<Texture2D*>(depthTex);
-	Parameters.DepthSampler.filtering = render::TexFilterOp::Min_Mag_Mip_Point;
-
-	Parameters.InvDeviceZToWorldZTransform = WhiteEngine::CreateInvDeviceZToWorldZTransform(projMatrix);
-	Parameters.NearFar.x = 1;
-	Parameters.NearFar.y = 1 / (1000.0f - 1);
+	Parameters.NormalTexture = normal_buffer.get();
+	Parameters.AlbedoTexture = albedo_buffer.get();
+	Parameters.LightDirectionAndIntensity = white::math::float4(-0.35f, 0.8f, -0.45f, 2.25f);
+	Parameters.LightColorAndAmbient = white::math::float4(1.0f, 0.92f, 0.78f, 0.32f);
+	Parameters.GBufferSampler.filtering = render::TexFilterOp::Min_Mag_Mip_Point;
 
 	SetShaderParameters(CmdList, PixelShader, PixelShader.GetPixelShader(), Parameters);
 

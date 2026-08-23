@@ -1165,6 +1165,9 @@
     <ClInclude Include="Runtime\RenderCore\ShaderParameterStruct.h">
       <Filter>Runtime\RenderCore</Filter>
     </ClInclude>
+    <ClInclude Include="Runtime\RenderCore\ShaderParameterResource.h">
+      <Filter>Runtime\RenderCore</Filter>
+    </ClInclude>
     <ClInclude Include="Runtime\RenderCore\ShaderParamterTraits.hpp">
       <Filter>Runtime\RenderCore</Filter>
     </ClInclude>

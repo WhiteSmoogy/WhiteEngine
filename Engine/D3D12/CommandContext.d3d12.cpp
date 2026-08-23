@@ -232,6 +232,33 @@ void CommandContext::SetShaderConstantBuffer(const platform::Render::ComputeHWSh
 	DirtyConstantBuffers[ShaderType::ComputeShader] |= (1 << BaseIndex);
 }
 
+void CommandContext::TransitionResource(platform::Render::GraphicsBuffer* InBuffer, platform::Render::EAccessHint Access, bool bUAVBarrier)
+{
+	if (!InBuffer || Access == platform::Render::EAccessHint::None)
+	{
+		return;
+	}
+
+	auto* Buffer = static_cast<GraphicsBuffer*>(InBuffer);
+	auto* Resource = Buffer->GetResource();
+	if (!Resource || !Resource->RequiresResourceStateTracking())
+	{
+		return;
+	}
+
+	const auto State = GetD3D12ResourceState(Access, IsAsyncComputeContext());
+	const bool bRequiresUAVBarrier = ContextCommon::TransitionResource(
+		Resource,
+		D3D12_RESOURCE_STATE_TBD,
+		State,
+		D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+
+	if (bRequiresUAVBarrier && bUAVBarrier)
+	{
+		AddUAVBarrier();
+	}
+}
+
 void CommandContext::SetShaderParameter(platform::Render::VertexHWShader* Shader, uint32 BufferIndex, uint32 BaseIndex, uint32 NumBytes, const void* NewValue)
 {
 	wconstraint(BufferIndex == 0);

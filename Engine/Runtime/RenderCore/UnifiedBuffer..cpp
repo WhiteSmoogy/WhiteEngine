@@ -91,7 +91,7 @@ public:
 		SHADER_PARAMETER_SRV(StructuredBuffer<wm::uint4>, SrcStructuredBuffer4x)
 		SHADER_PARAMETER_SRV(StructuredBuffer<wm::uint2>, SrcStructuredBuffer2x)
 		SHADER_PARAMETER_SRV(StructuredBuffer<uint32>, SrcStructuredBuffer1x)
-		SHADER_PARAMETER_SRV(Buffer<wm::float4>, DstBuffer)
+		SHADER_PARAMETER_SRV(Buffer<wm::float4>, SrcBuffer)
 		END_SHADER_PARAMETER_STRUCT()
 };
 
@@ -104,51 +104,119 @@ void platform::Render::MemcpyResource(RGBuilder& Builder, RGBuffer* DstResource,
 
 void platform::Render::MemcpyResource(RGBuilder& Builder, RGBufferUAV* UAV, RGBufferSRV* SRV, const MemcpyResourceParams& Params)
 {
+	wassume(UAV != nullptr && SRV != nullptr);
 	auto* DstResource = UAV->GetParent();
 	auto* SrcResource = SRV->GetParent();
+	wassume(DstResource != nullptr && SrcResource != nullptr);
+	wassume(uint64(Params.DstOffset) + Params.Count <= DstResource->Desc.GetSize64());
+	wassume(uint64(Params.SrcOffset) + Params.Count <= SrcResource->Desc.GetSize64());
 
-	const uint32 Divisor = white::has_anyflags(DstResource->GetAccess(), EAccessHint::Raw) ? 4 : 1;
+	if (Params.Count == 0)
+	{
+		return;
+	}
+
+	ByteBufferResourceType ResourceTypeEnum;
+	ByteBufferStructuredSize StructuredSize = ByteBufferStructuredSize::Uint4;
+	uint32 BytesPerElement;
+	uint32 BytesPerThread;
+
+	if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::Raw))
+	{
+		wassume(white::has_anyflags(SrcResource->GetAccess(), EAccessHint::Raw));
+		ResourceTypeEnum = ByteBufferResourceType::Uint_Buffer;
+		BytesPerElement = 4;
+		BytesPerThread = 16;
+	}
+	else if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::Structured))
+	{
+		wassume(white::has_anyflags(SrcResource->GetAccess(), EAccessHint::Structured));
+		wassume(DstResource->Desc.BytesPerElement == SrcResource->Desc.BytesPerElement);
+		ResourceTypeEnum = ByteBufferResourceType::StructuredBuffer;
+		BytesPerElement = DstResource->Desc.BytesPerElement;
+		BytesPerThread = BytesPerElement;
+
+		switch (BytesPerElement)
+		{
+		case 4: StructuredSize = ByteBufferStructuredSize::Uint1; break;
+		case 8: StructuredSize = ByteBufferStructuredSize::Uint2; break;
+		case 16: StructuredSize = ByteBufferStructuredSize::Uint4; break;
+		default: wassume(false); return;
+		}
+	}
+	else
+	{
+		ResourceTypeEnum = ByteBufferResourceType::Float4_Buffer;
+		BytesPerElement = 16;
+		BytesPerThread = 16;
+	}
+
+	wassume(Params.Count % BytesPerElement == 0);
+	wassume(Params.SrcOffset % BytesPerElement == 0);
+	wassume(Params.DstOffset % BytesPerElement == 0);
 
 	uint32 NumElementsProcessed = 0;
 
 	while (NumElementsProcessed < Params.Count)
 	{
-		ByteBufferResourceType ResourceTypeEnum;
-
-		const uint32 NumWaves = std::max(std::min<uint32>(Caps.MaxDispatchThreadGroupsPerDimension.x, white::math::DivideAndRoundUp(Params.Count / Divisor, 64u)), 1u);
-		const uint32 NumElementsPerDispatch = std::min(std::max(NumWaves, 1u) * Divisor * 64, Params.Count - NumElementsProcessed);
+		const uint32 RemainingBytes = Params.Count - NumElementsProcessed;
+		const uint32 ThreadCount = white::math::DivideAndRoundUp(RemainingBytes, BytesPerThread);
+		const uint32 NumWaves = std::max(std::min<uint32>(
+			Caps.MaxDispatchThreadGroupsPerDimension.x,
+			white::math::DivideAndRoundUp(ThreadCount, 64u)), 1u);
+		const uint64 DispatchCapacity = uint64(NumWaves) * 64 * BytesPerThread;
+		const uint32 NumBytesPerDispatch = static_cast<uint32>(std::min<uint64>(DispatchCapacity, RemainingBytes));
 
 		auto Parameters = Builder.AllocParameters<MemcpyCS::Parameters>();
-		Parameters->Common.Size = NumElementsPerDispatch;
-		Parameters->Common.SrcOffset = (Params.SrcOffset + NumElementsProcessed);
-		Parameters->Common.DstOffset = (Params.DstOffset + NumElementsProcessed);
+		Parameters->Common.Size = NumBytesPerDispatch / BytesPerElement;
+		Parameters->Common.SrcOffset = (Params.SrcOffset + NumElementsProcessed) / BytesPerElement;
+		Parameters->Common.DstOffset = (Params.DstOffset + NumElementsProcessed) / BytesPerElement;
 
-		if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::Raw))
+		switch (ResourceTypeEnum)
 		{
-			ResourceTypeEnum = ByteBufferResourceType::Uint_Buffer;
-
+		case ByteBufferResourceType::Uint_Buffer:
 			Parameters->SrcByteAddressBuffer = SRV;
 			Parameters->Common.DstByteAddressBuffer = UAV;
-		}
-		else
-		{
-			throw white::unimplemented();
+			break;
+		case ByteBufferResourceType::StructuredBuffer:
+			switch (StructuredSize)
+			{
+			case ByteBufferStructuredSize::Uint1:
+				Parameters->SrcStructuredBuffer1x = SRV;
+				Parameters->Common.DstStructuredBuffer1x = UAV;
+				break;
+			case ByteBufferStructuredSize::Uint2:
+				Parameters->SrcStructuredBuffer2x = SRV;
+				Parameters->Common.DstStructuredBuffer2x = UAV;
+				break;
+			case ByteBufferStructuredSize::Uint4:
+				Parameters->SrcStructuredBuffer4x = SRV;
+				Parameters->Common.DstStructuredBuffer4x = UAV;
+				break;
+			default: wassume(false); return;
+			}
+			break;
+		case ByteBufferResourceType::Float4_Buffer:
+			Parameters->SrcBuffer = SRV;
+			Parameters->Common.DstBuffer = UAV;
+			break;
+		default: wassume(false); return;
 		}
 
 		MemcpyCS::PermutationDomain PermutationVector;
 		PermutationVector.Set<MemcpyCS::ResourceTypeDim >(ResourceTypeEnum);
-		PermutationVector.Set<MemcpyCS::StructuredElementSizeDim>(ByteBufferStructuredSize::Uint4);
+		PermutationVector.Set<MemcpyCS::StructuredElementSizeDim>(StructuredSize);
 
 		auto ComputeShader = platform::Render::GetBuiltInShaderMap()->GetShader<MemcpyCS>(PermutationVector);
 
 		ComputeShaderUtils::AddPass(
 			Builder, 
-			RGEventName("Memcpy(Offset:{} Count:{})",NumElementsProcessed,NumElementsPerDispatch),
+			RGEventName("Memcpy(Offset:{} Count:{})",NumElementsProcessed,NumBytesPerDispatch),
 			ComputeShader, 
 			Parameters, 
 			white::math::int3(NumWaves, 1, 1));
 
-		NumElementsProcessed += NumElementsPerDispatch;
+		NumElementsProcessed += NumBytesPerDispatch;
 	}
 }
 
@@ -167,53 +235,99 @@ IMPLEMENT_BUILTIN_SHADER(MemsetCS, "ByteBuffer.hlsl", "MemsetCS", platform::Rend
 
 void  platform::Render::MemsetResource(RenderGraph::RGBuilder& Builder, RenderGraph::RGBufferUAV* UAV, const MemsetResourceParams& Params)
 {
+	wassume(UAV != nullptr);
 	auto* DstResource = UAV->GetParent();
+	wassume(DstResource != nullptr);
+	wassume(uint64(Params.DstOffset) + Params.Count <= DstResource->Desc.GetSize64());
 
-	const uint32 Divisor = white::has_anyflags(DstResource->GetAccess(), EAccessHint::Raw) ? 4 : 16;
+	if (Params.Count == 0)
+	{
+		return;
+	}
+
+	ByteBufferResourceType ResourceTypeEnum;
+	ByteBufferStructuredSize StructuredSize = ByteBufferStructuredSize::Uint4;
+	uint32 BytesPerElement;
+	uint32 BytesPerThread;
+
+	if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::Raw))
+	{
+		ResourceTypeEnum = ByteBufferResourceType::Uint_Buffer;
+		BytesPerElement = 4;
+		BytesPerThread = 16;
+	}
+	else if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::Structured))
+	{
+		ResourceTypeEnum = ByteBufferResourceType::StructuredBuffer;
+		BytesPerElement = DstResource->Desc.BytesPerElement;
+		BytesPerThread = BytesPerElement;
+		switch (BytesPerElement)
+		{
+		case 4: StructuredSize = ByteBufferStructuredSize::Uint1; break;
+		case 8: StructuredSize = ByteBufferStructuredSize::Uint2; break;
+		case 16: StructuredSize = ByteBufferStructuredSize::Uint4; break;
+		default: wassume(false); return;
+		}
+	}
+	else
+	{
+		ResourceTypeEnum = ByteBufferResourceType::Float4_Buffer;
+		BytesPerElement = 16;
+		BytesPerThread = 16;
+	}
+
+	wassume(Params.Count % BytesPerElement == 0);
+	wassume(Params.DstOffset % BytesPerElement == 0);
 
 	uint32 NumElementsProcessed = 0;
 
 	while (NumElementsProcessed < Params.Count)
 	{
-		ByteBufferResourceType ResourceTypeEnum;
-
-		const uint32 NumWaves = std::max(std::min<uint32>(Caps.MaxDispatchThreadGroupsPerDimension.x, white::math::DivideAndRoundUp(Params.Count / Divisor, 64u)), 1u);
-		const uint32 NumElementsPerDispatch = std::min(std::max(NumWaves, 1u) * Divisor * 64, Params.Count - NumElementsProcessed);
+		const uint32 RemainingBytes = Params.Count - NumElementsProcessed;
+		const uint32 ThreadCount = white::math::DivideAndRoundUp(RemainingBytes, BytesPerThread);
+		const uint32 NumWaves = std::max(std::min<uint32>(
+			Caps.MaxDispatchThreadGroupsPerDimension.x,
+			white::math::DivideAndRoundUp(ThreadCount, 64u)), 1u);
+		const uint64 DispatchCapacity = uint64(NumWaves) * 64 * BytesPerThread;
+		const uint32 NumBytesPerDispatch = static_cast<uint32>(std::min<uint64>(DispatchCapacity, RemainingBytes));
 
 		auto Parameters = Builder.AllocParameters<MemsetCS::Parameters>();
-		Parameters->Common.Size = NumElementsPerDispatch / Divisor;
-		Parameters->Common.DstOffset = (Params.DstOffset + NumElementsProcessed) / Divisor;
+		Parameters->Common.Size = NumBytesPerDispatch / BytesPerElement;
+		Parameters->Common.DstOffset = (Params.DstOffset + NumElementsProcessed) / BytesPerElement;
 		Parameters->Common.Value = Params.Value;
 
-		if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::Raw))
+		switch (ResourceTypeEnum)
 		{
-			ResourceTypeEnum = ByteBufferResourceType::Uint_Buffer;
-
+		case ByteBufferResourceType::Uint_Buffer:
 			Parameters->Common.DstByteAddressBuffer = UAV;
-		}
-		else if (white::has_anyflags(DstResource->GetAccess(), EAccessHint::Structured))
-		{
-			ResourceTypeEnum = ByteBufferResourceType::StructuredBuffer;
-			Parameters->Common.DstStructuredBuffer4x = UAV;
-		}
-		else
-		{
-			ResourceTypeEnum = ByteBufferResourceType::Float4_Buffer;
+			break;
+		case ByteBufferResourceType::StructuredBuffer:
+			switch (StructuredSize)
+			{
+			case ByteBufferStructuredSize::Uint1: Parameters->Common.DstStructuredBuffer1x = UAV; break;
+			case ByteBufferStructuredSize::Uint2: Parameters->Common.DstStructuredBuffer2x = UAV; break;
+			case ByteBufferStructuredSize::Uint4: Parameters->Common.DstStructuredBuffer4x = UAV; break;
+			default: wassume(false); return;
+			}
+			break;
+		case ByteBufferResourceType::Float4_Buffer:
 			Parameters->Common.DstBuffer = UAV;
+			break;
+		default: wassume(false); return;
 		}
 
 		MemsetCS::PermutationDomain PermutationVector;
 		PermutationVector.Set<MemcpyCS::ResourceTypeDim >(ResourceTypeEnum);
-		PermutationVector.Set<MemcpyCS::StructuredElementSizeDim>(ByteBufferStructuredSize::Uint4);
+		PermutationVector.Set<MemcpyCS::StructuredElementSizeDim>(StructuredSize);
 
 		auto ComputeShader = Render::GetBuiltInShaderMap()->GetShader<MemsetCS>(PermutationVector);
 
 		ComputeShaderUtils::AddPass<MemsetCS>(
 			Builder,
-			RenderGraph::RGEventName{ "Memset(Offset:{} Count:{})",NumElementsProcessed,NumElementsPerDispatch },
+			RenderGraph::RGEventName{ "Memset(Offset:{} Count:{})",NumElementsProcessed,NumBytesPerDispatch },
 			ComputeShader, Parameters, white::math::int3(NumWaves, 1, 1));
 
-		NumElementsProcessed += NumElementsPerDispatch;
+		NumElementsProcessed += NumBytesPerDispatch;
 	}
 }
 

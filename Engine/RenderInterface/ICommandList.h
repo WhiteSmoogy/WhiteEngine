@@ -320,6 +320,13 @@ namespace platform::Render {
 				});
 		}
 
+		void TransitionResource(GraphicsBuffer* Buffer, EAccessHint Access, bool bUAVBarrier = true)
+		{
+			InsertCommand([=](CommandListBase& CmdList) {
+				CmdList.GetComputeContext().TransitionResource(Buffer, Access, bUAVBarrier);
+			});
+		}
+
 		void DispatchComputeShader(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
 		{
 			InsertCommand([=](CommandListBase& CmdList) {

@@ -5,6 +5,10 @@ module;
 #include "RenderInterface/IContext.h"
 #include "RenderInterface/RenderResource.h"
 
+#include <algorithm>
+#include <limits>
+#include <vector>
+
 export module RenderGraph:resourcepool;
 
 import "WBase/cassert.h";
@@ -57,20 +61,35 @@ export namespace RenderGraph
 		white::ref_ptr<RGPooledBuffer> FindFreeBuffer(const RGBufferDesc& Desc, const char* InName, ERGPooledBufferAlignment Alignment = ERGPooledBufferAlignment::Page)
 		{
 			const uint64 BufferPageSize = 64 * 1024;
+			wassume(Desc.BytesPerElement > 0 && Desc.NumElements > 0);
+			wassume(Desc.GetSize64() <= std::numeric_limits<uint32>::max());
 
 			auto AlignedDesc = Desc;
+			uint64 AlignedNumBytes = Desc.GetSize64();
 
 			switch (Alignment)
 			{
 			case ERGPooledBufferAlignment::PowerOfTwo:
-				AlignedDesc.NumElements = white::math::RoundUpToPowerOfTwo(AlignedDesc.BytesPerElement * AlignedDesc.NumElements) / AlignedDesc.BytesPerElement;
+				AlignedNumBytes = white::math::RoundUpToPowerOfTwo(AlignedNumBytes);
 				// Fall through to align up to page size for small buffers; helps with reuse.
+				[[fallthrough]];
 
 			case ERGPooledBufferAlignment::Page:
-				AlignedDesc.NumElements = white::Align(AlignedDesc.BytesPerElement * AlignedDesc.NumElements, BufferPageSize) / AlignedDesc.BytesPerElement;
+				AlignedNumBytes = white::Align(AlignedNumBytes, BufferPageSize);
+				break;
+
+			case ERGPooledBufferAlignment::None:
+				break;
 			}
 
-			if (!(AlignedDesc.NumElements >= Desc.NumElements))
+			const uint64 AlignedNumElements =
+				(AlignedNumBytes + AlignedDesc.BytesPerElement - 1) / AlignedDesc.BytesPerElement;
+			if (AlignedNumElements <= std::numeric_limits<uint32>::max() &&
+				AlignedNumElements * AlignedDesc.BytesPerElement <= std::numeric_limits<uint32>::max())
+			{
+				AlignedDesc.NumElements = static_cast<uint32>(AlignedNumElements);
+			}
+			else
 			{
 				AlignedDesc = Desc;
 			}
@@ -86,6 +105,10 @@ export namespace RenderGraph
 				}
 
 				const auto& PooledBuffer = AllocatedBuffers[Index];
+				if (PooledBuffer->GetAlignDesc() != AlignedDesc)
+				{
+					continue;
+				}
 
 				// Still being used outside the pool.
 				if (PooledBuffer.count() > 1)
@@ -97,7 +120,7 @@ export namespace RenderGraph
 				PooledBuffer->Name = InName;
 
 				// We need the external-facing desc to match what the user requested.
-				const_cast<RGBufferDesc&>(PooledBuffer->Desc).NumElements = Desc.NumElements;
+				PooledBuffer->Desc = Desc;
 
 				return PooledBuffer;
 			}
@@ -111,7 +134,7 @@ export namespace RenderGraph
 				ResourceCreateInfo CreateInfo(InName);
 				GraphicsBufferRef BufferRobjcet = device.CreateBuffer(
 					platform::Render::Buffer::Usage::MultiFrame,
-					Desc.Usage, NumBytes, Desc.BytesPerElement);
+					Desc.Usage, NumBytes, Desc.BytesPerElement, CreateInfo);
 
 				white::ref_ptr<RGPooledBuffer> PooledBuffer = new RGPooledBuffer(CmdList, std::move(BufferRobjcet), Desc, AlignedDesc.NumElements, InName);
 				AllocatedBuffers.emplace_back(PooledBuffer);

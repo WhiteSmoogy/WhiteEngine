@@ -192,6 +192,7 @@ namespace platform_ex::Windows::D3D12 {
 	public:
 		CommandContext(NodeDevice* InParent, QueueType Type, bool InIsDefaultContext);
 		CommandContext(const CommandContext&) = delete;
+		using ContextCommon::TransitionResource;
 	public:
 		virtual void SetAsyncComputeBudgetInternal(platform::Render::AsyncComputeBudget Budget) {}
 
@@ -210,6 +211,8 @@ namespace platform_ex::Windows::D3D12 {
 		void SetShaderResourceView(const platform::Render::ComputeHWShader* Shader, uint32 TextureIndex, platform::Render::ShaderResourceView* SRV) override;
 
 		void SetShaderConstantBuffer(const platform::Render::ComputeHWShader* Shader, uint32 BaseIndex, platform::Render::ConstantBuffer* Buffer) override;
+
+		void TransitionResource(platform::Render::GraphicsBuffer* Buffer, platform::Render::EAccessHint Access, bool bUAVBarrier) override;
 
 		void SetComputePipelineState(platform::Render::ComputePipelineState* ComputeState) override;
 

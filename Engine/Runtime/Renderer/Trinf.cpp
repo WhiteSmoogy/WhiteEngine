@@ -141,10 +141,10 @@ void StreamingScene::EndAsyncUpdate(RenderGraph::RGBuilder& Builder)
 	if (GpuStreaming.empty())
 		return;
 
-	auto index = Position.ResizeByteAddressBufferIfNeeded(Builder);
-	auto position = Tangent.ResizeByteAddressBufferIfNeeded(Builder);
-	auto tangent = TexCoord.ResizeByteAddressBufferIfNeeded(Builder);
-	auto texcoord = Index.ResizeByteAddressBufferIfNeeded(Builder);
+	auto index = Index.ResizeByteAddressBufferIfNeeded(Builder);
+	auto position = Position.ResizeByteAddressBufferIfNeeded(Builder);
+	auto tangent = Tangent.ResizeByteAddressBufferIfNeeded(Builder);
+	auto texcoord = TexCoord.ResizeByteAddressBufferIfNeeded(Builder);
 
 	for (auto itr = GpuStreaming.begin(); itr != GpuStreaming.end();)
 	{
@@ -154,7 +154,7 @@ void StreamingScene::EndAsyncUpdate(RenderGraph::RGBuilder& Builder)
 
 		platform::Render::MemcpyResourceParams params =
 		{
-			.Count = resource->Metadata->Index.UncompressedSize / sizeof(float),
+			.Count = resource->Metadata->Index.UncompressedSize,
 			.SrcOffset = 0,
 			.DstOffset = key.Index * Index.kPageSize,
 		};
@@ -164,17 +164,17 @@ void StreamingScene::EndAsyncUpdate(RenderGraph::RGBuilder& Builder)
 		platform::Render::MemcpyResource(Builder, index, GpuStream, params);
 
 		params.SrcOffset += params.Count;
-		params.Count = resource->Metadata->Position.UncompressedSize / sizeof(float);
+		params.Count = resource->Metadata->Position.UncompressedSize;
 		params.DstOffset = key.Position * Position.kPageSize;
 		platform::Render::MemcpyResource(Builder, position, GpuStream, params);
 
 		params.SrcOffset += params.Count;
-		params.Count = resource->Metadata->Tangent.UncompressedSize / sizeof(float);
+		params.Count = resource->Metadata->Tangent.UncompressedSize;
 		params.DstOffset = key.Tangent * Tangent.kPageSize;
 		platform::Render::MemcpyResource(Builder, tangent, GpuStream, params);
 
 		params.SrcOffset += params.Count;
-		params.Count = resource->Metadata->TexCoord.UncompressedSize / sizeof(float);
+		params.Count = resource->Metadata->TexCoord.UncompressedSize;
 		params.DstOffset = key.TexCoord * TexCoord.kPageSize;
 		platform::Render::MemcpyResource(Builder, texcoord, GpuStream, params);
 

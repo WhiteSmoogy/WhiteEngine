@@ -28,6 +28,9 @@ namespace platform::Render {
 		
 		virtual void SetShaderConstantBuffer(const ComputeHWShader* Shader, uint32 BaseIndex, ConstantBuffer* Buffer) = 0;
 
+		/** Transitions an entire buffer to the access required by the next pass. */
+		virtual void TransitionResource(GraphicsBuffer* Buffer, EAccessHint Access, bool bUAVBarrier) = 0;
+
 		virtual void PushEvent(const char16_t* Name, platform::FColor Color) = 0;
 
 		virtual void PopEvent() = 0;

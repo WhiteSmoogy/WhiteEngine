@@ -1,7 +1,18 @@
 module;
 #include "Runtime/RenderCore/ShaderParametersMetadata.h"
+#include "Runtime/RenderCore/ShaderParameterResource.h"
 #include "RenderInterface/IFormat.hpp"
+
+#include <algorithm>
+#include <compare>
+#include <concepts>
+#include <cstring>
 #include <format>
+#include <iterator>
+#include <limits>
+#include <type_traits>
+#include <utility>
+#include <vector>
 export module RenderGraph:definition;
 
 import "WBase/cassert.h";
@@ -23,23 +34,23 @@ export namespace RenderGraph
 		using ObjectType = LocalObjectType;
 		using IndexType = LocalIndexType;
 
-		static RGHandle Null;
+		static const RGHandle Null;
 
 		constexpr RGHandle() = default;
 
-		explicit inline RGHandle(white::int32 InIndex)
+		explicit constexpr RGHandle(white::int32 InIndex)
 		{
-			wassume(InIndex >= 0 && InIndex <= kNullIndex);
+			wassume(InIndex >= 0 && static_cast<white::uint64>(InIndex) < kNullIndex);
 			Index = (IndexType)InIndex;
 		}
 
-		IndexType GetIndex() const { wassume(IsValid()); return Index; }
-		IndexType GetIndexUnwassumeed() const { return Index; }
-		bool IsNull()  const { return Index == kNullIndex; }
-		bool IsValid() const { return Index != kNullIndex; }
-		operator bool() const { return IsValid(); }
-		bool operator==(RGHandle Other) const { return Index == Other.Index; }
-		bool operator!=(RGHandle Other) const { return Index != Other.Index; }
+		constexpr IndexType GetIndex() const { wassume(IsValid()); return Index; }
+		constexpr IndexType GetIndexUnchecked() const { return Index; }
+		constexpr bool IsNull()  const { return Index == kNullIndex; }
+		constexpr bool IsValid() const { return Index != kNullIndex; }
+		explicit constexpr operator bool() const { return IsValid(); }
+		constexpr bool operator==(RGHandle Other) const { return Index == Other.Index; }
+		constexpr bool operator!=(RGHandle Other) const { return Index != Other.Index; }
 		bool operator<=(RGHandle Other) const { wassume(IsValid() && Other.IsValid()); return Index <= Other.Index; }
 		bool operator>=(RGHandle Other) const { wassume(IsValid() && Other.IsValid()); return Index >= Other.Index; }
 		bool operator< (RGHandle Other) const { wassume(IsValid() && Other.IsValid()); return Index < Other.Index; }
@@ -47,15 +58,19 @@ export namespace RenderGraph
 
 		RGHandle& operator+=(white::int32 Increment)
 		{
-			wassume(white::int64(Index + Increment) <= int64(kNullIndex));
-			Index += (IndexType)Increment;
+			wassume(IsValid());
+			const auto NewIndex = white::int64(Index) + Increment;
+			wassume(NewIndex >= 0 && NewIndex < int64(kNullIndex));
+			Index = static_cast<IndexType>(NewIndex);
 			return *this;
 		}
 
 		RGHandle& operator-=(white::int32 Decrement)
 		{
-			wassume(white::int64(Index - Decrement) > 0);
-			Index -= (IndexType)Decrement;
+			wassume(IsValid());
+			const auto NewIndex = white::int64(Index) - Decrement;
+			wassume(NewIndex >= 0 && NewIndex < int64(kNullIndex));
+			Index = static_cast<IndexType>(NewIndex);
 			return *this;
 		}
 
@@ -90,15 +105,17 @@ export namespace RenderGraph
 		// Returns the min of two pass handles. Returns null if both are null; returns the valid handle if one is null.
 		static RGHandle Min(RGHandle A, RGHandle B)
 		{
-			// If either index is null is will fail the comparison.
+			if (A.IsNull()) return B;
+			if (B.IsNull()) return A;
 			return A.Index < B.Index ? A : B;
 		}
 
 		// Returns the max of two pass handles. Returns null if both are null; returns the valid handle if one is null.
 		static RGHandle Max(RGHandle A, RGHandle B)
 		{
-			// If either index is null, it will wrap around to 0 and fail the comparison.
-			return (IndexType)(A.Index + 1) > (IndexType)(B.Index + 1) ? A : B;
+			if (A.IsNull()) return B;
+			if (B.IsNull()) return A;
+			return A.Index > B.Index ? A : B;
 		}
 
 	private:
@@ -107,12 +124,12 @@ export namespace RenderGraph
 
 		friend white::uint32 GetTypeHash(RGHandle Handle)
 		{
-			return Handle.GetIndex();
+			return Handle.GetIndexUnchecked();
 		}
 	};
 
 	template <typename LocalObjectType, typename LocalIndexType>
-	RGHandle<LocalObjectType, LocalIndexType> RGHandle<LocalObjectType, LocalIndexType>::Null;
+	inline const RGHandle<LocalObjectType, LocalIndexType> RGHandle<LocalObjectType, LocalIndexType>::Null{};
 
 	enum class ERGHandleRegistryDestructPolicy
 	{
@@ -142,6 +159,8 @@ export namespace RenderGraph
 
 		void Insert(ObjectType* Object)
 		{
+			wassume(Object != nullptr);
+			wassume(Array.size() < std::numeric_limits<IndexType>::max());
 			Array.emplace_back(Object);
 			Object->Handle = Last();
 		}
@@ -151,7 +170,7 @@ export namespace RenderGraph
 		{
 			static_assert(std::derived_from<DerivedType, ObjectType>, "You must specify a type that derives from ObjectType");
 			DerivedType* Object;
-			if (DestructPolicy == ERGHandleRegistryDestructPolicy::Allocator)
+			if constexpr (DestructPolicy == ERGHandleRegistryDestructPolicy::Allocator)
 			{
 				Object = Allocator.Alloc<DerivedType>(std::forward<TArgs>(Args)...);
 			}
@@ -165,7 +184,7 @@ export namespace RenderGraph
 
 		void Clear()
 		{
-			if (DestructPolicy == ERGHandleRegistryDestructPolicy::Registry)
+			if constexpr (DestructPolicy == ERGHandleRegistryDestructPolicy::Registry)
 			{
 				for (auto itr = Array.rbegin();itr != Array.rend();++itr)
 				{
@@ -195,11 +214,13 @@ export namespace RenderGraph
 
 		const ObjectType* Get(HandleType Handle) const
 		{
+			wassume(Handle.GetIndex() < Array.size());
 			return Array[Handle.GetIndex()];
 		}
 
 		ObjectType* Get(HandleType Handle)
 		{
+			wassume(Handle.GetIndex() < Array.size());
 			return Array[Handle.GetIndex()];
 		}
 
@@ -274,7 +295,10 @@ export namespace RenderGraph
 	};
 
 	template <typename TStruct>
-	concept IsRGParameterStruct = requires{ TStruct::TypeInfo::GetStructMetadata; };
+	concept IsRGParameterStruct = requires
+	{
+		{ TStruct::TypeInfo::GetStructMetadata() } -> std::convertible_to<const ShaderParametersMetadata*>;
+	};
 
 	struct RGBufferAccess
 	{
@@ -286,12 +310,12 @@ export namespace RenderGraph
 		{
 		}
 
-		RGBuffer* GetBuffer()
+		RGBuffer* GetBuffer() const
 		{
 			return Buffer;
 		}
 
-		EAccessHint GetAccess()
+		EAccessHint GetAccess() const
 		{
 			return Access;
 		}
@@ -327,22 +351,22 @@ export namespace RenderGraph
 
 		RGTextureSRVRef GetAsTextureSRV() const
 		{
-			return *GetAs<RGTextureSRVRef>();
+			return GetAsRenderGraphResource<RGTextureSRVRef>();
 		}
 
 		RGBufferSRVRef GetAsBufferSRV() const
 		{
-			return *GetAs<RGBufferSRVRef>();
+			return GetAsRenderGraphResource<RGBufferSRVRef>();
 		}
 
 		RGTextureUAVRef GetAsTextureUAV() const
 		{
-			return *GetAs<RGTextureUAVRef>();
+			return GetAsRenderGraphResource<RGTextureUAVRef>();
 		}
 
 		RGBufferUAVRef GetAsBufferUAV() const
 		{
-			return *GetAs<RGBufferUAVRef>();
+			return GetAsRenderGraphResource<RGBufferUAVRef>();
 		}
 
 		ShaderBaseType GetShaderBaseType() const
@@ -362,6 +386,13 @@ export namespace RenderGraph
 
 	protected:
 		template <typename T>
+		T GetAsRenderGraphResource() const
+		{
+			const auto* Resource = reinterpret_cast<const platform::Render::HLSLTraits::UnionPointerBase*>(MemberPtr);
+			return Resource->IsRenderGraph() ? static_cast<T>(Resource->GetValue()) : nullptr;
+		}
+
+		template <typename T>
 		const T* GetAs() const
 		{
 			return reinterpret_cast<const T*>(MemberPtr);
@@ -380,7 +411,7 @@ export namespace RenderGraph
 
 		RGConstBuffer* GetCBuffer() const
 		{
-			return *GetAs<RGConstBuffer*>();
+			return GetAsRenderGraphResource<RGConstBuffer*>();
 		}
 	};
 
@@ -513,7 +544,7 @@ export namespace RenderGraph
 
 		const char* c_str() const
 		{
-			return Buffer;
+			return Buffer ? Buffer : "";
 		}
 
 		void push_back(char c)

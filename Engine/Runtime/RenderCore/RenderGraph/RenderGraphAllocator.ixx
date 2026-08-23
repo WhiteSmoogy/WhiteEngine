@@ -2,6 +2,14 @@ module;
 #include "Runtime/MemStack.h"
 #include "WBase/winttype.hpp"
 
+#include <cstddef>
+#include <limits>
+#include <new>
+#include <thread>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
 export module RenderGraph:allocator;
 
 import :fwd;
@@ -31,7 +39,7 @@ export namespace RenderGraph
 		private:
 			template <typename... TArgs>
 			inline TObject(TArgs&&... Args)
-				: Alloc(std::forward<TArgs&&>(Args)...)
+				: Alloc(std::forward<TArgs>(Args)...)
 			{}
 
 			T Alloc;
@@ -39,6 +47,8 @@ export namespace RenderGraph
 
 		inline void* Alloc(uint64 SizeInBytes, uint32 AlignInBytes)
 		{
+			wassume(SizeInBytes <= std::numeric_limits<uint32>::max());
+			wassume(AlignInBytes > 0);
 			return GetContext().MemStack.Alloc(static_cast<uint32>(SizeInBytes), AlignInBytes);
 		}
 
@@ -53,7 +63,7 @@ export namespace RenderGraph
 		inline T* Alloc(TArgs&&... Args)
 		{
 			AContext& LocalContext = GetContext();
-			TObject<T>* Object = new(LocalContext.MemStack) TObject<T>(std::forward<TArgs&&>(Args)...);
+			TObject<T>* Object = new(LocalContext.MemStack) TObject<T>(std::forward<TArgs>(Args)...);
 			LocalContext.Objects.emplace_back(Object);
 			return &Object->Alloc;
 		}
@@ -61,7 +71,7 @@ export namespace RenderGraph
 		template <typename T, typename... TArgs>
 		inline T* AllocNoDestruct(TArgs&&... Args)
 		{
-			return new (GetContext().MemStack) T(std::forward<TArgs&&>(Args)...);
+			return new (GetContext().MemStack) T(std::forward<TArgs>(Args)...);
 		}
 
 	private:
@@ -101,7 +111,7 @@ export namespace RenderGraph
 
 	RGAllocator& GetAllocator()
 	{
-		static RGAllocator Instance;
+		static thread_local RGAllocator Instance;
 		return Instance;
 	}
 
@@ -124,6 +134,15 @@ export namespace RenderGraph
 
 		void deallocate(T* p, std::size_t n) noexcept
 		{
+		}
+
+		using is_always_equal = std::true_type;
+		using propagate_on_container_move_assignment = std::true_type;
+
+		template<class U>
+		bool operator==(const RGSTLAllocator<U>&) const noexcept
+		{
+			return true;
 		}
 	};
 

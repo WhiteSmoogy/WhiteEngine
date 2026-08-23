@@ -426,6 +426,7 @@
     <ClInclude Include="Runtime\RenderCore\ShaderParameters.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderParametersMetadata.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderParameterStruct.h" />
+    <ClInclude Include="Runtime\RenderCore\ShaderParameterResource.h" />
     <ClInclude Include="Runtime\RenderCore\ShaderParamterTraits.hpp" />
     <ClInclude Include="Runtime\RenderCore\ShaderTextureTraits.hpp" />
     <ClInclude Include="Runtime\RenderCore\UnifiedBuffer.h" />

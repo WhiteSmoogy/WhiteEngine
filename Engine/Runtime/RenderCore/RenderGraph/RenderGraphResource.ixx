@@ -6,6 +6,11 @@ module;
 #include "RenderInterface/IGraphicsBuffer.hpp"
 #include "RenderInterface/ICommandList.h"
 
+#include <compare>
+#include <limits>
+#include <memory>
+#include <vector>
+
 export module RenderGraph:resource;
 
 import :fwd;
@@ -28,7 +33,6 @@ export namespace RenderGraph
 
 	class RGConstBuffer;
 	using RGConstBufferHandle = RGHandle<RGConstBuffer, white::uint16>;
-	using RGConstBufferRegistry = RGHandleRegistry<RGConstBufferHandle>;
 	using RGConstBufferRegistry = RGHandleRegistry<RGConstBufferHandle>;
 
 	class RGPass;
@@ -59,7 +63,7 @@ export namespace RenderGraph
 			}
 
 			// UAV is a special case as a barrier may still be required even if the states match.
-			if (white::has_allflags(Next.Access, EAccessHint::UAV) && !SkipUAVBarrier(Previous, Next))
+			if (white::has_anyflags(Next.Access, EAccessHint::UAV) && !SkipUAVBarrier(Previous, Next))
 			{
 				return true;
 			}
@@ -108,7 +112,7 @@ export namespace RenderGraph
 			}
 
 			// Not allowed if the resource is being used as a UAV and needs a barrier.
-			if (white::has_allflags(Next.Access, EAccessHint::UAV) && !SkipUAVBarrier(Previous, Next))
+			if (white::has_anyflags(Next.Access, EAccessHint::UAV) && !SkipUAVBarrier(Previous, Next))
 			{
 				return false;
 			}
@@ -136,19 +140,22 @@ export namespace RenderGraph
 
 		void SetPass(EPipeline Pipeline, RGPassHandle PassHandle)
 		{
-			FirstPass = {};
-			LastPass = {};
-			FirstPass[Pipeline] = PassHandle;
+			if (FirstPass[Pipeline].IsNull())
+			{
+				FirstPass[Pipeline] = PassHandle;
+			}
 			LastPass[Pipeline] = PassHandle;
 		}
 
 		void Finalize()
 		{
-			auto LocalAccess = Access;
+			const auto LocalAccess = Access;
+			const auto LocalFlags = Flags;
 
 			*this = {};
 
 			Access = LocalAccess;
+			Flags = LocalFlags;
 		}
 
 		bool IsUsedBy(EPipeline Pipeline) const
@@ -175,8 +182,9 @@ export namespace RenderGraph
 				return white::enum_or(EPipeline::Graphics,EPipeline::Compute);
 			else if(has_graphics)
 				return EPipeline::Graphics;
-			else
+			else if (has_compute)
 				return EPipeline::Compute;
+			return static_cast<EPipeline>(0);
 		}
 
 		/** The last used access on the pass. */
@@ -263,7 +271,7 @@ export namespace RenderGraph
 			return ReferenceCount == 0;
 		}
 
-		constexpr static const uint16 DeallocatedReferenceCount = 65535;
+		constexpr static const uint32 DeallocatedReferenceCount = std::numeric_limits<uint32>::max();
 	protected:
 		/** Whether this is an externally registered resource. */
 		uint8 bExternal : 1 = 0;
@@ -278,7 +286,7 @@ export namespace RenderGraph
 		RGPassHandle FirstPass;
 		RGPassHandle LastPass;
 
-		uint16 ReferenceCount = 0;
+		uint32 ReferenceCount = 0;
 
 		/** Scratch index allocated for the resource in the pass being setup. */
 		uint16 PassStateIndex = 0;
@@ -367,7 +375,7 @@ export namespace RenderGraph
 			:RGView(InName, InType), Flags(InFlag)
 		{}
 
-		bool bExternal : 1;
+		bool bExternal : 1 = 0;
 
 		friend RGBuilder;
 	};
@@ -404,9 +412,9 @@ export namespace RenderGraph
 
 		static RGBufferDesc CreateByteAddressDesc(uint32 NumBytes)
 		{
-			wassume(NumBytes % 4 == 0);
+			wassume(NumBytes > 0 && NumBytes % 4 == 0);
 			RGBufferDesc Desc;
-			Desc.Usage = EAccessHint::Raw | EAccessHint::SRV | EAccessHint::Structured | EAccessHint::UAV;
+			Desc.Usage = EAccessHint::Raw | EAccessHint::SRV | EAccessHint::UAV;
 			Desc.BytesPerElement = 4;
 			Desc.NumElements = NumBytes / 4;
 			return Desc;
@@ -414,6 +422,7 @@ export namespace RenderGraph
 
 		static RGBufferDesc CreateStructuredDesc(uint32 BytesPerElement, uint32 NumElements)
 		{
+			wassume(BytesPerElement > 0 && NumElements > 0);
 			RGBufferDesc Desc;
 			Desc.Usage = EAccessHint::SRV | EAccessHint::Structured | EAccessHint::UAV;
 			Desc.BytesPerElement = BytesPerElement;
@@ -421,9 +430,16 @@ export namespace RenderGraph
 			return Desc;
 		}
 
+		uint64 GetSize64() const
+		{
+			return uint64(NumElements) * BytesPerElement;
+		}
+
 		uint32 GetSize() const
 		{
-			return NumElements * BytesPerElement;
+			const auto Size = GetSize64();
+			wassume(Size <= std::numeric_limits<uint32>::max());
+			return static_cast<uint32>(Size);
 		}
 
 		uint32 HashCode() const
@@ -471,7 +487,7 @@ export namespace RenderGraph
 			return AlignDesc;
 		}
 
-		const RGBufferDesc Desc;
+		RGBufferDesc Desc;
 		uint32 AlignNumElements;
 
 		GraphicsBufferRef Buffer;
@@ -480,6 +496,9 @@ export namespace RenderGraph
 		const char* Name = nullptr;
 
 		uint32 LastUsedFrame = 0;
+
+		/** Last known access state. Pass handles are cleared between graphs. */
+		RGSubresourceState State;
 
 
 		friend RGBuilder;
@@ -496,7 +515,7 @@ export namespace RenderGraph
 		RGBufferDesc Desc;
 		const ERGBufferFlags Flags;
 
-		GraphicsBuffer* GetRObject()
+		GraphicsBuffer* GetRObject() const
 		{
 			return static_cast<GraphicsBuffer*>(RGViewableResource::GetRObject());
 		}
@@ -527,6 +546,7 @@ export namespace RenderGraph
 		RGProducerStatesByPipeline LastProducer;
 
 		BufferViewCache* ViewCache = nullptr;
+		std::shared_ptr<BufferViewCache> OwnedViewCache;
 
 		friend RGBuilder;
 		friend RGBufferRegistry;
@@ -609,7 +629,8 @@ export namespace RenderGraph
 		{
 			if (!HasRObject())
 			{
-				RealObj = Cmd.CreateConstantBuffer(Size, ParameterStruct.GetContents(), Name);
+				Buffer = Cmd.CreateConstantBuffer(Size, ParameterStruct.GetContents(), Name);
+				RealObj = Buffer.get();
 			}
 		}
 	protected:
@@ -633,6 +654,7 @@ export namespace RenderGraph
 		RGConstBufferHandle Handle;
 		const RGParameterStruct ParameterStruct;
 		uint32 Size;
+		white::ref_ptr<ConstantBuffer, RObjectController> Buffer;
 
 		bool bQueuedForCreate = false;
 

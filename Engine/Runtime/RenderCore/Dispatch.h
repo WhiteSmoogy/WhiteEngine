@@ -28,9 +28,9 @@ namespace ComputeShaderUtils
 
 	inline void ValidateGroupCount(const white::math::int3& GroupCount)
 	{
-		wassume((uint32)GroupCount.x <= Render::Caps.MaxDispatchThreadGroupsPerDimension.x);
-		wassume((uint32)GroupCount.y <= Render::Caps.MaxDispatchThreadGroupsPerDimension.y);
-		wassume((uint32)GroupCount.z <= Render::Caps.MaxDispatchThreadGroupsPerDimension.z);
+		wassume(GroupCount.x > 0 && (uint32)GroupCount.x <= Render::Caps.MaxDispatchThreadGroupsPerDimension.x);
+		wassume(GroupCount.y > 0 && (uint32)GroupCount.y <= Render::Caps.MaxDispatchThreadGroupsPerDimension.y);
+		wassume(GroupCount.z > 0 && (uint32)GroupCount.z <= Render::Caps.MaxDispatchThreadGroupsPerDimension.z);
 	}
 
 	template<typename TShaderClass>
@@ -54,9 +54,10 @@ namespace ComputeShaderUtils
 			ParametersMetadata,
 			Parameters,
 			PassFlags,
-			[ParametersMetadata, Parameters, ComputeShader, GroupCount](platform::Render::ComputeCommandList& CmdList)
+			[ComputeShader, GroupCount](const RGPass* Pass, platform::Render::ComputeCommandList& CmdList)
 			{
-				ComputeShaderUtils::Dispatch(CmdList, ComputeShader, *Parameters, GroupCount);
+				const auto* PassParameters = reinterpret_cast<const typename TShaderClass::Parameters*>(Pass->GetParameters().GetContents());
+				ComputeShaderUtils::Dispatch(CmdList, ComputeShader, *PassParameters, GroupCount);
 			});
 	}
 

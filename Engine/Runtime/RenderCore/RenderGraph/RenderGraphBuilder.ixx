@@ -5,7 +5,18 @@ module;
 #include "WBase/wmathtype.hpp"
 #include "Core/Container/vector.hpp"
 
+#include <algorithm>
+#include <cstddef>
+#include <cstring>
+#include <fstream>
+#include <memory>
 #include <span>
+#include <string>
+#include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 export module RenderGraph:builder;
 
@@ -70,6 +81,8 @@ export namespace RenderGraph
 			, Pipeline(white::has_anyflags(Flags, ERGPassFlags::AsyncCompute)? EPipeline::Compute:EPipeline::Graphics)
 		{}
 
+		virtual ~RGPass() = default;
+
 		const char* GetName() const
 		{
 			return Name.GetName();
@@ -100,6 +113,8 @@ export namespace RenderGraph
 			RGSubresourceState State;
 			RGSubresourceState* MergeState = nullptr;
 			uint16 ReferenceCount = 0;
+			bool bTransitionRequired = false;
+			bool bUAVBarrierRequired = false;
 		};
 	protected:
 		RGEventName Name;
@@ -158,66 +173,34 @@ export namespace RenderGraph
 		static constexpr int32 kMaximumLambdaCaptureSize = 1024;
 		static_assert(sizeof(ExecuteLambdaType) <= kMaximumLambdaCaptureSize, "The amount of data of captured for the pass looks abnormally high.");
 
-		template <typename T>
-		struct TLambdaTraits
-			: TLambdaTraits<decltype(&T::operator())>
-		{};
-		template <typename ReturnType, typename ClassType, typename ArgType>
-		struct TLambdaTraits<ReturnType(ClassType::*)(ArgType&) const>
-		{
-			using TCommandList = ArgType;
-			using TRGPass = void;
-		};
-		template <typename ReturnType, typename ClassType, typename ArgType>
-		struct TLambdaTraits<ReturnType(ClassType::*)(ArgType&)>
-		{
-			using TCommandList = ArgType;
-			using TRGPass = void;
-		};
-		template <typename ReturnType, typename ClassType, typename ArgType1, typename ArgType2>
-		struct TLambdaTraits<ReturnType(ClassType::*)(const ArgType1*, ArgType2&) const>
-		{
-			using TCommandList = ArgType2;
-			using TRGPass = ArgType1;
-		};
-		template <typename ReturnType, typename ClassType, typename ArgType1, typename ArgType2>
-		struct TLambdaTraits<ReturnType(ClassType::*)(const ArgType1*, ArgType2&)>
-		{
-			using TCommandList = ArgType2;
-			using TRGPass = ArgType1;
-		};
-		using TCommandList = typename TLambdaTraits<ExecuteLambdaType>::TCommandList;
-		using TRGPass = typename TLambdaTraits<ExecuteLambdaType>::TRGPass;
-
 	public:
 		RGTLambdaPass(
 			RGEventName&& InName,
 			const ShaderParametersMetadata* InParameterMetadata,
 			const ParameterStructType* InParameterStruct,
 			ERGPassFlags InPassFlags,
-			ExecuteLambdaType&& InExecuteLambda)
+			ExecuteLambdaType InExecuteLambda)
 			: RGPass(std::move(InName), RGParameterStruct(InParameterStruct, InParameterMetadata), InPassFlags)
 			, ExecuteLambda(std::move(InExecuteLambda))
 		{
 		}
 
 	private:
-		template<class T>
-		void ExecuteLambdaFunc(ComputeCommandList& RHICmdList)
+		void Execute(ComputeCommandList& RHICmdList) override
 		{
-			if constexpr (std::is_same_v<T, RGPass>)
+			using CommandListImmediate = platform::Render::CommandListImmediate;
+			auto& ImmediateCmdList = static_cast<CommandListImmediate&>(RHICmdList);
+
+			if constexpr (std::is_invocable_v<ExecuteLambdaType&, const RGPass*, CommandListImmediate&>)
 			{
-				ExecuteLambda(this, static_cast<TCommandList&>(RHICmdList));
+				ExecuteLambda(static_cast<const RGPass*>(this), ImmediateCmdList);
 			}
 			else
 			{
-				ExecuteLambda(static_cast<TCommandList&>(RHICmdList));
+				static_assert(std::is_invocable_v<ExecuteLambdaType&, CommandListImmediate&>,
+					"An RDG pass lambda must accept a command list, optionally preceded by const RGPass*.");
+				ExecuteLambda(ImmediateCmdList);
 			}
-		}
-
-		void Execute(ComputeCommandList& RHICmdList) override
-		{
-			ExecuteLambdaFunc<TRGPass>(static_cast<TCommandList&>(RHICmdList));
 		}
 
 		ExecuteLambdaType ExecuteLambda;
@@ -245,12 +228,13 @@ export namespace RenderGraph
 		if (white::has_anyflags(PassFlags, white::enum_or(ERGPassFlags::AsyncCompute,ERGPassFlags::Compute)))
 		{
 			SRVAccess =  white::enum_or(SRVAccess, EAccessHint::SRVCompute);
-			UAVAccess =  white::enum_or(SRVAccess, EAccessHint::UAVCompute);
+			UAVAccess = white::enum_or(UAVAccess, EAccessHint::UAVCompute);
 		}
 
 		if (white::has_anyflags(PassFlags, ERGPassFlags::Copy))
 		{
 			SRVAccess = white::enum_or(SRVAccess, EAccessHint::CopySrc);
+			UAVAccess = white::enum_or(UAVAccess, EAccessHint::CopyDst);
 		}
 	}
 
@@ -331,10 +315,11 @@ export namespace RenderGraph
 	{
 	public:
 		RGBuilder(CommandListImmediate& InCmdList, RGEventName InName = {}, ERGBuilderFlags Flags = ERGBuilderFlags::None)
-			:CmdList(InCmdList), BuilderName(InName)
-			, bParallelSetupEnabled(white::has_anyflags(Flags, ERGBuilderFlags::AllowParallelExecute))
-			, bParallelExecuteEnabled(white::has_anyflags(Flags, ERGBuilderFlags::AllowParallelExecute))
+			:CmdList(InCmdList), BuilderName(std::move(InName))
 		{
+			// The current RHI exposes one immediate command list. AllowParallelExecute
+			// therefore selects the safe serial fallback until queue ownership exists.
+			(void)Flags;
 			AddProloguePass();
 		}
 
@@ -351,6 +336,7 @@ export namespace RenderGraph
 
 		RGBufferUAVRef CreateUAV(const RGBufferUAVDesc& Desc, ERGUnorderedAccessViewFlags InFlags = ERGUnorderedAccessViewFlags::None)
 		{
+			wassume(Desc.Buffer != nullptr);
 			auto UAV = Views.Allocate<RGBufferUAV>(Allocator, Desc.Buffer->Name, Desc, InFlags);
 
 			return UAV;
@@ -358,6 +344,7 @@ export namespace RenderGraph
 
 		RGBufferSRVRef CreateSRV(const RGBufferSRVDesc& Desc)
 		{
+			wassume(Desc.Buffer != nullptr);
 			auto SRV = Views.Allocate<RGBufferSRV>(Allocator, Desc.Buffer->Name, Desc);
 
 			return SRV;
@@ -373,6 +360,7 @@ export namespace RenderGraph
 		RGConstBufferRef CreateCBuffer(std::span<TBufferStruct> span)
 		{
 			auto ParametersSize = static_cast<uint32>(span.size_bytes());
+			wassume(ParametersSize > 0);
 			auto Parameters = Allocator.Alloc(ParametersSize, alignof(TBufferStruct));
 
 			std::memcpy(Parameters, span.data(), ParametersSize);
@@ -382,6 +370,9 @@ export namespace RenderGraph
 
 		RGBufferRef CreateBuffer(const RGBufferDesc& Desc, const char* Name, ERGBufferFlags Flags = ERGBufferFlags::None)
 		{
+			wassume(Name != nullptr);
+			wassume(Desc.BytesPerElement > 0 && Desc.NumElements > 0);
+			(void)Desc.GetSize();
 			auto Buffer = Buffers.Allocate(Allocator, Name, Desc, Flags);
 			return Buffer;
 		}
@@ -457,6 +448,7 @@ export namespace RenderGraph
 
 		RGBufferRef RegisterExternal(const white::ref_ptr<RGPooledBuffer>& External, ERGBufferFlags Flags = ERGBufferFlags::None)
 		{
+			wassume(External != nullptr);
 			const char* Name = External->Name;
 			if (!Name)
 			{
@@ -468,6 +460,8 @@ export namespace RenderGraph
 
 		RGBufferRef RegisterExternal(const white::ref_ptr<RGPooledBuffer>& External, const char* Name, ERGBufferFlags Flags = ERGBufferFlags::None)
 		{
+			wassume(External != nullptr);
+			wassume(Name != nullptr);
 			if (auto FoundBuffer = FindExternal(External.get()))
 			{
 				return FoundBuffer;
@@ -484,23 +478,13 @@ export namespace RenderGraph
 
 		void Execute()
 		{
+			wassume(!bExecuted);
 			SetupEmptyPass(EpiloguePass = Passes.Allocate<RGSentinelPass>(Allocator, RGEventName("Graph Epilogue")));
 
 			const auto ProloguePassHandle = GetProloguePassHandle();
 			const auto EpiloguePassHandle = GetEpiloguePassHandle();
 
 			Compile();
-			CompilePassBarriers();
-
-			for (const auto& Pair : ExternalBuffers)
-			{
-				auto Buffer = Pair.second;
-
-				if (Buffer->IsCulled())
-				{
-					EndResource(ProloguePassHandle, Buffer, 0);
-				}
-			}
 
 			for (auto PassHandle = ProloguePassHandle; PassHandle <= EpiloguePassHandle; ++PassHandle)
 			{
@@ -509,15 +493,11 @@ export namespace RenderGraph
 				if (!Pass->bCulled)
 				{
 					BeginResources(Pass, PassHandle);
-					EndResources(Pass, PassHandle);
 				}
 			}
 
 			CreateCBuffers();
-
-			//CreatePassBarriers
-
-			//ParallelExecuteEnabled
+			CompilePassBarriers();
 
 			for(auto PassHandle = ProloguePassHandle; PassHandle <= EpiloguePassHandle; ++PassHandle)
 			{
@@ -528,22 +508,40 @@ export namespace RenderGraph
 					continue;
 				}
 
-				if (!Pass->bSentinel)
-				{
-					CompilePassOps(Pass);
-				}
-
-
 				ExecutePass(Pass, CmdList);
+			}
+
+			QueueResourceLifetime();
+
+			Buffers.Enumerate([](RGBuffer* Buffer)
+				{
+					if (Buffer->State)
+					{
+						Buffer->State->Finalize();
+					}
+				});
+
+			for (auto PassHandle = ProloguePassHandle; PassHandle <= EpiloguePassHandle; ++PassHandle)
+			{
+				auto* Pass = Passes[PassHandle];
+				if (!Pass->bCulled)
+				{
+					EndResources(Pass, PassHandle);
+				}
+			}
+
+			for (const auto& Pair : ExternalBuffers)
+			{
+				auto* Buffer = Pair.second;
+				if (Buffer->ReferenceCount == 0 && Buffer->HasRObject())
+				{
+					EndResource(ProloguePassHandle, Buffer, 0);
+				}
 			}
 
 			RasterPassCount = 0;
 			AsyncComputePassCount = 0;
-		}
-
-		void CompilePassOps(RGPass* Pass)
-		{
-
+			bExecuted = true;
 		}
 
 		void ExecutePass(RGPass* Pass, ComputeCommandList& CmdList)
@@ -555,6 +553,13 @@ export namespace RenderGraph
 
 		void ExecutePassPrologue(RGPass* Pass, ComputeCommandList& CmdList)
 		{
+			for (const auto& PassState : Pass->BufferStates)
+			{
+				if (PassState.bTransitionRequired)
+				{
+					CmdList.TransitionResource(PassState.Buffer->GetRObject(), PassState.State.Access, PassState.bUAVBarrierRequired);
+				}
+			}
 		}
 
 		void ExecutePassEpilogue(RGPass* Pass, ComputeCommandList& CmdList)
@@ -673,11 +678,6 @@ export namespace RenderGraph
 
 			const uint32 CompilePassCount = Passes.Num();
 
-			if (bParallelSetupEnabled)
-			{
-				//Flush([RGPass* Pass]{SetupPassResources(Pass);});
-			}
-
 			auto bCullPasses = GRGCullPasses;
 
 			if (bCullPasses)
@@ -685,12 +685,9 @@ export namespace RenderGraph
 
 			if (bCullPasses || AsyncComputePassCount > 0)
 			{
-				if (!bParallelSetupEnabled)
+				for (auto PassHandle = ProloguePassHandle + 1; PassHandle < EpiloguePassHandle; ++PassHandle)
 				{
-					for (auto PassHandle = ProloguePassHandle + 1; PassHandle < EpiloguePassHandle; ++PassHandle)
-					{
-						SetupPassDependencies(Passes[PassHandle]);
-					}
+					SetupPassDependencies(Passes[PassHandle]);
 				}
 
 				const auto AddLastProducersToCullStack = [&](const RGProducerStatesByPipeline& LastProducers)
@@ -752,7 +749,34 @@ export namespace RenderGraph
 
 		void CompilePassBarriers()
 		{
+			const auto ProloguePassHandle = GetProloguePassHandle();
+			const auto EpiloguePassHandle = GetEpiloguePassHandle();
 
+			for (auto PassHandle = ProloguePassHandle + 1; PassHandle < EpiloguePassHandle; ++PassHandle)
+			{
+				auto* Pass = Passes[PassHandle];
+				if (Pass->bCulled)
+				{
+					continue;
+				}
+
+				for (auto& PassState : Pass->BufferStates)
+				{
+					auto* Buffer = PassState.Buffer;
+					wassume(Buffer->State != nullptr);
+
+					const RGSubresourceState Previous = *Buffer->State;
+					const RGSubresourceState& Next = PassState.State;
+					PassState.bTransitionRequired = Previous.Access == EAccessHint::None ||
+						RGSubresourceState::IsTransitionRequired(Previous, Next);
+					PassState.bUAVBarrierRequired =
+						white::has_anyflags(Previous.Access, EAccessHint::UAV) &&
+						white::has_anyflags(Next.Access, EAccessHint::UAV) &&
+						!SkipUAVBarrier(Previous, Next);
+
+					*Buffer->State = Next;
+				}
+			}
 		}
 
 		void EndResource(RGPassHandle PassHandle, RGBufferRef Buffer, uint32 ReferenceCount)
@@ -766,13 +790,17 @@ export namespace RenderGraph
 				if (Buffer->bTransient)
 				{
 					Buffer->TransientBuffer.reset();
-					delete Buffer->ViewCache;
+					Buffer->OwnedViewCache.reset();
 				}
 				else
 				{
 					Buffer->Allocation = nullptr;
 				}
 
+				Buffer->RealObj = nullptr;
+				Buffer->State = nullptr;
+				Buffer->MergeState = nullptr;
+				Buffer->ViewCache = nullptr;
 				Buffer->LastPass = PassHandle;
 				Buffer->ReferenceCount = RGViewableResource::DeallocatedReferenceCount;
 			}
@@ -805,7 +833,59 @@ export namespace RenderGraph
 
 		void EndResources(RGPass* ResourcePass, RGPassHandle ExecutePassHandle)
 		{
+			for (auto* PassToEnd : ResourcePass->ResourcesToEnd)
+			{
+				for (const auto& PassState : PassToEnd->BufferStates)
+				{
+					EndResource(ExecutePassHandle, PassState.Buffer, PassState.ReferenceCount);
+				}
+			}
+		}
 
+		void QueueResourceLifetime()
+		{
+			std::vector<white::ref_ptr<RGPooledBuffer>> PooledBuffers;
+			std::vector<GraphicsBufferRef> TransientBuffers;
+			std::vector<std::shared_ptr<BufferViewCache>> ViewCaches;
+			std::vector<white::ref_ptr<ConstantBuffer, RObjectController>> ConstantBuffers;
+
+			PooledBuffers.reserve(Buffers.Num());
+			TransientBuffers.reserve(Buffers.Num());
+			ViewCaches.reserve(Buffers.Num());
+			Buffers.Enumerate([&](RGBuffer* Buffer)
+				{
+					if (Buffer->Allocation)
+					{
+						PooledBuffers.emplace_back(Buffer->Allocation);
+					}
+					if (Buffer->TransientBuffer)
+					{
+						TransientBuffers.emplace_back(Buffer->TransientBuffer);
+					}
+					if (Buffer->OwnedViewCache)
+					{
+						ViewCaches.emplace_back(Buffer->OwnedViewCache);
+					}
+				});
+
+			ConstantBuffers.reserve(CBuffers.Num());
+			CBuffers.Enumerate([&](RGConstBuffer* Buffer)
+				{
+					if (Buffer->Buffer)
+					{
+						ConstantBuffers.emplace_back(Buffer->Buffer);
+					}
+				});
+
+			CmdList.InsertCommand([
+				PooledBuffers = std::move(PooledBuffers),
+				TransientBuffers = std::move(TransientBuffers),
+				ViewCaches = std::move(ViewCaches),
+				ConstantBuffers = std::move(ConstantBuffers)](platform::Render::CommandListBase&) mutable
+				{
+					// Captures deliberately keep graph-owned RHI objects alive until every
+					// previously queued pass command has executed.
+				});
 		}
 
 
@@ -833,12 +913,30 @@ export namespace RenderGraph
 			ExecuteLambdaType&& Lambda
 		)
 		{
-			using PassType = RGTLambdaPass<ParameterStructType, ExecuteLambdaType>;
+			const uint32 PassTypeCount =
+				(white::has_anyflags(Flags, ERGPassFlags::Raster) ? 1u : 0u) +
+				(white::has_anyflags(Flags, ERGPassFlags::Compute) ? 1u : 0u) +
+				(white::has_anyflags(Flags, ERGPassFlags::AsyncCompute) ? 1u : 0u) +
+				(white::has_anyflags(Flags, ERGPassFlags::Copy) ? 1u : 0u);
+			wassume(PassTypeCount == 1);
+			wassume(!bExecuted);
+
+			using LambdaType = std::decay_t<ExecuteLambdaType>;
+			using PassType = RGTLambdaPass<ParameterStructType, LambdaType>;
+
+			const ParameterStructType* ParameterCopy = Struct;
+			if (Metadata && Metadata->GetSize() > 0)
+			{
+				wassume(Struct != nullptr);
+				void* Storage = Allocator.Alloc(Metadata->GetSize(), 16);
+				std::memcpy(Storage, Struct, Metadata->GetSize());
+				ParameterCopy = static_cast<const ParameterStructType*>(Storage);
+			}
 
 			auto Pass = Allocator.AllocNoDestruct<PassType>(
 				std::move(Name),
 				Metadata,
-				Struct,
+				ParameterCopy,
 				Flags,
 				std::forward<ExecuteLambdaType>(Lambda)
 			);
@@ -846,7 +944,7 @@ export namespace RenderGraph
 			Passes.Insert(Pass);
 			SetupParameterPass(Pass);
 
-			return nullptr;
+			return Pass;
 		}
 
 		template<typename TBufferStruct>
@@ -865,12 +963,14 @@ export namespace RenderGraph
 
 		void SetRObject(RGBuffer* Buffer, const white::ref_ptr<RGPooledBuffer>& Pooled, RGPassHandle PassHandle)
 		{
+			wassume(Pooled != nullptr);
 			auto BufferObj = Pooled->GetRObject();
 
 			Buffer->RealObj = BufferObj;
 			Buffer->Allocation = Pooled;
 			Buffer->FirstPass = PassHandle;
 			Buffer->ViewCache = &Pooled->ViewCache;
+			Buffer->State = &Pooled->State;
 		}
 
 		void SetRObject(RGBuffer* Buffer, GraphicsBufferRef TransientBuffer, RGPassHandle PassHandle)
@@ -880,7 +980,8 @@ export namespace RenderGraph
 			Buffer->FirstPass = PassHandle;
 			Buffer->TransientBuffer = TransientBuffer;
 			Buffer->State = Allocator.AllocNoDestruct<RGSubresourceState>();
-			Buffer->ViewCache = new BufferViewCache();
+			Buffer->OwnedViewCache = std::make_shared<BufferViewCache>();
+			Buffer->ViewCache = Buffer->OwnedViewCache.get();
 			Buffer->Allocation = nullptr;
 		}
 
@@ -976,15 +1077,7 @@ export namespace RenderGraph
 		RGPass* SetupParameterPass(RGPass* Pass)
 		{
 			SetupPassInternals(Pass);
-
-			if (bParallelSetupEnabled)
-			{
-				throw white::unimplemented();
-			}
-			else
-			{
-				SetupPassResources(Pass);
-			}
+			SetupPassResources(Pass);
 
 			return Pass;
 		}
@@ -1000,11 +1093,8 @@ export namespace RenderGraph
 			Pass->PrologueBarrierPass = PassHandle;
 			Pass->EpilogueBarrierPass = PassHandle;
 
-			if (Pass->Pipeline == EPipeline::Graphics)
-			{
-				Pass->ResourcesToBegin.emplace_back(Pass);
-				Pass->ResourcesToEnd.emplace_back(Pass);
-			}
+			Pass->ResourcesToBegin.emplace_back(Pass);
+			Pass->ResourcesToEnd.emplace_back(Pass);
 
 			AsyncComputePassCount += white::has_anyflags(PassFlags, ERGPassFlags::AsyncCompute) ? 1 : 0;
 			RasterPassCount += white::has_anyflags(PassFlags, ERGPassFlags::Raster) ? 1 : 0;
@@ -1058,13 +1148,11 @@ export namespace RenderGraph
 
 					if (IsWritableAccess(Access))
 					{
+						Buffer->bProduced = true;
+					}
+					else
+					{
 						bRenderPassOnlyWrites = false;
-
-						// When running in parallel this is set via MarkResourcesAsProduced. We also can't touch this as its a bitfield and not atomic.
-						if (!bParallelSetupEnabled)
-						{
-							Buffer->bProduced = true;
-						}
 					}
 				});
 
@@ -1080,22 +1168,13 @@ export namespace RenderGraph
 					}
 				});
 
-			if (bParallelSetupEnabled)
-			{
-
-			}
 		}
 
 		RGPass* SetupEmptyPass(RGPass* Pass)
 		{
 			Pass->bEmptyParameters = true;
 			SetupPassInternals(Pass);
-			SetupAuxiliaryPasses(Pass);
 			return Pass;
-		}
-
-		void SetupAuxiliaryPasses(RGPass* Pass)
-		{
 		}
 
 		void SetupPassDependencies(RGPass* Pass)
@@ -1104,6 +1183,11 @@ export namespace RenderGraph
 			{
 				auto Buffer = PassState.Buffer;
 				const auto& SubresourceState = PassState.State;
+				const bool bHasProducer = std::any_of(
+					Buffer->LastProducer.begin(),
+					Buffer->LastProducer.end(),
+					[](const RGProducerState& Producer) { return Producer.Pass != nullptr; });
+				wassume(Buffer->bExternal || IsWritableAccess(SubresourceState.Access) || bHasProducer);
 
 				Buffer->ReferenceCount += PassState.ReferenceCount;
 
@@ -1206,11 +1290,14 @@ export namespace RenderGraph
 						Range.insert(LowerBound, Handle);
 					};
 
-				BinarySearchOrAdd(Producer->CrossPipelineConsumers, Consumer->Handle);
-
-				if (Consumer->CrossPipelineProducer.IsNull() || Producer->Handle > Consumer->CrossPipelineProducer)
+				if (Producer->Pipeline != Consumer->Pipeline)
 				{
-					Consumer->CrossPipelineProducer = Producer->Handle;
+					BinarySearchOrAdd(Producer->CrossPipelineConsumers, Consumer->Handle);
+
+					if (Consumer->CrossPipelineProducer.IsNull() || Producer->Handle > Consumer->CrossPipelineProducer)
+					{
+						Consumer->CrossPipelineProducer = Producer->Handle;
+					}
 				}
 
 				Producers.emplace_back(Producer->Handle);
@@ -1230,9 +1317,6 @@ export namespace RenderGraph
 		CommandListImmediate& CmdList;
 		const RGEventName BuilderName;
 
-		bool bParallelSetupEnabled;
-		bool bParallelExecuteEnabled;
-
 		RGPassRegistry Passes;
 		RGViewRegistry Views;
 		RGConstBufferRegistry CBuffers;
@@ -1248,8 +1332,9 @@ export namespace RenderGraph
 			std::equal_to<GraphicsBuffer*>,
 			RGSTLAllocator<std::pair<GraphicsBuffer* const, RGBufferRef>>> ExternalBuffers;
 
-		uint32 AsyncComputePassCount;
-		uint32 RasterPassCount;
+		uint32 AsyncComputePassCount = 0;
+		uint32 RasterPassCount = 0;
+		bool bExecuted = false;
 
 		RGPassRef ProloguePass;
 		RGPassRef EpiloguePass;

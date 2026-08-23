@@ -11,15 +11,15 @@ namespace platform::Render
 {
 	struct MemcpyResourceParams
 	{
-		uint32 Count;
-		uint32 SrcOffset;
-		uint32 DstOffset;
+		uint32 Count;     // Bytes to copy.
+		uint32 SrcOffset; // Byte offset in the source buffer.
+		uint32 DstOffset; // Byte offset in the destination buffer.
 	};
 
 	struct MemsetResourceParams
 	{
-		uint32 Count;
-		uint32 DstOffset;
+		uint32 Count;     // Bytes to fill.
+		uint32 DstOffset; // Byte offset in the destination buffer.
 		uint32 Value;
 	};
 

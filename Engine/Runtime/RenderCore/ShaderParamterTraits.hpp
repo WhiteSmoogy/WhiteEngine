@@ -2,6 +2,7 @@
 
 #include <WBase/wmathtype.hpp>
 #include "ShaderParametersMetadata.h"
+#include "ShaderParameterResource.h"
 #include "RenderInterface/IGraphicsBuffer.hpp"
 import RenderGraph;
 
@@ -47,56 +48,6 @@ namespace platform::Render
 			}
 		};
 
-		template<typename _type0, typename _type1>
-		struct UnionPointer
-		{
-			union {
-				_type0* v0;
-				_type1* v1;
-			};
-			uint32 index;
-
-			UnionPointer()
-				:index(0)
-			{
-			}
-
-			UnionPointer(_type0* value)
-				:index(0),v0(value)
-			{
-			}
-
-			UnionPointer(_type1* value)
-				:index(1), v1(value)
-			{
-			}
-
-			_type0*& operator=(_type0* value)
-			{
-				v0 = value;
-				index = 0;
-				return v0;
-			}
-
-			_type1*& operator=(_type1* value)
-			{
-				v1 = value;
-				index = 1;
-				return v1;
-			}
-
-			template<typename visitor>
-			void visit(visitor&& vis)
-			{
-				switch (index)
-				{
-				case 0:
-					vis(v0);
-				case 1:
-					vis(v1);
-				}
-			}
-		};
 	}
 
 #define MS_ALIGN(n) __declspec(align(n))
@@ -105,15 +56,15 @@ namespace platform::Render
 		template<typename TypeParameter>
 		struct TShaderParameterTypeInfo;
 
-		template<ShaderParamType ShaderType, uint32 NumElements = 0>
+		template<ShaderParamType InShaderType, uint32 InNumElements = 0>
 		struct ShaderTypeInfo
 		{
-			static constexpr ShaderParamType ShaderType = ShaderType;
+			static constexpr ShaderParamType ShaderType = InShaderType;
 
 			static constexpr ShaderBaseType BaseType = GetShaderBaseType(ShaderType);
 			static constexpr uint32 NumRows = GetNumRows(ShaderType);
 			static constexpr uint32 NumColumns = GetNumColumns(ShaderType);
-			static constexpr uint32 NumElements = NumElements;
+			static constexpr uint32 NumElements = InNumElements;
 
 			static inline const platform::Render::ShaderParametersMetadata* GetStructMetadata() { return nullptr; }
 		};

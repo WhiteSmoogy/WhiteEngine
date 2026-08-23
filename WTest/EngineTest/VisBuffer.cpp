@@ -273,11 +273,11 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 
 			for (uint32 clusterIndex = 0; clusterIndex < trinf.ClusterCount; ++clusterIndex)
 			{
-				args.ClusterId = clusterIndex;
-				BatchTrinfArgs[dispatchCount] = args;
-
-				if (dispatchCount >= MaxDispatchCount)
+				if (dispatchCount == MaxDispatchCount)
 					DipstachBatch();
+
+				args.ClusterId = clusterIndex;
+				BatchTrinfArgs[dispatchCount++] = args;
 			}
 		};
 
@@ -285,7 +285,7 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 	{
 		auto& trinf = sponza_trinf->Metadata->Trinfs[i];
 
-		if (BatchTrinfArgs.size() + trinf.ClusterCount > MaxDispatchCount)
+		if (dispatchCount + trinf.ClusterCount > MaxDispatchCount)
 		{
 			DipstachBatch();
 			AddBatch(i, trinf);
@@ -301,7 +301,7 @@ void VisBufferTest::RenderTrinf(RenderGraph::RGBuilder& Builder)
 	auto CompactedDrawArgsSize = white::Align(sizeof(DrawIndexArguments) * (sponza_trinf->Metadata->TrinfsCount + 1), 16);
 	auto CompactedDrawArgs = Builder.CreateBuffer(RGBufferDesc::CreateStructIndirectDesc(sizeof(DrawIndexArguments), sponza_trinf->Metadata->TrinfsCount + 1), "CompactedDrawArgs");
 	auto CompactedDrawArgsUAV = Builder.CreateUAV({ .Buffer = CompactedDrawArgs });
-	Params.Count = white::Align(sizeof(DrawIndexArguments), 16);
+	Params.Count = static_cast<uint32>(white::Align(sizeof(DrawIndexArguments), 16));
 	Params.DstOffset = 0;
 	Params.Value = 0;
 	MemsetResource(Builder, CompactedDrawArgsUAV, Params);
